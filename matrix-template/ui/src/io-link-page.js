@@ -19,7 +19,7 @@ export function renderIOLinkMaster() {
       <div class="grid grid-cols-1 lg:grid-cols-4 gap-4">
         <div class="card bg-base-200 shadow-xl">
           <div class="card-body items-center text-center">
-            <img id="productImage" src="/assets/img/AL1300.png" alt="AL1300 IO-Link Master" class="max-h-48 object-contain" onerror="this.style.display='none'; document.getElementById('productImagePlaceholder')?.classList.remove('hidden');" />
+            <img id="productImage" src="${typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.BASE_URL ? import.meta.env.BASE_URL + 'assets/img/AL1300.png' : '/assets/img/AL1300.png'}" alt="AL1300 IO-Link Master" class="max-h-48 object-contain" onerror="this.style.display='none'; document.getElementById('productImagePlaceholder')?.classList.remove('hidden');" />
             <div id="productImagePlaceholder" class="hidden text-base-content/60">AL1300 IO-Link Master</div>
           </div>
         </div>
@@ -199,7 +199,7 @@ function updateUI(data) {
   const img = document.getElementById('productImage');
   const placeholder = document.getElementById('productImagePlaceholder');
   if (img) {
-    img.src = data.device_icon_url || '/assets/img/AL1300.png';
+    img.src = data.device_icon_url || (typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.BASE_URL ? import.meta.env.BASE_URL + 'assets/img/AL1300.png' : '/assets/img/AL1300.png');
     img.classList.remove('hidden');
     if (placeholder) placeholder.classList.add('hidden');
   }
