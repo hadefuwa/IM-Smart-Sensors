@@ -14,6 +14,7 @@ Web dashboard for monitoring **IFM IO-Link Master** devices (e.g. AL1100/AL1300)
 - **Active port details** – per-port process data and optional CL50 LED decode
 - **Connection indicator** – green when connected, red when disconnected
 - **Two frontends** – simple HTML or Matrix-style UI (Tailwind + DaisyUI)
+- **Change Master IP from the UI** – no need to edit config files
 
 ---
 
@@ -75,6 +76,32 @@ Then open the URL shown (e.g. http://localhost:5173). Set the API base if needed
 
 ---
 
+## Running on Raspberry Pi
+
+You can run the backend on a Raspberry Pi on your network so the dashboard is always available and can reach the IO-Link Master.
+
+1. **On the Pi** (Raspberry Pi OS or similar):
+   ```bash
+   cd backend
+   pip install -r requirements.txt
+   python run_io_link_fastapi.py
+   ```
+   Or run in the background (e.g. with `nohup`, `screen`, or a systemd service).
+
+2. **Open the dashboard** from any device on the same network:
+   - **http://\<pi-ip\>:8000/** – backend serves the simple frontend.
+   - Or use the [GitHub Pages](https://hadefuwa.github.io/IM-Smart-Sensors/) UI and set the API base to `http://<pi-ip>:8000` (e.g. in browser console: `window.IO_LINK_API_BASE = 'http://192.168.7.10:8000'` then refresh).
+
+3. **Optional:** Put the Pi’s IP in `config.json` as `master_ip` if the IO-Link Master is at a different IP, or change it from the dashboard’s “IO-Link Master address” section.
+
+---
+
+## GitHub Pages (UI only)
+
+The repo includes a built version of the Matrix template for [GitHub Pages](https://hadefuwa.github.io/IM-Smart-Sensors/). That site is **static** – it cannot run the backend. To see live data, run the backend (on your PC or a Pi) and open **http://\<backend-host\>:8000/** or point the Pages UI at your backend as above.
+
+---
+
 ## Project Layout
 
 ```
@@ -106,7 +133,9 @@ Then open the URL shown (e.g. http://localhost:5173). Set the API base if needed
 
 | Endpoint | Description |
 |----------|-------------|
-| `GET /` | Serves the simple dashboard (io-link.html) |
+| `GET /` | Serves the Matrix template dashboard (or simple frontend) |
+| `GET /api/io-link/config` | Get IO-Link Master IP/port config |
+| `PUT /api/io-link/config` | Update Master IP/port (saved to config.json) |
 | `GET /api/io-link/status` | Full status (ports, supervision, software) |
 | `GET /api/io-link/port/<port_num>` | Detailed port data (e.g. PDin/PDout decoded) |
 | `GET /api/io-link/supervision-history` | Time-series for charts |
