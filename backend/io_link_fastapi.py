@@ -121,6 +121,20 @@ def load_config():
         }
 
 
+def save_config(io_link_updates: dict):
+    """Update io_link section in config.json and save. Other keys (plc, dobot, etc.) are preserved."""
+    config_path = os.path.join(os.path.dirname(__file__), 'config.json')
+    config = load_config()
+    if 'io_link' not in config:
+        config['io_link'] = {}
+    for key, value in io_link_updates.items():
+        if value is not None:
+            config['io_link'][key] = value
+    with open(config_path, 'w') as f:
+        json.dump(config, f, indent=2)
+    return config
+
+
 def parse_supervision_number(val, default=0):
     """Parse supervision value to number. E.g. '251mA'->251, '23758mV'->23.758, '39°C'->39"""
     if val is None or val == '':
@@ -372,22 +386,22 @@ async def get_device_info(base_url: str) -> Dict:
 
 
 async def poll_io_link_master():
-    """Background task that continuously polls the IO-Link Master"""
+    """Background task that continuously polls the IO-Link Master. Reloads config each loop so IP changes take effect."""
     global system_state
     
-    # Load config
-    config = load_config()
-    io_config = config.get('io_link', {})
-    ip = io_config.get('master_ip', IFM_MASTER_IP)
-    port = io_config.get('port', IFM_MASTER_PORT)
-    timeout = io_config.get('timeout_sec', IFM_TIMEOUT)
-    scheme = 'https' if io_config.get('use_https', False) else 'http'
-    default_port = 443 if scheme == 'https' else 80
-    base_url = f'{scheme}://{ip}' if port == default_port else f'{scheme}://{ip}:{port}'
-    
-    logger.info(f"Starting IO-Link Master polling: {base_url}")
+    logger.info("Starting IO-Link Master polling loop")
     
     while True:
+        # Load config each time so IP/port changes from the UI take effect without restart
+        config = load_config()
+        io_config = config.get('io_link', {})
+        ip = io_config.get('master_ip', IFM_MASTER_IP)
+        port = io_config.get('port', IFM_MASTER_PORT)
+        timeout = io_config.get('timeout_sec', IFM_TIMEOUT)
+        scheme = 'https' if io_config.get('use_https', False) else 'http'
+        default_port = 443 if scheme == 'https' else 80
+        base_url = f'{scheme}://{ip}' if port == default_port else f'{scheme}://{ip}:{port}'
+        
         try:
             # Fetch all data in parallel
             ports_task = poll_all_ports(base_url)
@@ -486,6 +500,59 @@ async def websocket_endpoint(websocket: WebSocket):
     finally:
         connected_clients.discard(websocket)
         logger.info(f"WebSocket client disconnected. Total clients: {len(connected_clients)}")
+
+
+@app.get("/api/io-link/config")
+async def get_io_link_config():
+    """Get current IO-Link Master config (IP, port, etc.) for the UI"""
+    config = load_config()
+    return JSONResponse(content={
+        "success": True,
+        "io_link": config.get("io_link", {
+            "master_ip": IFM_MASTER_IP,
+            "port": IFM_MASTER_PORT,
+            "timeout_sec": IFM_TIMEOUT,
+            "use_https": False
+        })
+    })
+
+
+@app.put("/api/io-link/config")
+async def update_io_link_config(request: Request):
+    """Update IO-Link Master IP and optional port/timeout. Saves to config.json."""
+    try:
+        body = await request.json()
+    except Exception:
+        raise HTTPException(status_code=400, detail="Invalid JSON body")
+    master_ip = body.get("master_ip")
+    if master_ip is not None:
+        master_ip = str(master_ip).strip()
+        if not master_ip:
+            raise HTTPException(status_code=400, detail="master_ip cannot be empty")
+    updates = {}
+    if master_ip is not None:
+        updates["master_ip"] = master_ip
+    if body.get("port") is not None:
+        try:
+            updates["port"] = int(body["port"])
+        except (TypeError, ValueError):
+            raise HTTPException(status_code=400, detail="port must be a number")
+    if body.get("timeout_sec") is not None:
+        try:
+            updates["timeout_sec"] = float(body["timeout_sec"])
+        except (TypeError, ValueError):
+            raise HTTPException(status_code=400, detail="timeout_sec must be a number")
+    if body.get("use_https") is not None:
+        updates["use_https"] = bool(body["use_https"])
+    if not updates:
+        return JSONResponse(content={"success": True, "message": "No changes", "io_link": load_config().get("io_link", {})})
+    config = save_config(updates)
+    logger.info(f"Config updated: {updates}")
+    return JSONResponse(content={
+        "success": True,
+        "message": "Config saved",
+        "io_link": config.get("io_link", {})
+    })
 
 
 @app.get("/api/io-link/status")

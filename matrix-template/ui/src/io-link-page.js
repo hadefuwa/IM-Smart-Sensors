@@ -42,6 +42,16 @@ export function renderIOLinkMaster() {
             <div class="flex gap-2 mt-3">
               <button type="button" class="btn btn-primary btn-sm" id="io-link-refresh-btn">Refresh Now</button>
             </div>
+            <div class="mt-3 pt-3 border-t border-base-300">
+              <p class="text-xs text-base-content/60 mb-2">IO-Link Master address</p>
+              <div class="flex flex-wrap items-center gap-2">
+                <input type="text" id="masterIpInput" placeholder="192.168.7.4" class="input input-bordered input-sm w-36" />
+                <span class="text-base-content/60 text-sm">Port</span>
+                <input type="number" id="masterPortInput" placeholder="80" min="1" max="65535" class="input input-bordered input-sm w-20" />
+                <button type="button" class="btn btn-primary btn-sm" id="io-link-save-config-btn">Save</button>
+                <span id="configMessage" class="text-sm text-success"></span>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -368,6 +378,50 @@ function connectWebSocket() {
   }
 }
 
+function loadMasterConfig() {
+  fetch(`${API_BASE}/api/io-link/config`)
+    .then(r => r.json())
+    .then(data => {
+      if (data.success && data.io_link) {
+        const ipEl = document.getElementById('masterIpInput');
+        if (ipEl) ipEl.value = data.io_link.master_ip || '';
+        const portEl = document.getElementById('masterPortInput');
+        if (portEl) portEl.value = data.io_link.port != null ? data.io_link.port : '80';
+      }
+    })
+    .catch(() => {});
+}
+
+function saveMasterConfig() {
+  const ipEl = document.getElementById('masterIpInput');
+  const portEl = document.getElementById('masterPortInput');
+  const msgEl = document.getElementById('configMessage');
+  const ip = ipEl && ipEl.value ? ipEl.value.trim() : '';
+  if (!ip) {
+    if (msgEl) { msgEl.textContent = 'Enter an IP address'; msgEl.className = 'text-sm text-error'; }
+    return;
+  }
+  let port = portEl && portEl.value ? parseInt(portEl.value, 10) : 80;
+  if (isNaN(port) || port < 1 || port > 65535) port = 80;
+  if (msgEl) { msgEl.textContent = 'Saving...'; msgEl.className = 'text-sm'; }
+  fetch(`${API_BASE}/api/io-link/config`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ master_ip: ip, port })
+  })
+    .then(r => r.json())
+    .then(data => {
+      if (msgEl) {
+        msgEl.textContent = data.success ? 'Saved.' : (data.detail || 'Error');
+        msgEl.className = data.success ? 'text-sm text-success' : 'text-sm text-error';
+      }
+      setTimeout(() => { if (msgEl) msgEl.textContent = ''; }, 4000);
+    })
+    .catch(err => {
+      if (msgEl) { msgEl.textContent = 'Error'; msgEl.className = 'text-sm text-error'; }
+    });
+}
+
 /** Call when leaving the IO-Link page so charts are destroyed. */
 export function destroyIOLinkPage() {
   if (reconnectTimer) clearTimeout(reconnectTimer);
@@ -384,6 +438,7 @@ export function initIOLinkPage() {
   ioLinkCharts.forEach(c => c.destroy());
   ioLinkCharts = [];
   if (reconnectTimer) clearTimeout(reconnectTimer);
+  loadMasterConfig();
   connectWebSocket();
   const btn = document.getElementById('io-link-refresh-btn');
   if (btn) {
@@ -392,4 +447,6 @@ export function initIOLinkPage() {
         fetch(`${API_BASE}/api/io-link/status`).then(r => r.json()).then(updateUI).catch(() => {});
     };
   }
+  const saveBtn = document.getElementById('io-link-save-config-btn');
+  if (saveBtn) saveBtn.onclick = saveMasterConfig;
 }

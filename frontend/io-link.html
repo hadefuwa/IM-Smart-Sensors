@@ -335,6 +335,16 @@
                     <button class="btn-control" onclick="setPollInterval(10)">10s</button>
                     <button class="btn-control btn-primary" onclick="refreshNow()">Refresh Now</button>
                   </div>
+                  <div class="mt-3 pt-3" style="border-top: 1px solid rgba(255,255,255,0.1);">
+                    <p class="mb-2" style="font-size: 14px; color: #aaa;">IO-Link Master address</p>
+                    <div class="d-flex flex-wrap align-items-center gap-2">
+                      <input type="text" id="masterIpInput" placeholder="192.168.7.4" style="width: 140px; padding: 6px 10px; border-radius: 4px; border: 1px solid #444; background: #222; color: #fff;" />
+                      <span class="text-muted">Port</span>
+                      <input type="number" id="masterPortInput" placeholder="80" min="1" max="65535" style="width: 70px; padding: 6px 10px; border-radius: 4px; border: 1px solid #444; background: #222; color: #fff;" />
+                      <button type="button" class="btn-control btn-primary" onclick="saveMasterConfig()">Save</button>
+                      <span id="configMessage" class="small" style="color: #4caf50;"></span>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
@@ -651,6 +661,50 @@
       }
     }
 
+    function loadMasterConfig() {
+      fetch(`${API_BASE}/api/io-link/config`)
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+          if (data.success && data.io_link) {
+            var el = document.getElementById('masterIpInput');
+            if (el) el.value = data.io_link.master_ip || '';
+            el = document.getElementById('masterPortInput');
+            if (el) el.value = data.io_link.port != null ? data.io_link.port : '80';
+          }
+        })
+        .catch(function(err) { console.error('Load config error:', err); });
+    }
+
+    function saveMasterConfig() {
+      var ipEl = document.getElementById('masterIpInput');
+      var portEl = document.getElementById('masterPortInput');
+      var msgEl = document.getElementById('configMessage');
+      var ip = ipEl && ipEl.value ? ipEl.value.trim() : '';
+      if (!ip) {
+        if (msgEl) { msgEl.textContent = 'Enter an IP address'; msgEl.style.color = '#f44336'; }
+        return;
+      }
+      var port = portEl && portEl.value ? parseInt(portEl.value, 10) : 80;
+      if (isNaN(port) || port < 1 || port > 65535) port = 80;
+      if (msgEl) msgEl.textContent = 'Saving...';
+      fetch(`${API_BASE}/api/io-link/config`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ master_ip: ip, port: port })
+      })
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+          if (msgEl) {
+            msgEl.textContent = data.success ? 'Saved. Backend will use new address on next poll.' : (data.detail || 'Error');
+            msgEl.style.color = data.success ? '#4caf50' : '#f44336';
+          }
+          setTimeout(function() { if (msgEl) msgEl.textContent = ''; }, 4000);
+        })
+        .catch(function(err) {
+          if (msgEl) { msgEl.textContent = 'Error: ' + (err.message || 'Failed'); msgEl.style.color = '#f44336'; }
+        });
+    }
+
     function updatePortTable(ports) {
       const tbody = document.getElementById('portTableBody');
       tbody.innerHTML = '';
@@ -932,7 +986,8 @@
       return div.innerHTML;
     }
 
-    // Start WebSocket connection on load
+    // Load master IP config and start WebSocket connection on load
+    loadMasterConfig();
     connectWebSocket();
     
     // Cleanup on page unload
