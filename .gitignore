@@ -1,0 +1,27 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+.venv/
+env/
+*.egg-info/
+.eggs/
+
+# Node (Matrix template)
+node_modules/
+dist/
+*.local
+
+# Logs and env
+*.log
+.env
+.env.local
+
+# IDE and OS
+.vscode/
+.idea/
+.DS_Store
+*.sw?

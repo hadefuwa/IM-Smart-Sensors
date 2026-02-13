@@ -1,0 +1,632 @@
+"""
+FastAPI Backend for IO-Link Master
+Real-time WebSocket-based communication with async polling
+"""
+
+from fastapi import FastAPI, WebSocket, WebSocketDisconnect, HTTPException, Request
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse, FileResponse, HTMLResponse, RedirectResponse, Response
+from fastapi.staticfiles import StaticFiles
+from starlette.middleware.base import BaseHTTPMiddleware
+import asyncio
+import httpx
+import json
+import os
+import time
+import logging
+from typing import Dict, List, Optional, Set
+from datetime import datetime
+
+from decoder import decode_cl50_led, parse_hex_to_bytes
+
+# Configure logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+)
+logger = logging.getLogger(__name__)
+
+# Get directory paths
+_BACKEND_DIR = os.path.dirname(os.path.abspath(__file__))
+_FRONTEND_DIR = os.path.normpath(os.path.join(_BACKEND_DIR, '..', 'frontend'))
+logger.info(f"Backend directory: {_BACKEND_DIR}")
+logger.info(f"Frontend directory: {_FRONTEND_DIR}")
+logger.info(f"Frontend exists: {os.path.exists(_FRONTEND_DIR)}")
+if os.path.exists(_FRONTEND_DIR):
+    io_link_html = os.path.join(_FRONTEND_DIR, 'io-link.html')
+    logger.info(f"io-link.html exists: {os.path.exists(io_link_html)}")
+
+# Create FastAPI app - disable default root
+app = FastAPI(
+    title="IO-Link Master API", 
+    docs_url="/docs", 
+    redoc_url="/redoc",
+    openapi_url="/openapi.json"
+)
+
+# Mount static files FIRST (before routes) - this is important!
+if os.path.exists(_FRONTEND_DIR):
+    # Mount assets directory for CSS, JS, images
+    assets_dir = os.path.join(_FRONTEND_DIR, 'assets')
+    if os.path.exists(assets_dir):
+        app.mount("/assets", StaticFiles(directory=assets_dir), name="assets")
+        logger.info(f"Mounted /assets from {assets_dir}")
+
+# Enable CORS for frontend
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # In production, specify your frontend URL
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+# Middleware to serve frontend at root
+class RootMiddleware(BaseHTTPMiddleware):
+    async def dispatch(self, request: Request, call_next):
+        if request.url.path == "/" and request.method == "GET":
+            index_path = os.path.join(_FRONTEND_DIR, 'io-link.html')
+            if os.path.exists(index_path):
+                try:
+                    with open(index_path, 'r', encoding='utf-8') as f:
+                        html_content = f.read()
+                    return HTMLResponse(content=html_content)
+                except Exception as e:
+                    logger.error(f"Error serving root: {e}")
+        return await call_next(request)
+
+app.add_middleware(RootMiddleware)
+
+# Global state
+system_state = {
+    'device_name': '',
+    'ports': [],
+    'supervision': {},
+    'software': {},
+    'device_icon_url': None,
+    'product_image_url': '/api/io-link/product-image',
+    'timestamp': 0,
+    'source': '',
+    'success': False
+}
+
+# Supervision history buffer
+supervision_history = []
+MAX_HISTORY_SIZE = 100
+
+# Connected WebSocket clients
+connected_clients: Set[WebSocket] = set()
+
+# Configuration
+IFM_MASTER_IP = "192.168.7.4"
+IFM_MASTER_PORT = 80
+IFM_TIMEOUT = 2.0  # 2 seconds timeout
+POLL_INTERVAL = 1.0  # Poll every 1 second
+
+
+def load_config():
+    """Load configuration from config.json"""
+    config_path = os.path.join(os.path.dirname(__file__), 'config.json')
+    try:
+        with open(config_path, 'r') as f:
+            return json.load(f)
+    except FileNotFoundError:
+        return {
+            "io_link": {
+                "master_ip": "192.168.7.4",
+                "port": 80,
+                "timeout_sec": 2.0,
+                "use_https": False
+            }
+        }
+
+
+def parse_supervision_number(val, default=0):
+    """Parse supervision value to number. E.g. '251mA'->251, '23758mV'->23.758, '39°C'->39"""
+    if val is None or val == '':
+        return default
+    import re
+    s = str(val).strip()
+    m = re.match(r'^([-\d.]+)', s)
+    if m:
+        num = float(m.group(1))
+        if 'mV' in s.lower():
+            return round(num / 1000, 2)
+        if 'mA' in s.lower() or '°c' in s.lower() or 'c' in s.lower():
+            return num
+        return num
+    try:
+        return float(s)
+    except ValueError:
+        return default
+
+
+def append_supervision_history(supervision_dict):
+    """Append parsed supervision to history buffer"""
+    if not supervision_dict:
+        return
+    entry = {
+        'ts': time.time(),
+        'current': None,
+        'voltage': None,
+        'temperature': None,
+        'status': None,
+        'sw_version': None
+    }
+    for k, v in supervision_dict.items():
+        low = k.lower().replace('-', '').replace(' ', '')
+        if 'current' in low:
+            entry['current'] = parse_supervision_number(v, None)
+        elif 'voltage' in low:
+            entry['voltage'] = parse_supervision_number(v, None)
+        elif 'temp' in low:
+            entry['temperature'] = parse_supervision_number(v, None)
+        elif 'status' in low and 'version' not in low:
+            entry['status'] = parse_supervision_number(v, None)
+        elif 'swversion' in low or ('sw' in low and 'version' in low):
+            entry['sw_version'] = parse_supervision_number(v, None)
+    
+    supervision_history.append(entry)
+    while len(supervision_history) > MAX_HISTORY_SIZE:
+        supervision_history.pop(0)
+
+
+async def get_ifm_port_data(client: httpx.AsyncClient, base_url: str, port_number: int) -> Optional[str]:
+    """
+    Fetches Process Data from an ifm IO-Link Master via IoT Core API.
+    
+    Args:
+        client: httpx async client
+        base_url: Base URL of the IO-Link Master
+        port_number: Port number (1-4)
+        
+    Returns:
+        Hex string value or None if error
+    """
+    url = f"{base_url}/iolinkmaster/port[{port_number}]/iolinkdevice/pdin/getdata"
+    
+    try:
+        response = await client.get(url, timeout=IFM_TIMEOUT)
+        response.raise_for_status()
+        
+        data = response.json()
+        if data.get('code') == 200:
+            return data.get('data', {}).get('value')
+        return None
+    except Exception as e:
+        logger.debug(f"Error fetching port {port_number} data: {e}")
+        return None
+
+
+async def get_ifm_port_pdout(client: httpx.AsyncClient, base_url: str, port_number: int) -> Optional[str]:
+    """Get Process Data Out for a port"""
+    url = f"{base_url}/iolinkmaster/port[{port_number}]/iolinkdevice/pdout/getdata"
+    
+    try:
+        response = await client.get(url, timeout=IFM_TIMEOUT)
+        response.raise_for_status()
+        
+        data = response.json()
+        if data.get('code') == 200:
+            return data.get('data', {}).get('value')
+        return None
+    except Exception as e:
+        logger.debug(f"Error fetching port {port_number} PDout: {e}")
+        return None
+
+
+async def get_ifm_port_info(client: httpx.AsyncClient, base_url: str, port_number: int) -> Dict:
+    """Get all information for a single port"""
+    port_data = {
+        'port': port_number,
+        'mode': 'inactive',
+        'comm_mode': '',
+        'master_cycle_time': '',
+        'vendor_id': '',
+        'device_id': '',
+        'name': '',
+        'serial': '',
+        'pdin': '',
+        'pdout': ''
+    }
+    
+    # List of endpoints to fetch
+    endpoints = [
+        (f'/iolinkmaster/port[{port_number}]/mode/getdata', 'mode'),
+        (f'/iolinkmaster/port[{port_number}]/comcode/getdata', 'comm_mode'),
+        (f'/iolinkmaster/port[{port_number}]/mastercycle/getdata', 'master_cycle_time'),
+        (f'/iolinkmaster/port[{port_number}]/iolinkdevice/vendorid/getdata', 'vendor_id'),
+        (f'/iolinkmaster/port[{port_number}]/iolinkdevice/deviceid/getdata', 'device_id'),
+        (f'/iolinkmaster/port[{port_number}]/iolinkdevice/productname/getdata', 'name'),
+        (f'/iolinkmaster/port[{port_number}]/iolinkdevice/serialnumber/getdata', 'serial'),
+        (f'/iolinkmaster/port[{port_number}]/iolinkdevice/pdin/getdata', 'pdin'),
+        (f'/iolinkmaster/port[{port_number}]/iolinkdevice/pdout/getdata', 'pdout'),
+    ]
+    
+    # Fetch all endpoints in parallel
+    tasks = []
+    for endpoint, key in endpoints:
+        url = f"{base_url}{endpoint}"
+        tasks.append(client.get(url, timeout=IFM_TIMEOUT))
+    
+    responses = await asyncio.gather(*tasks, return_exceptions=True)
+    
+    # Process responses
+    for i, response in enumerate(responses):
+        if isinstance(response, Exception):
+            continue
+            
+        try:
+            if response.status_code == 200:
+                data = response.json()
+                if data.get('code') == 200:
+                    value = data.get('data', {}).get('value', '')
+                    key = endpoints[i][1]
+                    port_data[key] = value
+        except Exception:
+            pass
+    
+    return port_data
+
+
+async def poll_all_ports(base_url: str) -> List[Dict]:
+    """Fetch data from all ports in parallel"""
+    async with httpx.AsyncClient() as client:
+        # Create tasks for all ports
+        tasks = [get_ifm_port_info(client, base_url, i) for i in range(1, 5)]
+        
+        # Run all tasks in parallel
+        ports = await asyncio.gather(*tasks, return_exceptions=True)
+        
+        # Convert exceptions to empty port data
+        result = []
+        for i, port in enumerate(ports):
+            if isinstance(port, Exception):
+                logger.error(f"Error fetching port {i+1}: {port}")
+                result.append({
+                    'port': i + 1,
+                    'mode': 'error',
+                    'comm_mode': '',
+                    'master_cycle_time': '',
+                    'vendor_id': '',
+                    'device_id': '',
+                    'name': '',
+                    'serial': '',
+                    'pdin': '',
+                    'pdout': ''
+                })
+            else:
+                result.append(port)
+        
+        return result
+
+
+async def get_device_info(base_url: str) -> Dict:
+    """Get device name and software info"""
+    device_info = {
+        'device_name': 'IO-Link Master',
+        'software': {},
+        'device_icon_url': None
+    }
+    
+    async with httpx.AsyncClient() as client:
+        # Get device name
+        try:
+            response = await client.get(
+                f"{base_url}/devicetag/applicationtag/getdata",
+                timeout=IFM_TIMEOUT
+            )
+            if response.status_code == 200:
+                data = response.json()
+                if data.get('code') == 200:
+                    device_info['device_name'] = data.get('data', {}).get('value', 'IO-Link Master')
+        except Exception:
+            pass
+        
+        # Get software versions
+        software_paths = [
+            ('deviceinfo/software/getdata', 'Firmware'),
+            ('deviceinfo/bootloaderrevision/getdata', 'Bootloader'),
+            ('software/firmware/getdata', 'Firmware'),
+            ('software/container/getdata', 'Container'),
+            ('software/bootloader/getdata', 'Bootloader'),
+            ('software/fieldbusfirmware/getdata', 'Fieldbus Firmware'),
+        ]
+        
+        tasks = []
+        for path, key in software_paths:
+            url = f"{base_url}/{path}"
+            tasks.append(client.get(url, timeout=IFM_TIMEOUT))
+        
+        responses = await asyncio.gather(*tasks, return_exceptions=True)
+        
+        for i, response in enumerate(responses):
+            if isinstance(response, Exception):
+                continue
+            try:
+                if response.status_code == 200:
+                    data = response.json()
+                    if data.get('code') == 200:
+                        val = data.get('data', {}).get('value', '')
+                        if val:
+                            key = software_paths[i][1]
+                            if key not in device_info['software']:
+                                device_info['software'][key] = val
+            except Exception:
+                pass
+        
+        # Get device icon
+        try:
+            response = await client.get(
+                f"{base_url}/deviceinfo/deviceicon/getdata",
+                timeout=IFM_TIMEOUT
+            )
+            if response.status_code == 200:
+                data = response.json()
+                if data.get('code') == 200:
+                    device_info['device_icon_url'] = data.get('data', {}).get('value')
+        except Exception:
+            pass
+    
+    return device_info
+
+
+async def poll_io_link_master():
+    """Background task that continuously polls the IO-Link Master"""
+    global system_state
+    
+    # Load config
+    config = load_config()
+    io_config = config.get('io_link', {})
+    ip = io_config.get('master_ip', IFM_MASTER_IP)
+    port = io_config.get('port', IFM_MASTER_PORT)
+    timeout = io_config.get('timeout_sec', IFM_TIMEOUT)
+    scheme = 'https' if io_config.get('use_https', False) else 'http'
+    default_port = 443 if scheme == 'https' else 80
+    base_url = f'{scheme}://{ip}' if port == default_port else f'{scheme}://{ip}:{port}'
+    
+    logger.info(f"Starting IO-Link Master polling: {base_url}")
+    
+    while True:
+        try:
+            # Fetch all data in parallel
+            ports_task = poll_all_ports(base_url)
+            device_info_task = get_device_info(base_url)
+            
+            ports, device_info = await asyncio.gather(ports_task, device_info_task, return_exceptions=True)
+            
+            if isinstance(ports, Exception):
+                logger.error(f"Error polling ports: {ports}")
+                ports = []
+            if isinstance(device_info, Exception):
+                logger.error(f"Error fetching device info: {device_info}")
+                device_info = {'device_name': 'IO-Link Master', 'software': {}, 'device_icon_url': None}
+            
+            # Extract supervision data from ports if available
+            supervision = {}
+            # Note: Supervision data might come from device info endpoints
+            # This is a placeholder - adjust based on your actual IO-Link Master API
+            
+            # Update global state
+            system_state = {
+                'device_name': device_info.get('device_name', 'IO-Link Master'),
+                'ports': ports if isinstance(ports, list) else [],
+                'supervision': supervision,
+                'software': device_info.get('software', {}),
+                'device_icon_url': device_info.get('device_icon_url'),
+                'product_image_url': '/api/io-link/product-image',
+                'timestamp': time.time(),
+                'source': 'iot_core',
+                'success': True
+            }
+            
+            # Append supervision history if available
+            if supervision:
+                append_supervision_history(supervision)
+            
+            # Broadcast to all connected WebSocket clients
+            await broadcast_to_clients(system_state)
+            
+        except Exception as e:
+            logger.error(f"Error in polling loop: {e}")
+            system_state['success'] = False
+            system_state['error'] = str(e)
+        
+        # Wait before next poll
+        await asyncio.sleep(POLL_INTERVAL)
+
+
+async def broadcast_to_clients(data: Dict):
+    """Send data to all connected WebSocket clients"""
+    if not connected_clients:
+        return
+    
+    # Create a list of disconnected clients to remove
+    disconnected = []
+    
+    for client in connected_clients:
+        try:
+            await client.send_json(data)
+        except Exception as e:
+            logger.debug(f"Error sending to client: {e}")
+            disconnected.append(client)
+    
+    # Remove disconnected clients
+    for client in disconnected:
+        connected_clients.discard(client)
+
+
+@app.websocket("/ws")
+async def websocket_endpoint(websocket: WebSocket):
+    """WebSocket endpoint for real-time data push"""
+    await websocket.accept()
+    connected_clients.add(websocket)
+    logger.info(f"WebSocket client connected. Total clients: {len(connected_clients)}")
+    
+    try:
+        # Send current state immediately
+        await websocket.send_json(system_state)
+        
+        # Keep connection alive and handle incoming messages
+        while True:
+            try:
+                # Wait for any message (or timeout)
+                data = await asyncio.wait_for(websocket.receive_text(), timeout=30.0)
+                # Echo back or handle commands if needed
+                logger.debug(f"Received WebSocket message: {data}")
+            except asyncio.TimeoutError:
+                # Send heartbeat/ping to keep connection alive
+                await websocket.send_json({'type': 'ping', 'timestamp': time.time()})
+            except WebSocketDisconnect:
+                break
+    except WebSocketDisconnect:
+        pass
+    except Exception as e:
+        logger.error(f"WebSocket error: {e}")
+    finally:
+        connected_clients.discard(websocket)
+        logger.info(f"WebSocket client disconnected. Total clients: {len(connected_clients)}")
+
+
+@app.get("/api/io-link/status")
+async def io_link_status():
+    """Get current IO-Link Master status (for HTTP fallback)"""
+    return JSONResponse(content=system_state)
+
+
+@app.get("/api/io-link/supervision-history")
+async def io_link_supervision_history():
+    """Return supervision data history for graphing"""
+    return JSONResponse(content={
+        'history': supervision_history,
+        'count': len(supervision_history)
+    })
+
+
+@app.get("/api/io-link/port/{port_num}")
+async def io_link_port_detail(port_num: int):
+    """Get detailed data for a specific IO-Link port including decoded process data"""
+    if port_num < 1 or port_num > 4:
+        raise HTTPException(status_code=400, detail="Port must be between 1 and 4")
+    
+    config = load_config()
+    io_config = config.get('io_link', {})
+    ip = io_config.get('master_ip', IFM_MASTER_IP)
+    port = io_config.get('port', IFM_MASTER_PORT)
+    timeout = io_config.get('timeout_sec', IFM_TIMEOUT)
+    scheme = 'https' if io_config.get('use_https', False) else 'http'
+    default_port = 443 if scheme == 'https' else 80
+    base_url = f'{scheme}://{ip}' if port == default_port else f'{scheme}://{ip}:{port}'
+    
+    port_data = {
+        'port': port_num,
+        'mode': '',
+        'comm_mode': '',
+        'vendor_id': '',
+        'device_id': '',
+        'name': '',
+        'serial': '',
+        'pdin': {'raw': '', 'hex': '', 'bytes': [], 'decoded': {}},
+        'pdout': {'raw': '', 'hex': '', 'bytes': [], 'decoded': {}},
+        'parameters': {}
+    }
+    
+    async with httpx.AsyncClient() as client:
+        # Get port info
+        port_info = await get_ifm_port_info(client, base_url, port_num)
+        port_data.update({
+            'mode': port_info.get('mode', ''),
+            'comm_mode': port_info.get('comm_mode', ''),
+            'vendor_id': port_info.get('vendor_id', ''),
+            'device_id': port_info.get('device_id', ''),
+            'name': port_info.get('name', ''),
+            'serial': port_info.get('serial', '')
+        })
+        
+        # Get PDin
+        pdin_raw = port_info.get('pdin', '')
+        if pdin_raw:
+            pdin_hex = pdin_raw.replace(' ', '').replace('0x', '')
+            pdin_bytes = parse_hex_to_bytes(pdin_raw)
+            port_data['pdin'] = {
+                'raw': pdin_raw,
+                'hex': pdin_hex,
+                'bytes': pdin_bytes
+            }
+        
+        # Get PDout and decode
+        pdout_raw = port_info.get('pdout', '')
+        if pdout_raw:
+            pdout_hex = pdout_raw.replace(' ', '').replace('0x', '')
+            pdout_bytes = parse_hex_to_bytes(pdout_raw)
+            port_data['pdout'] = {
+                'raw': pdout_raw,
+                'hex': pdout_hex,
+                'bytes': pdout_bytes
+            }
+            
+            # Decode LED status if we have 3+ bytes
+            if len(pdout_bytes) >= 3:
+                port_data['pdout']['decoded'] = decode_cl50_led(pdout_bytes)
+    
+    return JSONResponse(content={
+        'success': True,
+        'port': port_data,
+        'timestamp': time.time()
+    })
+
+
+@app.get("/io-link.html", response_class=HTMLResponse)
+async def io_link_page():
+    """Serve the IO-Link HTML page"""
+    index_path = r'c:\Users\HamedA\Documents\IO-Link IM\frontend\io-link.html'
+    if os.path.exists(index_path):
+        with open(index_path, 'r', encoding='utf-8') as f:
+            return HTMLResponse(content=f.read())
+    raise HTTPException(status_code=404, detail=f"io-link.html not found at {index_path}")
+
+
+@app.get("/test-root")
+async def test_root():
+    """Test endpoint to verify routes work"""
+    return {"test": "This is a test endpoint", "message": "Routes are working"}
+
+
+# Define root route - MUST be after all other route definitions
+@app.get("/", response_class=HTMLResponse, include_in_schema=False)
+async def serve_frontend():
+    """Serve the IO-Link frontend page at root URL"""
+    index_path = os.path.join(_FRONTEND_DIR, 'io-link.html')
+    
+    logger.info(f"Root route called - serving: {index_path}")
+    
+    if not os.path.exists(index_path):
+        logger.error(f"Frontend file not found: {index_path}")
+        return HTMLResponse(
+            content=f"<h1>Frontend Not Found</h1><p>File: {index_path}</p>",
+            status_code=404
+        )
+    
+    try:
+        with open(index_path, 'r', encoding='utf-8') as f:
+            html_content = f.read()
+        logger.info(f"Serving frontend HTML ({len(html_content)} bytes)")
+        return HTMLResponse(content=html_content)
+    except Exception as e:
+        logger.error(f"Error reading HTML: {e}", exc_info=True)
+        return HTMLResponse(
+            content=f"<h1>Error</h1><p>{str(e)}</p>",
+            status_code=500
+        )
+
+
+@app.get("/favicon.ico")
+async def favicon():
+    """Serve favicon to avoid 404. 204 = no body; browser uses link tag icon from page."""
+    return Response(status_code=204)
+
+
+@app.get("/health")
+async def health_check():
+    """Health check endpoint"""
+    return {"status": "healthy", "clients": len(connected_clients)}

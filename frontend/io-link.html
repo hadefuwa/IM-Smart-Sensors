@@ -1,0 +1,953 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+  <title>IO-Link Master</title>
+  <!-- Basic favicon (inline SVG - no 404) -->
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect fill='%231a1a1a' width='32' height='32' rx='4'/%3E%3Cpath fill='%234CAF50' d='M16 6l2 4h4l-3 3 1 4-4-2-4 2 1-4-3-3h4z'/%3E%3Ccircle fill='%234CAF50' cx='16' cy='16' r='3'/%3E%3C/svg%3E" />
+  <meta content='width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0, shrink-to-fit=no' name='viewport' />
+  
+  <!-- Basic CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/chartist/1.3.0/chartist.min.css" />
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+      background-color: #1a1a1a;
+      color: #fff;
+    }
+    .sidebar {
+      position: fixed;
+      left: 0;
+      top: 0;
+      width: 260px;
+      height: 100vh;
+      background: #000;
+      padding: 20px;
+      overflow-y: auto;
+    }
+    .logo {
+      color: #fff;
+      font-size: 20px;
+      font-weight: bold;
+      margin-bottom: 30px;
+      padding-bottom: 20px;
+      border-bottom: 1px solid #333;
+    }
+    .nav-link {
+      color: #999;
+      text-decoration: none;
+      padding: 10px;
+      display: block;
+      border-radius: 4px;
+      margin-bottom: 5px;
+    }
+    .nav-link:hover, .nav-link.active {
+      background: #333;
+      color: #fff;
+    }
+    .main-panel {
+      margin-left: 260px;
+      padding: 20px;
+    }
+    .navbar {
+      background: rgba(0, 0, 0, 0.8);
+      padding: 15px 20px;
+      margin-bottom: 20px;
+    }
+    .card {
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 8px;
+      padding: 20px;
+      margin-bottom: 20px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    .card-header {
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      padding-bottom: 15px;
+      margin-bottom: 15px;
+    }
+    .card-title {
+      margin: 0;
+      font-size: 18px;
+      font-weight: 600;
+    }
+    .card-category {
+      color: #999;
+      font-size: 14px;
+      margin-top: 5px;
+    }
+    table {
+      width: 100%;
+      color: #fff;
+    }
+    table thead th {
+      color: #fff;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      padding: 10px;
+      text-align: left;
+    }
+    table tbody td {
+      padding: 10px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    }
+    code {
+      background: rgba(255, 255, 255, 0.1);
+      padding: 2px 6px;
+      border-radius: 3px;
+      font-family: monospace;
+    }
+    .btn-control {
+      background: #333;
+      color: #fff;
+      border: 1px solid #555;
+      padding: 8px 16px;
+      border-radius: 4px;
+      cursor: pointer;
+      margin-right: 10px;
+    }
+    .btn-control:hover {
+      background: #444;
+    }
+    .btn-primary {
+      background: #007bff;
+      border-color: #007bff;
+    }
+    .status-value.active { color: #4caf50; }
+    .status-value.inactive { color: #f44336; }
+    .connection-glow-dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 8px; vertical-align: middle; }
+    .connection-glow-dot.glow-green { background: #22c55e; box-shadow: 0 0 10px #22c55e, 0 0 20px #22c55e; }
+    .connection-glow-dot.glow-red { background: #ef4444; box-shadow: 0 0 10px #ef4444, 0 0 20px #ef4444; }
+    .connection-glow-dot.glow-checking { background: #eab308; box-shadow: 0 0 8px #eab308; }
+    .status-value-wrap { display: flex; align-items: center; }
+    .chart-container {
+      padding: 10px;
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 8px;
+      margin-bottom: 10px;
+      min-height: 300px;
+    }
+  </style>
+  <style>
+    .port-active, .port-active td, .port-active th, .port-active code { color: #1a1a1a !important; }
+    
+    /* Chart container styling */
+    .chart-container {
+      padding: 10px;
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 8px;
+      margin-bottom: 10px;
+      min-height: 300px;
+    }
+    
+    /* Make charts taller and more visible - responsive */
+    .ct-perfect-fourth {
+      display: block;
+      position: relative;
+      width: 100%;
+      height: 280px;
+      min-height: 250px;
+    }
+    
+    /* Responsive chart height on smaller screens */
+    @media (max-width: 768px) {
+      .ct-perfect-fourth {
+        height: 250px;
+      }
+      .chart-container {
+        min-height: 280px;
+      }
+    }
+    
+    /* Chart line and area colors for each graph */
+    #chartCurrent .ct-line {
+      stroke: #4caf50;
+      stroke-width: 3px;
+    }
+    #chartCurrent .ct-area {
+      fill: #4caf50;
+      fill-opacity: 0.2;
+    }
+    #chartCurrent .ct-point {
+      stroke: #4caf50;
+      stroke-width: 8px;
+    }
+    
+    #chartVoltage .ct-line {
+      stroke: #ff9800;
+      stroke-width: 3px;
+    }
+    #chartVoltage .ct-area {
+      fill: #ff9800;
+      fill-opacity: 0.2;
+    }
+    #chartVoltage .ct-point {
+      stroke: #ff9800;
+      stroke-width: 8px;
+    }
+    
+    #chartTemp .ct-line {
+      stroke: #f44336;
+      stroke-width: 3px;
+    }
+    #chartTemp .ct-area {
+      fill: #f44336;
+      fill-opacity: 0.2;
+    }
+    #chartTemp .ct-point {
+      stroke: #f44336;
+      stroke-width: 8px;
+    }
+    
+    /* Chart labels - responsive and readable */
+    .ct-label {
+      color: rgba(255, 255, 255, 0.7);
+      font-size: 10px;
+      fill: rgba(255, 255, 255, 0.7);
+    }
+    
+    /* X-axis labels - better spacing and readability */
+    .ct-chart .ct-label.ct-horizontal {
+      text-anchor: middle;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 60px;
+    }
+    
+    /* Better spacing for x-axis */
+    .ct-chart .ct-axis-x {
+      overflow: visible;
+    }
+    
+    /* Ensure chart area has enough padding for labels */
+    .ct-chart-line .ct-area {
+      clip-path: inset(0 0 10% 0);
+    }
+    
+    /* Chart grid */
+    .ct-grid {
+      stroke: rgba(255, 255, 255, 0.1);
+      stroke-width: 1px;
+    }
+    
+    /* Ensure charts resize on window resize */
+    .ct-chart {
+      overflow: visible;
+    }
+  </style>
+  
+
+  <!-- All styles consolidated in professional-theme.css -->
+</head>
+
+<body class="dark-edition">
+  <div class="wrapper">
+    <div class="sidebar" data-color="purple" data-background-color="black" data-image="">
+      <div class="logo">
+        <a href="/" class="simple-text logo-normal">
+          <i class="material-icons">settings_input_component</i>
+          IO-Link Master
+        </a>
+      </div>
+      <div class="sidebar-wrapper">
+        <ul class="nav">
+          <li class="nav-item active">
+            <a class="nav-link" href="/">
+              <i class="material-icons">dashboard</i>
+              <p>Dashboard</p>
+            </a>
+          </li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="main-panel">
+      <!-- Navbar -->
+      <nav class="navbar navbar-expand-lg navbar-transparent navbar-absolute fixed-top">
+        <div class="container-fluid">
+          <div class="navbar-wrapper">
+            <a class="navbar-brand" href="javascript:;">IO-Link Master</a>
+          </div>
+          <button class="navbar-toggler" type="button" data-toggle="collapse" aria-controls="navigation-index" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="sr-only">Toggle navigation</span>
+            <span class="navbar-toggler-icon icon-bar"></span>
+            <span class="navbar-toggler-icon icon-bar"></span>
+            <span class="navbar-toggler-icon icon-bar"></span>
+          </button>
+        </div>
+      </nav>
+      <!-- End Navbar -->
+
+      <div class="content">
+        <div class="container-fluid">
+          <!-- Product Image and Header -->
+          <div class="row">
+            <div class="col-md-3">
+              <div class="card">
+                <div class="card-body text-center">
+                  <img id="productImage" src="/assets/img/AL1300.png" alt="AL1300 IO-Link Master" 
+                       class="img-fluid" style="max-height: 200px; object-fit: contain;"
+                       onerror="this.style.display='none'; if(document.getElementById('productImagePlaceholder')) document.getElementById('productImagePlaceholder').style.display='block';">
+                  <div id="productImagePlaceholder" style="display:none; padding: 20px; color: #666;">
+                    <i class="material-icons" style="font-size: 80px;">settings_input_component</i>
+                    <p>AL1300 IO-Link Master</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-9">
+              <div class="card">
+                <div class="card-header card-header-purple">
+                  <h4 class="card-title" id="deviceName">IO-Link Master</h4>
+                  <p class="card-category">IFM IO-Link Master - Port status, supervision, and software versions</p>
+                </div>
+                <div class="card-body">
+                  <div class="status-panel">
+                    <div class="status-row">
+                      <div class="status-label">Connection:</div>
+                      <div class="status-value-wrap">
+                        <span id="connectionGlow" class="connection-glow-dot glow-checking" title="Status"></span>
+                        <div class="status-value" id="connectionStatus">Checking...</div>
+                      </div>
+                    </div>
+                    <div class="status-row">
+                      <div class="status-label">Data Source:</div>
+                      <div class="status-value" id="dataSource">-</div>
+                    </div>
+                    <div class="status-row">
+                      <div class="status-label">Last Update:</div>
+                      <div class="status-value" id="lastUpdate">-</div>
+                    </div>
+                    <div class="status-row">
+                      <div class="status-label">Poll Interval:</div>
+                      <div class="status-value" id="pollInterval">5s</div>
+                    </div>
+                  </div>
+                  <div class="controls" style="margin-top: 12px;">
+                    <button class="btn-control" onclick="setPollInterval(3)">3s</button>
+                    <button class="btn-control" onclick="setPollInterval(5)">5s</button>
+                    <button class="btn-control" onclick="setPollInterval(10)">10s</button>
+                    <button class="btn-control btn-primary" onclick="refreshNow()">Refresh Now</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Port Status Table -->
+          <div class="row">
+            <div class="col-md-12">
+              <div class="card">
+                <div class="card-header card-header-info">
+                  <h4 class="card-title">Port Status</h4>
+                  <p class="card-category">IO-Link ports and connected devices</p>
+                </div>
+                <div class="card-body table-responsive">
+                  <table class="table table-hover">
+                    <thead class="text-primary">
+                      <tr>
+                        <th>Port</th>
+                        <th>Mode</th>
+                        <th>Comm. Mode</th>
+                        <th>MasterCycle</th>
+                        <th>Vendor ID</th>
+                        <th>Device ID</th>
+                        <th>Name</th>
+                        <th>Serial</th>
+                        <th>PD In</th>
+                        <th>PD Out</th>
+                      </tr>
+                    </thead>
+                    <tbody id="portTableBody">
+                      <tr>
+                        <td colspan="10" class="text-center">Loading...</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Supervision Trends - Full Width -->
+          <div class="row">
+            <div class="col-md-12">
+              <div class="card card-chart">
+                <div class="card-header card-header-success">
+                  <h4 class="card-title">Supervision Trends</h4>
+                  <p class="card-category">Current, Voltage, Temperature over time</p>
+                </div>
+                <div class="card-body">
+                  <div class="row">
+                    <div class="col-md-4 col-sm-12">
+                      <div class="chart-container">
+                        <h6 class="text-center font-weight-bold">Current (mA)</h6>
+                        <div class="ct-chart ct-perfect-fourth" id="chartCurrent"></div>
+                      </div>
+                    </div>
+                    <div class="col-md-4 col-sm-12">
+                      <div class="chart-container">
+                        <h6 class="text-center font-weight-bold">Voltage (mV)</h6>
+                        <div class="ct-chart ct-perfect-fourth" id="chartVoltage"></div>
+                      </div>
+                    </div>
+                    <div class="col-md-4 col-sm-12">
+                      <div class="chart-container">
+                        <h6 class="text-center font-weight-bold">Temperature (°C)</h6>
+                        <div class="ct-chart ct-perfect-fourth" id="chartTemp"></div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Supervision and Software -->
+          <div class="row">
+            <div class="col-md-6">
+              <div class="card">
+                <div class="card-header card-header-success">
+                  <h4 class="card-title">Supervision</h4>
+                  <p class="card-category">Device operational parameters</p>
+                </div>
+                <div class="card-body">
+                  <div class="table-responsive">
+                    <table class="table">
+                      <tbody id="supervisionTableBody">
+                        <tr><td colspan="2" class="text-center">-</td></tr>
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="card">
+                <div class="card-header card-header-warning">
+                  <h4 class="card-title">Software Versions</h4>
+                  <p class="card-category">Firmware and component versions</p>
+                </div>
+                <div class="card-body">
+                  <div class="table-responsive">
+                    <table class="table">
+                      <tbody id="softwareTableBody">
+                        <tr><td colspan="2" class="text-center">-</td></tr>
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Port Details Section -->
+          <div class="row" id="portDetailsSection">
+            <div class="col-md-12">
+              <div class="card">
+                <div class="card-header card-header-info">
+                  <h4 class="card-title">Active Port Details</h4>
+                  <p class="card-category">Process data and decoded device status</p>
+                </div>
+                <div class="card-body" id="portDetailsContainer">
+                  <p class="text-center">Loading...</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Core JS Files - minimal dependencies -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/chartist/1.3.0/chartist.min.js"></script>
+
+  <script>
+    // ========== IO-LINK MASTER LOGIC WITH WEBSOCKETS ==========
+    const API_BASE = window.location.origin;
+    // Convert http:// to ws:// or https:// to wss://
+    // If FastAPI is on a different port, change this:
+    // const WS_BASE = 'ws://localhost:8000';
+    const WS_BASE = API_BASE.replace(/^http/, 'ws');
+    let websocket = null;
+    let reconnectTimer = null;
+    let reconnectAttempts = 0;
+    const MAX_RECONNECT_ATTEMPTS = 10;
+    const RECONNECT_DELAY = 5000; // 5 seconds
+
+    let lastGoodData = null;
+
+    function showError(msg, clearData) {
+      document.getElementById('connectionStatus').textContent = msg;
+      document.getElementById('connectionStatus').className = 'status-value inactive';
+      var g = document.getElementById('connectionGlow'); if (g) g.className = 'connection-glow-dot glow-red';
+      document.getElementById('dataSource').textContent = '-';
+      if (clearData || !lastGoodData) {
+        updatePortTable([]);
+        updateSupervisionTable({});
+        updateSoftwareTable({});
+      }
+    }
+
+    function updateUI(data) {
+      if (!data || !data.success) {
+        if (data && data.error) {
+          showError('Error: ' + data.error, false);
+        }
+        return;
+      }
+
+      lastGoodData = data;
+      document.getElementById('connectionStatus').textContent = 'Connected';
+      document.getElementById('connectionStatus').className = 'status-value active';
+      var g = document.getElementById('connectionGlow'); if (g) g.className = 'connection-glow-dot glow-green';
+      document.getElementById('dataSource').textContent = data.source || 'WebSocket';
+      document.getElementById('deviceName').textContent = data.device_name || 'IO-Link Master';
+      document.getElementById('lastUpdate').textContent = new Date().toLocaleTimeString();
+      document.getElementById('pollInterval').textContent = 'Real-time';
+      
+      updatePortTable(data.ports || []);
+      updateSupervisionTable(data.supervision || {});
+      updateSoftwareTable(data.software || {});
+      updateSupervisionChart();
+      
+      const img = document.getElementById('productImage');
+      const placeholder = document.getElementById('productImagePlaceholder');
+      if (data.device_icon_url) {
+        img.src = data.device_icon_url;
+        img.style.display = '';
+        placeholder.style.display = 'none';
+      } else {
+        // Always use the AL1300.png image from assets folder
+        img.src = '/assets/img/AL1300.png';
+        img.style.display = '';
+        placeholder.style.display = 'none';
+        img.onerror = function() { 
+          console.warn('Failed to load AL1300.png, showing placeholder');
+          img.style.display = 'none';
+          placeholder.style.display = 'block';
+        };
+      }
+    }
+
+    function connectWebSocket() {
+      // Close existing connection if any
+      if (websocket) {
+        websocket.close();
+        websocket = null;
+      }
+
+      try {
+        const wsUrl = `${WS_BASE}/ws`;
+        console.log('Connecting to WebSocket:', wsUrl);
+        websocket = new WebSocket(wsUrl);
+
+        // Connection opened
+        websocket.onopen = function() {
+          console.log('WebSocket connected to IO-Link Backend');
+          reconnectAttempts = 0;
+          document.getElementById('connectionStatus').textContent = 'Connecting...';
+          document.getElementById('connectionStatus').className = 'status-value';
+          var g = document.getElementById('connectionGlow'); if (g) g.className = 'connection-glow-dot glow-checking';
+        };
+
+        // Listen for messages (the "Push" from FastAPI)
+        websocket.onmessage = function(event) {
+          try {
+            const data = JSON.parse(event.data);
+            
+            // Ignore ping messages
+            if (data.type === 'ping') {
+              return;
+            }
+            
+            // Update UI with the received data
+            updateUI(data);
+          } catch (error) {
+            console.error('Error parsing WebSocket message:', error);
+          }
+        };
+
+        // Handle errors/disconnections
+        websocket.onerror = function(error) {
+          console.error('WebSocket error:', error);
+          showError('WebSocket error', false);
+        };
+
+        websocket.onclose = function() {
+          console.warn('WebSocket closed. Attempting to reconnect...');
+          websocket = null;
+          
+          // Try to reconnect
+          if (reconnectAttempts < MAX_RECONNECT_ATTEMPTS) {
+            reconnectAttempts++;
+            const delay = RECONNECT_DELAY * reconnectAttempts; // Exponential backoff
+            showError(`Reconnecting... (${reconnectAttempts}/${MAX_RECONNECT_ATTEMPTS})`, false);
+            
+            reconnectTimer = setTimeout(function() {
+              connectWebSocket();
+            }, delay);
+          } else {
+            showError('Connection lost. Please refresh the page.', false);
+          }
+        };
+
+      } catch (error) {
+        console.error('Error creating WebSocket:', error);
+        showError('WebSocket not supported or connection failed', false);
+        
+        // Fallback to HTTP polling if WebSocket fails
+        setTimeout(function() {
+          console.log('Falling back to HTTP polling...');
+          fallbackToPolling();
+        }, 2000);
+      }
+    }
+
+    // Fallback to HTTP polling if WebSocket is not available
+    let pollTimer = null;
+    function fallbackToPolling() {
+      console.log('Using HTTP polling fallback');
+      document.getElementById('pollInterval').textContent = '5s (HTTP)';
+      
+      async function fetchIoLinkStatus() {
+        try {
+          const response = await fetch(`${API_BASE}/api/io-link/status`, {
+            signal: AbortSignal.timeout(5000)
+          });
+          const data = await response.json();
+          updateUI(data);
+        } catch (error) {
+          console.error('HTTP polling error:', error);
+          showError('Connection error', false);
+        }
+      }
+      
+      fetchIoLinkStatus();
+      pollTimer = setInterval(fetchIoLinkStatus, 5000);
+    }
+
+    function setPollInterval(sec) {
+      // This function is kept for compatibility but doesn't do anything with WebSockets
+      // The backend pushes data automatically
+      console.log('Poll interval set to', sec, 'seconds (ignored - using WebSocket)');
+    }
+
+    function refreshNow() {
+      // Request immediate update via HTTP if WebSocket is not connected
+      if (!websocket || websocket.readyState !== WebSocket.OPEN) {
+        fetch(`${API_BASE}/api/io-link/status`)
+          .then(response => response.json())
+          .then(data => updateUI(data))
+          .catch(error => console.error('Refresh error:', error));
+      }
+    }
+
+    function updatePortTable(ports) {
+      const tbody = document.getElementById('portTableBody');
+      tbody.innerHTML = '';
+
+      if (ports.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="10" class="text-center">No port data</td></tr>';
+        return;
+      }
+
+      for (let i = 0; i < ports.length; i++) {
+        const p = ports[i];
+        const isActive = (p.mode || '').toLowerCase().includes('io-link') || (p.mode || '').toLowerCase() === 'io-link';
+        const rowClass = isActive ? 'table-success port-active' : '';
+        const row = document.createElement('tr');
+        row.className = rowClass;
+        const pdin = p.pdin ? (p.pdin.length <= 8 ? p.pdin : p.pdin.substring(0, 8) + '...') : '-';
+        const pdout = p.pdout ? (p.pdout.length <= 8 ? p.pdout : p.pdout.substring(0, 8) + '...') : '-';
+        row.innerHTML = `
+          <td>${p.port}</td>
+          <td>${escapeHtml(p.mode || '-')}</td>
+          <td>${escapeHtml(p.comm_mode || '-')}</td>
+          <td>${escapeHtml(p.master_cycle_time || '-')}</td>
+          <td>${escapeHtml(p.vendor_id || '-')}</td>
+          <td>${escapeHtml(p.device_id || '-')}</td>
+          <td>${escapeHtml(p.name || '-')}</td>
+          <td>${escapeHtml(p.serial || '-')}</td>
+          <td><code class="process-data">${escapeHtml(pdin)}</code></td>
+          <td><code class="process-data">${escapeHtml(pdout)}</code></td>
+        `;
+        tbody.appendChild(row);
+      }
+      
+      // Load details for active ports
+      loadActivePortDetails(ports);
+    }
+
+    async function loadActivePortDetails(ports) {
+      const activePorts = ports.filter(p => (p.mode || '').toLowerCase().includes('io-link'));
+      
+      if (activePorts.length === 0) {
+        document.getElementById('portDetailsContainer').innerHTML = '<p class="text-center">No active IO-Link ports</p>';
+        return;
+      }
+      
+      let html = '';
+      for (const port of activePorts) {
+        try {
+          const res = await fetch(`${API_BASE}/api/io-link/port/${port.port}`, { signal: AbortSignal.timeout(30000) });
+          const data = await res.json();
+          
+          if (data.success && data.port) {
+            html += generatePortDetailsHTML(data.port);
+          } else {
+            html += `<div class="alert alert-warning">Port ${port.port}: No data available</div>`;
+          }
+        } catch (error) {
+          console.error(`Port ${port.port} error:`, error);
+          html += `<div class="alert alert-warning">Port ${port.port}: ${error.name === 'TimeoutError' ? 'Request timed out (30s)' : 'Error loading details'}</div>`;
+        }
+      }
+      
+      document.getElementById('portDetailsContainer').innerHTML = html || '<p class="text-center">No port details available</p>';
+    }
+
+    function generatePortDetailsHTML(port) {
+      let html = `<div class="port-detail-card" style="border: 1px solid #333; border-radius: 8px; padding: 15px; margin-bottom: 15px; background: rgba(255,255,255,0.02);">`;
+      html += `<h5 class="text-info">Port ${port.port} - ${escapeHtml(port.name || 'Unknown Device')}</h5>`;
+      
+      // Device Info
+      html += '<div class="row mb-2">';
+      html += `<div class="col-md-3"><small><strong>Vendor ID:</strong> ${escapeHtml(port.vendor_id || '-')}</small></div>`;
+      html += `<div class="col-md-3"><small><strong>Device ID:</strong> ${escapeHtml(port.device_id || '-')}</small></div>`;
+      html += `<div class="col-md-3"><small><strong>Serial:</strong> ${escapeHtml(port.serial || '-')}</small></div>`;
+      html += `<div class="col-md-3"><small><strong>Mode:</strong> ${escapeHtml(port.mode || '-')}</small></div>`;
+      html += '</div>';
+      
+      // Process Data Out (PLC to Device)
+      html += '<div class="row mt-3"><div class="col-12"><h6 class="text-success" style="font-size: 14px;">Process Data Out (PLC → Device)</h6></div></div>';
+      html += '<div class="row">';
+      if (port.pdout && port.pdout.raw) {
+        html += `<div class="col-md-4"><small><strong>Raw:</strong> <code>${escapeHtml(port.pdout.raw)}</code></small></div>`;
+        html += `<div class="col-md-4"><small><strong>Hex:</strong> <code>${escapeHtml(port.pdout.hex)}</code></small></div>`;
+        html += `<div class="col-md-4"><small><strong>Bytes:</strong> <code>[${port.pdout.bytes.join(', ')}]</code></small></div>`;
+        
+        // Decoded LED status
+        if (port.pdout.decoded && Object.keys(port.pdout.decoded).length > 0) {
+          html += '<div class="col-12 mt-2">';
+          const dec = port.pdout.decoded;
+          html += '<div class="row">';
+          html += `<div class="col-md-12 mb-2"><strong>LED Status:</strong> <span class="badge badge-${dec.led_on ? 'success' : 'secondary'}">${dec.led_on ? 'ON' : 'OFF'}</span></div>`;
+          html += `<div class="col-md-6"><strong>Color 1:</strong> <span class="badge badge-primary">${dec.color1}</span> <span class="badge badge-secondary">${dec.color1_intensity}</span></div>`;
+          html += `<div class="col-md-6"><strong>Color 2:</strong> <span class="badge badge-primary">${dec.color2}</span> <span class="badge badge-secondary">${dec.color2_intensity}</span></div>`;
+          html += `<div class="col-md-4"><strong>Animation:</strong> <span class="badge badge-info">${dec.animation}</span></div>`;
+          html += `<div class="col-md-4"><strong>Pattern:</strong> <span class="badge badge-info">${dec.pulse_pattern}</span></div>`;
+          html += `<div class="col-md-4"><strong>Speed:</strong> <span class="badge badge-info">${dec.speed}</span></div>`;
+          if (dec.audible_state && dec.audible_state !== 'Off') {
+            html += `<div class="col-md-12 mt-1"><strong>Audible:</strong> <span class="badge badge-warning">${dec.audible_state}</span></div>`;
+          }
+          html += '</div>';
+          html += '</div>';
+        }
+      } else {
+        html += '<div class="col-12"><small><em>No process data out</em></small></div>';
+      }
+      html += '</div>';
+      
+      // Process Data In (Device to PLC)
+      html += '<div class="row mt-2"><div class="col-12"><h6 class="text-warning" style="font-size: 14px;">Process Data In (Device → PLC)</h6></div></div>';
+      html += '<div class="row">';
+      if (port.pdin && port.pdin.raw) {
+        html += `<div class="col-md-4"><small><strong>Raw:</strong> <code>${escapeHtml(port.pdin.raw)}</code></small></div>`;
+        html += `<div class="col-md-4"><small><strong>Hex:</strong> <code>${escapeHtml(port.pdin.hex)}</code></small></div>`;
+        html += `<div class="col-md-4"><small><strong>Bytes:</strong> <code>[${port.pdin.bytes.join(', ')}]</code></small></div>`;
+      } else {
+        html += '<div class="col-12"><small><em>No process data in</em></small></div>';
+      }
+      html += '</div>';
+      
+      html += '</div>';
+      return html;
+    }
+
+    function updateSupervisionTable(supervision) {
+      const tbody = document.getElementById('supervisionTableBody');
+      tbody.innerHTML = '';
+
+      const entries = Object.entries(supervision);
+      if (entries.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="2" class="text-center">No supervision data</td></tr>';
+        return;
+      }
+
+      for (let i = 0; i < entries.length; i++) {
+        const [key, val] = entries[i];
+        const row = document.createElement('tr');
+        row.innerHTML = `<td>${escapeHtml(key)}</td><td>${escapeHtml(val)}</td>`;
+        tbody.appendChild(row);
+      }
+    }
+
+    function updateSoftwareTable(software) {
+      const tbody = document.getElementById('softwareTableBody');
+      tbody.innerHTML = '';
+
+      const entries = Object.entries(software);
+      if (entries.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="2" class="text-center">No software data</td></tr>';
+        return;
+      }
+
+      for (let i = 0; i < entries.length; i++) {
+        const [key, val] = entries[i];
+        const row = document.createElement('tr');
+        row.innerHTML = `<td>${escapeHtml(key)}</td><td>${escapeHtml(val)}</td>`;
+        tbody.appendChild(row);
+      }
+    }
+
+    let chartCurrent = null, chartVoltage = null, chartTemp = null;
+
+    async function updateSupervisionChart() {
+      try {
+        const res = await fetch(`${API_BASE}/api/io-link/supervision-history`, { signal: AbortSignal.timeout(5000) });
+        const data = await res.json();
+        const history = data.history || [];
+        if (history.length < 2) return;
+
+        // Calculate optimal number of labels based on chart width to prevent overlap
+        const chartWidth = document.getElementById('chartCurrent')?.offsetWidth || 300;
+        const maxLabels = Math.max(3, Math.min(8, Math.floor(chartWidth / 70))); // ~70px per label, max 8 labels
+        const step = Math.max(1, Math.floor(history.length / maxLabels));
+        
+        // Create labels with better spacing - only show every Nth label, shorter format
+        const labels = history.map((h, i) => {
+          if (i % step === 0 || i === history.length - 1) {
+            const date = new Date(h.ts * 1000);
+            // Short format: HH:MM only
+            return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+          }
+          return '';
+        });
+        
+        const currentSer = history.map(h => h.current != null ? h.current : null);
+        const voltageSer = history.map(h => h.voltage != null ? h.voltage : null);
+        const tempSer = history.map(h => h.temperature != null ? h.temperature : null);
+
+        // Base chart options with better responsive settings
+        const baseOpts = {
+          showArea: true,
+          showPoint: false, // Hide points to reduce clutter
+          fullWidth: true,
+          lineSmooth: Chartist.Interpolation.simple({
+            divisor: 2
+          }),
+          chartPadding: { 
+            top: 15, 
+            right: 15, 
+            bottom: 30, // Space for x-axis labels
+            left: 20 // Space for y-axis labels
+          },
+          axisX: {
+            labelInterpolationFnc: function(value, index) {
+              // Only show non-empty labels
+              return value || '';
+            },
+            offset: 50 // Space for rotated labels
+          },
+          axisY: { 
+            onlyInteger: false, 
+            labelInterpolationFnc: value => {
+              // Format large numbers better
+              if (value >= 1000) return (value / 1000).toFixed(1) + 'k';
+              return Math.round(value);
+            }
+          },
+          responsiveOptions: [
+            ['screen and (max-width: 768px)', {
+              chartPadding: { top: 10, right: 10, bottom: 30, left: 15 },
+              axisX: { offset: 30 },
+              axisY: { 
+                labelInterpolationFnc: value => {
+                  if (value >= 1000) return (value / 1000).toFixed(0) + 'k';
+                  return Math.round(value);
+                }
+              }
+            }]
+          ]
+        };
+
+        // Calculate min/max - always start at 0 for all charts
+        const getMinMax = (series) => {
+          const values = series.filter(v => v != null);
+          if (values.length === 0) return { low: 0, high: 100 };
+          const max = Math.max(...values);
+          const range = max || 1;
+          return {
+            low: 0, // Always start at 0
+            high: max + range * 0.1 // Add 10% padding at the top
+          };
+        };
+
+        // Current chart (mA) - always starts at 0A
+        const currentRange = getMinMax(currentSer);
+        const currentOpts = { ...baseOpts, ...currentRange };
+        if (chartCurrent) chartCurrent.update({ labels: labels, series: [currentSer] }, currentOpts);
+        else chartCurrent = new Chartist.Line('#chartCurrent', { labels: labels, series: [currentSer] }, currentOpts);
+
+        // Voltage chart (mV) - always starts at 0V
+        const voltageRange = getMinMax(voltageSer);
+        const voltageOpts = { ...baseOpts, ...voltageRange };
+        if (chartVoltage) chartVoltage.update({ labels: labels, series: [voltageSer] }, voltageOpts);
+        else chartVoltage = new Chartist.Line('#chartVoltage', { labels: labels, series: [voltageSer] }, voltageOpts);
+
+        // Temperature chart (°C) - always starts at 0°C
+        const tempRange = getMinMax(tempSer);
+        const tempOpts = { ...baseOpts, ...tempRange };
+        if (chartTemp) chartTemp.update({ labels: labels, series: [tempSer] }, tempOpts);
+        else chartTemp = new Chartist.Line('#chartTemp', { labels: labels, series: [tempSer] }, tempOpts);
+      } catch (e) {
+        console.error('Chart update error:', e);
+      }
+    }
+    
+    // Make charts responsive to window resize
+    let resizeTimeout;
+    window.addEventListener('resize', function() {
+      clearTimeout(resizeTimeout);
+      resizeTimeout = setTimeout(function() {
+        if (chartCurrent || chartVoltage || chartTemp) {
+          updateSupervisionChart();
+        }
+      }, 250);
+    });
+
+    function escapeHtml(text) {
+      if (text === null || text === undefined) return '-';
+      const div = document.createElement('div');
+      div.textContent = String(text);
+      return div.innerHTML;
+    }
+
+    // Start WebSocket connection on load
+    connectWebSocket();
+    
+    // Cleanup on page unload
+    window.addEventListener('beforeunload', function() {
+      if (websocket) {
+        websocket.close();
+      }
+      if (reconnectTimer) {
+        clearTimeout(reconnectTimer);
+      }
+      if (pollTimer) {
+        clearInterval(pollTimer);
+      }
+    });
+  </script>
+
+</body>
+</html>
