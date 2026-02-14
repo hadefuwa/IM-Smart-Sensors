@@ -6018,6 +6018,8 @@ app.innerHTML = `
             </span>
           </li>
           <li><a href="#" data-page="io-link-master">IO-Link Master</a></li>
+          <li><a href="#" id="sidebar-learn-link" target="_blank" rel="noopener">Learn (Smart Sensors, Industry 4.0)</a></li>
+          <li><a href="#" id="sidebar-worksheets-link" target="_blank" rel="noopener">Worksheets</a></li>
           <!-- Commented out: other template pages (uncomment to restore)
           <li><a href="#" data-page="hmi-dashboard-1">Electrical Machines</a></li>
           <li><a href="#" data-page="hmi-dashboard-2">Wind Tunnel</a></li>

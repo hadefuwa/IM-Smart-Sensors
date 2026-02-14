@@ -240,6 +240,13 @@
     .ct-chart {
       overflow: visible;
     }
+    
+    /* Raw vs Decoded toggle and port learn blurb */
+    .pdin-raw, .pdin-decoded { display: none; }
+    .pdin-raw.show, .pdin-decoded.show { display: block; }
+    .signal-quality-bar { height: 20px; background: #333; border-radius: 4px; overflow: hidden; }
+    .signal-quality-fill { height: 100%; background: linear-gradient(90deg, #f44336, #ff9800, #4caf50); transition: width 0.2s; }
+    .event-badge { display: inline-block; padding: 4px 8px; margin: 2px; border-radius: 4px; background: #b71c1c; color: #fff; font-size: 12px; }
   </style>
   
 
@@ -261,6 +268,18 @@
             <a class="nav-link" href="/">
               <i class="material-icons">dashboard</i>
               <p>Dashboard</p>
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="/learn">
+              <i class="material-icons">menu_book</i>
+              <p>Learn</p>
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="/worksheets">
+              <i class="material-icons">assignment</i>
+              <p>Worksheets</p>
             </a>
           </li>
         </ul>
@@ -451,6 +470,41 @@
                         <tr><td colspan="2" class="text-center">-</td></tr>
                       </tbody>
                     </table>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Simulate Fault (training) -->
+          <div class="row" id="simulate-fault">
+            <div class="col-md-12">
+              <div class="card">
+                <div class="card-header card-header-warning">
+                  <h4 class="card-title">Simulate Fault (Training)</h4>
+                  <p class="card-category">See how the dashboard reacts to a fault without touching hardware</p>
+                </div>
+                <div class="card-body">
+                  <div class="d-flex flex-wrap align-items-center gap-3">
+                    <span>Port:</span>
+                    <select id="simulateFaultPort" class="form-select form-select-sm" style="width: auto; max-width: 80px; background: #222; color: #fff; border: 1px solid #444;">
+                      <option value="1">1</option>
+                      <option value="2">2</option>
+                      <option value="3">3</option>
+                      <option value="4">4</option>
+                    </select>
+                    <span>Fault:</span>
+                    <select id="simulateFaultEvent" class="form-select form-select-sm" style="width: auto; max-width: 200px; background: #222; color: #fff; border: 1px solid #444;">
+                      <option value="">-- Select fault --</option>
+                      <option value='{"code":"0x01","label":"Wire break"}'>Wire break</option>
+                      <option value='{"code":"0x02","label":"Short circuit"}'>Short circuit</option>
+                      <option value='{"code":"0x08","label":"Lens dirty"}'>Lens dirty</option>
+                      <option value='{"code":"0x04","label":"Overheating"}'>Overheating</option>
+                      <option value='{"code":"0x05","label":"Data storage error"}'>Data storage error</option>
+                    </select>
+                    <button type="button" class="btn-control btn-primary" id="simulateFaultSetBtn">Set fault</button>
+                    <button type="button" class="btn-control" id="simulateFaultClearBtn">Clear fault</button>
+                    <span id="simulateFaultMessage" class="small text-muted"></span>
                   </div>
                 </div>
               </div>
@@ -769,60 +823,99 @@
       document.getElementById('portDetailsContainer').innerHTML = html || '<p class="text-center">No port details available</p>';
     }
 
+    var portCycleCounts = {};
+    var LEARN_BLURBS = {
+      status_led: { blurb: 'Status lights show machine or line state (e.g. green = running, red = fault). Check supervision and that the correct state is displayed.', anchor: 'status-led' },
+      photo_electric: { blurb: 'Photoelectric sensors detect objects and often report signal quality. Keep the lens clean and watch signal quality; a drop means cleaning or alignment before failure.', anchor: 'photo-electric' },
+      temperature: { blurb: 'Temperature sensors report °C for process and maintenance. Check supervision current and wiring; use trends to spot overheating.', anchor: 'temperature' },
+      proximity: { blurb: 'Proximity sensors report presence or distance. Check mounting distance and contamination; use event flags and cycle count for MTTF-based replacement.', anchor: 'proximity' }
+    };
+
     function generatePortDetailsHTML(port) {
-      let html = `<div class="port-detail-card" style="border: 1px solid #333; border-radius: 8px; padding: 15px; margin-bottom: 15px; background: rgba(255,255,255,0.02);">`;
-      html += `<h5 class="text-info">Port ${port.port} - ${escapeHtml(port.name || 'Unknown Device')}</h5>`;
-      
-      // Device Info
+      var dtype = port.device_type || 'unknown';
+      var hasDecodedPdin = port.pdin && port.pdin.decoded && Object.keys(port.pdin.decoded).length > 0;
+      var showDecodedByDefault = hasDecodedPdin;
+      var cardId = 'port-card-' + port.port;
+
+      var html = '<div class="port-detail-card" id="' + cardId + '" data-port="' + port.port + '" style="border: 1px solid #333; border-radius: 8px; padding: 15px; margin-bottom: 15px; background: rgba(255,255,255,0.02);">';
+      html += '<h5 class="text-info">Port ' + port.port + ' - ' + escapeHtml(port.name || 'Unknown Device') + '</h5>';
+      if (dtype !== 'unknown') {
+        var blurb = LEARN_BLURBS[dtype];
+        if (blurb) {
+          html += '<div class="mb-3 p-2" style="background: rgba(76, 175, 80, 0.1); border-radius: 6px; border-left: 4px solid #4caf50;">';
+          html += '<strong>About this sensor:</strong> ' + escapeHtml(blurb.blurb) + ' <a href="/learn#' + blurb.anchor + '" target="_blank">Learn more</a>';
+          html += '</div>';
+        }
+      }
+      if (port.events && port.events.length > 0) {
+        html += '<div class="mb-2"><strong>Events / faults:</strong> ';
+        for (var e = 0; e < port.events.length; e++) {
+          html += '<span class="event-badge">' + escapeHtml(port.events[e].code) + ' ' + escapeHtml(port.events[e].label) + '</span>';
+        }
+        html += '</div>';
+      }
       html += '<div class="row mb-2">';
-      html += `<div class="col-md-3"><small><strong>Vendor ID:</strong> ${escapeHtml(port.vendor_id || '-')}</small></div>`;
-      html += `<div class="col-md-3"><small><strong>Device ID:</strong> ${escapeHtml(port.device_id || '-')}</small></div>`;
-      html += `<div class="col-md-3"><small><strong>Serial:</strong> ${escapeHtml(port.serial || '-')}</small></div>`;
-      html += `<div class="col-md-3"><small><strong>Mode:</strong> ${escapeHtml(port.mode || '-')}</small></div>`;
+      html += '<div class="col-md-3"><small><strong>Device type:</strong> ' + escapeHtml(dtype) + '</small></div>';
+      html += '<div class="col-md-3"><small><strong>Vendor ID:</strong> ' + escapeHtml(port.vendor_id || '-') + '</small></div>';
+      html += '<div class="col-md-3"><small><strong>Device ID:</strong> ' + escapeHtml(port.device_id || '-') + '</small></div>';
+      html += '<div class="col-md-3"><small><strong>Serial:</strong> ' + escapeHtml(port.serial || '-') + '</small></div>';
       html += '</div>';
-      
-      // Process Data Out (PLC to Device)
+
+      if ((dtype === 'photo_electric' || dtype === 'proximity') && port.pdin && port.pdin.decoded) {
+        portCycleCounts[port.port] = (portCycleCounts[port.port] || 950000) + Math.floor(Math.random() * 50) + 1;
+        var count = portCycleCounts[port.port];
+        html += '<div class="mb-2"><strong>Total activations (simulated):</strong> ' + count.toLocaleString() + '. <small class="text-muted">Parts have a mechanical life cycle (MTTF). Smart sensors can support replacement planning.</small></div>';
+      }
+      if (dtype === 'photo_electric' && port.pdin && port.pdin.decoded && port.pdin.decoded.signal_quality_percent != null) {
+        var sq = port.pdin.decoded.signal_quality_percent;
+        html += '<div class="mb-2"><strong>Signal quality:</strong> <div class="signal-quality-bar" style="max-width: 200px;"><div class="signal-quality-fill" style="width: ' + sq + '%;"></div></div> ' + sq + '%. <small class="text-muted">Dropping quality → clean lens or check alignment.</small></div>';
+      }
+
       html += '<div class="row mt-3"><div class="col-12"><h6 class="text-success" style="font-size: 14px;">Process Data Out (PLC → Device)</h6></div></div>';
       html += '<div class="row">';
       if (port.pdout && port.pdout.raw) {
-        html += `<div class="col-md-4"><small><strong>Raw:</strong> <code>${escapeHtml(port.pdout.raw)}</code></small></div>`;
-        html += `<div class="col-md-4"><small><strong>Hex:</strong> <code>${escapeHtml(port.pdout.hex)}</code></small></div>`;
-        html += `<div class="col-md-4"><small><strong>Bytes:</strong> <code>[${port.pdout.bytes.join(', ')}]</code></small></div>`;
-        
-        // Decoded LED status
+        html += '<div class="col-md-4"><small><strong>Raw:</strong> <code>' + escapeHtml(port.pdout.raw) + '</code></small></div>';
+        html += '<div class="col-md-4"><small><strong>Hex:</strong> <code>' + escapeHtml(port.pdout.hex) + '</code></small></div>';
+        html += '<div class="col-md-4"><small><strong>Bytes:</strong> <code>[' + (port.pdout.bytes || []).join(', ') + ']</code></small></div>';
         if (port.pdout.decoded && Object.keys(port.pdout.decoded).length > 0) {
-          html += '<div class="col-12 mt-2">';
-          const dec = port.pdout.decoded;
-          html += '<div class="row">';
-          html += `<div class="col-md-12 mb-2"><strong>LED Status:</strong> <span class="badge badge-${dec.led_on ? 'success' : 'secondary'}">${dec.led_on ? 'ON' : 'OFF'}</span></div>`;
-          html += `<div class="col-md-6"><strong>Color 1:</strong> <span class="badge badge-primary">${dec.color1}</span> <span class="badge badge-secondary">${dec.color1_intensity}</span></div>`;
-          html += `<div class="col-md-6"><strong>Color 2:</strong> <span class="badge badge-primary">${dec.color2}</span> <span class="badge badge-secondary">${dec.color2_intensity}</span></div>`;
-          html += `<div class="col-md-4"><strong>Animation:</strong> <span class="badge badge-info">${dec.animation}</span></div>`;
-          html += `<div class="col-md-4"><strong>Pattern:</strong> <span class="badge badge-info">${dec.pulse_pattern}</span></div>`;
-          html += `<div class="col-md-4"><strong>Speed:</strong> <span class="badge badge-info">${dec.speed}</span></div>`;
+          var dec = port.pdout.decoded;
+          html += '<div class="col-12 mt-2"><div class="row">';
+          html += '<div class="col-md-12 mb-2"><strong>LED Status:</strong> <span class="badge badge-' + (dec.led_on ? 'success' : 'secondary') + '">' + (dec.led_on ? 'ON' : 'OFF') + '</span></div>';
+          html += '<div class="col-md-6"><strong>Color 1:</strong> <span class="badge badge-primary">' + escapeHtml(dec.color1) + '</span> <span class="badge badge-secondary">' + escapeHtml(dec.color1_intensity) + '</span></div>';
+          html += '<div class="col-md-6"><strong>Color 2:</strong> <span class="badge badge-primary">' + escapeHtml(dec.color2) + '</span> <span class="badge badge-secondary">' + escapeHtml(dec.color2_intensity) + '</span></div>';
+          html += '<div class="col-md-4"><strong>Animation:</strong> <span class="badge badge-info">' + escapeHtml(dec.animation) + '</span></div>';
+          html += '<div class="col-md-4"><strong>Pattern:</strong> <span class="badge badge-info">' + escapeHtml(dec.pulse_pattern) + '</span></div>';
+          html += '<div class="col-md-4"><strong>Speed:</strong> <span class="badge badge-info">' + escapeHtml(dec.speed) + '</span></div>';
           if (dec.audible_state && dec.audible_state !== 'Off') {
-            html += `<div class="col-md-12 mt-1"><strong>Audible:</strong> <span class="badge badge-warning">${dec.audible_state}</span></div>`;
+            html += '<div class="col-md-12 mt-1"><strong>Audible:</strong> <span class="badge badge-warning">' + escapeHtml(dec.audible_state) + '</span></div>';
           }
-          html += '</div>';
-          html += '</div>';
+          html += '</div></div>';
         }
       } else {
         html += '<div class="col-12"><small><em>No process data out</em></small></div>';
       }
       html += '</div>';
-      
-      // Process Data In (Device to PLC)
+
       html += '<div class="row mt-2"><div class="col-12"><h6 class="text-warning" style="font-size: 14px;">Process Data In (Device → PLC)</h6></div></div>';
-      html += '<div class="row">';
+      html += '<div class="row align-items-center">';
       if (port.pdin && port.pdin.raw) {
-        html += `<div class="col-md-4"><small><strong>Raw:</strong> <code>${escapeHtml(port.pdin.raw)}</code></small></div>`;
-        html += `<div class="col-md-4"><small><strong>Hex:</strong> <code>${escapeHtml(port.pdin.hex)}</code></small></div>`;
-        html += `<div class="col-md-4"><small><strong>Bytes:</strong> <code>[${port.pdin.bytes.join(', ')}]</code></small></div>`;
+        html += '<div class="col-auto mb-2"><label class="me-2"><input type="checkbox" class="raw-decoded-toggle" data-port="' + port.port + '"> Show Raw Hex</label></div>';
+        html += '<div class="col-12">';
+        html += '<div class="pdin-decoded' + (showDecodedByDefault ? ' show' : '') + '">';
+        if (hasDecodedPdin) {
+          html += '<strong>Decoded:</strong> <code>' + escapeHtml(port.pdin.decoded.description || '') + '</code>';
+        } else {
+          html += '<small><em>No decoded value</em></small>';
+        }
+        html += '</div>';
+        html += '<div class="pdin-raw' + (!showDecodedByDefault ? ' show' : '') + '">';
+        html += '<strong>Raw:</strong> <code>' + escapeHtml(port.pdin.raw) + '</code> &nbsp; <strong>Hex:</strong> <code>' + escapeHtml(port.pdin.hex) + '</code> &nbsp; <strong>Bytes:</strong> <code>[' + (port.pdin.bytes || []).join(', ') + ']</code>';
+        html += '</div>';
+        html += '</div>';
       } else {
         html += '<div class="col-12"><small><em>No process data in</em></small></div>';
       }
       html += '</div>';
-      
       html += '</div>';
       return html;
     }
@@ -986,11 +1079,80 @@
       return div.innerHTML;
     }
 
-    // Load master IP config and start WebSocket connection on load
+    document.addEventListener('change', function(e) {
+      if (e.target && e.target.classList && e.target.classList.contains('raw-decoded-toggle')) {
+        var card = e.target.closest('.port-detail-card');
+        if (!card) return;
+        var rawDiv = card.querySelector('.pdin-raw');
+        var decDiv = card.querySelector('.pdin-decoded');
+        if (!rawDiv || !decDiv) return;
+        if (e.target.checked) {
+          rawDiv.classList.add('show');
+          decDiv.classList.remove('show');
+        } else {
+          rawDiv.classList.remove('show');
+          decDiv.classList.add('show');
+        }
+      }
+    });
+
+    document.getElementById('simulateFaultSetBtn').addEventListener('click', function() {
+      var portSelect = document.getElementById('simulateFaultPort');
+      var eventSelect = document.getElementById('simulateFaultEvent');
+      var msgEl = document.getElementById('simulateFaultMessage');
+      var port = parseInt(portSelect.value, 10);
+      var eventVal = eventSelect.value;
+      if (!eventVal) {
+        if (msgEl) { msgEl.textContent = 'Select a fault first'; msgEl.style.color = '#f44336'; }
+        return;
+      }
+      var eventObj;
+      try { eventObj = JSON.parse(eventVal); } catch (err) { if (msgEl) msgEl.textContent = 'Invalid fault'; return; }
+      fetch(API_BASE + '/api/io-link/simulate-fault', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ port: port, event: eventObj })
+      })
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+          if (msgEl) { msgEl.textContent = data.success ? 'Fault set. Port details will update.' : (data.detail || 'Error'); msgEl.style.color = data.success ? '#4caf50' : '#f44336'; }
+          if (data.success && lastGoodData && lastGoodData.ports) {
+            var active = lastGoodData.ports.filter(function(p) { return (p.mode || '').toLowerCase().includes('io-link'); });
+            loadActivePortDetails(active);
+          } else if (data.success) refreshNow();
+          setTimeout(function() { if (msgEl) msgEl.textContent = ''; }, 4000);
+        })
+        .catch(function(err) {
+          if (msgEl) { msgEl.textContent = 'Error: ' + (err.message || 'Request failed'); msgEl.style.color = '#f44336'; }
+        });
+    });
+
+    document.getElementById('simulateFaultClearBtn').addEventListener('click', function() {
+      var portSelect = document.getElementById('simulateFaultPort');
+      var msgEl = document.getElementById('simulateFaultMessage');
+      var port = parseInt(portSelect.value, 10);
+      fetch(API_BASE + '/api/io-link/simulate-fault', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ port: port, event: null })
+      })
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+          if (msgEl) { msgEl.textContent = data.success ? 'Fault cleared.' : (data.detail || 'Error'); msgEl.style.color = data.success ? '#4caf50' : '#f44336'; }
+          if (data.success && lastGoodData && lastGoodData.ports) {
+            var active = lastGoodData.ports.filter(function(p) { return (p.mode || '').toLowerCase().includes('io-link'); });
+            loadActivePortDetails(active);
+          } else if (data.success) refreshNow();
+          setTimeout(function() { if (msgEl) msgEl.textContent = ''; }, 4000);
+        })
+        .catch(function(err) {
+          if (msgEl) { msgEl.textContent = 'Error: ' + (err.message || 'Request failed'); msgEl.style.color = '#f44336'; }
+        });
+    });
+
     loadMasterConfig();
     connectWebSocket();
     
-    // Cleanup on page unload
     window.addEventListener('beforeunload', function() {
       if (websocket) {
         websocket.close();

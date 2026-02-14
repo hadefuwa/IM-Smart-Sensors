@@ -1,7 +1,160 @@
 """
 CL50 LED Decoder Module
-Decodes Process Data Out (PDout) bytes from CL50 PRO SELECT LED devices
+Decodes Process Data Out (PDout) bytes from CL50 PRO SELECT LED devices.
+Also: device-type detection, photo electric / temperature / proximity PDin decoders,
+and IO-Link event code lookup.
 """
+
+# Device type constants
+DEVICE_TYPE_STATUS_LED = 'status_led'
+DEVICE_TYPE_PHOTO_ELECTRIC = 'photo_electric'
+DEVICE_TYPE_TEMPERATURE = 'temperature'
+DEVICE_TYPE_PROXIMITY = 'proximity'
+DEVICE_TYPE_UNKNOWN = 'unknown'
+
+# Fallback: (vendor_id, device_id) -> device_type (when product name is missing or generic)
+# vendor_id and device_id from Master are often hex strings or numbers
+DEVICE_ID_FALLBACK = [
+    # Example: (vendor_id, device_id, type) - add known devices as you discover them
+    # ('0x02A5', '0x0012', DEVICE_TYPE_TEMPERATURE),
+]
+
+# Common IO-Link event codes (hex) -> human-readable label (for maintenance training)
+IO_LINK_EVENT_CODES = {
+    0x01: 'Wire break',
+    0x02: 'Short circuit',
+    0x03: 'Overload',
+    0x04: 'Overheating',
+    0x05: 'Data storage error',
+    0x06: 'Configuration error',
+    0x07: 'Maintenance required',
+    0x08: 'Lens dirty',
+    0x09: 'Sensor fault',
+    0x0A: 'Communication error',
+}
+
+
+def get_device_type(vendor_id, device_id, name):
+    """
+    Determine device type from product name (preferred) or fallback (vendor_id, device_id).
+    Name-based rules make the trainer future-proof when swapping sensor models.
+    """
+    name_upper = (name or '').upper()
+    name_lower = (name or '').lower()
+
+    # Name substring rules (check name first)
+    if any(x in name_upper for x in ('O5D', 'O5E', 'O2D', 'O3D')) or 'PHOTO' in name_upper or 'DISTANCE' in name_upper:
+        return DEVICE_TYPE_PHOTO_ELECTRIC
+    if 'TN' in name_upper or 'TR' in name_upper or 'TEMP' in name_upper or 'TEMPERATURE' in name_lower:
+        return DEVICE_TYPE_TEMPERATURE
+    if any(x in name_upper for x in ('LED', 'CL50', 'LIGHT', 'STACK', 'TOWER')):
+        return DEVICE_TYPE_STATUS_LED
+    if any(x in name_lower for x in ('proximity', 'inductive', 'capacitive', 'prox')):
+        return DEVICE_TYPE_PROXIMITY
+
+    # Fallback table
+    v = str(vendor_id or '').strip().upper().replace('0X', '')
+    d = str(device_id or '').strip().upper().replace('0X', '')
+    for vid, did, dtype in DEVICE_ID_FALLBACK:
+        if (str(vid).upper().replace('0X', '') == v and
+                str(did).upper().replace('0X', '') == d):
+            return dtype
+
+    return DEVICE_TYPE_UNKNOWN
+
+
+def decode_photo_electric_pdin(bytes_data):
+    """
+    Decode Process Data In for photoelectric sensors.
+    Typical: byte 0 = status (bit 0 = object detected), optional byte 1 = signal quality 0-100%.
+    """
+    decoded = {
+        'object_detected': False,
+        'signal_quality_percent': None,
+        'raw_hex': '',
+        'description': 'No data'
+    }
+    if not bytes_data or len(bytes_data) < 1:
+        return decoded
+    if isinstance(bytes_data, bytearray):
+        bytes_data = list(bytes_data)
+    decoded['raw_hex'] = ''.join(f'{b:02X}' for b in bytes_data)
+    decoded['object_detected'] = bool(bytes_data[0] & 0x01)
+    decoded['description'] = 'Object present' if decoded['object_detected'] else 'Object absent'
+    if len(bytes_data) >= 2:
+        decoded['signal_quality_percent'] = min(100, max(0, bytes_data[1]))
+        decoded['description'] += f', Signal {decoded["signal_quality_percent"]}%'
+    return decoded
+
+
+def decode_temperature_pdin(bytes_data):
+    """
+    Decode Process Data In for temperature sensors.
+    Common: 2 bytes, signed or unsigned, 0.1 °C resolution (e.g. 235 = 23.5 °C).
+    """
+    decoded = {
+        'temperature_c': None,
+        'raw_hex': '',
+        'description': 'No data'
+    }
+    if not bytes_data or len(bytes_data) < 2:
+        return decoded
+    if isinstance(bytes_data, bytearray):
+        bytes_data = list(bytes_data)
+    decoded['raw_hex'] = ''.join(f'{b:02X}' for b in bytes_data)
+    # 16-bit little-endian signed, 0.1 °C (common in IO-Link temp sensors)
+    raw = bytes_data[0] | (bytes_data[1] << 8)
+    if raw >= 0x8000:
+        raw = raw - 0x10000
+    decoded['temperature_c'] = round(raw * 0.1, 1)
+    decoded['description'] = f"{decoded['temperature_c']} °C"
+    return decoded
+
+
+def decode_proximity_pdin(bytes_data):
+    """
+    Decode Process Data In for proximity sensors.
+    Often 1 byte (present/absent) or 2 bytes (distance in mm).
+    """
+    decoded = {
+        'object_present': False,
+        'distance_mm': None,
+        'raw_hex': '',
+        'description': 'No data'
+    }
+    if not bytes_data or len(bytes_data) < 1:
+        return decoded
+    if isinstance(bytes_data, bytearray):
+        bytes_data = list(bytes_data)
+    decoded['raw_hex'] = ''.join(f'{b:02X}' for b in bytes_data)
+    decoded['object_present'] = bool(bytes_data[0] & 0x01)
+    decoded['description'] = 'Object present' if decoded['object_present'] else 'Object absent'
+    if len(bytes_data) >= 2:
+        decoded['distance_mm'] = bytes_data[0] | (bytes_data[1] << 8)
+        decoded['description'] += f', {decoded["distance_mm"]} mm'
+    return decoded
+
+
+def decode_io_link_events(status_byte_or_bytes):
+    """
+    Decode IO-Link event/status bytes into a list of { code, label } for maintenance.
+    status_byte_or_bytes: single int (e.g. 0x02) or list of bytes to check.
+    """
+    events = []
+    if status_byte_or_bytes is None:
+        return events
+    if isinstance(status_byte_or_bytes, (list, bytearray)):
+        for b in status_byte_or_bytes:
+            if b in IO_LINK_EVENT_CODES:
+                events.append({
+                    'code': f'0x{b:02X}',
+                    'label': IO_LINK_EVENT_CODES[b]
+                })
+    else:
+        b = int(status_byte_or_bytes)
+        if b in IO_LINK_EVENT_CODES:
+            events.append({'code': f'0x{b:02X}', 'label': IO_LINK_EVENT_CODES[b]})
+    return events
 
 
 def decode_cl50_led(bytes_data):

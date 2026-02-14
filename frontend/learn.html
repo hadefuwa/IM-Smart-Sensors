@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Learn – Smart Sensors, Industry 4.0 &amp; IoT</title>
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect fill='%231a1a1a' width='32' height='32' rx='4'/%3E%3Cpath fill='%234CAF50' d='M16 6l2 4h4l-3 3 1 4-4-2-4 2 1-4-3-3h4z'/%3E%3Ccircle fill='%234CAF50' cx='16' cy='16' r='3'/%3E%3C/svg%3E" />
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <style>
+    * { box-sizing: border-box; }
+    body { margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background-color: #1a1a1a; color: #fff; }
+    .sidebar { position: fixed; left: 0; top: 0; width: 260px; height: 100vh; background: #000; padding: 20px; overflow-y: auto; }
+    .logo { color: #fff; font-size: 20px; font-weight: bold; margin-bottom: 30px; padding-bottom: 20px; border-bottom: 1px solid #333; }
+    .nav-link { color: #999; text-decoration: none; padding: 10px; display: block; border-radius: 4px; margin-bottom: 5px; }
+    .nav-link:hover, .nav-link.active { background: #333; color: #fff; }
+    .main-panel { margin-left: 260px; padding: 30px; max-width: 900px; }
+    .card { background: rgba(255,255,255,0.05); border-radius: 8px; padding: 24px; margin-bottom: 24px; border: 1px solid rgba(255,255,255,0.1); }
+    .card-title { margin: 0 0 12px 0; font-size: 20px; font-weight: 600; }
+    .card-category { color: #999; font-size: 14px; margin-bottom: 16px; }
+    table { width: 100%; color: #fff; border-collapse: collapse; }
+    table th, table td { padding: 12px; border: 1px solid rgba(255,255,255,0.15); text-align: left; }
+    table th { background: rgba(255,255,255,0.08); color: #ddd; }
+    .before-after-table td:first-child { width: 45%; font-style: italic; color: #aaa; }
+    .before-after-table td:last-child { color: #8bc34a; }
+    h2 { font-size: 22px; margin-top: 32px; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid #333; }
+    h3 { font-size: 18px; margin-top: 24px; margin-bottom: 8px; }
+    p { line-height: 1.6; color: #ccc; margin-bottom: 12px; }
+    a { color: #4caf50; }
+    a:hover { color: #81c784; }
+    .anchor { scroll-margin-top: 20px; }
+  </style>
+</head>
+<body>
+  <div class="sidebar">
+    <div class="logo">
+      <a href="/" style="color: inherit; text-decoration: none;">IO-Link Master</a>
+    </div>
+    <ul class="nav">
+      <li><a class="nav-link" href="/"><i class="fas fa-tachometer-alt"></i> Dashboard</a></li>
+      <li><a class="nav-link active" href="/learn"><i class="fas fa-book"></i> Learn</a></li>
+      <li><a class="nav-link" href="/worksheets"><i class="fas fa-clipboard-list"></i> Worksheets</a></li>
+    </ul>
+  </div>
+  <div class="main-panel">
+    <h1 class="mb-4">Learn: Smart Sensors, Industry 4.0 &amp; IoT</h1>
+    <p class="lead text-muted">Why IO-Link and smart sensors matter for industrial maintenance.</p>
+
+    <section class="card anchor" id="industry4">
+      <h2 class="card-title">Industry 4.0 &amp; IoT</h2>
+      <p>Industry 4.0 means connecting machines and sensors to data networks so you can monitor, analyze, and act on real-time information. IoT (Internet of Things) in the factory is about sensors and devices that send data—temperature, presence, counts, faults—so maintenance and production can react before something fails.</p>
+      <p>For maintenance, this means: less guessing, more data. Instead of replacing parts on a fixed schedule or only after a breakdown, you can use sensor data (current, voltage, event flags, cycle counts) to plan repairs and spot problems early.</p>
+    </section>
+
+    <section class="card anchor" id="smart-sensors">
+      <h2 class="card-title">Smart Sensors &amp; IO-Link</h2>
+      <p>A <strong>smart sensor</strong> does more than switch on or off. It can report its identity (vendor, device ID, serial), process data (measured values), and diagnostics (events, supervision). IO-Link is a standard way to connect these sensors to a master (and then to a PLC or your dashboard) over a single cable. The master reads process data (PDin), sends commands (PDout), and can read parameters and events.</p>
+      <p>In this app, the dashboard shows the same kind of data a technician would see in tools like ifm LineRecorder or Moneo: port status, process data, supervision (current, voltage, temperature), and decoded values. Learning to read this data is the first step toward condition-based and predictive maintenance.</p>
+    </section>
+
+    <section class="card anchor" id="digital-twin">
+      <h2 class="card-title">Digital Twin</h2>
+      <p>The JSON data you see from the FastAPI backend—port status, decoded PDin/PDout, supervision, events—is the foundation of a <strong>Digital Twin</strong>. A Digital Twin is a digital representation of a physical device. Here, the “twin” is the live state of your IO-Link master and its sensors: what each port reports, what each sensor measures, and any faults or events.</p>
+      <p>In Industry 4.0, this digital representation is used for condition monitoring (is the sensor healthy?), predictive maintenance (when might it fail?), and training—exactly what this app is for. When you look at the dashboard, you are looking at the digital twin of your IO-Link setup.</p>
+    </section>
+
+    <section class="card anchor" id="status-led">
+      <h2 class="card-title">Status LED / Light Stack</h2>
+      <p>Status lights (e.g. CL50-style LED stacks) show machine or line state: green = running, red = fault, yellow = warning, and so on. They are often driven by the PLC via IO-Link (PDout): the master sends bytes that define color, intensity, and animation. In maintenance, you check that the correct state is displayed and that supervision (current/voltage) is within spec.</p>
+      <h3>Before vs. After</h3>
+      <table class="table before-after-table">
+        <thead><tr><th>Traditional</th><th>IO-Link</th></tr></thead>
+        <tbody>
+          <tr><td>Operator sees a red light; tech hunts for which device or station caused it.</td><td>Event or status is reported by the master; dashboard shows which port/device and what event (e.g. short circuit).</td></tr>
+          <tr><td>Lights are “dumb”; no remote visibility of state.</td><td>State is data: you can log it, trend it, and use it for diagnostics and training.</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="card anchor" id="photo-electric">
+      <h2 class="card-title">Photo Electric Sensor</h2>
+      <p>Photoelectric sensors detect objects (or light/dark) using a light beam. PDin typically includes “object detected” (on/off) and often a signal quality or intensity (0–100%). Maintenance focus: keep the lens clean, check alignment, and watch signal quality; a drop often means cleaning or adjustment before the sensor fails.</p>
+      <h3>Before vs. After</h3>
+      <table class="table before-after-table">
+        <thead><tr><th>Traditional</th><th>IO-Link</th></tr></thead>
+        <tbody>
+          <tr><td>Sensor fails → machine stops → tech spends 20 minutes finding the failed unit.</td><td>Sensor sends “lens dirty” or low signal quality → tech cleans during a scheduled break → zero unplanned downtime.</td></tr>
+          <tr><td>No visibility into why a sensor stopped working.</td><td>Diagnostics and signal quality show degradation before total failure.</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="card anchor" id="temperature">
+      <h2 class="card-title">Temperature Sensor</h2>
+      <p>IO-Link temperature sensors report temperature (e.g. in °C) as process data (often 2 bytes, sometimes 0.1 °C resolution). Used for process control and for monitoring motor or cabinet temperature. In maintenance: check calibration, placement, and supervision; use trends to spot overheating or cooling issues.</p>
+      <h3>Before vs. After</h3>
+      <table class="table before-after-table">
+        <thead><tr><th>Traditional</th><th>IO-Link</th></tr></thead>
+        <tbody>
+          <tr><td>Periodic manual checks with a handheld thermometer; no history.</td><td>Live temperature on the dashboard; trend over time supports condition monitoring and alarms.</td></tr>
+          <tr><td>Alarms only when a limit is exceeded at the PLC.</td><td>Full temperature data available for logging, analysis, and training without touching the sensor.</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="card anchor" id="proximity">
+      <h2 class="card-title">Proximity Sensor</h2>
+      <p>Proximity sensors (inductive or capacitive) detect the presence (and sometimes distance) of metal or other materials. PDin is often 1 byte (present/absent) or 2 bytes (distance in mm). Maintenance: check mounting distance, contamination, and wiring; use event flags (e.g. wire break) and supervision to plan replacement (e.g. MTTF and cycle count).</p>
+      <h3>Before vs. After</h3>
+      <table class="table before-after-table">
+        <thead><tr><th>Traditional</th><th>IO-Link</th></tr></thead>
+        <tbody>
+          <tr><td>Trial and error to set switching distance; no diagnostics.</td><td>Distance and signal quality data; events (e.g. short circuit) point to the exact issue.</td></tr>
+          <tr><td>Replace on a fixed schedule or after failure.</td><td>Cycle count and diagnostics support “replace when needed” and MTTF-based planning.</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <p class="mt-4 text-muted"><a href="/">Back to Dashboard</a></p>
+  </div>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js" crossorigin="anonymous"></script>
+</body>
+</html>

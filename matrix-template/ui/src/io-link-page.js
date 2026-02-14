@@ -10,10 +10,16 @@ const API_BASE = window.IO_LINK_API_BASE || 'http://localhost:8000';
 const WS_BASE = API_BASE.replace(/^http/, 'ws');
 
 export function renderIOLinkMaster() {
+  const learnUrl = `${API_BASE}/learn`;
   return `
     <div class="space-y-4">
-      <h1 class="text-2xl font-bold text-base-content">IO-Link Master</h1>
-      <p class="text-base-content/70">IFM IO-Link Master – Port status, supervision, and software versions</p>
+      <div class="flex flex-wrap items-center justify-between gap-2">
+        <div>
+          <h1 class="text-2xl font-bold text-base-content">IO-Link Master</h1>
+          <p class="text-base-content/70">IFM IO-Link Master – Port status, supervision, and software versions</p>
+        </div>
+        <a href="${learnUrl}" target="_blank" rel="noopener" class="btn btn-outline btn-sm">Learn: Smart Sensors, Industry 4.0 &amp; IoT</a>
+      </div>
 
       <!-- Status card + device image -->
       <div class="grid grid-cols-1 lg:grid-cols-4 gap-4">
@@ -122,6 +128,35 @@ export function renderIOLinkMaster() {
                 </tbody>
               </table>
             </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Simulate Fault (Training) -->
+      <div class="card bg-base-200 shadow-xl">
+        <div class="card-body">
+          <h2 class="card-title text-base-content">Simulate Fault (Training)</h2>
+          <p class="text-sm text-base-content/70">See how the dashboard reacts to a fault without touching hardware</p>
+          <div class="flex flex-wrap items-center gap-3 mt-2">
+            <span class="text-sm">Port:</span>
+            <select id="simulateFaultPort" class="select select-bordered select-sm w-20">
+              <option value="1">1</option>
+              <option value="2">2</option>
+              <option value="3">3</option>
+              <option value="4">4</option>
+            </select>
+            <span class="text-sm">Fault:</span>
+            <select id="simulateFaultEvent" class="select select-bordered select-sm w-48">
+              <option value="">-- Select fault --</option>
+              <option value='{"code":"0x01","label":"Wire break"}'>Wire break</option>
+              <option value='{"code":"0x02","label":"Short circuit"}'>Short circuit</option>
+              <option value='{"code":"0x08","label":"Lens dirty"}'>Lens dirty</option>
+              <option value='{"code":"0x04","label":"Overheating"}'>Overheating</option>
+              <option value='{"code":"0x05","label":"Data storage error"}'>Data storage error</option>
+            </select>
+            <button type="button" class="btn btn-primary btn-sm" id="simulateFaultSetBtn">Set fault</button>
+            <button type="button" class="btn btn-ghost btn-sm" id="simulateFaultClearBtn">Clear fault</button>
+            <span id="simulateFaultMessage" class="text-sm opacity-70"></span>
           </div>
         </div>
       </div>
@@ -258,19 +293,57 @@ async function loadActivePortDetails(ports) {
   container.innerHTML = html || '<p class="text-center">No details</p>';
 }
 
+const LEARN_BLURBS = {
+  status_led: { blurb: 'Status lights show machine or line state (e.g. green = running, red = fault). Check supervision and that the correct state is displayed.', anchor: 'status-led' },
+  photo_electric: { blurb: 'Photoelectric sensors detect objects and often report signal quality. Keep the lens clean and watch signal quality; a drop means cleaning or alignment before failure.', anchor: 'photo-electric' },
+  temperature: { blurb: 'Temperature sensors report °C for process and maintenance. Check supervision current and wiring; use trends to spot overheating.', anchor: 'temperature' },
+  proximity: { blurb: 'Proximity sensors report presence or distance. Check mounting distance and contamination; use event flags and cycle count for MTTF-based replacement.', anchor: 'proximity' }
+};
+let portCycleCounts = {};
+
 function generatePortDetailsHTML(port) {
-  let h = `<div class="rounded-lg border border-base-300 bg-base-100 p-4 mb-3">`;
+  const dtype = port.device_type || 'unknown';
+  const hasDecodedPdin = port.pdin && port.pdin.decoded && Object.keys(port.pdin.decoded).length > 0;
+  const showDecodedByDefault = hasDecodedPdin;
+
+  let h = `<div class="port-detail-card rounded-lg border border-base-300 bg-base-100 p-4 mb-3" data-port="${port.port}">`;
   h += `<h3 class="font-semibold text-primary">Port ${port.port} – ${escapeHtml(port.name || 'Unknown')}</h3>`;
-  h += `<p class="text-sm opacity-80">Vendor: ${escapeHtml(port.vendor_id || '-')} | Device: ${escapeHtml(port.device_id || '-')} | Serial: ${escapeHtml(port.serial || '-')}</p>`;
+  if (dtype !== 'unknown' && LEARN_BLURBS[dtype]) {
+    const blurb = LEARN_BLURBS[dtype];
+    h += `<div class="my-2 p-2 rounded bg-success/10 border-l-4 border-success"><strong>About this sensor:</strong> ${escapeHtml(blurb.blurb)} <a href="${API_BASE}/learn#${blurb.anchor}" target="_blank" class="link link-primary text-sm">Learn more</a></div>`;
+  }
+  if (port.events && port.events.length > 0) {
+    h += '<div class="mb-2"><strong>Events / faults:</strong> ';
+    port.events.forEach(ev => {
+      h += `<span class="badge badge-error badge-sm mr-1">${escapeHtml(ev.code)} ${escapeHtml(ev.label)}</span>`;
+    });
+    h += '</div>';
+  }
+  h += `<p class="text-sm opacity-80">Type: ${escapeHtml(dtype)} | Vendor: ${escapeHtml(port.vendor_id || '-')} | Device: ${escapeHtml(port.device_id || '-')} | Serial: ${escapeHtml(port.serial || '-')}</p>`;
+
+  if ((dtype === 'photo_electric' || dtype === 'proximity') && port.pdin && port.pdin.decoded) {
+    portCycleCounts[port.port] = (portCycleCounts[port.port] || 950000) + Math.floor(Math.random() * 50) + 1;
+    const count = portCycleCounts[port.port];
+    h += `<p class="text-xs my-1"><strong>Total activations (simulated):</strong> ${count.toLocaleString()}. <span class="opacity-70">Parts have a mechanical life cycle (MTTF). Smart sensors can support replacement planning.</span></p>`;
+  }
+  if (dtype === 'photo_electric' && port.pdin && port.pdin.decoded && port.pdin.decoded.signal_quality_percent != null) {
+    const sq = port.pdin.decoded.signal_quality_percent;
+    h += `<div class="my-1"><strong>Signal quality:</strong> <progress class="progress progress-success w-48" value="${sq}" max="100"></progress> ${sq}%. <span class="text-xs opacity-70">Dropping → clean lens or check alignment.</span></div>`;
+  }
+
   if (port.pdout && port.pdout.raw) {
     h += `<p class="text-xs mt-2"><strong>PD Out:</strong> <code>${escapeHtml(port.pdout.raw)}</code></p>`;
     if (port.pdout.decoded && port.pdout.decoded.color1) {
       const d = port.pdout.decoded;
-      h += `<p class="text-xs">LED: ${d.color1} / ${d.color2} | ${d.animation} | ${d.pulse_pattern}</p>`;
+      h += `<p class="text-xs">LED: ${escapeHtml(d.color1)} / ${escapeHtml(d.color2)} | ${escapeHtml(d.animation)} | ${escapeHtml(d.pulse_pattern)}</p>`;
     }
   }
   if (port.pdin && port.pdin.raw) {
-    h += `<p class="text-xs"><strong>PD In:</strong> <code>${escapeHtml(port.pdin.raw)}</code></p>`;
+    h += '<div class="mt-2"><label class="label cursor-pointer justify-start gap-2"><input type="checkbox" class="raw-decoded-toggle checkbox checkbox-sm" data-port="' + port.port + '"/><span class="label-text">Show Raw Hex</span></label>';
+    h += '<div class="pdin-decoded ' + (showDecodedByDefault ? '' : 'hidden') + '">';
+    h += '<strong>Decoded:</strong> <code>' + (hasDecodedPdin ? escapeHtml(port.pdin.decoded.description || '') : 'No decoded value') + '</code></div>';
+    h += '<div class="pdin-raw ' + (!showDecodedByDefault ? '' : 'hidden') + '">';
+    h += '<strong>Raw:</strong> <code>' + escapeHtml(port.pdin.raw) + '</code> <strong>Hex:</strong> <code>' + escapeHtml(port.pdin.hex) + '</code> <strong>Bytes:</strong> <code>[' + (port.pdin.bytes || []).join(', ') + ']</code></div></div>';
   }
   h += '</div>';
   return h;
@@ -434,12 +507,92 @@ export function destroyIOLinkPage() {
   ioLinkCharts = [];
 }
 
+function setupRawDecodedToggle() {
+  document.addEventListener('change', (e) => {
+    if (!e.target || !e.target.classList || !e.target.classList.contains('raw-decoded-toggle')) return;
+    const card = e.target.closest('.port-detail-card');
+    if (!card) return;
+    const rawDiv = card.querySelector('.pdin-raw');
+    const decDiv = card.querySelector('.pdin-decoded');
+    if (!rawDiv || !decDiv) return;
+    if (e.target.checked) {
+      rawDiv.classList.remove('hidden');
+      decDiv.classList.add('hidden');
+    } else {
+      rawDiv.classList.add('hidden');
+      decDiv.classList.remove('hidden');
+    }
+  });
+}
+
+function setupSimulateFault() {
+  const setBtn = document.getElementById('simulateFaultSetBtn');
+  const clearBtn = document.getElementById('simulateFaultClearBtn');
+  const msgEl = document.getElementById('simulateFaultMessage');
+  if (setBtn) {
+    setBtn.onclick = () => {
+      const portSelect = document.getElementById('simulateFaultPort');
+      const eventSelect = document.getElementById('simulateFaultEvent');
+      const port = parseInt(portSelect?.value || '1', 10);
+      const eventVal = eventSelect?.value;
+      if (!eventVal) {
+        if (msgEl) { msgEl.textContent = 'Select a fault first'; msgEl.className = 'text-sm text-error'; }
+        return;
+      }
+      let eventObj;
+      try { eventObj = JSON.parse(eventVal); } catch (err) { if (msgEl) msgEl.textContent = 'Invalid fault'; return; }
+      fetch(`${API_BASE}/api/io-link/simulate-fault`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ port, event: eventObj })
+      })
+        .then(r => r.json())
+        .then(data => {
+          if (msgEl) { msgEl.textContent = data.success ? 'Fault set. Port details will update.' : (data.detail || 'Error'); msgEl.className = data.success ? 'text-sm text-success' : 'text-sm text-error'; }
+          if (data.success && lastGoodData && lastGoodData.ports) {
+            const active = lastGoodData.ports.filter(p => (p.mode || '').toLowerCase().includes('io-link'));
+            loadActivePortDetails(active);
+          }
+          setTimeout(() => { if (msgEl) msgEl.textContent = ''; }, 4000);
+        })
+        .catch(err => { if (msgEl) { msgEl.textContent = 'Error: ' + (err.message || 'Request failed'); msgEl.className = 'text-sm text-error'; } });
+    };
+  }
+  if (clearBtn) {
+    clearBtn.onclick = () => {
+      const portSelect = document.getElementById('simulateFaultPort');
+      const port = parseInt(portSelect?.value || '1', 10);
+      fetch(`${API_BASE}/api/io-link/simulate-fault`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ port, event: null })
+      })
+        .then(r => r.json())
+        .then(data => {
+          if (msgEl) { msgEl.textContent = data.success ? 'Fault cleared.' : (data.detail || 'Error'); msgEl.className = data.success ? 'text-sm text-success' : 'text-sm text-error'; }
+          if (data.success && lastGoodData && lastGoodData.ports) {
+            const active = lastGoodData.ports.filter(p => (p.mode || '').toLowerCase().includes('io-link'));
+            loadActivePortDetails(active);
+          }
+          setTimeout(() => { if (msgEl) msgEl.textContent = ''; }, 4000);
+        })
+        .catch(err => { if (msgEl) { msgEl.textContent = 'Error'; msgEl.className = 'text-sm text-error'; } });
+    };
+  }
+}
+
 export function initIOLinkPage() {
+  const learnLink = document.getElementById('sidebar-learn-link');
+  if (learnLink) learnLink.href = `${API_BASE}/learn`;
+  const worksheetsLink = document.getElementById('sidebar-worksheets-link');
+  if (worksheetsLink) worksheetsLink.href = `${API_BASE}/worksheets`;
   ioLinkCharts.forEach(c => c.destroy());
   ioLinkCharts = [];
   if (reconnectTimer) clearTimeout(reconnectTimer);
   loadMasterConfig();
   connectWebSocket();
+  setupRawDecodedToggle();
+  setupSimulateFault();
   const btn = document.getElementById('io-link-refresh-btn');
   if (btn) {
     btn.onclick = () => {

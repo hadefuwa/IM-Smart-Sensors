@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Worksheets – IO-Link Industrial Maintenance</title>
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect fill='%231a1a1a' width='32' height='32' rx='4'/%3E%3Cpath fill='%234CAF50' d='M16 6l2 4h4l-3 3 1 4-4-2-4 2 1-4-3-3h4z'/%3E%3Ccircle fill='%234CAF50' cx='16' cy='16' r='3'/%3E%3C/svg%3E" />
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+  <style>
+    * { box-sizing: border-box; }
+    body { margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background-color: #1a1a1a; color: #fff; }
+    .sidebar { position: fixed; left: 0; top: 0; width: 260px; height: 100vh; background: #000; padding: 20px; overflow-y: auto; }
+    .logo { color: #fff; font-size: 20px; font-weight: bold; margin-bottom: 30px; padding-bottom: 20px; border-bottom: 1px solid #333; }
+    .nav-link { color: #999; text-decoration: none; padding: 10px; display: block; border-radius: 4px; margin-bottom: 5px; }
+    .nav-link:hover, .nav-link.active { background: #333; color: #fff; }
+    .main-panel { margin-left: 260px; padding: 30px; max-width: 920px; }
+    .card { background: rgba(255,255,255,0.05); border-radius: 8px; padding: 24px; margin-bottom: 24px; border: 1px solid rgba(255,255,255,0.1); }
+    .card-title { margin: 0 0 12px 0; font-size: 20px; font-weight: 600; }
+    table { width: 100%; color: #fff; border-collapse: collapse; }
+    table th, table td { padding: 10px 12px; border: 1px solid rgba(255,255,255,0.15); text-align: left; }
+    table th { background: rgba(255,255,255,0.08); color: #ddd; }
+    h2 { font-size: 20px; margin-top: 28px; margin-bottom: 10px; padding-bottom: 6px; border-bottom: 1px solid #333; }
+    h3 { font-size: 17px; margin-top: 20px; margin-bottom: 8px; }
+    p { line-height: 1.6; color: #ccc; margin-bottom: 10px; }
+    a { color: #4caf50; }
+    a:hover { color: #81c784; }
+    .anchor { scroll-margin-top: 20px; }
+    .dashboard-box { background: rgba(76, 175, 80, 0.12); border-left: 4px solid #4caf50; padding: 12px 16px; margin: 14px 0; border-radius: 0 6px 6px 0; }
+    .dashboard-box a { font-weight: 600; }
+    .suggested-answer { display: none; margin-top: 8px; padding: 10px; background: rgba(255,255,255,0.06); border-radius: 6px; color: #aaa; font-size: 14px; }
+    .suggested-answer.show { display: block; }
+    .check-result { margin-left: 8px; font-size: 14px; }
+    .check-result.correct { color: #4caf50; }
+    .check-result.incorrect { color: #f44336; }
+    select, textarea, input[type="text"] { background: #222; color: #fff; border: 1px solid #444; border-radius: 4px; padding: 6px 10px; }
+    @media print { .sidebar, .no-print { display: none !important; } .main-panel { margin-left: 0; } }
+  </style>
+</head>
+<body>
+  <div class="sidebar no-print">
+    <div class="logo"><a href="/" style="color: inherit; text-decoration: none;">IO-Link Master</a></div>
+    <ul class="nav">
+      <li><a class="nav-link" href="/"><i class="fas fa-tachometer-alt"></i> Dashboard</a></li>
+      <li><a class="nav-link" href="/learn"><i class="fas fa-book"></i> Learn</a></li>
+      <li><a class="nav-link active" href="/worksheets"><i class="fas fa-clipboard-list"></i> Worksheets</a></li>
+    </ul>
+  </div>
+  <div class="main-panel">
+    <h1 class="mb-3">Worksheets: IO-Link in Industrial Maintenance</h1>
+    <p class="lead text-muted">Learning objectives and 12 practical worksheets. Use the Dashboard to complete tasks where indicated.</p>
+
+    <section class="card" id="learning-objectives">
+      <h2 class="card-title">Learning Objectives</h2>
+      <ol class="mb-0" style="color: #ccc; line-height: 1.8;">
+        <li><strong>Understand IO-Link Fundamentals</strong> – Explain what IO-Link is and how it differs from standard digital/analog signals. Identify key components: IO-Link master, IO-Link devices, standard sensors/actuators.</li>
+        <li><strong>Recognize Maintenance Benefits</strong> – Describe how IO-Link enables predictive and preventive maintenance. Understand diagnostic data (e.g., cable break, sensor contamination, temperature warnings).</li>
+        <li><strong>Setup and Wiring</strong> – Demonstrate correct wiring of an IO-Link device using standard 3-wire cables. Differentiate between IO-Link, standard I/O, and fieldbus connections.</li>
+        <li><strong>Commissioning and Configuration</strong> – Use IO-Device Description files (IODDs) to identify and configure devices. Explain the role of parameter storage and automatic device replacement.</li>
+        <li><strong>Fault Finding and Troubleshooting</strong> – Access diagnostic information from an IO-Link device via an HMI or engineering software. Interpret diagnostic codes to identify common faults (cable damage, wrong configuration, device failure). Practice replacing a faulty sensor and restoring parameters automatically.</li>
+        <li><strong>Data Handling for Maintenance</strong> – Explain the difference between process data, service data, and event data. Show how maintenance teams can use this data to plan interventions.</li>
+        <li><strong>Integration with PLCs / SCADA</strong> – Demonstrate how IO-Link diagnostic data appears in PLC/HMI systems. Explain the value of remote monitoring in reducing downtime.</li>
+        <li><strong>Practical Applications in Maintenance</strong> – Replace and configure an IO-Link sensor in a simulated industrial system. Use IO-Link diagnostics to reduce MTTR (Mean Time to Repair). Compare maintenance tasks on a standard sensor vs. an IO-Link sensor.</li>
+      </ol>
+    </section>
+
+    <section class="card">
+      <h2 class="card-title">Worksheet Index</h2>
+      <p class="text-muted mb-3">Jump to a worksheet:</p>
+      <div class="row g-2">
+        <div class="col-md-6"><a href="#worksheet-1" class="d-block p-2 rounded" style="background: rgba(255,255,255,0.06); color: #ccc; text-decoration: none;">1. Introduction to IO-Link</a></div>
+        <div class="col-md-6"><a href="#worksheet-2" class="d-block p-2 rounded" style="background: rgba(255,255,255,0.06); color: #ccc; text-decoration: none;">2. Benefits for Maintenance</a></div>
+        <div class="col-md-6"><a href="#worksheet-3" class="d-block p-2 rounded" style="background: rgba(255,255,255,0.06); color: #ccc; text-decoration: none;">3. Cabling and Connections</a></div>
+        <div class="col-md-6"><a href="#worksheet-4" class="d-block p-2 rounded" style="background: rgba(255,255,255,0.06); color: #ccc; text-decoration: none;">4. Device Identification (IODD)</a></div>
+        <div class="col-md-6"><a href="#worksheet-5" class="d-block p-2 rounded" style="background: rgba(255,255,255,0.06); color: #ccc; text-decoration: none;">5. Parameter Configuration</a></div>
+        <div class="col-md-6"><a href="#worksheet-6" class="d-block p-2 rounded" style="background: rgba(255,255,255,0.06); color: #ccc; text-decoration: none;">6. Diagnostics Overview</a></div>
+        <div class="col-md-6"><a href="#worksheet-7" class="d-block p-2 rounded" style="background: rgba(255,255,255,0.06); color: #ccc; text-decoration: none;">7. Troubleshooting Scenarios</a></div>
+        <div class="col-md-6"><a href="#worksheet-8" class="d-block p-2 rounded" style="background: rgba(255,255,255,0.06); color: #ccc; text-decoration: none;">8. Device Replacement</a></div>
+        <div class="col-md-6"><a href="#worksheet-9" class="d-block p-2 rounded" style="background: rgba(255,255,255,0.06); color: #ccc; text-decoration: none;">9. Maintenance Data Handling</a></div>
+        <div class="col-md-6"><a href="#worksheet-10" class="d-block p-2 rounded" style="background: rgba(255,255,255,0.06); color: #ccc; text-decoration: none;">10. PLC and HMI Integration</a></div>
+        <div class="col-md-6"><a href="#worksheet-11" class="d-block p-2 rounded" style="background: rgba(255,255,255,0.06); color: #ccc; text-decoration: none;">11. Case Study – Standard vs IO-Link</a></div>
+        <div class="col-md-6"><a href="#worksheet-12" class="d-block p-2 rounded" style="background: rgba(255,255,255,0.06); color: #ccc; text-decoration: none;">12. Final Practical Assessment</a></div>
+      </div>
+      <div class="mt-3 no-print"><button type="button" class="btn btn-sm btn-outline-secondary" onclick="window.print();">Print worksheets</button></div>
+    </section>
+
+    <!-- Worksheet 1 -->
+    <section class="card anchor" id="worksheet-1">
+      <h2 class="card-title">Worksheet 1: Introduction to IO-Link</h2>
+      <p>Identify IO-Link components and explain how it differs from standard I/O signals.</p>
+      <p><strong>Key components:</strong> IO-Link master, IO-Link devices (sensors/actuators), standard digital/analog I/O devices.</p>
+      <p class="mb-2"><strong>1.</strong> How does IO-Link differ from a standard digital (on/off) sensor signal?</p>
+      <textarea class="form-control mb-3" rows="3" style="max-width: 100%;" placeholder="Your answer..."></textarea>
+      <p class="mb-2"><strong>2.</strong> Name the three main components in an IO-Link system.</p>
+      <textarea class="form-control mb-3" rows="2" style="max-width: 100%;" placeholder="Your answer..."></textarea>
+      <p class="mb-2"><strong>3.</strong> IO-Link, compared to standard I/O, provides:</p>
+      <div class="mb-2">
+        <label class="d-block mb-1"><input type="radio" name="ws1-q3" value="a"> Only on/off switching</label>
+        <label class="d-block mb-1"><input type="radio" name="ws1-q3" value="b"> Process data, parameters, and diagnostics over the same cable</label>
+        <label class="d-block mb-1"><input type="radio" name="ws1-q3" value="c"> Only analog values</label>
+      </div>
+      <button type="button" class="btn btn-sm btn-outline-secondary mb-2" onclick="toggleSuggested('ws1-suggested')">Show suggested answer</button>
+      <div id="ws1-suggested" class="suggested-answer">1. IO-Link sends process data, parameters, and diagnostics over a single cable; standard digital only sends on/off. 2. IO-Link master, IO-Link devices (sensors/actuators), and (optionally) standard I/O devices. 3. b – Process data, parameters, and diagnostics over the same cable.</div>
+    </section>
+
+    <!-- Worksheet 2 -->
+    <section class="card anchor" id="worksheet-2">
+      <h2 class="card-title">Worksheet 2: Benefits for Maintenance</h2>
+      <p>Match the maintenance problem to the IO-Link feature that helps solve it.</p>
+      <table class="table">
+        <thead><tr><th>Maintenance problem</th><th>IO-Link feature (choose one)</th><th>Check</th></tr></thead>
+        <tbody>
+          <tr>
+            <td>Sensor fails without warning</td>
+            <td>
+              <select id="ws2-1" class="form-select form-select-sm" style="max-width: 100%;">
+                <option value="">-- Select --</option>
+                <option value="events">Diagnostic events (e.g. lens dirty, wire break)</option>
+                <option value="params">Parameter storage</option>
+                <option value="process">Process data only</option>
+              </select>
+            </td>
+            <td><span id="ws2-result-1" class="check-result"></span></td>
+          </tr>
+          <tr>
+            <td>Replacing a sensor loses configuration</td>
+            <td>
+              <select id="ws2-2" class="form-select form-select-sm" style="max-width: 100%;">
+                <option value="">-- Select --</option>
+                <option value="events">Diagnostic events</option>
+                <option value="params">Parameter storage and automatic device replacement</option>
+                <option value="process">Process data only</option>
+              </select>
+            </td>
+            <td><span id="ws2-result-2" class="check-result"></span></td>
+          </tr>
+          <tr>
+            <td>Unknown which sensor on the line failed</td>
+            <td>
+              <select id="ws2-3" class="form-select form-select-sm" style="max-width: 100%;">
+                <option value="">-- Select --</option>
+                <option value="events">Device identity and event codes per port</option>
+                <option value="params">Parameter storage</option>
+                <option value="process">Process data only</option>
+              </select>
+            </td>
+            <td><span id="ws2-result-3" class="check-result"></span></td>
+          </tr>
+          <tr>
+            <td>Planning when to replace a sensor</td>
+            <td>
+              <select id="ws2-4" class="form-select form-select-sm" style="max-width: 100%;">
+                <option value="">-- Select --</option>
+                <option value="events">Cycle count and diagnostic trends</option>
+                <option value="params">Parameter storage</option>
+                <option value="process">Process data only</option>
+              </select>
+            </td>
+            <td><span id="ws2-result-4" class="check-result"></span></td>
+          </tr>
+        </tbody>
+      </table>
+      <button type="button" class="btn btn-sm btn-primary" onclick="checkWorksheet2();">Check answers</button>
+    </section>
+
+    <!-- Worksheet 3 -->
+    <section class="card anchor" id="worksheet-3">
+      <h2 class="card-title">Worksheet 3: Cabling and Connections</h2>
+      <p>IO-Link devices use standard 3-wire cables (L+, L-, C/Q) and often M12 connectors. Wiring is the same as for many standard sensors; the master and device negotiate IO-Link communication automatically.</p>
+      <p class="mb-2"><strong>1.</strong> What is the typical number of wires in an IO-Link connection?</p>
+      <div class="mb-3">
+        <label class="d-block mb-1"><input type="radio" name="ws3-q1" value="2"> 2 wires</label>
+        <label class="d-block mb-1"><input type="radio" name="ws3-q1" value="3"> 3 wires</label>
+        <label class="d-block mb-1"><input type="radio" name="ws3-q1" value="4"> 4 wires</label>
+      </div>
+      <p class="mb-2"><strong>2.</strong> Draw or describe the correct connection between an IO-Link master port and an IO-Link sensor (which pins/wires go where, if you know them).</p>
+      <textarea class="form-control mb-3" rows="4" style="max-width: 100%;" placeholder="Your answer..."></textarea>
+      <button type="button" class="btn btn-sm btn-outline-secondary mb-2" onclick="toggleSuggested('ws3-suggested')">Show suggested answer</button>
+      <div id="ws3-suggested" class="suggested-answer">1. 3 wires. 2. Standard 3-wire: L+ (24 V), L- (0 V), C/Q (communication). M12: typically pin 1 = L+, 3 = L-, 4 = C/Q. Master port to device with a single cable; no separate power supply needed for the device.</div>
+    </section>
+
+    <!-- Worksheet 4 -->
+    <section class="card anchor" id="worksheet-4">
+      <h2 class="card-title">Worksheet 4: Device Identification (IODD Files)</h2>
+      <p>IODD (IO-Device Description) files describe a device’s parameters, process data, and identity. They are used by engineering tools and HMIs to configure and display the device.</p>
+      <p class="mb-2"><strong>1.</strong> Where in an IODD would you find the device ID and vendor ID?</p>
+      <div class="mb-3">
+        <label class="d-block mb-1"><input type="radio" name="ws4-q1" value="a"> In the &quot;DeviceIdentity&quot; or &quot;DeviceId&quot; section</label>
+        <label class="d-block mb-1"><input type="radio" name="ws4-q1" value="b"> Only in the manual</label>
+        <label class="d-block mb-1"><input type="radio" name="ws4-q1" value="c"> In the process data section only</label>
+      </div>
+      <div class="dashboard-box">
+        <strong>Do this on the Dashboard:</strong> Open the <a href="/">Dashboard</a>, scroll to <a href="/#portDetailsSection">Active Port Details</a>, and note the <strong>Vendor ID</strong> and <strong>Device ID</strong> for a connected device. These match what an IODD would describe.
+      </div>
+    </section>
+
+    <!-- Worksheet 5 -->
+    <section class="card anchor" id="worksheet-5">
+      <h2 class="card-title">Worksheet 5: Parameter Configuration</h2>
+      <p>Parameters (e.g. switching distance, filter time) can be read and written via the master. Many masters support storing parameters so that when a device is replaced, the new device can be configured automatically.</p>
+      <p class="mb-2"><strong>1.</strong> Record one parameter you could set on an IO-Link sensor (from the datasheet or IODD), and what values it might have.</p>
+      <textarea class="form-control mb-3" rows="3" style="max-width: 100%;" placeholder="e.g. Parameter name, possible values..."></textarea>
+      <div class="dashboard-box">
+        <strong>Do this on the Dashboard:</strong> Open the <a href="/">Dashboard</a> and go to <a href="/#portDetailsSection">Active Port Details</a>. Note the current <strong>process data</strong> (PD In / PD Out) for one port. This is the live data that parameters can influence.
+      </div>
+      <button type="button" class="btn btn-sm btn-outline-secondary mb-2" onclick="toggleSuggested('ws5-suggested')">Show suggested answer</button>
+      <div id="ws5-suggested" class="suggested-answer">Example: Filter time (e.g. 0–255 ms) to reduce noise; or switching distance / hysteresis. Values depend on the device type (see IODD or datasheet).</div>
+    </section>
+
+    <!-- Worksheet 6 -->
+    <section class="card anchor" id="worksheet-6">
+      <h2 class="card-title">Worksheet 6: Diagnostics Overview</h2>
+      <p>Classify each item as <strong>Process data</strong>, <strong>Service data</strong>, or <strong>Event data</strong>.</p>
+      <table class="table">
+        <thead><tr><th>Data item</th><th>Your classification</th><th>Check</th></tr></thead>
+        <tbody>
+          <tr>
+            <td>Temperature value (e.g. 23.5 °C)</td>
+            <td>
+              <select id="ws6-1" class="form-select form-select-sm" style="max-width: 100%;">
+                <option value="">-- Select --</option>
+                <option value="process">Process</option>
+                <option value="service">Service</option>
+                <option value="event">Event</option>
+              </select>
+            </td>
+            <td><span id="ws6-result-1" class="check-result"></span></td>
+          </tr>
+          <tr>
+            <td>Device replacement event</td>
+            <td>
+              <select id="ws6-2" class="form-select form-select-sm" style="max-width: 100%;">
+                <option value="">-- Select --</option>
+                <option value="process">Process</option>
+                <option value="service">Service</option>
+                <option value="event">Event</option>
+              </select>
+            </td>
+            <td><span id="ws6-result-2" class="check-result"></span></td>
+          </tr>
+          <tr>
+            <td>Parameter read (e.g. filter time)</td>
+            <td>
+              <select id="ws6-3" class="form-select form-select-sm" style="max-width: 100%;">
+                <option value="">-- Select --</option>
+                <option value="process">Process</option>
+                <option value="service">Service</option>
+                <option value="event">Event</option>
+              </select>
+            </td>
+            <td><span id="ws6-result-3" class="check-result"></span></td>
+          </tr>
+          <tr>
+            <td>Object present (on/off)</td>
+            <td>
+              <select id="ws6-4" class="form-select form-select-sm" style="max-width: 100%;">
+                <option value="">-- Select --</option>
+                <option value="process">Process</option>
+                <option value="service">Service</option>
+                <option value="event">Event</option>
+              </select>
+            </td>
+            <td><span id="ws6-result-4" class="check-result"></span></td>
+          </tr>
+          <tr>
+            <td>Short circuit fault</td>
+            <td>
+              <select id="ws6-5" class="form-select form-select-sm" style="max-width: 100%;">
+                <option value="">-- Select --</option>
+                <option value="process">Process</option>
+                <option value="service">Service</option>
+                <option value="event">Event</option>
+              </select>
+            </td>
+            <td><span id="ws6-result-5" class="check-result"></span></td>
+          </tr>
+        </tbody>
+      </table>
+      <button type="button" class="btn btn-sm btn-primary" onclick="checkWorksheet6();">Check answers</button>
+    </section>
+
+    <!-- Worksheet 7 -->
+    <section class="card anchor" id="worksheet-7">
+      <h2 class="card-title">Worksheet 7: Troubleshooting Scenarios</h2>
+      <p>Interpret fault codes and decide the correct maintenance action.</p>
+      <p class="mb-2"><strong>1.</strong> Fault code 0x02 (Short circuit) is reported on a port. What should you do first? <span id="ws7-result-1" class="check-result"></span></p>
+      <div class="mb-3">
+        <label class="d-block mb-1"><input type="radio" name="ws7-q1" value="a"> Ignore it and restart the machine</label>
+        <label class="d-block mb-1"><input type="radio" name="ws7-q1" value="b"> Check wiring and device for short circuit; isolate and repair or replace</label>
+        <label class="d-block mb-1"><input type="radio" name="ws7-q1" value="c"> Only replace the master</label>
+      </div>
+      <p class="mb-2"><strong>2.</strong> Fault &quot;Lens dirty&quot; (or low signal quality) on a photoelectric sensor suggests: <span id="ws7-result-2" class="check-result"></span></p>
+      <div class="mb-3">
+        <label class="d-block mb-1"><input type="radio" name="ws7-q2" value="a"> Replace the sensor immediately</label>
+        <label class="d-block mb-1"><input type="radio" name="ws7-q2" value="b"> Clean the lens and check alignment; plan replacement if it recurs</label>
+        <label class="d-block mb-1"><input type="radio" name="ws7-q2" value="c"> Ignore it</label>
+      </div>
+      <button type="button" class="btn btn-sm btn-primary mb-2" onclick="checkWorksheet7();">Check answers</button>
+      <div class="dashboard-box mt-3">
+        <strong>Do this on the Dashboard:</strong> Use <a href="/#simulate-fault">Simulate Fault</a> to inject &quot;Short circuit&quot; or &quot;Lens dirty&quot; for a port. See how the fault appears in Active Port Details (Events/faults area).
+      </div>
+    </section>
+
+    <!-- Worksheet 8 -->
+    <section class="card anchor" id="worksheet-8">
+      <h2 class="card-title">Worksheet 8: Device Replacement</h2>
+      <p>You have replaced a faulty IO-Link sensor with a new one. How does IO-Link help?</p>
+      <p class="mb-2"><strong>1.</strong> After replacement, the master can:</p>
+      <div class="mb-3">
+        <label class="d-block mb-1"><input type="radio" name="ws8-q1" value="a"> Do nothing; you must reconfigure manually</label>
+        <label class="d-block mb-1"><input type="radio" name="ws8-q1" value="b"> Automatically restore stored parameters to the new device (if supported)</label>
+        <label class="d-block mb-1"><input type="radio" name="ws8-q1" value="c"> Only report the new device ID</label>
+      </div>
+      <p class="mb-2"><strong>2.</strong> In one sentence, why is automatic parameter restoration useful for maintenance?</p>
+      <textarea class="form-control mb-3" rows="2" style="max-width: 100%;" placeholder="Your answer..."></textarea>
+      <div class="dashboard-box">
+        <strong>Do this on the Dashboard:</strong> Go to <a href="/#simulate-fault">Simulate Fault</a>. Set a fault for a port, then click <strong>Clear fault</strong>. This simulates &quot;replacement&quot; – the event list updates when the fault is cleared.
+      </div>
+      <button type="button" class="btn btn-sm btn-outline-secondary mb-2" onclick="toggleSuggested('ws8-suggested')">Show suggested answer</button>
+      <div id="ws8-suggested" class="suggested-answer">1. b. 2. It reduces downtime and human error – the new device works with the same settings without manual re-entry.</div>
+    </section>
+
+    <!-- Worksheet 9 -->
+    <section class="card anchor" id="worksheet-9">
+      <h2 class="card-title">Worksheet 9: Maintenance Data Handling</h2>
+      <p>Use IO-Link event logs and diagnostics to plan preventive maintenance.</p>
+      <p class="mb-2"><strong>1.</strong> How can event data (e.g. &quot;Lens dirty&quot;, &quot;Overheating&quot;) help plan maintenance?</p>
+      <textarea class="form-control mb-3" rows="2" style="max-width: 100%;" placeholder="Your answer..."></textarea>
+      <p class="mb-2"><strong>2.</strong> What is one advantage of storing cycle count or signal quality over time?</p>
+      <textarea class="form-control mb-3" rows="2" style="max-width: 100%;" placeholder="Your answer..."></textarea>
+      <div class="dashboard-box">
+        <strong>Do this on the Dashboard:</strong> Open <a href="/">Dashboard</a>, go to <a href="/#simulate-fault">Simulate Fault</a> and set a fault, then open <a href="/#portDetailsSection">Active Port Details</a>. Describe what you see in the <strong>Events / faults</strong> area for that port.
+      </div>
+      <textarea class="form-control mb-2" rows="2" style="max-width: 100%;" placeholder="What you see in Events area..."></textarea>
+      <button type="button" class="btn btn-sm btn-outline-secondary mb-2" onclick="toggleSuggested('ws9-suggested')">Show suggested answer</button>
+      <div id="ws9-suggested" class="suggested-answer">1. Events indicate degradation or faults before total failure; maintenance can schedule cleaning or replacement during a break. 2. Trend data supports predictive replacement (e.g. nearing MTTF) and reduces unplanned downtime.</div>
+    </section>
+
+    <!-- Worksheet 10 -->
+    <section class="card anchor" id="worksheet-10">
+      <h2 class="card-title">Worksheet 10: PLC and HMI Integration</h2>
+      <p><strong>1.</strong> How does IO-Link diagnostic data typically appear in an HMI or PLC?</p>
+      <textarea class="form-control mb-3" rows="3" style="max-width: 100%;" placeholder="Your answer..."></textarea>
+      <div class="dashboard-box">
+        <strong>Do this on the Dashboard:</strong> This app’s <a href="/">Dashboard</a> is like a simple HMI. Trace where <strong>process data</strong> appears (Port Status, Active Port Details) and where <strong>events/diagnostics</strong> appear (Simulate Fault, then Events in Port Details). In a real plant, the PLC would read the same data and show it on the HMI with alarms.
+      </div>
+      <button type="button" class="btn btn-sm btn-outline-secondary mb-2" onclick="toggleSuggested('ws10-suggested')">Show suggested answer</button>
+      <div id="ws10-suggested" class="suggested-answer">Process data is mapped to PLC inputs/outputs; diagnostic and event data can be read via the master and displayed on the HMI (e.g. alarms, maintenance messages). Remote monitoring allows technicians to see faults and plan interventions without being at the machine.</div>
+    </section>
+
+    <!-- Worksheet 11 -->
+    <section class="card anchor" id="worksheet-11">
+      <h2 class="card-title">Worksheet 11: Case Study – Standard vs IO-Link Sensor</h2>
+      <p>Compare diagnosis and repair times to understand MTTR (Mean Time to Repair).</p>
+      <p><strong>Scenario:</strong> A sensor on a production line stops working. With a <strong>standard sensor</strong>: the line stops, the tech must locate the faulty sensor (e.g. 20 min), replace it and reconfigure (e.g. 15 min). With <strong>IO-Link</strong>: the HMI shows which port and which fault (e.g. wire break); the tech goes directly to the device (e.g. 5 min), replaces it, and parameters are restored automatically (e.g. 5 min).</p>
+      <table class="table mb-3" style="max-width: 600px;">
+        <thead><tr><th>Step</th><th>Standard (minutes)</th><th>IO-Link (minutes)</th></tr></thead>
+        <tbody>
+          <tr><td>Time to find fault / locate device</td><td><input type="text" class="form-control form-control-sm" style="max-width: 100px;" placeholder="e.g. 20"></td><td><input type="text" class="form-control form-control-sm" style="max-width: 100px;" placeholder="e.g. 5"></td></tr>
+          <tr><td>Time to replace and reconfigure</td><td><input type="text" class="form-control form-control-sm" style="max-width: 100px;" placeholder="e.g. 15"></td><td><input type="text" class="form-control form-control-sm" style="max-width: 100px;" placeholder="e.g. 5"></td></tr>
+          <tr><td>Total MTTR</td><td><input type="text" class="form-control form-control-sm" style="max-width: 100px;" placeholder="sum"></td><td><input type="text" class="form-control form-control-sm" style="max-width: 100px;" placeholder="sum"></td></tr>
+        </tbody>
+      </table>
+      <button type="button" class="btn btn-sm btn-outline-secondary mb-2" onclick="toggleSuggested('ws11-suggested')">Show suggested answer</button>
+      <div id="ws11-suggested" class="suggested-answer">Example: Standard 20+15 = 35 min; IO-Link 5+5 = 10 min. IO-Link reduces MTTR by faster fault location and automatic parameter restore.</div>
+    </section>
+
+    <!-- Worksheet 12 -->
+    <section class="card anchor" id="worksheet-12">
+      <h2 class="card-title">Worksheet 12: Final Practical Assessment</h2>
+      <p>Checklist: complete these tasks (in the lab or on the Dashboard where indicated).</p>
+      <div class="mb-2"><label class="d-block mb-1"><input type="checkbox"> Wire (or describe) an IO-Link device correctly (3-wire / M12).</label></div>
+      <div class="mb-2"><label class="d-block mb-1"><input type="checkbox"> Configure (or describe) one parameter you would set on a sensor.</label></div>
+      <p class="mb-1">What did you set? <textarea class="form-control mt-1" rows="1" style="max-width: 100%;" placeholder="Your answer..."></textarea></p>
+      <div class="mb-2"><label class="d-block mb-1"><input type="checkbox"> Trigger a fault (e.g. Simulate Fault on the Dashboard) and interpret the fault code.</label></div>
+      <p class="mb-1">Fault code and your interpretation: <textarea class="form-control mt-1" rows="1" style="max-width: 100%;" placeholder="e.g. 0x02 Short circuit – check wiring"></textarea></p>
+      <div class="mb-2"><label class="d-block mb-1"><input type="checkbox"> Simulate replacing the device (Clear fault on Dashboard) and verify the event list updates.</label></div>
+      <div class="dashboard-box">
+        <strong>Do this on the Dashboard:</strong> Use <a href="/#simulate-fault">Simulate Fault</a> to set then clear a fault; check <a href="/#portDetailsSection">Active Port Details</a> to see Events and decoded process data.
+      </div>
+      <button type="button" class="btn btn-sm btn-outline-secondary mb-2" onclick="toggleSuggested('ws12-suggested')">Show suggested answers</button>
+      <div id="ws12-suggested" class="suggested-answer">Answers depend on your lab setup. For the Dashboard: Simulate Fault shows events in the port card (e.g. &quot;0x02 Short circuit&quot;); clearing the fault removes the event. Decoded process data (temperature, object present, etc.) appears in the same card when the device type is recognized.</div>
+    </section>
+
+    <p class="mt-4 text-muted"><a href="/">Back to Dashboard</a> | <a href="/learn">Learn</a></p>
+  </div>
+
+  <script>
+    function toggleSuggested(id) {
+      var el = document.getElementById(id);
+      if (!el) return;
+      el.classList.toggle('show');
+    }
+    var ws2Correct = { 'ws2-1': 'events', 'ws2-2': 'params', 'ws2-3': 'events', 'ws2-4': 'events' };
+    function checkWorksheet2() {
+      for (var i = 1; i <= 4; i++) {
+        var sel = document.getElementById('ws2-' + i);
+        var res = document.getElementById('ws2-result-' + i);
+        if (!sel || !res) continue;
+        var val = (sel.value || '').trim();
+        var correct = ws2Correct['ws2-' + i];
+        res.textContent = val ? (val === correct ? 'Correct' : 'Incorrect') : '';
+        res.className = 'check-result ' + (val === correct ? 'correct' : (val ? 'incorrect' : ''));
+      }
+    }
+    var ws6Correct = { 'ws6-1': 'process', 'ws6-2': 'event', 'ws6-3': 'service', 'ws6-4': 'process', 'ws6-5': 'event' };
+    function checkWorksheet6() {
+      for (var i = 1; i <= 5; i++) {
+        var sel = document.getElementById('ws6-' + i);
+        var res = document.getElementById('ws6-result-' + i);
+        if (!sel || !res) continue;
+        var val = (sel.value || '').trim();
+        var correct = ws6Correct['ws6-' + i];
+        res.textContent = val ? (val === correct ? 'Correct' : 'Incorrect') : '';
+        res.className = 'check-result ' + (val === correct ? 'correct' : (val ? 'incorrect' : ''));
+      }
+    }
+    function checkWorksheet7() {
+      var q1 = document.querySelector('input[name="ws7-q1"]:checked');
+      var q2 = document.querySelector('input[name="ws7-q2"]:checked');
+      var r1 = document.getElementById('ws7-result-1');
+      var r2 = document.getElementById('ws7-result-2');
+      if (r1) { r1.textContent = q1 ? (q1.value === 'b' ? 'Correct' : 'Incorrect') : ''; r1.className = 'check-result ' + (q1 && q1.value === 'b' ? 'correct' : (q1 ? 'incorrect' : '')); }
+      if (r2) { r2.textContent = q2 ? (q2.value === 'b' ? 'Correct' : 'Incorrect') : ''; r2.className = 'check-result ' + (q2 && q2.value === 'b' ? 'correct' : (q2 ? 'incorrect' : '')); }
+    }
+  </script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js" crossorigin="anonymous"></script>
+</body>
+</html>

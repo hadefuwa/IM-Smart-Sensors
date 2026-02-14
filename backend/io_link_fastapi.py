@@ -17,7 +17,18 @@ import logging
 from typing import Dict, List, Optional, Set
 from datetime import datetime
 
-from decoder import decode_cl50_led, parse_hex_to_bytes
+from decoder import (
+    decode_cl50_led,
+    parse_hex_to_bytes,
+    get_device_type,
+    decode_photo_electric_pdin,
+    decode_temperature_pdin,
+    decode_proximity_pdin,
+    DEVICE_TYPE_STATUS_LED,
+    DEVICE_TYPE_PHOTO_ELECTRIC,
+    DEVICE_TYPE_TEMPERATURE,
+    DEVICE_TYPE_PROXIMITY,
+)
 
 # Configure logging
 logging.basicConfig(
@@ -96,6 +107,10 @@ MAX_HISTORY_SIZE = 100
 
 # Connected WebSocket clients
 connected_clients: Set[WebSocket] = set()
+
+# Simulated fault overlay per port (for training: show fault without touching hardware)
+# Keys: port number (1-4), Values: list of {"code": "0x02", "label": "Short circuit"} or None to clear
+simulated_events_by_port: Dict[int, List[Dict]] = {}
 
 # Configuration
 IFM_MASTER_IP = "192.168.7.4"
@@ -555,6 +570,36 @@ async def update_io_link_config(request: Request):
     })
 
 
+@app.post("/api/io-link/simulate-fault")
+async def simulate_fault(request: Request):
+    """
+    Set or clear a simulated fault for a port (for training: see dashboard reaction without touching hardware).
+    Body: { "port": 1, "event": { "code": "0x02", "label": "Short circuit" } } to set;
+    { "port": 1, "event": null } to clear.
+    """
+    try:
+        body = await request.json()
+    except Exception:
+        raise HTTPException(status_code=400, detail="Invalid JSON body")
+    port_num = body.get("port")
+    if port_num is None:
+        raise HTTPException(status_code=400, detail="port is required")
+    try:
+        port_num = int(port_num)
+    except (TypeError, ValueError):
+        raise HTTPException(status_code=400, detail="port must be 1-4")
+    if port_num < 1 or port_num > 4:
+        raise HTTPException(status_code=400, detail="port must be between 1 and 4")
+    event = body.get("event")
+    if event is None:
+        simulated_events_by_port.pop(port_num, None)
+        return JSONResponse(content={"success": True, "message": f"Simulated fault cleared for port {port_num}", "port": port_num, "event": None})
+    if not isinstance(event, dict) or "label" not in event:
+        raise HTTPException(status_code=400, detail="event must be { code, label }")
+    simulated_events_by_port[port_num] = [{"code": str(event.get("code", "0x00")), "label": str(event["label"])}]
+    return JSONResponse(content={"success": True, "message": f"Simulated fault set for port {port_num}", "port": port_num, "event": simulated_events_by_port[port_num][0]})
+
+
 @app.get("/api/io-link/status")
 async def io_link_status():
     """Get current IO-Link Master status (for HTTP fallback)"""
@@ -593,9 +638,11 @@ async def io_link_port_detail(port_num: int):
         'device_id': '',
         'name': '',
         'serial': '',
+        'device_type': 'unknown',
         'pdin': {'raw': '', 'hex': '', 'bytes': [], 'decoded': {}},
         'pdout': {'raw': '', 'hex': '', 'bytes': [], 'decoded': {}},
-        'parameters': {}
+        'parameters': {},
+        'events': []
     }
     
     async with httpx.AsyncClient() as client:
@@ -610,6 +657,13 @@ async def io_link_port_detail(port_num: int):
             'serial': port_info.get('serial', '')
         })
         
+        # Device type (name-based first, then fallback table)
+        port_data['device_type'] = get_device_type(
+            port_data['vendor_id'],
+            port_data['device_id'],
+            port_data['name']
+        )
+        
         # Get PDin
         pdin_raw = port_info.get('pdin', '')
         if pdin_raw:
@@ -618,8 +672,17 @@ async def io_link_port_detail(port_num: int):
             port_data['pdin'] = {
                 'raw': pdin_raw,
                 'hex': pdin_hex,
-                'bytes': pdin_bytes
+                'bytes': pdin_bytes,
+                'decoded': {}
             }
+            # Decode PDin by device type
+            dtype = port_data['device_type']
+            if dtype == DEVICE_TYPE_PHOTO_ELECTRIC and pdin_bytes:
+                port_data['pdin']['decoded'] = decode_photo_electric_pdin(pdin_bytes)
+            elif dtype == DEVICE_TYPE_TEMPERATURE and len(pdin_bytes) >= 2:
+                port_data['pdin']['decoded'] = decode_temperature_pdin(pdin_bytes)
+            elif dtype == DEVICE_TYPE_PROXIMITY and pdin_bytes:
+                port_data['pdin']['decoded'] = decode_proximity_pdin(pdin_bytes)
         
         # Get PDout and decode
         pdout_raw = port_info.get('pdout', '')
@@ -629,18 +692,40 @@ async def io_link_port_detail(port_num: int):
             port_data['pdout'] = {
                 'raw': pdout_raw,
                 'hex': pdout_hex,
-                'bytes': pdout_bytes
+                'bytes': pdout_bytes,
+                'decoded': {}
             }
-            
-            # Decode LED status if we have 3+ bytes
-            if len(pdout_bytes) >= 3:
+            if port_data['device_type'] == DEVICE_TYPE_STATUS_LED and len(pdout_bytes) >= 3:
                 port_data['pdout']['decoded'] = decode_cl50_led(pdout_bytes)
+        
+        # Events: overlay simulated faults (real device events would come from a separate Master API if available)
+        port_data['events'] = list(simulated_events_by_port.get(port_num) or [])
     
     return JSONResponse(content={
         'success': True,
         'port': port_data,
         'timestamp': time.time()
     })
+
+
+@app.get("/learn", response_class=HTMLResponse)
+async def serve_learn_page():
+    """Serve the Learn page (Smart Sensors, Industry 4.0, IoT)."""
+    learn_path = os.path.join(_FRONTEND_DIR, 'learn.html')
+    if not os.path.exists(learn_path):
+        raise HTTPException(status_code=404, detail="learn.html not found")
+    with open(learn_path, 'r', encoding='utf-8') as f:
+        return HTMLResponse(content=f.read())
+
+
+@app.get("/worksheets", response_class=HTMLResponse)
+async def serve_worksheets_page():
+    """Serve the Worksheets page (IO-Link Industrial Maintenance)."""
+    worksheets_path = os.path.join(_FRONTEND_DIR, 'worksheets.html')
+    if not os.path.exists(worksheets_path):
+        raise HTTPException(status_code=404, detail="worksheets.html not found")
+    with open(worksheets_path, 'r', encoding='utf-8') as f:
+        return HTMLResponse(content=f.read())
 
 
 @app.get("/io-link.html", response_class=HTMLResponse)
