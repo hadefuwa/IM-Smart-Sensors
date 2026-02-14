@@ -23,41 +23,16 @@ export function renderIOLinkMaster() {
 
       <!-- Status card + device image -->
       <div class="grid grid-cols-1 lg:grid-cols-4 gap-4">
-        <div class="card bg-base-200 shadow-xl">
-          <div class="card-body items-center text-center">
-            <img id="productImage" src="${typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.BASE_URL ? import.meta.env.BASE_URL + 'assets/img/AL1300.png' : '/assets/img/AL1300.png'}" alt="AL1300 IO-Link Master" class="max-h-48 object-contain" onerror="this.style.display='none'; document.getElementById('productImagePlaceholder')?.classList.remove('hidden');" />
+        <div class="card bg-base-200 shadow-xl min-h-0 flex flex-col">
+          <div class="card-body items-center justify-center text-center flex-1 min-h-[16rem] lg:min-h-[20rem]">
+            <img id="productImage" src="${typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.BASE_URL ? import.meta.env.BASE_URL + 'assets/img/AL1300.png' : '/assets/img/AL1300.png'}" alt="AL1300 IO-Link Master" class="w-full max-w-full h-auto max-h-72 object-contain" onerror="this.style.display='none'; document.getElementById('productImagePlaceholder')?.classList.remove('hidden');" />
             <div id="productImagePlaceholder" class="hidden text-base-content/60">AL1300 IO-Link Master</div>
           </div>
         </div>
         <div class="lg:col-span-3 card bg-base-200 shadow-xl">
           <div class="card-body">
             <h2 class="card-title text-base-content" id="deviceName">IO-Link Master</h2>
-            <p class="text-sm text-base-content/70">Connection and data source</p>
-            <style>
-              .connection-glow-dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 6px; vertical-align: middle; }
-              .connection-glow-dot.glow-green { background: #22c55e; box-shadow: 0 0 10px #22c55e, 0 0 20px #22c55e; }
-              .connection-glow-dot.glow-red { background: #ef4444; box-shadow: 0 0 10px #ef4444, 0 0 20px #ef4444; }
-              .connection-glow-dot.glow-checking { background: #eab308; box-shadow: 0 0 8px #eab308; }
-            </style>
-            <div class="grid grid-cols-2 gap-2 mt-2 text-sm">
-              <div class="flex items-center gap-1"><span class="text-base-content/60">Connection:</span> <span id="connectionGlow" class="connection-glow-dot glow-checking" title="Status"></span><span id="connectionStatus" class="font-medium">Checking...</span></div>
-              <div><span class="text-base-content/60">Data Source:</span> <span id="dataSource">-</span></div>
-              <div><span class="text-base-content/60">Last Update:</span> <span id="lastUpdate">-</span></div>
-              <div><span class="text-base-content/60">Poll:</span> <span id="pollInterval">-</span></div>
-            </div>
-            <div class="flex gap-2 mt-3">
-              <button type="button" class="btn btn-primary btn-sm" id="io-link-refresh-btn">Refresh Now</button>
-            </div>
-            <div class="mt-3 pt-3 border-t border-base-300">
-              <p class="text-xs text-base-content/60 mb-2">IO-Link Master address</p>
-              <div class="flex flex-wrap items-center gap-2">
-                <input type="text" id="masterIpInput" placeholder="192.168.7.4" class="input input-bordered input-sm w-36" />
-                <span class="text-base-content/60 text-sm">Port</span>
-                <input type="number" id="masterPortInput" placeholder="80" min="1" max="65535" class="input input-bordered input-sm w-20" />
-                <button type="button" class="btn btn-primary btn-sm" id="io-link-save-config-btn">Save</button>
-                <span id="configMessage" class="text-sm text-success"></span>
-              </div>
-            </div>
+            <p class="text-sm text-base-content/70">Port status, supervision, and software versions. Connection and address are set in the bar at the top.</p>
           </div>
         </div>
       </div>
@@ -133,7 +108,7 @@ export function renderIOLinkMaster() {
       </div>
 
       <!-- Simulate Fault (Training) -->
-      <div class="card bg-base-200 shadow-xl">
+      <div id="simulate-fault" class="card bg-base-200 shadow-xl">
         <div class="card-body">
           <h2 class="card-title text-base-content">Simulate Fault (Training)</h2>
           <p class="text-sm text-base-content/70">See how the dashboard reacts to a fault without touching hardware</p>
@@ -162,7 +137,7 @@ export function renderIOLinkMaster() {
       </div>
 
       <!-- Active Port Details -->
-      <div class="card bg-base-200 shadow-xl">
+      <div id="portDetailsSection" class="card bg-base-200 shadow-xl">
         <div class="card-body">
           <h2 class="card-title text-base-content">Active Port Details</h2>
           <p class="text-sm text-base-content/70">Process data and decoded device status</p>
@@ -582,10 +557,6 @@ function setupSimulateFault() {
 }
 
 export function initIOLinkPage() {
-  const learnLink = document.getElementById('sidebar-learn-link');
-  if (learnLink) learnLink.href = `${API_BASE}/learn`;
-  const worksheetsLink = document.getElementById('sidebar-worksheets-link');
-  if (worksheetsLink) worksheetsLink.href = `${API_BASE}/worksheets`;
   ioLinkCharts.forEach(c => c.destroy());
   ioLinkCharts = [];
   if (reconnectTimer) clearTimeout(reconnectTimer);

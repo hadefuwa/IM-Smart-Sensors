@@ -2,6 +2,8 @@ import './style.css';
 import noUiSlider from 'nouislider';
 import 'nouislider/dist/nouislider.css';
 import { renderIOLinkMaster, initIOLinkPage, destroyIOLinkPage } from './io-link-page.js';
+import { renderLearnPage } from './learn-page.js';
+import { renderWorksheetsPage, initWorksheetsPage } from './worksheets-page.js';
 import {
   Chart,
   LineController,
@@ -5938,7 +5940,9 @@ const PAGES = {
   'components': renderComponentGallery,
   'settings': renderSettingsPage,
   'about': renderAboutPage,
-  'io-link-master': renderIOLinkMaster
+  'io-link-master': renderIOLinkMaster,
+  'learn': renderLearnPage,
+  'worksheets': renderWorksheetsPage
 };
 
 // ================================================================
@@ -5978,16 +5982,29 @@ app.innerHTML = `
       </div>
     </header>
 
-    <!-- Connection Status Bar -->
-    <div id="connection-status-bar" class="bg-base-300 border-b-2 border-base-content/10 px-4 py-2 min-h-[40px] flex items-center justify-center shadow-sm">
+    <!-- Connection Status Bar (IO-Link Master: status, config, refresh) -->
+    <div id="connection-status-bar" class="bg-base-300 border-b-2 border-base-content/10 px-4 py-2 min-h-[40px] flex flex-wrap items-center justify-center gap-x-4 gap-y-2 shadow-sm">
+      <style>
+        .connection-glow-dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 6px; vertical-align: middle; }
+        .connection-glow-dot.glow-green { background: #22c55e; box-shadow: 0 0 10px #22c55e; }
+        .connection-glow-dot.glow-red { background: #ef4444; box-shadow: 0 0 10px #ef4444; }
+        .connection-glow-dot.glow-checking { background: #eab308; box-shadow: 0 0 8px #eab308; }
+      </style>
       <div class="flex items-center gap-2">
-        <span class="text-sm font-medium">Connection Status:</span>
-        <div id="connection-status" class="flex items-center gap-2">
-          <span id="connection-indicator" class="flex h-3 w-3 rounded-full bg-success animate-pulse"></span>
-          <span id="connection-text" class="text-sm font-semibold text-success">Connected</span>
-        </div>
-        <span class="text-xs text-base-content/60 ml-2">•</span>
-        <span id="connection-time" class="text-xs text-base-content/60">Last connected: Just now</span>
+        <span id="connectionGlow" class="connection-glow-dot glow-checking" title="Status"></span>
+        <span id="connectionStatus" class="text-sm font-medium">Checking...</span>
+      </div>
+      <span class="text-base-content/60 text-sm">Data source: <span id="dataSource">-</span></span>
+      <span class="text-base-content/60 text-sm">Last update: <span id="lastUpdate">-</span></span>
+      <span class="text-base-content/60 text-sm">Poll: <span id="pollInterval">-</span></span>
+      <div class="flex items-center gap-2 border-l border-base-content/20 pl-4">
+        <span class="text-xs text-base-content/60">IO-Link Master</span>
+        <input type="text" id="masterIpInput" placeholder="192.168.7.4" class="input input-bordered input-sm w-28 max-w-xs" />
+        <span class="text-base-content/60 text-xs">Port</span>
+        <input type="number" id="masterPortInput" placeholder="80" min="1" max="65535" class="input input-bordered input-sm w-16" />
+        <button type="button" class="btn btn-primary btn-sm" id="io-link-save-config-btn">Save</button>
+        <button type="button" class="btn btn-ghost btn-sm" id="io-link-refresh-btn">Refresh</button>
+        <span id="configMessage" class="text-xs text-success"></span>
       </div>
     </div>
 
@@ -6018,8 +6035,8 @@ app.innerHTML = `
             </span>
           </li>
           <li><a href="#" data-page="io-link-master">IO-Link Master</a></li>
-          <li><a href="#" id="sidebar-learn-link" target="_blank" rel="noopener">Learn (Smart Sensors, Industry 4.0)</a></li>
-          <li><a href="#" id="sidebar-worksheets-link" target="_blank" rel="noopener">Worksheets</a></li>
+          <li><a href="#" data-page="learn">Learn (Smart Sensors, Industry 4.0)</a></li>
+          <li><a href="#" data-page="worksheets">Worksheets</a></li>
           <!-- Commented out: other template pages (uncomment to restore)
           <li><a href="#" data-page="hmi-dashboard-1">Electrical Machines</a></li>
           <li><a href="#" data-page="hmi-dashboard-2">Wind Tunnel</a></li>
@@ -6146,6 +6163,8 @@ function renderPage(pageKey) {
     initializeComponentLibraryTabs();
   } else if (pageKey === 'io-link-master') {
     initIOLinkPage();
+  } else if (pageKey === 'worksheets') {
+    initWorksheetsPage();
   }
 }
 
@@ -6962,21 +6981,30 @@ function initializeHMICharts4() {
   }, 10);
 }
 
-// Sidebar navigation click handling.
-const sidebarMenu = document.getElementById('sidebar-menu');
-sidebarMenu.addEventListener('click', (event) => {
+// In-app navigation: any link with data-page (sidebar or inside main content) switches page.
+document.addEventListener('click', (event) => {
   const link = event.target.closest('a[data-page]');
   if (!link) return;
   event.preventDefault();
 
   const pageKey = link.getAttribute('data-page');
+  const scrollId = link.getAttribute('data-scroll');
 
-  // Update active class.
-  sidebarMenu.querySelectorAll('a[data-page]').forEach((a) => {
-    a.classList.toggle('active', a === link);
-  });
+  const sidebarMenu = document.getElementById('sidebar-menu');
+  if (sidebarMenu) {
+    sidebarMenu.querySelectorAll('a[data-page]').forEach((a) => {
+      a.classList.toggle('active', a.getAttribute('data-page') === pageKey);
+    });
+  }
 
   renderPage(pageKey);
+
+  if (scrollId) {
+    setTimeout(function () {
+      const el = document.getElementById(scrollId);
+      if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 150);
+  }
 });
 
 // Admin button click handling (in header) - set up after DOM is created
@@ -7232,54 +7260,30 @@ setTimeout(() => {
   });
 }, 0);
 
-// ================================================================
-// CONNECTION STATUS MANAGEMENT (TEMPLATE STUB)
-// ================================================================
-// TODO: Implement actual device connection detection logic here
-// This is a placeholder template for future Matrix TSL projects
-
-setTimeout(() => {
-  const connectionIndicator = document.getElementById('connection-indicator');
-  const connectionText = document.getElementById('connection-text');
-  const connectionTime = document.getElementById('connection-time');
-
-  if (!connectionIndicator || !connectionText || !connectionTime) return;
-
-  // Template function to update connection status UI
-  // TODO: Replace with actual connection status from device communication
-  function updateConnectionStatusUI(isConnected) {
-    if (isConnected) {
-      connectionIndicator.classList.remove('bg-error');
-      connectionIndicator.classList.add('bg-success');
-      connectionText.textContent = 'Connected';
-      connectionText.classList.remove('text-error');
-      connectionText.classList.add('text-success');
-      const now = new Date();
-      const timeStr = now.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-      connectionTime.textContent = `Last connected: ${timeStr}`;
-    } else {
-      connectionIndicator.classList.remove('bg-success');
-      connectionIndicator.classList.add('bg-error');
-      connectionText.textContent = 'Disconnected';
-      connectionText.classList.remove('text-success');
-      connectionText.classList.add('text-error');
-      const now = new Date();
-      const timeStr = now.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-      connectionTime.textContent = `Last disconnected: ${timeStr}`;
-    }
-  }
-
-  // TEMPLATE STUB: Initialize connection status
-  // TODO: Replace with actual device connection check
-  // Example: checkDeviceConnection().then(status => updateConnectionStatusUI(status))
-  const isConnected = true; // Placeholder: default to connected for template
-  updateConnectionStatusUI(isConnected);
-
-  // TEMPLATE STUB: Expose function for device communication integration
-  // TODO: Call this function when device connection status changes
-  // Example: window.updateConnectionStatus = (status) => updateConnectionStatusUI(status);
-  window.updateConnectionStatus = updateConnectionStatusUI;
-}, 0);
+// Load IO-Link config into top bar inputs on app load (so address is shown before opening IO-Link page).
+// If the backend is not running, fetch will fail; we ignore it so the app still loads.
+(function () {
+  const API_BASE = window.IO_LINK_API_BASE || 'http://localhost:8000';
+  fetch(API_BASE + '/api/io-link/config')
+    .then(function (r) {
+      if (!r.ok) return null;
+      try {
+        return r.json();
+      } catch (e) {
+        return null;
+      }
+    })
+    .then(function (data) {
+      if (!data || !data.io_link) return;
+      try {
+        const ipEl = document.getElementById('masterIpInput');
+        const portEl = document.getElementById('masterPortInput');
+        if (ipEl) ipEl.value = data.io_link.master_ip || '';
+        if (portEl) portEl.value = (data.io_link.port != null ? data.io_link.port : 80) + '';
+      } catch (e) {}
+    })
+    .catch(function () {});
+})();
 
 // Initial page: IO-Link Master dashboard
 renderPage('io-link-master');
