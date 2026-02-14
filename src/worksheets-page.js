@@ -1,25 +1,13 @@
 /**
  * Worksheets page – IO-Link Industrial Maintenance (Matrix template style)
- * Index view + single-worksheet view (one worksheet per "page") with extra info.
+ * Index view (2-column large cards) + single-worksheet view (one worksheet per "page") with extra info.
  */
-
-const LEARNING_OBJECTIVES_HTML = `
-  <ol class="list-decimal list-inside space-y-3 text-base-content/90 leading-relaxed pl-1">
-    <li><strong class="text-base-content">Understand IO-Link Fundamentals</strong> – Explain what IO-Link is and how it differs from standard digital/analog signals. Identify key components: IO-Link master, IO-Link devices, standard sensors/actuators.</li>
-    <li><strong class="text-base-content">Recognize Maintenance Benefits</strong> – Describe how IO-Link enables predictive and preventive maintenance. Understand diagnostic data (e.g., cable break, sensor contamination, temperature warnings).</li>
-    <li><strong class="text-base-content">Setup and Wiring</strong> – Demonstrate correct wiring of an IO-Link device using standard 3-wire cables. Differentiate between IO-Link, standard I/O, and fieldbus connections.</li>
-    <li><strong class="text-base-content">Commissioning and Configuration</strong> – Use IO-Device Description files (IODDs) to identify and configure devices. Explain the role of parameter storage and automatic device replacement.</li>
-    <li><strong class="text-base-content">Fault Finding and Troubleshooting</strong> – Access diagnostic information from an IO-Link device via an HMI or engineering software. Interpret diagnostic codes to identify common faults (cable damage, wrong configuration, device failure). Practice replacing a faulty sensor and restoring parameters automatically.</li>
-    <li><strong class="text-base-content">Data Handling for Maintenance</strong> – Explain the difference between process data, service data, and event data. Show how maintenance teams can use this data to plan interventions.</li>
-    <li><strong class="text-base-content">Integration with PLCs / SCADA</strong> – Demonstrate how IO-Link diagnostic data appears in PLC/HMI systems. Explain the value of remote monitoring in reducing downtime.</li>
-    <li><strong class="text-base-content">Practical Applications in Maintenance</strong> – Replace and configure an IO-Link sensor in a simulated industrial system. Use IO-Link diagnostics to reduce MTTR (Mean Time to Repair). Compare maintenance tasks on a standard sensor vs. an IO-Link sensor.</li>
-  </ol>
-`;
 
 const WORKSHEETS = [
   {
     id: 1,
     title: 'Introduction to IO-Link',
+    shortDesc: 'Components, signals, one cable.',
     estimatedTime: 'About 10 min',
     whyItMatters: 'Understanding IO-Link basics is the foundation for all maintenance tasks. It helps you see why one cable can carry data, parameters, and diagnostics instead of just on/off.',
     relatedLearn: 'Learn: Industry 4.0 & IoT',
@@ -46,6 +34,7 @@ const WORKSHEETS = [
   {
     id: 2,
     title: 'Benefits for Maintenance',
+    shortDesc: 'Match problems to IO-Link features.',
     estimatedTime: 'About 15 min',
     whyItMatters: 'Matching IO-Link features to real maintenance problems shows how diagnostics and parameter storage reduce downtime and guesswork.',
     relatedLearn: 'Learn: Industry 4.0, Smart Sensors',
@@ -114,6 +103,7 @@ const WORKSHEETS = [
   {
     id: 3,
     title: 'Cabling and Connections',
+    shortDesc: 'Three-wire cables and M12.',
     estimatedTime: 'About 10 min',
     whyItMatters: 'Correct wiring prevents faults and saves time. IO-Link uses the same 3-wire standard you may already know from other sensors.',
     relatedLearn: 'Learn: Smart Sensors',
@@ -137,6 +127,7 @@ const WORKSHEETS = [
   {
     id: 4,
     title: 'Device Identification (IODD Files)',
+    shortDesc: 'Vendor ID, device ID, IODD.',
     estimatedTime: 'About 10 min',
     whyItMatters: 'IODD files let tools and HMIs show the right parameters and diagnostics. Knowing where Vendor ID and Device ID live helps you commission and troubleshoot.',
     relatedLearn: 'Learn: Digital Twin, Smart Sensors',
@@ -158,6 +149,7 @@ const WORKSHEETS = [
   {
     id: 5,
     title: 'Parameter Configuration',
+    shortDesc: 'Read and write parameters via master.',
     estimatedTime: 'About 15 min',
     whyItMatters: 'Parameters control sensor behaviour (e.g. filter time, switching distance). Storing them in the master means fast, error-free replacement.',
     relatedLearn: 'Learn: Smart Sensors',
@@ -178,6 +170,7 @@ const WORKSHEETS = [
   {
     id: 6,
     title: 'Diagnostics Overview',
+    shortDesc: 'Process, service, and event data.',
     estimatedTime: 'About 15 min',
     whyItMatters: 'Process, service, and event data are used differently. Knowing the difference helps you find the right data for maintenance decisions.',
     relatedLearn: 'Learn: Smart Sensors, Temperature, Proximity',
@@ -203,6 +196,7 @@ const WORKSHEETS = [
   {
     id: 7,
     title: 'Troubleshooting Scenarios',
+    shortDesc: 'Fault codes and maintenance actions.',
     estimatedTime: 'About 15 min',
     whyItMatters: 'Interpreting fault codes quickly reduces MTTR. Short circuit vs lens dirty lead to different actions; IO-Link tells you which.',
     relatedLearn: 'Learn: Photo Electric, Status LED',
@@ -231,6 +225,7 @@ const WORKSHEETS = [
   {
     id: 8,
     title: 'Device Replacement',
+    shortDesc: 'Automatic parameter restore after replacement.',
     estimatedTime: 'About 10 min',
     whyItMatters: 'Automatic parameter restore after replacement cuts downtime and human error. You see this in practice when you clear a fault and the "new" device comes back with the same settings.',
     relatedLearn: 'Learn: Smart Sensors, Proximity',
@@ -257,6 +252,7 @@ const WORKSHEETS = [
   {
     id: 9,
     title: 'Maintenance Data Handling',
+    shortDesc: 'Event logs and preventive planning.',
     estimatedTime: 'About 15 min',
     whyItMatters: 'Event logs and trends turn reactive repairs into planned interventions. You use the same data the Dashboard shows for Events and diagnostics.',
     relatedLearn: 'Learn: Temperature, Proximity, Industry 4.0',
@@ -280,6 +276,7 @@ const WORKSHEETS = [
   {
     id: 10,
     title: 'PLC and HMI Integration',
+    shortDesc: 'Diagnostics on HMI and PLC.',
     estimatedTime: 'About 15 min',
     whyItMatters: 'Knowing how diagnostics show up in an HMI or PLC helps you design screens and alarms so maintenance gets the right information remotely.',
     relatedLearn: 'Learn: Digital Twin, Status LED',
@@ -299,6 +296,7 @@ const WORKSHEETS = [
   {
     id: 11,
     title: 'Case Study – Standard vs IO-Link Sensor',
+    shortDesc: 'Compare MTTR and repair times.',
     estimatedTime: 'About 20 min',
     whyItMatters: 'Comparing MTTR for standard vs IO-Link makes the business case clear: less time to find the fault and no manual reconfiguration after replacement.',
     relatedLearn: 'Learn: Photo Electric, Proximity, Industry 4.0',
@@ -325,6 +323,7 @@ const WORKSHEETS = [
   {
     id: 12,
     title: 'Final Practical Assessment',
+    shortDesc: 'Checklist: wire, configure, fault, replace.',
     estimatedTime: 'About 30 min',
     whyItMatters: 'This checklist ties everything together: wiring, parameters, fault interpretation, and replacement. Use it as a final check before moving to real equipment.',
     relatedLearn: 'Learn: all chapters',
@@ -351,13 +350,21 @@ const WORKSHEETS = [
 ];
 
 function buildIndexHtml() {
-  const links = WORKSHEETS.map(function (ws, i) {
+  const cards = WORKSHEETS.map(function (ws, i) {
     const isEven = i % 2 === 0;
-    const btnClass = isEven ? 'btn btn-outline btn-sm justify-start font-normal text-left ws-index-link border-primary/40 hover:border-primary hover:bg-primary/10' : 'btn btn-outline btn-sm justify-start font-normal text-left ws-index-link border-secondary/40 hover:border-secondary hover:bg-secondary/10';
-    return '<button type="button" class="' + btnClass + '" data-worksheet-index="' + ws.id + '"><span class="font-semibold text-primary mr-2">' + ws.id + '.</span>' + ws.title + '</button>';
+    const borderClass = isEven ? 'border-primary/30 hover:border-primary' : 'border-secondary/30 hover:border-secondary';
+    const badgeClass = isEven ? 'badge-primary' : 'badge-secondary';
+    const desc = ws.shortDesc || '';
+    return `
+      <button type="button" class="ws-index-link w-full text-left rounded-2xl border-2 bg-base-200/95 shadow-lg hover:shadow-xl transition-all duration-200 p-6 min-h-[140px] flex flex-col justify-center ${borderClass}" data-worksheet-index="${ws.id}">
+        <span class="badge ${badgeClass} badge-sm w-fit mb-2">${ws.id}</span>
+        <h3 class="font-bold text-lg text-base-content leading-tight">${ws.title}</h3>
+        <p class="text-sm text-base-content/70 mt-1">${desc}</p>
+      </button>
+    `;
   }).join('');
   return `
-    <div class="worksheets-index max-w-4xl mx-auto space-y-6 relative min-h-full py-2 rounded-2xl" style="background: linear-gradient(160deg, hsl(var(--b2)) 0%, hsl(var(--b3)) 40%, hsl(var(--p) / 0.06) 100%);">
+    <div class="worksheets-index max-w-5xl mx-auto space-y-6 relative min-h-full py-2 rounded-2xl" style="background: linear-gradient(160deg, hsl(var(--b2)) 0%, hsl(var(--b3)) 40%, hsl(var(--p) / 0.06) 100%);">
       <div class="absolute top-0 right-0 w-64 h-64 opacity-20 pointer-events-none" aria-hidden="true">
         <svg viewBox="0 0 100 100" fill="none" class="text-primary"><path d="M20 20h60v60H20V20z" stroke="currentColor" stroke-width="1.5" fill="none"/><path d="M30 35h40M30 50h40M30 65h25" stroke="currentColor" stroke-width="1"/></svg>
       </div>
@@ -368,37 +375,19 @@ function buildIndexHtml() {
           </div>
           <div>
             <h1 class="text-3xl font-bold text-base-content tracking-tight">Worksheets: IO-Link in Industrial Maintenance</h1>
-            <p class="mt-2 text-base-content/80 text-lg leading-relaxed">Learning objectives and 12 practical worksheets. Use the Dashboard to complete tasks where indicated.</p>
+            <p class="mt-2 text-base-content/80 text-lg leading-relaxed">12 practical worksheets. Use the Dashboard to complete tasks where indicated.</p>
           </div>
         </div>
       </header>
-      <div class="relative card bg-base-200 shadow-xl border-2 border-primary/20 rounded-2xl overflow-hidden">
-        <div class="card-body gap-4">
-          <h2 class="card-title text-xl text-base-content border-b-2 border-primary/30 pb-2 gap-2">
-            <span class="rounded-lg bg-primary/20 p-1.5"><svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg></span>
-            Learning Objectives
-          </h2>
-          ${LEARNING_OBJECTIVES_HTML}
-        </div>
+      <div class="relative grid grid-cols-1 sm:grid-cols-2 gap-5">
+        ${cards}
       </div>
-      <div class="relative card bg-base-200 shadow-xl border-2 border-secondary/20 rounded-2xl overflow-hidden">
-        <div class="card-body gap-4">
-          <h2 class="card-title text-xl text-base-content border-b-2 border-secondary/30 pb-2 gap-2">
-            <span class="rounded-lg bg-secondary/20 p-1.5"><svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-secondary" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16" /></svg></span>
-            Worksheet Index
-          </h2>
-          <p class="text-base-content/80 text-sm">Choose a worksheet to open:</p>
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            ${links}
-          </div>
-          <div class="pt-2"><button type="button" class="btn btn-ghost btn-sm gap-2 ws-print-btn"><svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5M7 9V3m5 4v10m0 0v4m0-4h4" /></svg>Print</button></div>
-        </div>
-      </div>
-      <footer class="relative pt-4 border-t-2 border-base-300 flex flex-wrap gap-2">
+      <footer class="relative pt-4 border-t-2 border-base-300 flex flex-wrap gap-2 items-center justify-between">
         <a href="#" data-page="io-link-master" class="btn btn-outline btn-sm gap-2">
           <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>
           Back to Dashboard
         </a>
+        <button type="button" class="btn btn-ghost btn-sm gap-2 ws-print-btn"><svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5M7 9V3m5 4v10m0 0v4m0-4h4" /></svg>Print</button>
       </footer>
     </div>
   `;
