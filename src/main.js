@@ -2,8 +2,9 @@ import './style.css';
 import noUiSlider from 'nouislider';
 import 'nouislider/dist/nouislider.css';
 import { renderIOLinkMaster, initIOLinkPage, destroyIOLinkPage } from './io-link-page.js';
-import { renderLearnPage } from './learn-page.js';
+import { renderLearnPage, initLearnPage } from './learn-page.js';
 import { renderWorksheetsPage, initWorksheetsPage } from './worksheets-page.js';
+import { renderSettingsPage, initSettingsPage, applySavedAppSettings } from './settings-page.js';
 import {
   Chart,
   LineController,
@@ -4979,9 +4980,9 @@ function renderComponentGallery() {
     </section>
   `;
 }
-function renderSettingsPage() {
+function renderEngineeringSettingsTemplate() {
   return `
-    <!-- Settings Page - engineering control software -->
+    <!-- Settings Page - engineering control software (template) -->
     <section class="space-y-4">
       <div class="card bg-base-200 shadow">
         <div class="card-body">
@@ -5938,11 +5939,11 @@ const PAGES = {
   'faults-1': renderFaultsTemplate1,
   'tasks-1': renderTasksTemplate1,
   'components': renderComponentGallery,
-  'settings': renderSettingsPage,
   'about': renderAboutPage,
   'io-link-master': renderIOLinkMaster,
   'learn': renderLearnPage,
-  'worksheets': renderWorksheetsPage
+  'worksheets': renderWorksheetsPage,
+  'settings': renderSettingsPage
 };
 
 // ================================================================
@@ -5982,7 +5983,7 @@ app.innerHTML = `
       </div>
     </header>
 
-    <!-- Connection Status Bar (IO-Link Master: status, config, refresh) -->
+    <!-- Connection Status Bar (IO-Link Master: status only; config is in Settings page) -->
     <div id="connection-status-bar" class="bg-base-300 border-b-2 border-base-content/10 px-4 py-2 min-h-[40px] flex flex-wrap items-center justify-center gap-x-4 gap-y-2 shadow-sm">
       <style>
         .connection-glow-dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 6px; vertical-align: middle; }
@@ -5997,15 +5998,7 @@ app.innerHTML = `
       <span class="text-base-content/60 text-sm">Data source: <span id="dataSource">-</span></span>
       <span class="text-base-content/60 text-sm">Last update: <span id="lastUpdate">-</span></span>
       <span class="text-base-content/60 text-sm">Poll: <span id="pollInterval">-</span></span>
-      <div class="flex items-center gap-2 border-l border-base-content/20 pl-4">
-        <span class="text-xs text-base-content/60">IO-Link Master</span>
-        <input type="text" id="masterIpInput" placeholder="192.168.7.4" class="input input-bordered input-sm w-28 max-w-xs" />
-        <span class="text-base-content/60 text-xs">Port</span>
-        <input type="number" id="masterPortInput" placeholder="80" min="1" max="65535" class="input input-bordered input-sm w-16" />
-        <button type="button" class="btn btn-primary btn-sm" id="io-link-save-config-btn">Save</button>
-        <button type="button" class="btn btn-ghost btn-sm" id="io-link-refresh-btn">Refresh</button>
-        <span id="configMessage" class="text-xs text-success"></span>
-      </div>
+      <a href="#" data-page="settings" class="btn btn-ghost btn-sm ml-2">Settings</a>
     </div>
 
     <!-- Body with sidebar + main content -->
@@ -6037,6 +6030,7 @@ app.innerHTML = `
           <li><a href="#" data-page="io-link-master">IO-Link Master</a></li>
           <li><a href="#" data-page="learn">Learn (Smart Sensors, Industry 4.0)</a></li>
           <li><a href="#" data-page="worksheets">Worksheets</a></li>
+          <li><a href="#" data-page="settings">Settings</a></li>
           <!-- Commented out: other template pages (uncomment to restore)
           <li><a href="#" data-page="hmi-dashboard-1">Electrical Machines</a></li>
           <li><a href="#" data-page="hmi-dashboard-2">Wind Tunnel</a></li>
@@ -6165,6 +6159,10 @@ function renderPage(pageKey) {
     initIOLinkPage();
   } else if (pageKey === 'worksheets') {
     initWorksheetsPage();
+  } else if (pageKey === 'settings') {
+    initSettingsPage();
+  } else if (pageKey === 'learn') {
+    initLearnPage();
   }
 }
 
@@ -7100,13 +7098,16 @@ if (savedTheme === 'light' || savedTheme === 'dark') {
 }
 setMatrixLogoForTheme(html.getAttribute('data-theme'));
 
-// When user changes theme
+// When user changes theme (header dropdown)
 themeSelect.addEventListener('change', () => {
   const newTheme = themeSelect.value;
   html.setAttribute('data-theme', newTheme);
   localStorage.setItem('matrix-theme', newTheme);
   setMatrixLogoForTheme(newTheme);
 });
+
+// Apply saved app settings (e.g. hide connection bar if user turned it off in Settings)
+applySavedAppSettings();
 
 // ================================================================
 // SIDEBAR COLLAPSE/EXPAND FUNCTIONALITY
@@ -7259,31 +7260,6 @@ setTimeout(() => {
     }, 250);
   });
 }, 0);
-
-// Load IO-Link config into top bar inputs on app load (so address is shown before opening IO-Link page).
-// If the backend is not running, fetch will fail; we ignore it so the app still loads.
-(function () {
-  const API_BASE = window.IO_LINK_API_BASE || 'http://localhost:8000';
-  fetch(API_BASE + '/api/io-link/config')
-    .then(function (r) {
-      if (!r.ok) return null;
-      try {
-        return r.json();
-      } catch (e) {
-        return null;
-      }
-    })
-    .then(function (data) {
-      if (!data || !data.io_link) return;
-      try {
-        const ipEl = document.getElementById('masterIpInput');
-        const portEl = document.getElementById('masterPortInput');
-        if (ipEl) ipEl.value = data.io_link.master_ip || '';
-        if (portEl) portEl.value = (data.io_link.port != null ? data.io_link.port : 80) + '';
-      } catch (e) {}
-    })
-    .catch(function () {});
-})();
 
 // Initial page: IO-Link Master dashboard
 renderPage('io-link-master');

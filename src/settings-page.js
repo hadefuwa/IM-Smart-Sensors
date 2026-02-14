@@ -1,0 +1,125 @@
+/**
+ * Settings page – App settings (theme, etc.) and IO-Link Master connection config.
+ */
+
+import { loadMasterConfig, saveMasterConfig, refreshIOLinkData } from './io-link-page.js';
+
+const APP_THEME_KEY = 'matrix-theme';
+const APP_CONNECTION_BAR_KEY = 'matrix-show-connection-bar';
+
+function getBaseUrl() {
+  return (typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.BASE_URL) ? import.meta.env.BASE_URL : '';
+}
+
+function applyTheme(theme) {
+  if (theme !== 'light' && theme !== 'dark') return;
+  const html = document.documentElement;
+  html.setAttribute('data-theme', theme);
+  localStorage.setItem(APP_THEME_KEY, theme);
+  const headerSelect = document.getElementById('theme-select');
+  if (headerSelect) headerSelect.value = theme;
+  const logo = document.getElementById('header-matrix-logo');
+  if (logo) logo.src = getBaseUrl() + (theme === 'dark' ? 'matrix.png' : 'matrix.svg');
+}
+
+function applyConnectionBarVisible(visible) {
+  const bar = document.getElementById('connection-status-bar');
+  if (bar) bar.style.display = visible ? '' : 'none';
+  localStorage.setItem(APP_CONNECTION_BAR_KEY, visible ? '1' : '0');
+}
+
+export function renderSettingsPage() {
+  return `
+    <div class="max-w-2xl mx-auto space-y-6">
+      <header class="pb-4 border-b border-base-300">
+        <h1 class="text-3xl font-bold text-base-content tracking-tight">Settings</h1>
+        <p class="mt-2 text-base-content/80">App appearance and IO-Link Master connection.</p>
+      </header>
+
+      <div class="card bg-base-200 shadow-xl border border-base-300">
+        <div class="card-body gap-4">
+          <h2 class="card-title text-lg text-base-content border-b border-base-300 pb-2">App</h2>
+          <div class="form-control gap-2">
+            <label class="label" for="settings-theme-select">
+              <span class="label-text font-medium text-base-content">Default theme</span>
+            </label>
+            <select id="settings-theme-select" class="select select-bordered select-sm w-full max-w-xs">
+              <option value="light">Light</option>
+              <option value="dark">Dark</option>
+            </select>
+            <p class="text-xs text-base-content/60">Applies immediately and is saved for next time.</p>
+          </div>
+          <div class="form-control gap-2">
+            <label class="label cursor-pointer gap-2 justify-start">
+              <input type="checkbox" id="settings-show-connection-bar" class="checkbox checkbox-sm" checked />
+              <span class="label-text font-medium text-base-content">Show connection status bar</span>
+            </label>
+            <p class="text-xs text-base-content/60">The bar below the header with connection status and Settings link.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="card bg-base-200 shadow-xl border border-base-300">
+        <div class="card-body gap-4">
+          <h2 class="card-title text-lg text-base-content border-b border-base-300 pb-2">IO-Link Master</h2>
+          <div class="form-control gap-2">
+            <label class="label" for="masterIpInput">
+              <span class="label-text font-medium text-base-content">Host (IP or hostname)</span>
+            </label>
+            <input type="text" id="masterIpInput" placeholder="192.168.7.4" class="input input-bordered input-sm w-full max-w-xs" />
+          </div>
+          <div class="form-control gap-2">
+            <label class="label" for="masterPortInput">
+              <span class="label-text font-medium text-base-content">Port</span>
+            </label>
+            <input type="number" id="masterPortInput" placeholder="80" min="1" max="65535" class="input input-bordered input-sm w-24" />
+          </div>
+          <div class="flex flex-wrap items-center gap-2 pt-2">
+            <button type="button" class="btn btn-primary btn-sm" id="io-link-save-config-btn">Save</button>
+            <button type="button" class="btn btn-ghost btn-sm" id="io-link-refresh-btn">Refresh</button>
+            <span id="configMessage" class="text-sm text-success"></span>
+          </div>
+        </div>
+      </div>
+      <footer class="pt-4 border-t border-base-300">
+        <a href="#" data-page="io-link-master" class="btn btn-outline btn-sm gap-2">Back to IO-Link Master</a>
+      </footer>
+    </div>
+  `;
+}
+
+export function initSettingsPage() {
+  loadMasterConfig();
+  const saveBtn = document.getElementById('io-link-save-config-btn');
+  const refreshBtn = document.getElementById('io-link-refresh-btn');
+  if (saveBtn) saveBtn.onclick = saveMasterConfig;
+  if (refreshBtn) refreshBtn.onclick = refreshIOLinkData;
+
+  const themeSelect = document.getElementById('settings-theme-select');
+  if (themeSelect) {
+    const saved = localStorage.getItem(APP_THEME_KEY);
+    themeSelect.value = (saved === 'light' || saved === 'dark') ? saved : 'dark';
+    themeSelect.addEventListener('change', function () {
+      applyTheme(themeSelect.value);
+    });
+  }
+
+  const connectionBarCheck = document.getElementById('settings-show-connection-bar');
+  if (connectionBarCheck) {
+    const saved = localStorage.getItem(APP_CONNECTION_BAR_KEY);
+    connectionBarCheck.checked = saved !== '0';
+    applyConnectionBarVisible(connectionBarCheck.checked);
+    connectionBarCheck.addEventListener('change', function () {
+      applyConnectionBarVisible(connectionBarCheck.checked);
+    });
+  }
+}
+
+/** Apply saved "show connection bar" on app load (called from main.js). */
+export function applySavedAppSettings() {
+  const showBar = localStorage.getItem(APP_CONNECTION_BAR_KEY);
+  if (showBar === '0') {
+    const bar = document.getElementById('connection-status-bar');
+    if (bar) bar.style.display = 'none';
+  }
+}

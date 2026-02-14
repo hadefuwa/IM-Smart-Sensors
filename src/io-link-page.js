@@ -32,7 +32,7 @@ export function renderIOLinkMaster() {
         <div class="lg:col-span-3 card bg-base-200 shadow-xl">
           <div class="card-body">
             <h2 class="card-title text-base-content" id="deviceName">IO-Link Master</h2>
-            <p class="text-sm text-base-content/70">Port status, supervision, and software versions. Connection and address are set in the bar at the top.</p>
+            <p class="text-sm text-base-content/70">Port status, supervision, and software versions. Connection (IP and port) is set in <a href="#" data-page="settings" class="link link-primary">Settings</a>.</p>
           </div>
         </div>
       </div>
@@ -426,7 +426,7 @@ function connectWebSocket() {
   }
 }
 
-function loadMasterConfig() {
+export function loadMasterConfig() {
   fetch(`${API_BASE}/api/io-link/config`)
     .then(r => r.json())
     .then(data => {
@@ -440,7 +440,7 @@ function loadMasterConfig() {
     .catch(() => {});
 }
 
-function saveMasterConfig() {
+export function saveMasterConfig() {
   const ipEl = document.getElementById('masterIpInput');
   const portEl = document.getElementById('masterPortInput');
   const msgEl = document.getElementById('configMessage');
@@ -468,6 +468,14 @@ function saveMasterConfig() {
     .catch(err => {
       if (msgEl) { msgEl.textContent = 'Error'; msgEl.className = 'text-sm text-error'; }
     });
+}
+
+/** Fetch current status and update UI (used by Settings page Refresh button). */
+export function refreshIOLinkData() {
+  fetch(`${API_BASE}/api/io-link/status`)
+    .then(r => r.json())
+    .then(updateUI)
+    .catch(() => {});
 }
 
 /** Call when leaving the IO-Link page so charts are destroyed. */
@@ -560,17 +568,7 @@ export function initIOLinkPage() {
   ioLinkCharts.forEach(c => c.destroy());
   ioLinkCharts = [];
   if (reconnectTimer) clearTimeout(reconnectTimer);
-  loadMasterConfig();
   connectWebSocket();
   setupRawDecodedToggle();
   setupSimulateFault();
-  const btn = document.getElementById('io-link-refresh-btn');
-  if (btn) {
-    btn.onclick = () => {
-      if (!websocket || websocket.readyState !== WebSocket.OPEN)
-        fetch(`${API_BASE}/api/io-link/status`).then(r => r.json()).then(updateUI).catch(() => {});
-    };
-  }
-  const saveBtn = document.getElementById('io-link-save-config-btn');
-  if (saveBtn) saveBtn.onclick = saveMasterConfig;
 }
