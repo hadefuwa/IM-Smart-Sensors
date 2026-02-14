@@ -1,6 +1,7 @@
 import './style.css';
 import noUiSlider from 'nouislider';
 import 'nouislider/dist/nouislider.css';
+import { renderHomePage, initHomePage, destroyHomePage } from './home-page.js';
 import { renderIOLinkMaster, initIOLinkPage, destroyIOLinkPage } from './io-link-page.js';
 import { renderLearnPage, initLearnPage } from './learn-page.js';
 import { renderWorksheetsPage, initWorksheetsPage } from './worksheets-page.js';
@@ -5924,6 +5925,7 @@ function renderPlaceholder(title) {
 // by a proper router if we need deep links or browser history.
 
 const PAGES = {
+  'home': renderHomePage,
   'hmi-dashboard-1': renderHMIDashboard1,
   'hmi-dashboard-2': renderHMIDashboard2,
   'hmi-dashboard-3': renderHMIDashboard3,
@@ -6027,6 +6029,7 @@ app.innerHTML = `
               Dashboard
             </span>
           </li>
+          <li><a href="#" data-page="home">HMI Dashboard</a></li>
           <li><a href="#" data-page="io-link-master">IO-Link Master</a></li>
           <li><a href="#" data-page="worksheets">Worksheets</a></li>
           <li><a href="#" data-page="learn">Further Study</a></li>
@@ -6121,7 +6124,8 @@ let activeCharts = [];
 
 // Simple function to render the requested page into the main content area.
 function renderPage(pageKey) {
-  // Clean up existing charts and IO-Link page (WebSocket, charts)
+  // Clean up existing charts, IO-Link page, and home page (WebSocket, charts)
+  destroyHomePage();
   destroyIOLinkPage();
   activeCharts.forEach(chart => chart.destroy());
   activeCharts = [];
@@ -6143,7 +6147,9 @@ function renderPage(pageKey) {
   }
 
   // Initialize charts for pages that use Chart.js
-  if (pageKey === 'home-2') {
+  if (pageKey === 'home') {
+    initHomePage();
+  } else if (pageKey === 'home-2') {
     initializeHomeTemplate2Charts();
   } else if (pageKey === 'hmi-dashboard-1') {
     initializeHMICharts1();
@@ -7261,5 +7267,5 @@ setTimeout(() => {
   });
 }, 0);
 
-// Initial page: IO-Link Master dashboard
-renderPage('io-link-master');
+// Initial page: HMI Dashboard (home page)
+renderPage('home');
