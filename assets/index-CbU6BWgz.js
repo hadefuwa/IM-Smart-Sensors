@@ -1,55 +1,142 @@
-import './style.css';
-import noUiSlider from 'nouislider';
-import 'nouislider/dist/nouislider.css';
-import { renderIOLinkMaster, initIOLinkPage, destroyIOLinkPage } from './io-link-page.js';
-import {
-  Chart,
-  LineController,
-  BarController,
-  DoughnutController,
-  CategoryScale,
-  LinearScale,
-  PointElement,
-  LineElement,
-  BarElement,
-  ArcElement,
-  Tooltip,
-  Legend,
-  Filler
-} from 'chart.js';
+(function(){const t=document.createElement("link").relList;if(t&&t.supports&&t.supports("modulepreload"))return;for(const i of document.querySelectorAll('link[rel="modulepreload"]'))a(i);new MutationObserver(i=>{for(const n of i)if(n.type==="childList")for(const o of n.addedNodes)o.tagName==="LINK"&&o.rel==="modulepreload"&&a(o)}).observe(document,{childList:!0,subtree:!0});function e(i){const n={};return i.integrity&&(n.integrity=i.integrity),i.referrerPolicy&&(n.referrerPolicy=i.referrerPolicy),i.crossOrigin==="use-credentials"?n.credentials="include":i.crossOrigin==="anonymous"?n.credentials="omit":n.credentials="same-origin",n}function a(i){if(i.ep)return;i.ep=!0;const n=e(i);fetch(i.href,n)}})();var Gt;(function(s){s.Range="range",s.Steps="steps",s.Positions="positions",s.Count="count",s.Values="values"})(Gt||(Gt={}));var yt;(function(s){s[s.None=-1]="None",s[s.NoValue=0]="NoValue",s[s.LargeValue=1]="LargeValue",s[s.SmallValue=2]="SmallValue"})(yt||(yt={}));function gl(s){return ws(s)&&typeof s.from=="function"}function ws(s){return typeof s=="object"&&typeof s.to=="function"}function Ja(s){s.parentElement.removeChild(s)}function ca(s){return s!=null}function ti(s){s.preventDefault()}function vl(s){return s.filter(function(t){return this[t]?!1:this[t]=!0},{})}function ml(s,t){return Math.round(s/t)*t}function xl(s,t){var e=s.getBoundingClientRect(),a=s.ownerDocument,i=a.documentElement,n=Ln(a);return/webkit.*Chrome.*Mobile/i.test(navigator.userAgent)&&(n.x=0),t?e.top+n.y-i.clientTop:e.left+n.x-i.clientLeft}function Dt(s){return typeof s=="number"&&!isNaN(s)&&isFinite(s)}function ei(s,t,e){e>0&&(pt(s,t),setTimeout(function(){ms(s,t)},e))}function si(s){return Math.max(Math.min(s,100),0)}function Ls(s){return Array.isArray(s)?s:[s]}function yl(s){s=String(s);var t=s.split(".");return t.length>1?t[1].length:0}function pt(s,t){s.classList&&!/\s/.test(t)?s.classList.add(t):s.className+=" "+t}function ms(s,t){s.classList&&!/\s/.test(t)?s.classList.remove(t):s.className=s.className.replace(new RegExp("(^|\\b)"+t.split(" ").join("|")+"(\\b|$)","gi")," ")}function wl(s,t){return s.classList?s.classList.contains(t):new RegExp("\\b"+t+"\\b").test(s.className)}function Ln(s){var t=window.pageXOffset!==void 0,e=(s.compatMode||"")==="CSS1Compat",a=t?window.pageXOffset:e?s.documentElement.scrollLeft:s.body.scrollLeft,i=t?window.pageYOffset:e?s.documentElement.scrollTop:s.body.scrollTop;return{x:a,y:i}}function kl(){return window.navigator.pointerEnabled?{start:"pointerdown",move:"pointermove",end:"pointerup"}:window.navigator.msPointerEnabled?{start:"MSPointerDown",move:"MSPointerMove",end:"MSPointerUp"}:{start:"mousedown touchstart",move:"mousemove touchmove",end:"mouseup touchend"}}function Sl(){var s=!1;try{var t=Object.defineProperty({},"passive",{get:function(){s=!0}});window.addEventListener("test",null,t)}catch{}return s}function _l(){return window.CSS&&CSS.supports&&CSS.supports("touch-action","none")}function Sa(s,t){return 100/(t-s)}function da(s,t,e){return t*100/(s[e+1]-s[e])}function Cl(s,t){return da(s,s[0]<0?t+Math.abs(s[0]):t-s[0],0)}function Ml(s,t){return t*(s[1]-s[0])/100+s[0]}function We(s,t){for(var e=1;s>=t[e];)e+=1;return e}function Pl(s,t,e){if(e>=s.slice(-1)[0])return 100;var a=We(e,s),i=s[a-1],n=s[a],o=t[a-1],l=t[a];return o+Cl([i,n],e)/Sa(o,l)}function Al(s,t,e){if(e>=100)return s.slice(-1)[0];var a=We(e,t),i=s[a-1],n=s[a],o=t[a-1],l=t[a];return Ml([i,n],(e-o)*Sa(o,l))}function Dl(s,t,e,a){if(a===100)return a;var i=We(a,s),n=s[i-1],o=s[i];return e?a-n>(o-n)/2?o:n:t[i-1]?s[i-1]+ml(a-s[i-1],t[i-1]):a}var On=(function(){function s(t,e,a){this.xPct=[],this.xVal=[],this.xSteps=[],this.xNumSteps=[],this.xHighestCompleteStep=[],this.xSteps=[a||!1],this.xNumSteps=[!1],this.snap=e;var i,n=[];for(Object.keys(t).forEach(function(o){n.push([Ls(t[o]),o])}),n.sort(function(o,l){return o[0][0]-l[0][0]}),i=0;i<n.length;i++)this.handleEntryPoint(n[i][1],n[i][0]);for(this.xNumSteps=this.xSteps.slice(0),i=0;i<this.xNumSteps.length;i++)this.handleStepPoint(i,this.xNumSteps[i])}return s.prototype.getDistance=function(t){for(var e=[],a=0;a<this.xNumSteps.length-1;a++)e[a]=da(this.xVal,t,a);return e},s.prototype.getAbsoluteDistance=function(t,e,a){var i=0;if(t<this.xPct[this.xPct.length-1])for(;t>this.xPct[i+1];)i++;else t===this.xPct[this.xPct.length-1]&&(i=this.xPct.length-2);!a&&t===this.xPct[i+1]&&i++,e===null&&(e=[]);var n,o=1,l=e[i],r=0,c=0,d=0,u=0;for(a?n=(t-this.xPct[i])/(this.xPct[i+1]-this.xPct[i]):n=(this.xPct[i+1]-t)/(this.xPct[i+1]-this.xPct[i]);l>0;)r=this.xPct[i+1+u]-this.xPct[i+u],e[i+u]*o+100-n*100>100?(c=r*n,o=(l-100*n)/e[i+u],n=1):(c=e[i+u]*r/100*o,o=0),a?(d=d-c,this.xPct.length+u>=1&&u--):(d=d+c,this.xPct.length-u>=1&&u++),l=e[i+u]*o;return t+d},s.prototype.toStepping=function(t){return t=Pl(this.xVal,this.xPct,t),t},s.prototype.fromStepping=function(t){return Al(this.xVal,this.xPct,t)},s.prototype.getStep=function(t){return t=Dl(this.xPct,this.xSteps,this.snap,t),t},s.prototype.getDefaultStep=function(t,e,a){var i=We(t,this.xPct);return(t===100||e&&t===this.xPct[i-1])&&(i=Math.max(i-1,1)),(this.xVal[i]-this.xVal[i-1])/a},s.prototype.getNearbySteps=function(t){var e=We(t,this.xPct);return{stepBefore:{startValue:this.xVal[e-2],step:this.xNumSteps[e-2],highestStep:this.xHighestCompleteStep[e-2]},thisStep:{startValue:this.xVal[e-1],step:this.xNumSteps[e-1],highestStep:this.xHighestCompleteStep[e-1]},stepAfter:{startValue:this.xVal[e],step:this.xNumSteps[e],highestStep:this.xHighestCompleteStep[e]}}},s.prototype.countStepDecimals=function(){var t=this.xNumSteps.map(yl);return Math.max.apply(null,t)},s.prototype.hasNoSize=function(){return this.xVal[0]===this.xVal[this.xVal.length-1]},s.prototype.convert=function(t){return this.getStep(this.toStepping(t))},s.prototype.handleEntryPoint=function(t,e){var a;if(t==="min"?a=0:t==="max"?a=100:a=parseFloat(t),!Dt(a)||!Dt(e[0]))throw new Error("noUiSlider: 'range' value isn't numeric.");this.xPct.push(a),this.xVal.push(e[0]);var i=Number(e[1]);a?this.xSteps.push(isNaN(i)?!1:i):isNaN(i)||(this.xSteps[0]=i),this.xHighestCompleteStep.push(0)},s.prototype.handleStepPoint=function(t,e){if(e){if(this.xVal[t]===this.xVal[t+1]){this.xSteps[t]=this.xHighestCompleteStep[t]=this.xVal[t];return}this.xSteps[t]=da([this.xVal[t],this.xVal[t+1]],e,0)/Sa(this.xPct[t],this.xPct[t+1]);var a=(this.xVal[t+1]-this.xVal[t])/this.xNumSteps[t],i=Math.ceil(Number(a.toFixed(3))-1),n=this.xVal[t]+this.xNumSteps[t]*i;this.xHighestCompleteStep[t]=n}},s})(),ai={to:function(s){return s===void 0?"":s.toFixed(2)},from:Number},En={target:"target",base:"base",origin:"origin",handle:"handle",handleLower:"handle-lower",handleUpper:"handle-upper",touchArea:"touch-area",horizontal:"horizontal",vertical:"vertical",background:"background",connect:"connect",connects:"connects",ltr:"ltr",rtl:"rtl",textDirectionLtr:"txt-dir-ltr",textDirectionRtl:"txt-dir-rtl",draggable:"draggable",drag:"state-drag",tap:"state-tap",active:"active",tooltip:"tooltip",pips:"pips",pipsHorizontal:"pips-horizontal",pipsVertical:"pips-vertical",marker:"marker",markerHorizontal:"marker-horizontal",markerVertical:"marker-vertical",markerNormal:"marker-normal",markerLarge:"marker-large",markerSub:"marker-sub",value:"value",valueHorizontal:"value-horizontal",valueVertical:"value-vertical",valueNormal:"value-normal",valueLarge:"value-large",valueSub:"value-sub"},Yt={tooltips:".__tooltips",aria:".__aria"};function Tl(s,t){if(!Dt(t))throw new Error("noUiSlider: 'step' is not numeric.");s.singleStep=t}function Ll(s,t){if(!Dt(t))throw new Error("noUiSlider: 'keyboardPageMultiplier' is not numeric.");s.keyboardPageMultiplier=t}function Ol(s,t){if(!Dt(t))throw new Error("noUiSlider: 'keyboardMultiplier' is not numeric.");s.keyboardMultiplier=t}function El(s,t){if(!Dt(t))throw new Error("noUiSlider: 'keyboardDefaultStep' is not numeric.");s.keyboardDefaultStep=t}function Il(s,t){if(typeof t!="object"||Array.isArray(t))throw new Error("noUiSlider: 'range' is not an object.");if(t.min===void 0||t.max===void 0)throw new Error("noUiSlider: Missing 'min' or 'max' in 'range'.");s.spectrum=new On(t,s.snap||!1,s.singleStep)}function Rl(s,t){if(t=Ls(t),!Array.isArray(t)||!t.length)throw new Error("noUiSlider: 'start' option is incorrect.");s.handles=t.length,s.start=t}function zl(s,t){if(typeof t!="boolean")throw new Error("noUiSlider: 'snap' option must be a boolean.");s.snap=t}function Bl(s,t){if(typeof t!="boolean")throw new Error("noUiSlider: 'animate' option must be a boolean.");s.animate=t}function Fl(s,t){if(typeof t!="number")throw new Error("noUiSlider: 'animationDuration' option must be a number.");s.animationDuration=t}function In(s,t){var e=[!1],a;if(t==="lower"?t=[!0,!1]:t==="upper"&&(t=[!1,!0]),t===!0||t===!1){for(a=1;a<s.handles;a++)e.push(t);e.push(!1)}else{if(!Array.isArray(t)||!t.length||t.length!==s.handles+1)throw new Error("noUiSlider: 'connect' option doesn't match handle count.");e=t}s.connect=e}function Vl(s,t){switch(t){case"horizontal":s.ort=0;break;case"vertical":s.ort=1;break;default:throw new Error("noUiSlider: 'orientation' option is invalid.")}}function Rn(s,t){if(!Dt(t))throw new Error("noUiSlider: 'margin' option must be numeric.");t!==0&&(s.margin=s.spectrum.getDistance(t))}function Hl(s,t){if(!Dt(t))throw new Error("noUiSlider: 'limit' option must be numeric.");if(s.limit=s.spectrum.getDistance(t),!s.limit||s.handles<2)throw new Error("noUiSlider: 'limit' option is only supported on linear sliders with 2 or more handles.")}function jl(s,t){var e;if(!Dt(t)&&!Array.isArray(t))throw new Error("noUiSlider: 'padding' option must be numeric or array of exactly 2 numbers.");if(Array.isArray(t)&&!(t.length===2||Dt(t[0])||Dt(t[1])))throw new Error("noUiSlider: 'padding' option must be numeric or array of exactly 2 numbers.");if(t!==0){for(Array.isArray(t)||(t=[t,t]),s.padding=[s.spectrum.getDistance(t[0]),s.spectrum.getDistance(t[1])],e=0;e<s.spectrum.xNumSteps.length-1;e++)if(s.padding[0][e]<0||s.padding[1][e]<0)throw new Error("noUiSlider: 'padding' option must be a positive number(s).");var a=t[0]+t[1],i=s.spectrum.xVal[0],n=s.spectrum.xVal[s.spectrum.xVal.length-1];if(a/(n-i)>1)throw new Error("noUiSlider: 'padding' option must not exceed 100% of the range.")}}function Nl(s,t){switch(t){case"ltr":s.dir=0;break;case"rtl":s.dir=1;break;default:throw new Error("noUiSlider: 'direction' option was not recognized.")}}function Wl(s,t){if(typeof t!="string")throw new Error("noUiSlider: 'behaviour' must be a string containing options.");var e=t.indexOf("tap")>=0,a=t.indexOf("drag")>=0,i=t.indexOf("fixed")>=0,n=t.indexOf("snap")>=0,o=t.indexOf("hover")>=0,l=t.indexOf("unconstrained")>=0,r=t.indexOf("invert-connects")>=0,c=t.indexOf("drag-all")>=0,d=t.indexOf("smooth-steps")>=0;if(i){if(s.handles!==2)throw new Error("noUiSlider: 'fixed' behaviour must be used with 2 handles");Rn(s,s.start[1]-s.start[0])}if(r&&s.handles!==2)throw new Error("noUiSlider: 'invert-connects' behaviour must be used with 2 handles");if(l&&(s.margin||s.limit))throw new Error("noUiSlider: 'unconstrained' behaviour cannot be used with margin or limit");s.events={tap:e||n,drag:a,dragAll:c,smoothSteps:d,fixed:i,snap:n,hover:o,unconstrained:l,invertConnects:r}}function Ul(s,t){if(t!==!1)if(t===!0||ws(t)){s.tooltips=[];for(var e=0;e<s.handles;e++)s.tooltips.push(t)}else{if(t=Ls(t),t.length!==s.handles)throw new Error("noUiSlider: must pass a formatter for all handles.");t.forEach(function(a){if(typeof a!="boolean"&&!ws(a))throw new Error("noUiSlider: 'tooltips' must be passed a formatter or 'false'.")}),s.tooltips=t}}function $l(s,t){if(t.length!==s.handles)throw new Error("noUiSlider: must pass a attributes for all handles.");s.handleAttributes=t}function Yl(s,t){if(!ws(t))throw new Error("noUiSlider: 'ariaFormat' requires 'to' method.");s.ariaFormat=t}function Gl(s,t){if(!gl(t))throw new Error("noUiSlider: 'format' requires 'to' and 'from' methods.");s.format=t}function Xl(s,t){if(typeof t!="boolean")throw new Error("noUiSlider: 'keyboardSupport' option must be a boolean.");s.keyboardSupport=t}function ql(s,t){s.documentElement=t}function Kl(s,t){if(typeof t!="string"&&t!==!1)throw new Error("noUiSlider: 'cssPrefix' must be a string or `false`.");s.cssPrefix=t}function Zl(s,t){if(typeof t!="object")throw new Error("noUiSlider: 'cssClasses' must be an object.");typeof s.cssPrefix=="string"?(s.cssClasses={},Object.keys(t).forEach(function(e){s.cssClasses[e]=s.cssPrefix+t[e]})):s.cssClasses=t}function zn(s){var t={margin:null,limit:null,padding:null,animate:!0,animationDuration:300,ariaFormat:ai,format:ai},e={step:{r:!1,t:Tl},keyboardPageMultiplier:{r:!1,t:Ll},keyboardMultiplier:{r:!1,t:Ol},keyboardDefaultStep:{r:!1,t:El},start:{r:!0,t:Rl},connect:{r:!0,t:In},direction:{r:!0,t:Nl},snap:{r:!1,t:zl},animate:{r:!1,t:Bl},animationDuration:{r:!1,t:Fl},range:{r:!0,t:Il},orientation:{r:!1,t:Vl},margin:{r:!1,t:Rn},limit:{r:!1,t:Hl},padding:{r:!1,t:jl},behaviour:{r:!0,t:Wl},ariaFormat:{r:!1,t:Yl},format:{r:!1,t:Gl},tooltips:{r:!1,t:Ul},keyboardSupport:{r:!0,t:Xl},documentElement:{r:!1,t:ql},cssPrefix:{r:!0,t:Kl},cssClasses:{r:!0,t:Zl},handleAttributes:{r:!1,t:$l}},a={connect:!1,direction:"ltr",behaviour:"tap",orientation:"horizontal",keyboardSupport:!0,cssPrefix:"noUi-",cssClasses:En,keyboardPageMultiplier:5,keyboardMultiplier:1,keyboardDefaultStep:10};s.format&&!s.ariaFormat&&(s.ariaFormat=s.format),Object.keys(e).forEach(function(r){if(!ca(s[r])&&a[r]===void 0){if(e[r].r)throw new Error("noUiSlider: '"+r+"' is required.");return}e[r].t(t,ca(s[r])?s[r]:a[r])}),t.pips=s.pips;var i=document.createElement("div"),n=i.style.msTransform!==void 0,o=i.style.transform!==void 0;t.transformRule=o?"transform":n?"msTransform":"webkitTransform";var l=[["left","top"],["right","bottom"]];return t.style=l[t.dir][t.ort],t}function Ql(s,t,e){var a=kl(),i=_l(),n=i&&Sl(),o=s,l,r,c,d,u,h,p=t.spectrum,b=[],f=[],v=[],x=0,w={},_=!1,S=s.ownerDocument,k=t.documentElement||S.documentElement,P=S.body,T=S.dir==="rtl"||t.ort===1?0:100;function M(g,m){var y=S.createElement("div");return m&&pt(y,m),g.appendChild(y),y}function O(g,m){var y=M(g,t.cssClasses.origin),C=M(y,t.cssClasses.handle);if(M(C,t.cssClasses.touchArea),C.setAttribute("data-handle",String(m)),t.keyboardSupport&&(C.setAttribute("tabindex","0"),C.addEventListener("keydown",function(D){return ol(D,m)})),t.handleAttributes!==void 0){var A=t.handleAttributes[m];Object.keys(A).forEach(function(D){C.setAttribute(D,A[D])})}return C.setAttribute("role","slider"),C.setAttribute("aria-orientation",t.ort?"vertical":"horizontal"),m===0?pt(C,t.cssClasses.handleLower):m===t.handles-1&&pt(C,t.cssClasses.handleUpper),y.handle=C,y}function R(g,m){return m?M(g,t.cssClasses.connect):!1}function z(g,m){r=M(m,t.cssClasses.connects),c=[],d=[],d.push(R(r,g[0]));for(var y=0;y<t.handles;y++)c.push(O(m,y)),v[y]=y,d.push(R(r,g[y+1]))}function F(g){pt(g,t.cssClasses.target),t.dir===0?pt(g,t.cssClasses.ltr):pt(g,t.cssClasses.rtl),t.ort===0?pt(g,t.cssClasses.horizontal):pt(g,t.cssClasses.vertical);var m=getComputedStyle(g).direction;return m==="rtl"?pt(g,t.cssClasses.textDirectionRtl):pt(g,t.cssClasses.textDirectionLtr),M(g,t.cssClasses.base)}function it(g,m){return!t.tooltips||!t.tooltips[m]?!1:M(g.firstChild,t.cssClasses.tooltip)}function ut(){return o.hasAttribute("disabled")}function H(g){var m=c[g];return m.hasAttribute("disabled")}function Y(g){g!=null?(c[g].setAttribute("disabled",""),c[g].handle.removeAttribute("tabindex")):(o.setAttribute("disabled",""),c.forEach(function(m){m.handle.removeAttribute("tabindex")}))}function Z(g){g!=null?(c[g].removeAttribute("disabled"),c[g].handle.setAttribute("tabindex","0")):(o.removeAttribute("disabled"),c.forEach(function(m){m.removeAttribute("disabled"),m.handle.setAttribute("tabindex","0")}))}function xt(){h&&(Me("update"+Yt.tooltips),h.forEach(function(g){g&&Ja(g)}),h=null)}function nt(){xt(),h=c.map(it),Ns("update"+Yt.tooltips,function(g,m,y){if(!(!h||!t.tooltips)&&h[m]!==!1){var C=g[m];t.tooltips[m]!==!0&&(C=t.tooltips[m].to(y[m])),h[m].innerHTML=C}})}function $t(){Me("update"+Yt.aria),Ns("update"+Yt.aria,function(g,m,y,C,A){v.forEach(function(D){var E=c[D],L=ts(f,D,0,!0,!0,!0),U=ts(f,D,100,!0,!0,!0),$=A[D],Q=String(t.ariaFormat.to(y[D]));L=p.fromStepping(L).toFixed(1),U=p.fromStepping(U).toFixed(1),$=p.fromStepping($).toFixed(1),E.children[0].setAttribute("aria-valuemin",L),E.children[0].setAttribute("aria-valuemax",U),E.children[0].setAttribute("aria-valuenow",$),E.children[0].setAttribute("aria-valuetext",Q)})})}function me(g){if(g.mode===Gt.Range||g.mode===Gt.Steps)return p.xVal;if(g.mode===Gt.Count){if(g.values<2)throw new Error("noUiSlider: 'values' (>= 2) required for mode 'count'.");for(var m=g.values-1,y=100/m,C=[];m--;)C[m]=m*y;return C.push(100),Et(C,g.stepped)}return g.mode===Gt.Positions?Et(g.values,g.stepped):g.mode===Gt.Values?g.stepped?g.values.map(function(A){return p.fromStepping(p.getStep(p.toStepping(A)))}):g.values:[]}function Et(g,m){return g.map(function(y){return p.fromStepping(m?p.getStep(y):y)})}function ae(g){function m($,Q){return Number(($+Q).toFixed(7))}var y=me(g),C={},A=p.xVal[0],D=p.xVal[p.xVal.length-1],E=!1,L=!1,U=0;return y=vl(y.slice().sort(function($,Q){return $-Q})),y[0]!==A&&(y.unshift(A),E=!0),y[y.length-1]!==D&&(y.push(D),L=!0),y.forEach(function($,Q){var J,N,at,ht=$,rt=y[Q+1],dt,$s,Ys,Gs,Ka,Xs,Za,Qa=g.mode===Gt.Steps;for(Qa&&(J=p.xNumSteps[Q]),J||(J=rt-ht),rt===void 0&&(rt=ht),J=Math.max(J,1e-7),N=ht;N<=rt;N=m(N,J)){for(dt=p.toStepping(N),$s=dt-U,Ka=$s/(g.density||1),Xs=Math.round(Ka),Za=$s/Xs,at=1;at<=Xs;at+=1)Ys=U+at*Za,C[Ys.toFixed(5)]=[p.fromStepping(Ys),0];Gs=y.indexOf(N)>-1?yt.LargeValue:Qa?yt.SmallValue:yt.NoValue,!Q&&E&&N!==rt&&(Gs=0),N===rt&&L||(C[dt.toFixed(5)]=[N,Gs]),U=dt}}),C}function It(g,m,y){var C,A,D=S.createElement("div"),E=(C={},C[yt.None]="",C[yt.NoValue]=t.cssClasses.valueNormal,C[yt.LargeValue]=t.cssClasses.valueLarge,C[yt.SmallValue]=t.cssClasses.valueSub,C),L=(A={},A[yt.None]="",A[yt.NoValue]=t.cssClasses.markerNormal,A[yt.LargeValue]=t.cssClasses.markerLarge,A[yt.SmallValue]=t.cssClasses.markerSub,A),U=[t.cssClasses.valueHorizontal,t.cssClasses.valueVertical],$=[t.cssClasses.markerHorizontal,t.cssClasses.markerVertical];pt(D,t.cssClasses.pips),pt(D,t.ort===0?t.cssClasses.pipsHorizontal:t.cssClasses.pipsVertical);function Q(N,at){var ht=at===t.cssClasses.value,rt=ht?U:$,dt=ht?E:L;return at+" "+rt[t.ort]+" "+dt[N]}function J(N,at,ht){if(ht=m?m(at,ht):ht,ht!==yt.None){var rt=M(D,!1);rt.className=Q(ht,t.cssClasses.marker),rt.style[t.style]=N+"%",ht>yt.NoValue&&(rt=M(D,!1),rt.className=Q(ht,t.cssClasses.value),rt.setAttribute("data-value",String(at)),rt.style[t.style]=N+"%",rt.innerHTML=String(y.to(at)))}}return Object.keys(g).forEach(function(N){J(N,g[N][0],g[N][1])}),D}function Rt(){u&&(Ja(u),u=null)}function Pt(g){Rt();var m=ae(g),y=g.filter,C=g.format||{to:function(A){return String(Math.round(A))}};return u=o.appendChild(It(m,y,C)),u}function ja(){var g=l.getBoundingClientRect(),m="offset"+["Width","Height"][t.ort];return t.ort===0?g.width||l[m]:g.height||l[m]}function ie(g,m,y,C){var A=function(E){var L=tl(E,C.pageOffset,C.target||m);if(!L||ut()&&!C.doNotReject||wl(o,t.cssClasses.tap)&&!C.doNotReject||g===a.start&&L.buttons!==void 0&&L.buttons>1||C.hover&&L.buttons)return!1;n||L.preventDefault(),L.calcPoint=L.points[t.ort],y(L,C)},D=[];return g.split(" ").forEach(function(E){m.addEventListener(E,A,n?{passive:!0}:!1),D.push([E,A])}),D}function tl(g,m,y){var C=g.type.indexOf("touch")===0,A=g.type.indexOf("mouse")===0,D=g.type.indexOf("pointer")===0,E=0,L=0;if(g.type.indexOf("MSPointer")===0&&(D=!0),g.type==="mousedown"&&!g.buttons&&!g.touches)return!1;if(C){var U=function(J){var N=J.target;return N===y||y.contains(N)||g.composed&&g.composedPath().shift()===y};if(g.type==="touchstart"){var $=Array.prototype.filter.call(g.touches,U);if($.length>1)return!1;E=$[0].pageX,L=$[0].pageY}else{var Q=Array.prototype.find.call(g.changedTouches,U);if(!Q)return!1;E=Q.pageX,L=Q.pageY}}return m=m||Ln(S),(A||D)&&(E=g.clientX+m.x,L=g.clientY+m.y),g.pageOffset=m,g.points=[E,L],g.cursor=A||D,g}function Na(g){var m=g-xl(l,t.ort),y=m*100/ja();return y=si(y),t.dir?100-y:y}function el(g){var m=100,y=!1;return c.forEach(function(C,A){if(!H(A)){var D=f[A],E=Math.abs(D-g),L=E===100&&m===100,U=E<m,$=E<=m&&g>D;(U||$||L)&&(y=A,m=E)}}),y}function sl(g,m){g.type==="mouseout"&&g.target.nodeName==="HTML"&&g.relatedTarget===null&&Hs(g,m)}function al(g,m){if(navigator.appVersion.indexOf("MSIE 9")===-1&&g.buttons===0&&m.buttonsProperty!==0)return Hs(g,m);var y=(t.dir?-1:1)*(g.calcPoint-m.startCalcPoint),C=y*100/m.baseSize;Ua(y>0,C,m.locations,m.handleNumbers,m.connect)}function Hs(g,m){m.handle&&(ms(m.handle,t.cssClasses.active),x-=1),m.listeners.forEach(function(y){k.removeEventListener(y[0],y[1])}),x===0&&(ms(o,t.cssClasses.drag),Us(),g.cursor&&(P.style.cursor="",P.removeEventListener("selectstart",ti))),t.events.smoothSteps&&(m.handleNumbers.forEach(function(y){ne(y,f[y],!0,!0,!1,!1)}),m.handleNumbers.forEach(function(y){et("update",y)})),m.handleNumbers.forEach(function(y){et("change",y),et("set",y),et("end",y)})}function js(g,m){if(!m.handleNumbers.some(H)){var y;if(m.handleNumbers.length===1){var C=c[m.handleNumbers[0]];y=C.children[0],x+=1,pt(y,t.cssClasses.active)}g.stopPropagation();var A=[],D=ie(a.move,k,al,{target:g.target,handle:y,connect:m.connect,listeners:A,startCalcPoint:g.calcPoint,baseSize:ja(),pageOffset:g.pageOffset,handleNumbers:m.handleNumbers,buttonsProperty:g.buttons,locations:f.slice()}),E=ie(a.end,k,Hs,{target:g.target,handle:y,listeners:A,doNotReject:!0,handleNumbers:m.handleNumbers}),L=ie("mouseout",k,sl,{target:g.target,handle:y,listeners:A,doNotReject:!0,handleNumbers:m.handleNumbers});A.push.apply(A,D.concat(E,L)),g.cursor&&(P.style.cursor=getComputedStyle(g.target).cursor,c.length>1&&pt(o,t.cssClasses.drag),P.addEventListener("selectstart",ti,!1)),m.handleNumbers.forEach(function(U){et("start",U)})}}function il(g){g.stopPropagation();var m=Na(g.calcPoint),y=el(m);y!==!1&&(t.events.snap||ei(o,t.cssClasses.tap,t.animationDuration),ne(y,m,!0,!0),Us(),et("slide",y,!0),et("update",y,!0),t.events.snap?js(g,{handleNumbers:[y]}):(et("change",y,!0),et("set",y,!0)))}function nl(g){var m=Na(g.calcPoint),y=p.getStep(m),C=p.fromStepping(y);Object.keys(w).forEach(function(A){A.split(".")[0]==="hover"&&w[A].forEach(function(D){D.call(ss,C)})})}function ol(g,m){if(ut()||H(m))return!1;var y=["Left","Right"],C=["Down","Up"],A=["PageDown","PageUp"],D=["Home","End"];t.dir&&!t.ort?y.reverse():t.ort&&!t.dir&&(C.reverse(),A.reverse());var E=g.key.replace("Arrow",""),L=E===A[0],U=E===A[1],$=E===C[0]||E===y[0]||L,Q=E===C[1]||E===y[1]||U,J=E===D[0],N=E===D[1];if(!$&&!Q&&!J&&!N)return!0;g.preventDefault();var at;if(Q||$){var ht=$?0:1,rt=Xa(m),dt=rt[ht];if(dt===null)return!1;dt===!1&&(dt=p.getDefaultStep(f[m],$,t.keyboardDefaultStep)),U||L?dt*=t.keyboardPageMultiplier:dt*=t.keyboardMultiplier,dt=Math.max(dt,1e-7),dt=($?-1:1)*dt,at=b[m]+dt}else N?at=t.spectrum.xVal[t.spectrum.xVal.length-1]:at=t.spectrum.xVal[0];return ne(m,p.toStepping(at),!0,!0),et("slide",m),et("update",m),et("change",m),et("set",m),!1}function Wa(g){g.fixed||c.forEach(function(m,y){ie(a.start,m.children[0],js,{handleNumbers:[y]})}),g.tap&&ie(a.start,l,il,{}),g.hover&&ie(a.move,l,nl,{hover:!0}),g.drag&&d.forEach(function(m,y){if(!(m===!1||y===0||y===d.length-1)){var C=c[y-1],A=c[y],D=[m],E=[C,A],L=[y-1,y];pt(m,t.cssClasses.draggable),g.fixed&&(D.push(C.children[0]),D.push(A.children[0])),g.dragAll&&(E=c,L=v),D.forEach(function(U){ie(a.start,U,js,{handles:E,handleNumbers:L,connect:m})})}})}function Ns(g,m){w[g]=w[g]||[],w[g].push(m),g.split(".")[0]==="update"&&c.forEach(function(y,C){et("update",C)})}function ll(g){return g===Yt.aria||g===Yt.tooltips}function Me(g){var m=g&&g.split(".")[0],y=m?g.substring(m.length):g;Object.keys(w).forEach(function(C){var A=C.split(".")[0],D=C.substring(A.length);(!m||m===A)&&(!y||y===D)&&(!ll(D)||y===D)&&delete w[C]})}function et(g,m,y){Object.keys(w).forEach(function(C){var A=C.split(".")[0];g===A&&w[C].forEach(function(D){D.call(ss,b.map(t.format.to),m,b.slice(),y||!1,f.slice(),ss)})})}function ts(g,m,y,C,A,D,E){var L;return c.length>1&&!t.events.unconstrained&&(C&&m>0&&(L=p.getAbsoluteDistance(g[m-1],t.margin,!1),y=Math.max(y,L)),A&&m<c.length-1&&(L=p.getAbsoluteDistance(g[m+1],t.margin,!0),y=Math.min(y,L))),c.length>1&&t.limit&&(C&&m>0&&(L=p.getAbsoluteDistance(g[m-1],t.limit,!1),y=Math.min(y,L)),A&&m<c.length-1&&(L=p.getAbsoluteDistance(g[m+1],t.limit,!0),y=Math.max(y,L))),t.padding&&(m===0&&(L=p.getAbsoluteDistance(0,t.padding[0],!1),y=Math.max(y,L)),m===c.length-1&&(L=p.getAbsoluteDistance(100,t.padding[1],!0),y=Math.min(y,L))),E||(y=p.getStep(y)),y=si(y),y===g[m]&&!D?!1:y}function Ws(g,m){var y=t.ort;return(y?m:g)+", "+(y?g:m)}function Ua(g,m,y,C,A){var D=y.slice(),E=C[0],L=t.events.smoothSteps,U=[!g,g],$=[g,!g];C=C.slice(),g&&C.reverse(),C.length>1?C.forEach(function(J,N){var at=ts(D,J,D[J]+m,U[N],$[N],!1,L);at===!1?m=0:(m=at-D[J],D[J]=at)}):U=$=[!0];var Q=!1;C.forEach(function(J,N){Q=ne(J,y[J]+m,U[N],$[N],!1,L)||Q}),Q&&(C.forEach(function(J){et("update",J),et("slide",J)}),A!=null&&et("drag",E))}function $a(g,m){return t.dir?100-g-m:g}function rl(g,m){f[g]=m,b[g]=p.fromStepping(m);var y=$a(m,0)-T,C="translate("+Ws(y+"%","0")+")";if(c[g].style[t.transformRule]=C,t.events.invertConnects&&f.length>1){var A=f.every(function(D,E,L){return E===0||D>=L[E-1]});if(_!==!A){fl();return}}Pe(g),Pe(g+1),_&&(Pe(g-1),Pe(g+2))}function Us(){v.forEach(function(g){var m=f[g]>50?-1:1,y=3+(c.length+m*g);c[g].style.zIndex=String(y)})}function ne(g,m,y,C,A,D){return A||(m=ts(f,g,m,y,C,!1,D)),m===!1?!1:(rl(g,m),!0)}function Pe(g){if(d[g]){var m=f.slice();_&&m.sort(function(L,U){return L-U});var y=0,C=100;g!==0&&(y=m[g-1]),g!==d.length-1&&(C=m[g]);var A=C-y,D="translate("+Ws($a(y,A)+"%","0")+")",E="scale("+Ws(A/100,"1")+")";d[g].style[t.transformRule]=D+" "+E}}function Ya(g,m){return g===null||g===!1||g===void 0||(typeof g=="number"&&(g=String(g)),g=t.format.from(g),g!==!1&&(g=p.toStepping(g)),g===!1||isNaN(g))?f[m]:g}function es(g,m,y){var C=Ls(g),A=f[0]===void 0;m=m===void 0?!0:m,t.animate&&!A&&ei(o,t.cssClasses.tap,t.animationDuration),v.forEach(function(L){ne(L,Ya(C[L],L),!0,!1,y)});var D=v.length===1?0:1;if(A&&p.hasNoSize()&&(y=!0,f[0]=0,v.length>1)){var E=100/(v.length-1);v.forEach(function(L){f[L]=L*E})}for(;D<v.length;++D)v.forEach(function(L){ne(L,f[L],!0,!0,y)});Us(),v.forEach(function(L){et("update",L),C[L]!==null&&m&&et("set",L)})}function cl(g){es(t.start,g)}function dl(g,m,y,C){if(g=Number(g),!(g>=0&&g<v.length))throw new Error("noUiSlider: invalid handle number, got: "+g);ne(g,Ya(m,g),!0,!0,C),et("update",g),y&&et("set",g)}function Ga(g){if(g===void 0&&(g=!1),g)return b.length===1?b[0]:b.slice(0);var m=b.map(t.format.to);return m.length===1?m[0]:m}function ul(){for(Me(Yt.aria),Me(Yt.tooltips),Object.keys(t.cssClasses).forEach(function(g){ms(o,t.cssClasses[g])});o.firstChild;)o.removeChild(o.firstChild);delete o.noUiSlider}function Xa(g){var m=f[g],y=p.getNearbySteps(m),C=b[g],A=y.thisStep.step,D=null;if(t.snap)return[C-y.stepBefore.startValue||null,y.stepAfter.startValue-C||null];A!==!1&&C+A>y.stepAfter.startValue&&(A=y.stepAfter.startValue-C),C>y.thisStep.startValue?D=y.thisStep.step:y.stepBefore.step===!1?D=!1:D=C-y.stepBefore.highestStep,m===100?A=null:m===0&&(D=null);var E=p.countStepDecimals();return A!==null&&A!==!1&&(A=Number(A.toFixed(E))),D!==null&&D!==!1&&(D=Number(D.toFixed(E))),[D,A]}function hl(){return v.map(Xa)}function pl(g,m){var y=Ga(),C=["margin","limit","padding","range","animate","snap","step","format","pips","tooltips","connect"];C.forEach(function(D){g[D]!==void 0&&(e[D]=g[D])});var A=zn(e);C.forEach(function(D){g[D]!==void 0&&(t[D]=A[D])}),p=A.spectrum,t.margin=A.margin,t.limit=A.limit,t.padding=A.padding,t.pips?Pt(t.pips):Rt(),t.tooltips?nt():xt(),f=[],es(ca(g.start)?g.start:y,m),g.connect&&qa()}function qa(){for(;r.firstChild;)r.removeChild(r.firstChild);for(var g=0;g<=t.handles;g++)d[g]=R(r,t.connect[g]),Pe(g);Wa({drag:t.events.drag,fixed:!0})}function fl(){_=!_,In(t,t.connect.map(function(g){return!g})),qa()}function bl(){l=F(o),z(t.connect,l),Wa(t.events),es(t.start),t.pips&&Pt(t.pips),t.tooltips&&nt(),$t()}bl();var ss={destroy:ul,steps:hl,on:Ns,off:Me,get:Ga,set:es,setHandle:dl,reset:cl,disable:Y,enable:Z,__moveHandles:function(g,m,y){Ua(g,m,f,y)},options:e,updateOptions:pl,target:o,removePips:Rt,removeTooltips:xt,getPositions:function(){return f.slice()},getTooltips:function(){return h},getOrigins:function(){return c},pips:Pt};return ss}function Jl(s,t){if(!s||!s.nodeName)throw new Error("noUiSlider: create requires a single element, got: "+s);if(s.noUiSlider)throw new Error("noUiSlider: Slider was already initialized.");var e=zn(t),a=Ql(s,e,t);return s.noUiSlider=a,a}const Bn={__spectrum:On,cssClasses:En,create:Jl};function Ze(s){return s+.5|0}const Xt=(s,t,e)=>Math.max(Math.min(s,e),t);function Ee(s){return Xt(Ze(s*2.55),0,255)}function Qt(s){return Xt(Ze(s*255),0,255)}function Vt(s){return Xt(Ze(s/2.55)/100,0,1)}function ii(s){return Xt(Ze(s*100),0,100)}const Ct={0:0,1:1,2:2,3:3,4:4,5:5,6:6,7:7,8:8,9:9,A:10,B:11,C:12,D:13,E:14,F:15,a:10,b:11,c:12,d:13,e:14,f:15},ua=[..."0123456789ABCDEF"],tr=s=>ua[s&15],er=s=>ua[(s&240)>>4]+ua[s&15],as=s=>(s&240)>>4===(s&15),sr=s=>as(s.r)&&as(s.g)&&as(s.b)&&as(s.a);function ar(s){var t=s.length,e;return s[0]==="#"&&(t===4||t===5?e={r:255&Ct[s[1]]*17,g:255&Ct[s[2]]*17,b:255&Ct[s[3]]*17,a:t===5?Ct[s[4]]*17:255}:(t===7||t===9)&&(e={r:Ct[s[1]]<<4|Ct[s[2]],g:Ct[s[3]]<<4|Ct[s[4]],b:Ct[s[5]]<<4|Ct[s[6]],a:t===9?Ct[s[7]]<<4|Ct[s[8]]:255})),e}const ir=(s,t)=>s<255?t(s):"";function nr(s){var t=sr(s)?tr:er;return s?"#"+t(s.r)+t(s.g)+t(s.b)+ir(s.a,t):void 0}const or=/^(hsla?|hwb|hsv)\(\s*([-+.e\d]+)(?:deg)?[\s,]+([-+.e\d]+)%[\s,]+([-+.e\d]+)%(?:[\s,]+([-+.e\d]+)(%)?)?\s*\)$/;function Fn(s,t,e){const a=t*Math.min(e,1-e),i=(n,o=(n+s/30)%12)=>e-a*Math.max(Math.min(o-3,9-o,1),-1);return[i(0),i(8),i(4)]}function lr(s,t,e){const a=(i,n=(i+s/60)%6)=>e-e*t*Math.max(Math.min(n,4-n,1),0);return[a(5),a(3),a(1)]}function rr(s,t,e){const a=Fn(s,1,.5);let i;for(t+e>1&&(i=1/(t+e),t*=i,e*=i),i=0;i<3;i++)a[i]*=1-t-e,a[i]+=t;return a}function cr(s,t,e,a,i){return s===i?(t-e)/a+(t<e?6:0):t===i?(e-s)/a+2:(s-t)/a+4}function _a(s){const e=s.r/255,a=s.g/255,i=s.b/255,n=Math.max(e,a,i),o=Math.min(e,a,i),l=(n+o)/2;let r,c,d;return n!==o&&(d=n-o,c=l>.5?d/(2-n-o):d/(n+o),r=cr(e,a,i,d,n),r=r*60+.5),[r|0,c||0,l]}function Ca(s,t,e,a){return(Array.isArray(t)?s(t[0],t[1],t[2]):s(t,e,a)).map(Qt)}function Ma(s,t,e){return Ca(Fn,s,t,e)}function dr(s,t,e){return Ca(rr,s,t,e)}function ur(s,t,e){return Ca(lr,s,t,e)}function Vn(s){return(s%360+360)%360}function hr(s){const t=or.exec(s);let e=255,a;if(!t)return;t[5]!==a&&(e=t[6]?Ee(+t[5]):Qt(+t[5]));const i=Vn(+t[2]),n=+t[3]/100,o=+t[4]/100;return t[1]==="hwb"?a=dr(i,n,o):t[1]==="hsv"?a=ur(i,n,o):a=Ma(i,n,o),{r:a[0],g:a[1],b:a[2],a:e}}function pr(s,t){var e=_a(s);e[0]=Vn(e[0]+t),e=Ma(e),s.r=e[0],s.g=e[1],s.b=e[2]}function fr(s){if(!s)return;const t=_a(s),e=t[0],a=ii(t[1]),i=ii(t[2]);return s.a<255?`hsla(${e}, ${a}%, ${i}%, ${Vt(s.a)})`:`hsl(${e}, ${a}%, ${i}%)`}const ni={x:"dark",Z:"light",Y:"re",X:"blu",W:"gr",V:"medium",U:"slate",A:"ee",T:"ol",S:"or",B:"ra",C:"lateg",D:"ights",R:"in",Q:"turquois",E:"hi",P:"ro",O:"al",N:"le",M:"de",L:"yello",F:"en",K:"ch",G:"arks",H:"ea",I:"ightg",J:"wh"},oi={OiceXe:"f0f8ff",antiquewEte:"faebd7",aqua:"ffff",aquamarRe:"7fffd4",azuY:"f0ffff",beige:"f5f5dc",bisque:"ffe4c4",black:"0",blanKedOmond:"ffebcd",Xe:"ff",XeviTet:"8a2be2",bPwn:"a52a2a",burlywood:"deb887",caMtXe:"5f9ea0",KartYuse:"7fff00",KocTate:"d2691e",cSO:"ff7f50",cSnflowerXe:"6495ed",cSnsilk:"fff8dc",crimson:"dc143c",cyan:"ffff",xXe:"8b",xcyan:"8b8b",xgTMnPd:"b8860b",xWay:"a9a9a9",xgYF:"6400",xgYy:"a9a9a9",xkhaki:"bdb76b",xmagFta:"8b008b",xTivegYF:"556b2f",xSange:"ff8c00",xScEd:"9932cc",xYd:"8b0000",xsOmon:"e9967a",xsHgYF:"8fbc8f",xUXe:"483d8b",xUWay:"2f4f4f",xUgYy:"2f4f4f",xQe:"ced1",xviTet:"9400d3",dAppRk:"ff1493",dApskyXe:"bfff",dimWay:"696969",dimgYy:"696969",dodgerXe:"1e90ff",fiYbrick:"b22222",flSOwEte:"fffaf0",foYstWAn:"228b22",fuKsia:"ff00ff",gaRsbSo:"dcdcdc",ghostwEte:"f8f8ff",gTd:"ffd700",gTMnPd:"daa520",Way:"808080",gYF:"8000",gYFLw:"adff2f",gYy:"808080",honeyMw:"f0fff0",hotpRk:"ff69b4",RdianYd:"cd5c5c",Rdigo:"4b0082",ivSy:"fffff0",khaki:"f0e68c",lavFMr:"e6e6fa",lavFMrXsh:"fff0f5",lawngYF:"7cfc00",NmoncEffon:"fffacd",ZXe:"add8e6",ZcSO:"f08080",Zcyan:"e0ffff",ZgTMnPdLw:"fafad2",ZWay:"d3d3d3",ZgYF:"90ee90",ZgYy:"d3d3d3",ZpRk:"ffb6c1",ZsOmon:"ffa07a",ZsHgYF:"20b2aa",ZskyXe:"87cefa",ZUWay:"778899",ZUgYy:"778899",ZstAlXe:"b0c4de",ZLw:"ffffe0",lime:"ff00",limegYF:"32cd32",lRF:"faf0e6",magFta:"ff00ff",maPon:"800000",VaquamarRe:"66cdaa",VXe:"cd",VScEd:"ba55d3",VpurpN:"9370db",VsHgYF:"3cb371",VUXe:"7b68ee",VsprRggYF:"fa9a",VQe:"48d1cc",VviTetYd:"c71585",midnightXe:"191970",mRtcYam:"f5fffa",mistyPse:"ffe4e1",moccasR:"ffe4b5",navajowEte:"ffdead",navy:"80",Tdlace:"fdf5e6",Tive:"808000",TivedBb:"6b8e23",Sange:"ffa500",SangeYd:"ff4500",ScEd:"da70d6",pOegTMnPd:"eee8aa",pOegYF:"98fb98",pOeQe:"afeeee",pOeviTetYd:"db7093",papayawEp:"ffefd5",pHKpuff:"ffdab9",peru:"cd853f",pRk:"ffc0cb",plum:"dda0dd",powMrXe:"b0e0e6",purpN:"800080",YbeccapurpN:"663399",Yd:"ff0000",Psybrown:"bc8f8f",PyOXe:"4169e1",saddNbPwn:"8b4513",sOmon:"fa8072",sandybPwn:"f4a460",sHgYF:"2e8b57",sHshell:"fff5ee",siFna:"a0522d",silver:"c0c0c0",skyXe:"87ceeb",UXe:"6a5acd",UWay:"708090",UgYy:"708090",snow:"fffafa",sprRggYF:"ff7f",stAlXe:"4682b4",tan:"d2b48c",teO:"8080",tEstN:"d8bfd8",tomato:"ff6347",Qe:"40e0d0",viTet:"ee82ee",JHt:"f5deb3",wEte:"ffffff",wEtesmoke:"f5f5f5",Lw:"ffff00",LwgYF:"9acd32"};function br(){const s={},t=Object.keys(oi),e=Object.keys(ni);let a,i,n,o,l;for(a=0;a<t.length;a++){for(o=l=t[a],i=0;i<e.length;i++)n=e[i],l=l.replace(n,ni[n]);n=parseInt(oi[o],16),s[l]=[n>>16&255,n>>8&255,n&255]}return s}let is;function gr(s){is||(is=br(),is.transparent=[0,0,0,0]);const t=is[s.toLowerCase()];return t&&{r:t[0],g:t[1],b:t[2],a:t.length===4?t[3]:255}}const vr=/^rgba?\(\s*([-+.\d]+)(%)?[\s,]+([-+.e\d]+)(%)?[\s,]+([-+.e\d]+)(%)?(?:[\s,/]+([-+.e\d]+)(%)?)?\s*\)$/;function mr(s){const t=vr.exec(s);let e=255,a,i,n;if(t){if(t[7]!==a){const o=+t[7];e=t[8]?Ee(o):Xt(o*255,0,255)}return a=+t[1],i=+t[3],n=+t[5],a=255&(t[2]?Ee(a):Xt(a,0,255)),i=255&(t[4]?Ee(i):Xt(i,0,255)),n=255&(t[6]?Ee(n):Xt(n,0,255)),{r:a,g:i,b:n,a:e}}}function xr(s){return s&&(s.a<255?`rgba(${s.r}, ${s.g}, ${s.b}, ${Vt(s.a)})`:`rgb(${s.r}, ${s.g}, ${s.b})`)}const qs=s=>s<=.0031308?s*12.92:Math.pow(s,1/2.4)*1.055-.055,xe=s=>s<=.04045?s/12.92:Math.pow((s+.055)/1.055,2.4);function yr(s,t,e){const a=xe(Vt(s.r)),i=xe(Vt(s.g)),n=xe(Vt(s.b));return{r:Qt(qs(a+e*(xe(Vt(t.r))-a))),g:Qt(qs(i+e*(xe(Vt(t.g))-i))),b:Qt(qs(n+e*(xe(Vt(t.b))-n))),a:s.a+e*(t.a-s.a)}}function ns(s,t,e){if(s){let a=_a(s);a[t]=Math.max(0,Math.min(a[t]+a[t]*e,t===0?360:1)),a=Ma(a),s.r=a[0],s.g=a[1],s.b=a[2]}}function Hn(s,t){return s&&Object.assign(t||{},s)}function li(s){var t={r:0,g:0,b:0,a:255};return Array.isArray(s)?s.length>=3&&(t={r:s[0],g:s[1],b:s[2],a:255},s.length>3&&(t.a=Qt(s[3]))):(t=Hn(s,{r:0,g:0,b:0,a:1}),t.a=Qt(t.a)),t}function wr(s){return s.charAt(0)==="r"?mr(s):hr(s)}class Ue{constructor(t){if(t instanceof Ue)return t;const e=typeof t;let a;e==="object"?a=li(t):e==="string"&&(a=ar(t)||gr(t)||wr(t)),this._rgb=a,this._valid=!!a}get valid(){return this._valid}get rgb(){var t=Hn(this._rgb);return t&&(t.a=Vt(t.a)),t}set rgb(t){this._rgb=li(t)}rgbString(){return this._valid?xr(this._rgb):void 0}hexString(){return this._valid?nr(this._rgb):void 0}hslString(){return this._valid?fr(this._rgb):void 0}mix(t,e){if(t){const a=this.rgb,i=t.rgb;let n;const o=e===n?.5:e,l=2*o-1,r=a.a-i.a,c=((l*r===-1?l:(l+r)/(1+l*r))+1)/2;n=1-c,a.r=255&c*a.r+n*i.r+.5,a.g=255&c*a.g+n*i.g+.5,a.b=255&c*a.b+n*i.b+.5,a.a=o*a.a+(1-o)*i.a,this.rgb=a}return this}interpolate(t,e){return t&&(this._rgb=yr(this._rgb,t._rgb,e)),this}clone(){return new Ue(this.rgb)}alpha(t){return this._rgb.a=Qt(t),this}clearer(t){const e=this._rgb;return e.a*=1-t,this}greyscale(){const t=this._rgb,e=Ze(t.r*.3+t.g*.59+t.b*.11);return t.r=t.g=t.b=e,this}opaquer(t){const e=this._rgb;return e.a*=1+t,this}negate(){const t=this._rgb;return t.r=255-t.r,t.g=255-t.g,t.b=255-t.b,this}lighten(t){return ns(this._rgb,2,t),this}darken(t){return ns(this._rgb,2,-t),this}saturate(t){return ns(this._rgb,1,t),this}desaturate(t){return ns(this._rgb,1,-t),this}rotate(t){return pr(this._rgb,t),this}}function zt(){}const kr=(()=>{let s=0;return()=>s++})();function B(s){return s==null}function q(s){if(Array.isArray&&Array.isArray(s))return!0;const t=Object.prototype.toString.call(s);return t.slice(0,7)==="[object"&&t.slice(-6)==="Array]"}function V(s){return s!==null&&Object.prototype.toString.call(s)==="[object Object]"}function tt(s){return(typeof s=="number"||s instanceof Number)&&isFinite(+s)}function _t(s,t){return tt(s)?s:t}function I(s,t){return typeof s>"u"?t:s}const Sr=(s,t)=>typeof s=="string"&&s.endsWith("%")?parseFloat(s)/100:+s/t,jn=(s,t)=>typeof s=="string"&&s.endsWith("%")?parseFloat(s)/100*t:+s;function G(s,t,e){if(s&&typeof s.call=="function")return s.apply(e,t)}function W(s,t,e,a){let i,n,o;if(q(s))for(n=s.length,i=0;i<n;i++)t.call(e,s[i],i);else if(V(s))for(o=Object.keys(s),n=o.length,i=0;i<n;i++)t.call(e,s[o[i]],o[i])}function ks(s,t){let e,a,i,n;if(!s||!t||s.length!==t.length)return!1;for(e=0,a=s.length;e<a;++e)if(i=s[e],n=t[e],i.datasetIndex!==n.datasetIndex||i.index!==n.index)return!1;return!0}function Ss(s){if(q(s))return s.map(Ss);if(V(s)){const t=Object.create(null),e=Object.keys(s),a=e.length;let i=0;for(;i<a;++i)t[e[i]]=Ss(s[e[i]]);return t}return s}function Nn(s){return["__proto__","prototype","constructor"].indexOf(s)===-1}function _r(s,t,e,a){if(!Nn(s))return;const i=t[s],n=e[s];V(i)&&V(n)?$e(i,n,a):t[s]=Ss(n)}function $e(s,t,e){const a=q(t)?t:[t],i=a.length;if(!V(s))return s;e=e||{};const n=e.merger||_r;let o;for(let l=0;l<i;++l){if(o=a[l],!V(o))continue;const r=Object.keys(o);for(let c=0,d=r.length;c<d;++c)n(r[c],s,o,e)}return s}function Fe(s,t){return $e(s,t,{merger:Cr})}function Cr(s,t,e){if(!Nn(s))return;const a=t[s],i=e[s];V(a)&&V(i)?Fe(a,i):Object.prototype.hasOwnProperty.call(t,s)||(t[s]=Ss(i))}const ri={"":s=>s,x:s=>s.x,y:s=>s.y};function Mr(s){const t=s.split("."),e=[];let a="";for(const i of t)a+=i,a.endsWith("\\")?a=a.slice(0,-1)+".":(e.push(a),a="");return e}function Pr(s){const t=Mr(s);return e=>{for(const a of t){if(a==="")break;e=e&&e[a]}return e}}function Jt(s,t){return(ri[t]||(ri[t]=Pr(t)))(s)}function Pa(s){return s.charAt(0).toUpperCase()+s.slice(1)}const Ye=s=>typeof s<"u",te=s=>typeof s=="function",ci=(s,t)=>{if(s.size!==t.size)return!1;for(const e of s)if(!t.has(e))return!1;return!0};function Ar(s){return s.type==="mouseup"||s.type==="click"||s.type==="contextmenu"}const j=Math.PI,X=2*j,Dr=X+j,_s=Number.POSITIVE_INFINITY,Tr=j/180,st=j/2,oe=j/4,di=j*2/3,qt=Math.log10,Ot=Math.sign;function Ve(s,t,e){return Math.abs(s-t)<e}function ui(s){const t=Math.round(s);s=Ve(s,t,s/1e3)?t:s;const e=Math.pow(10,Math.floor(qt(s))),a=s/e;return(a<=1?1:a<=2?2:a<=5?5:10)*e}function Lr(s){const t=[],e=Math.sqrt(s);let a;for(a=1;a<e;a++)s%a===0&&(t.push(a),t.push(s/a));return e===(e|0)&&t.push(e),t.sort((i,n)=>i-n).pop(),t}function Or(s){return typeof s=="symbol"||typeof s=="object"&&s!==null&&!(Symbol.toPrimitive in s||"toString"in s||"valueOf"in s)}function Se(s){return!Or(s)&&!isNaN(parseFloat(s))&&isFinite(s)}function Er(s,t){const e=Math.round(s);return e-t<=s&&e+t>=s}function Wn(s,t,e){let a,i,n;for(a=0,i=s.length;a<i;a++)n=s[a][e],isNaN(n)||(t.min=Math.min(t.min,n),t.max=Math.max(t.max,n))}function At(s){return s*(j/180)}function Aa(s){return s*(180/j)}function hi(s){if(!tt(s))return;let t=1,e=0;for(;Math.round(s*t)/t!==s;)t*=10,e++;return e}function Un(s,t){const e=t.x-s.x,a=t.y-s.y,i=Math.sqrt(e*e+a*a);let n=Math.atan2(a,e);return n<-.5*j&&(n+=X),{angle:n,distance:i}}function ha(s,t){return Math.sqrt(Math.pow(t.x-s.x,2)+Math.pow(t.y-s.y,2))}function Ir(s,t){return(s-t+Dr)%X-j}function bt(s){return(s%X+X)%X}function Ge(s,t,e,a){const i=bt(s),n=bt(t),o=bt(e),l=bt(n-i),r=bt(o-i),c=bt(i-n),d=bt(i-o);return i===n||i===o||a&&n===o||l>r&&c<d}function ct(s,t,e){return Math.max(t,Math.min(e,s))}function Rr(s){return ct(s,-32768,32767)}function jt(s,t,e,a=1e-6){return s>=Math.min(t,e)-a&&s<=Math.max(t,e)+a}function Da(s,t,e){e=e||(o=>s[o]<t);let a=s.length-1,i=0,n;for(;a-i>1;)n=i+a>>1,e(n)?i=n:a=n;return{lo:i,hi:a}}const Nt=(s,t,e,a)=>Da(s,e,a?i=>{const n=s[i][t];return n<e||n===e&&s[i+1][t]===e}:i=>s[i][t]<e),zr=(s,t,e)=>Da(s,e,a=>s[a][t]>=e);function Br(s,t,e){let a=0,i=s.length;for(;a<i&&s[a]<t;)a++;for(;i>a&&s[i-1]>e;)i--;return a>0||i<s.length?s.slice(a,i):s}const $n=["push","pop","shift","splice","unshift"];function Fr(s,t){if(s._chartjs){s._chartjs.listeners.push(t);return}Object.defineProperty(s,"_chartjs",{configurable:!0,enumerable:!1,value:{listeners:[t]}}),$n.forEach(e=>{const a="_onData"+Pa(e),i=s[e];Object.defineProperty(s,e,{configurable:!0,enumerable:!1,value(...n){const o=i.apply(this,n);return s._chartjs.listeners.forEach(l=>{typeof l[a]=="function"&&l[a](...n)}),o}})})}function pi(s,t){const e=s._chartjs;if(!e)return;const a=e.listeners,i=a.indexOf(t);i!==-1&&a.splice(i,1),!(a.length>0)&&($n.forEach(n=>{delete s[n]}),delete s._chartjs)}function Yn(s){const t=new Set(s);return t.size===s.length?s:Array.from(t)}const Gn=(function(){return typeof window>"u"?function(s){return s()}:window.requestAnimationFrame})();function Xn(s,t){let e=[],a=!1;return function(...i){e=i,a||(a=!0,Gn.call(window,()=>{a=!1,s.apply(t,e)}))}}function Vr(s,t){let e;return function(...a){return t?(clearTimeout(e),e=setTimeout(s,t,a)):s.apply(this,a),t}}const Ta=s=>s==="start"?"left":s==="end"?"right":"center",ft=(s,t,e)=>s==="start"?t:s==="end"?e:(t+e)/2,Hr=(s,t,e,a)=>s===(a?"left":"right")?e:s==="center"?(t+e)/2:t;function qn(s,t,e){const a=t.length;let i=0,n=a;if(s._sorted){const{iScale:o,vScale:l,_parsed:r}=s,c=s.dataset&&s.dataset.options?s.dataset.options.spanGaps:null,d=o.axis,{min:u,max:h,minDefined:p,maxDefined:b}=o.getUserBounds();if(p){if(i=Math.min(Nt(r,d,u).lo,e?a:Nt(t,d,o.getPixelForValue(u)).lo),c){const f=r.slice(0,i+1).reverse().findIndex(v=>!B(v[l.axis]));i-=Math.max(0,f)}i=ct(i,0,a-1)}if(b){let f=Math.max(Nt(r,o.axis,h,!0).hi+1,e?0:Nt(t,d,o.getPixelForValue(h),!0).hi+1);if(c){const v=r.slice(f-1).findIndex(x=>!B(x[l.axis]));f+=Math.max(0,v)}n=ct(f,i,a)-i}else n=a-i}return{start:i,count:n}}function Kn(s){const{xScale:t,yScale:e,_scaleRanges:a}=s,i={xmin:t.min,xmax:t.max,ymin:e.min,ymax:e.max};if(!a)return s._scaleRanges=i,!0;const n=a.xmin!==t.min||a.xmax!==t.max||a.ymin!==e.min||a.ymax!==e.max;return Object.assign(a,i),n}const os=s=>s===0||s===1,fi=(s,t,e)=>-(Math.pow(2,10*(s-=1))*Math.sin((s-t)*X/e)),bi=(s,t,e)=>Math.pow(2,-10*s)*Math.sin((s-t)*X/e)+1,He={linear:s=>s,easeInQuad:s=>s*s,easeOutQuad:s=>-s*(s-2),easeInOutQuad:s=>(s/=.5)<1?.5*s*s:-.5*(--s*(s-2)-1),easeInCubic:s=>s*s*s,easeOutCubic:s=>(s-=1)*s*s+1,easeInOutCubic:s=>(s/=.5)<1?.5*s*s*s:.5*((s-=2)*s*s+2),easeInQuart:s=>s*s*s*s,easeOutQuart:s=>-((s-=1)*s*s*s-1),easeInOutQuart:s=>(s/=.5)<1?.5*s*s*s*s:-.5*((s-=2)*s*s*s-2),easeInQuint:s=>s*s*s*s*s,easeOutQuint:s=>(s-=1)*s*s*s*s+1,easeInOutQuint:s=>(s/=.5)<1?.5*s*s*s*s*s:.5*((s-=2)*s*s*s*s+2),easeInSine:s=>-Math.cos(s*st)+1,easeOutSine:s=>Math.sin(s*st),easeInOutSine:s=>-.5*(Math.cos(j*s)-1),easeInExpo:s=>s===0?0:Math.pow(2,10*(s-1)),easeOutExpo:s=>s===1?1:-Math.pow(2,-10*s)+1,easeInOutExpo:s=>os(s)?s:s<.5?.5*Math.pow(2,10*(s*2-1)):.5*(-Math.pow(2,-10*(s*2-1))+2),easeInCirc:s=>s>=1?s:-(Math.sqrt(1-s*s)-1),easeOutCirc:s=>Math.sqrt(1-(s-=1)*s),easeInOutCirc:s=>(s/=.5)<1?-.5*(Math.sqrt(1-s*s)-1):.5*(Math.sqrt(1-(s-=2)*s)+1),easeInElastic:s=>os(s)?s:fi(s,.075,.3),easeOutElastic:s=>os(s)?s:bi(s,.075,.3),easeInOutElastic(s){return os(s)?s:s<.5?.5*fi(s*2,.1125,.45):.5+.5*bi(s*2-1,.1125,.45)},easeInBack(s){return s*s*((1.70158+1)*s-1.70158)},easeOutBack(s){return(s-=1)*s*((1.70158+1)*s+1.70158)+1},easeInOutBack(s){let t=1.70158;return(s/=.5)<1?.5*(s*s*(((t*=1.525)+1)*s-t)):.5*((s-=2)*s*(((t*=1.525)+1)*s+t)+2)},easeInBounce:s=>1-He.easeOutBounce(1-s),easeOutBounce(s){return s<1/2.75?7.5625*s*s:s<2/2.75?7.5625*(s-=1.5/2.75)*s+.75:s<2.5/2.75?7.5625*(s-=2.25/2.75)*s+.9375:7.5625*(s-=2.625/2.75)*s+.984375},easeInOutBounce:s=>s<.5?He.easeInBounce(s*2)*.5:He.easeOutBounce(s*2-1)*.5+.5};function La(s){if(s&&typeof s=="object"){const t=s.toString();return t==="[object CanvasPattern]"||t==="[object CanvasGradient]"}return!1}function gi(s){return La(s)?s:new Ue(s)}function Ks(s){return La(s)?s:new Ue(s).saturate(.5).darken(.1).hexString()}const jr=["x","y","borderWidth","radius","tension"],Nr=["color","borderColor","backgroundColor"];function Wr(s){s.set("animation",{delay:void 0,duration:1e3,easing:"easeOutQuart",fn:void 0,from:void 0,loop:void 0,to:void 0,type:void 0}),s.describe("animation",{_fallback:!1,_indexable:!1,_scriptable:t=>t!=="onProgress"&&t!=="onComplete"&&t!=="fn"}),s.set("animations",{colors:{type:"color",properties:Nr},numbers:{type:"number",properties:jr}}),s.describe("animations",{_fallback:"animation"}),s.set("transitions",{active:{animation:{duration:400}},resize:{animation:{duration:0}},show:{animations:{colors:{from:"transparent"},visible:{type:"boolean",duration:0}}},hide:{animations:{colors:{to:"transparent"},visible:{type:"boolean",easing:"linear",fn:t=>t|0}}}})}function Ur(s){s.set("layout",{autoPadding:!0,padding:{top:0,right:0,bottom:0,left:0}})}const vi=new Map;function $r(s,t){t=t||{};const e=s+JSON.stringify(t);let a=vi.get(e);return a||(a=new Intl.NumberFormat(s,t),vi.set(e,a)),a}function Qe(s,t,e){return $r(t,e).format(s)}const Zn={values(s){return q(s)?s:""+s},numeric(s,t,e){if(s===0)return"0";const a=this.chart.options.locale;let i,n=s;if(e.length>1){const c=Math.max(Math.abs(e[0].value),Math.abs(e[e.length-1].value));(c<1e-4||c>1e15)&&(i="scientific"),n=Yr(s,e)}const o=qt(Math.abs(n)),l=isNaN(o)?1:Math.max(Math.min(-1*Math.floor(o),20),0),r={notation:i,minimumFractionDigits:l,maximumFractionDigits:l};return Object.assign(r,this.options.ticks.format),Qe(s,a,r)},logarithmic(s,t,e){if(s===0)return"0";const a=e[t].significand||s/Math.pow(10,Math.floor(qt(s)));return[1,2,3,5,10,15].includes(a)||t>.8*e.length?Zn.numeric.call(this,s,t,e):""}};function Yr(s,t){let e=t.length>3?t[2].value-t[1].value:t[1].value-t[0].value;return Math.abs(e)>=1&&s!==Math.floor(s)&&(e=s-Math.floor(s)),e}var Os={formatters:Zn};function Gr(s){s.set("scale",{display:!0,offset:!1,reverse:!1,beginAtZero:!1,bounds:"ticks",clip:!0,grace:0,grid:{display:!0,lineWidth:1,drawOnChartArea:!0,drawTicks:!0,tickLength:8,tickWidth:(t,e)=>e.lineWidth,tickColor:(t,e)=>e.color,offset:!1},border:{display:!0,dash:[],dashOffset:0,width:1},title:{display:!1,text:"",padding:{top:4,bottom:4}},ticks:{minRotation:0,maxRotation:50,mirror:!1,textStrokeWidth:0,textStrokeColor:"",padding:3,display:!0,autoSkip:!0,autoSkipPadding:3,labelOffset:0,callback:Os.formatters.values,minor:{},major:{},align:"center",crossAlign:"near",showLabelBackdrop:!1,backdropColor:"rgba(255, 255, 255, 0.75)",backdropPadding:2}}),s.route("scale.ticks","color","","color"),s.route("scale.grid","color","","borderColor"),s.route("scale.border","color","","borderColor"),s.route("scale.title","color","","color"),s.describe("scale",{_fallback:!1,_scriptable:t=>!t.startsWith("before")&&!t.startsWith("after")&&t!=="callback"&&t!=="parser",_indexable:t=>t!=="borderDash"&&t!=="tickBorderDash"&&t!=="dash"}),s.describe("scales",{_fallback:"scale"}),s.describe("scale.ticks",{_scriptable:t=>t!=="backdropPadding"&&t!=="callback",_indexable:t=>t!=="backdropPadding"})}const fe=Object.create(null),pa=Object.create(null);function je(s,t){if(!t)return s;const e=t.split(".");for(let a=0,i=e.length;a<i;++a){const n=e[a];s=s[n]||(s[n]=Object.create(null))}return s}function Zs(s,t,e){return typeof t=="string"?$e(je(s,t),e):$e(je(s,""),t)}class Xr{constructor(t,e){this.animation=void 0,this.backgroundColor="rgba(0,0,0,0.1)",this.borderColor="rgba(0,0,0,0.1)",this.color="#666",this.datasets={},this.devicePixelRatio=a=>a.chart.platform.getDevicePixelRatio(),this.elements={},this.events=["mousemove","mouseout","click","touchstart","touchmove"],this.font={family:"'Helvetica Neue', 'Helvetica', 'Arial', sans-serif",size:12,style:"normal",lineHeight:1.2,weight:null},this.hover={},this.hoverBackgroundColor=(a,i)=>Ks(i.backgroundColor),this.hoverBorderColor=(a,i)=>Ks(i.borderColor),this.hoverColor=(a,i)=>Ks(i.color),this.indexAxis="x",this.interaction={mode:"nearest",intersect:!0,includeInvisible:!1},this.maintainAspectRatio=!0,this.onHover=null,this.onClick=null,this.parsing=!0,this.plugins={},this.responsive=!0,this.scale=void 0,this.scales={},this.showLine=!0,this.drawActiveElementsOnTop=!0,this.describe(t),this.apply(e)}set(t,e){return Zs(this,t,e)}get(t){return je(this,t)}describe(t,e){return Zs(pa,t,e)}override(t,e){return Zs(fe,t,e)}route(t,e,a,i){const n=je(this,t),o=je(this,a),l="_"+e;Object.defineProperties(n,{[l]:{value:n[e],writable:!0},[e]:{enumerable:!0,get(){const r=this[l],c=o[i];return V(r)?Object.assign({},c,r):I(r,c)},set(r){this[l]=r}}})}apply(t){t.forEach(e=>e(this))}}var K=new Xr({_scriptable:s=>!s.startsWith("on"),_indexable:s=>s!=="events",hover:{_fallback:"interaction"},interaction:{_scriptable:!1,_indexable:!1}},[Wr,Ur,Gr]);function qr(s){return!s||B(s.size)||B(s.family)?null:(s.style?s.style+" ":"")+(s.weight?s.weight+" ":"")+s.size+"px "+s.family}function Cs(s,t,e,a,i){let n=t[i];return n||(n=t[i]=s.measureText(i).width,e.push(i)),n>a&&(a=n),a}function Kr(s,t,e,a){a=a||{};let i=a.data=a.data||{},n=a.garbageCollect=a.garbageCollect||[];a.font!==t&&(i=a.data={},n=a.garbageCollect=[],a.font=t),s.save(),s.font=t;let o=0;const l=e.length;let r,c,d,u,h;for(r=0;r<l;r++)if(u=e[r],u!=null&&!q(u))o=Cs(s,i,n,o,u);else if(q(u))for(c=0,d=u.length;c<d;c++)h=u[c],h!=null&&!q(h)&&(o=Cs(s,i,n,o,h));s.restore();const p=n.length/2;if(p>e.length){for(r=0;r<p;r++)delete i[n[r]];n.splice(0,p)}return o}function le(s,t,e){const a=s.currentDevicePixelRatio,i=e!==0?Math.max(e/2,.5):0;return Math.round((t-i)*a)/a+i}function mi(s,t){!t&&!s||(t=t||s.getContext("2d"),t.save(),t.resetTransform(),t.clearRect(0,0,s.width,s.height),t.restore())}function fa(s,t,e,a){Qn(s,t,e,a,null)}function Qn(s,t,e,a,i){let n,o,l,r,c,d,u,h;const p=t.pointStyle,b=t.rotation,f=t.radius;let v=(b||0)*Tr;if(p&&typeof p=="object"&&(n=p.toString(),n==="[object HTMLImageElement]"||n==="[object HTMLCanvasElement]")){s.save(),s.translate(e,a),s.rotate(v),s.drawImage(p,-p.width/2,-p.height/2,p.width,p.height),s.restore();return}if(!(isNaN(f)||f<=0)){switch(s.beginPath(),p){default:i?s.ellipse(e,a,i/2,f,0,0,X):s.arc(e,a,f,0,X),s.closePath();break;case"triangle":d=i?i/2:f,s.moveTo(e+Math.sin(v)*d,a-Math.cos(v)*f),v+=di,s.lineTo(e+Math.sin(v)*d,a-Math.cos(v)*f),v+=di,s.lineTo(e+Math.sin(v)*d,a-Math.cos(v)*f),s.closePath();break;case"rectRounded":c=f*.516,r=f-c,o=Math.cos(v+oe)*r,u=Math.cos(v+oe)*(i?i/2-c:r),l=Math.sin(v+oe)*r,h=Math.sin(v+oe)*(i?i/2-c:r),s.arc(e-u,a-l,c,v-j,v-st),s.arc(e+h,a-o,c,v-st,v),s.arc(e+u,a+l,c,v,v+st),s.arc(e-h,a+o,c,v+st,v+j),s.closePath();break;case"rect":if(!b){r=Math.SQRT1_2*f,d=i?i/2:r,s.rect(e-d,a-r,2*d,2*r);break}v+=oe;case"rectRot":u=Math.cos(v)*(i?i/2:f),o=Math.cos(v)*f,l=Math.sin(v)*f,h=Math.sin(v)*(i?i/2:f),s.moveTo(e-u,a-l),s.lineTo(e+h,a-o),s.lineTo(e+u,a+l),s.lineTo(e-h,a+o),s.closePath();break;case"crossRot":v+=oe;case"cross":u=Math.cos(v)*(i?i/2:f),o=Math.cos(v)*f,l=Math.sin(v)*f,h=Math.sin(v)*(i?i/2:f),s.moveTo(e-u,a-l),s.lineTo(e+u,a+l),s.moveTo(e+h,a-o),s.lineTo(e-h,a+o);break;case"star":u=Math.cos(v)*(i?i/2:f),o=Math.cos(v)*f,l=Math.sin(v)*f,h=Math.sin(v)*(i?i/2:f),s.moveTo(e-u,a-l),s.lineTo(e+u,a+l),s.moveTo(e+h,a-o),s.lineTo(e-h,a+o),v+=oe,u=Math.cos(v)*(i?i/2:f),o=Math.cos(v)*f,l=Math.sin(v)*f,h=Math.sin(v)*(i?i/2:f),s.moveTo(e-u,a-l),s.lineTo(e+u,a+l),s.moveTo(e+h,a-o),s.lineTo(e-h,a+o);break;case"line":o=i?i/2:Math.cos(v)*f,l=Math.sin(v)*f,s.moveTo(e-o,a-l),s.lineTo(e+o,a+l);break;case"dash":s.moveTo(e,a),s.lineTo(e+Math.cos(v)*(i?i/2:f),a+Math.sin(v)*f);break;case!1:s.closePath();break}s.fill(),t.borderWidth>0&&s.stroke()}}function Wt(s,t,e){return e=e||.5,!t||s&&s.x>t.left-e&&s.x<t.right+e&&s.y>t.top-e&&s.y<t.bottom+e}function Es(s,t){s.save(),s.beginPath(),s.rect(t.left,t.top,t.right-t.left,t.bottom-t.top),s.clip()}function Is(s){s.restore()}function Zr(s,t,e,a,i){if(!t)return s.lineTo(e.x,e.y);if(i==="middle"){const n=(t.x+e.x)/2;s.lineTo(n,t.y),s.lineTo(n,e.y)}else i==="after"!=!!a?s.lineTo(t.x,e.y):s.lineTo(e.x,t.y);s.lineTo(e.x,e.y)}function Qr(s,t,e,a){if(!t)return s.lineTo(e.x,e.y);s.bezierCurveTo(a?t.cp1x:t.cp2x,a?t.cp1y:t.cp2y,a?e.cp2x:e.cp1x,a?e.cp2y:e.cp1y,e.x,e.y)}function Jr(s,t){t.translation&&s.translate(t.translation[0],t.translation[1]),B(t.rotation)||s.rotate(t.rotation),t.color&&(s.fillStyle=t.color),t.textAlign&&(s.textAlign=t.textAlign),t.textBaseline&&(s.textBaseline=t.textBaseline)}function tc(s,t,e,a,i){if(i.strikethrough||i.underline){const n=s.measureText(a),o=t-n.actualBoundingBoxLeft,l=t+n.actualBoundingBoxRight,r=e-n.actualBoundingBoxAscent,c=e+n.actualBoundingBoxDescent,d=i.strikethrough?(r+c)/2:c;s.strokeStyle=s.fillStyle,s.beginPath(),s.lineWidth=i.decorationWidth||2,s.moveTo(o,d),s.lineTo(l,d),s.stroke()}}function ec(s,t){const e=s.fillStyle;s.fillStyle=t.color,s.fillRect(t.left,t.top,t.width,t.height),s.fillStyle=e}function be(s,t,e,a,i,n={}){const o=q(t)?t:[t],l=n.strokeWidth>0&&n.strokeColor!=="";let r,c;for(s.save(),s.font=i.string,Jr(s,n),r=0;r<o.length;++r)c=o[r],n.backdrop&&ec(s,n.backdrop),l&&(n.strokeColor&&(s.strokeStyle=n.strokeColor),B(n.strokeWidth)||(s.lineWidth=n.strokeWidth),s.strokeText(c,e,a,n.maxWidth)),s.fillText(c,e,a,n.maxWidth),tc(s,e,a,c,n),a+=Number(i.lineHeight);s.restore()}function Xe(s,t){const{x:e,y:a,w:i,h:n,radius:o}=t;s.arc(e+o.topLeft,a+o.topLeft,o.topLeft,1.5*j,j,!0),s.lineTo(e,a+n-o.bottomLeft),s.arc(e+o.bottomLeft,a+n-o.bottomLeft,o.bottomLeft,j,st,!0),s.lineTo(e+i-o.bottomRight,a+n),s.arc(e+i-o.bottomRight,a+n-o.bottomRight,o.bottomRight,st,0,!0),s.lineTo(e+i,a+o.topRight),s.arc(e+i-o.topRight,a+o.topRight,o.topRight,0,-st,!0),s.lineTo(e+o.topLeft,a)}const sc=/^(normal|(\d+(?:\.\d+)?)(px|em|%)?)$/,ac=/^(normal|italic|initial|inherit|unset|(oblique( -?[0-9]?[0-9]deg)?))$/;function ic(s,t){const e=(""+s).match(sc);if(!e||e[1]==="normal")return t*1.2;switch(s=+e[2],e[3]){case"px":return s;case"%":s/=100;break}return t*s}const nc=s=>+s||0;function Oa(s,t){const e={},a=V(t),i=a?Object.keys(t):t,n=V(s)?a?o=>I(s[o],s[t[o]]):o=>s[o]:()=>s;for(const o of i)e[o]=nc(n(o));return e}function Jn(s){return Oa(s,{top:"y",right:"x",bottom:"y",left:"x"})}function he(s){return Oa(s,["topLeft","topRight","bottomLeft","bottomRight"])}function mt(s){const t=Jn(s);return t.width=t.left+t.right,t.height=t.top+t.bottom,t}function lt(s,t){s=s||{},t=t||K.font;let e=I(s.size,t.size);typeof e=="string"&&(e=parseInt(e,10));let a=I(s.style,t.style);a&&!(""+a).match(ac)&&(console.warn('Invalid font style specified: "'+a+'"'),a=void 0);const i={family:I(s.family,t.family),lineHeight:ic(I(s.lineHeight,t.lineHeight),e),size:e,style:a,weight:I(s.weight,t.weight),string:""};return i.string=qr(i),i}function Ie(s,t,e,a){let i,n,o;for(i=0,n=s.length;i<n;++i)if(o=s[i],o!==void 0&&o!==void 0)return o}function oc(s,t,e){const{min:a,max:i}=s,n=jn(t,(i-a)/2),o=(l,r)=>e&&l===0?0:l+r;return{min:o(a,-Math.abs(n)),max:o(i,n)}}function ee(s,t){return Object.assign(Object.create(s),t)}function Ea(s,t=[""],e,a,i=()=>s[0]){const n=e||s;typeof a>"u"&&(a=ao("_fallback",s));const o={[Symbol.toStringTag]:"Object",_cacheable:!0,_scopes:s,_rootScopes:n,_fallback:a,_getTarget:i,override:l=>Ea([l,...s],t,n,a)};return new Proxy(o,{deleteProperty(l,r){return delete l[r],delete l._keys,delete s[0][r],!0},get(l,r){return eo(l,r,()=>fc(r,t,s,l))},getOwnPropertyDescriptor(l,r){return Reflect.getOwnPropertyDescriptor(l._scopes[0],r)},getPrototypeOf(){return Reflect.getPrototypeOf(s[0])},has(l,r){return yi(l).includes(r)},ownKeys(l){return yi(l)},set(l,r,c){const d=l._storage||(l._storage=i());return l[r]=d[r]=c,delete l._keys,!0}})}function _e(s,t,e,a){const i={_cacheable:!1,_proxy:s,_context:t,_subProxy:e,_stack:new Set,_descriptors:to(s,a),setContext:n=>_e(s,n,e,a),override:n=>_e(s.override(n),t,e,a)};return new Proxy(i,{deleteProperty(n,o){return delete n[o],delete s[o],!0},get(n,o,l){return eo(n,o,()=>rc(n,o,l))},getOwnPropertyDescriptor(n,o){return n._descriptors.allKeys?Reflect.has(s,o)?{enumerable:!0,configurable:!0}:void 0:Reflect.getOwnPropertyDescriptor(s,o)},getPrototypeOf(){return Reflect.getPrototypeOf(s)},has(n,o){return Reflect.has(s,o)},ownKeys(){return Reflect.ownKeys(s)},set(n,o,l){return s[o]=l,delete n[o],!0}})}function to(s,t={scriptable:!0,indexable:!0}){const{_scriptable:e=t.scriptable,_indexable:a=t.indexable,_allKeys:i=t.allKeys}=s;return{allKeys:i,scriptable:e,indexable:a,isScriptable:te(e)?e:()=>e,isIndexable:te(a)?a:()=>a}}const lc=(s,t)=>s?s+Pa(t):t,Ia=(s,t)=>V(t)&&s!=="adapters"&&(Object.getPrototypeOf(t)===null||t.constructor===Object);function eo(s,t,e){if(Object.prototype.hasOwnProperty.call(s,t)||t==="constructor")return s[t];const a=e();return s[t]=a,a}function rc(s,t,e){const{_proxy:a,_context:i,_subProxy:n,_descriptors:o}=s;let l=a[t];return te(l)&&o.isScriptable(t)&&(l=cc(t,l,s,e)),q(l)&&l.length&&(l=dc(t,l,s,o.isIndexable)),Ia(t,l)&&(l=_e(l,i,n&&n[t],o)),l}function cc(s,t,e,a){const{_proxy:i,_context:n,_subProxy:o,_stack:l}=e;if(l.has(s))throw new Error("Recursion detected: "+Array.from(l).join("->")+"->"+s);l.add(s);let r=t(n,o||a);return l.delete(s),Ia(s,r)&&(r=Ra(i._scopes,i,s,r)),r}function dc(s,t,e,a){const{_proxy:i,_context:n,_subProxy:o,_descriptors:l}=e;if(typeof n.index<"u"&&a(s))return t[n.index%t.length];if(V(t[0])){const r=t,c=i._scopes.filter(d=>d!==r);t=[];for(const d of r){const u=Ra(c,i,s,d);t.push(_e(u,n,o&&o[s],l))}}return t}function so(s,t,e){return te(s)?s(t,e):s}const uc=(s,t)=>s===!0?t:typeof s=="string"?Jt(t,s):void 0;function hc(s,t,e,a,i){for(const n of t){const o=uc(e,n);if(o){s.add(o);const l=so(o._fallback,e,i);if(typeof l<"u"&&l!==e&&l!==a)return l}else if(o===!1&&typeof a<"u"&&e!==a)return null}return!1}function Ra(s,t,e,a){const i=t._rootScopes,n=so(t._fallback,e,a),o=[...s,...i],l=new Set;l.add(a);let r=xi(l,o,e,n||e,a);return r===null||typeof n<"u"&&n!==e&&(r=xi(l,o,n,r,a),r===null)?!1:Ea(Array.from(l),[""],i,n,()=>pc(t,e,a))}function xi(s,t,e,a,i){for(;e;)e=hc(s,t,e,a,i);return e}function pc(s,t,e){const a=s._getTarget();t in a||(a[t]={});const i=a[t];return q(i)&&V(e)?e:i||{}}function fc(s,t,e,a){let i;for(const n of t)if(i=ao(lc(n,s),e),typeof i<"u")return Ia(s,i)?Ra(e,a,s,i):i}function ao(s,t){for(const e of t){if(!e)continue;const a=e[s];if(typeof a<"u")return a}}function yi(s){let t=s._keys;return t||(t=s._keys=bc(s._scopes)),t}function bc(s){const t=new Set;for(const e of s)for(const a of Object.keys(e).filter(i=>!i.startsWith("_")))t.add(a);return Array.from(t)}function io(s,t,e,a){const{iScale:i}=s,{key:n="r"}=this._parsing,o=new Array(a);let l,r,c,d;for(l=0,r=a;l<r;++l)c=l+e,d=t[c],o[l]={r:i.parse(Jt(d,n),c)};return o}const gc=Number.EPSILON||1e-14,Ce=(s,t)=>t<s.length&&!s[t].skip&&s[t],no=s=>s==="x"?"y":"x";function vc(s,t,e,a){const i=s.skip?t:s,n=t,o=e.skip?t:e,l=ha(n,i),r=ha(o,n);let c=l/(l+r),d=r/(l+r);c=isNaN(c)?0:c,d=isNaN(d)?0:d;const u=a*c,h=a*d;return{previous:{x:n.x-u*(o.x-i.x),y:n.y-u*(o.y-i.y)},next:{x:n.x+h*(o.x-i.x),y:n.y+h*(o.y-i.y)}}}function mc(s,t,e){const a=s.length;let i,n,o,l,r,c=Ce(s,0);for(let d=0;d<a-1;++d)if(r=c,c=Ce(s,d+1),!(!r||!c)){if(Ve(t[d],0,gc)){e[d]=e[d+1]=0;continue}i=e[d]/t[d],n=e[d+1]/t[d],l=Math.pow(i,2)+Math.pow(n,2),!(l<=9)&&(o=3/Math.sqrt(l),e[d]=i*o*t[d],e[d+1]=n*o*t[d])}}function xc(s,t,e="x"){const a=no(e),i=s.length;let n,o,l,r=Ce(s,0);for(let c=0;c<i;++c){if(o=l,l=r,r=Ce(s,c+1),!l)continue;const d=l[e],u=l[a];o&&(n=(d-o[e])/3,l[`cp1${e}`]=d-n,l[`cp1${a}`]=u-n*t[c]),r&&(n=(r[e]-d)/3,l[`cp2${e}`]=d+n,l[`cp2${a}`]=u+n*t[c])}}function yc(s,t="x"){const e=no(t),a=s.length,i=Array(a).fill(0),n=Array(a);let o,l,r,c=Ce(s,0);for(o=0;o<a;++o)if(l=r,r=c,c=Ce(s,o+1),!!r){if(c){const d=c[t]-r[t];i[o]=d!==0?(c[e]-r[e])/d:0}n[o]=l?c?Ot(i[o-1])!==Ot(i[o])?0:(i[o-1]+i[o])/2:i[o-1]:i[o]}mc(s,i,n),xc(s,n,t)}function ls(s,t,e){return Math.max(Math.min(s,e),t)}function wc(s,t){let e,a,i,n,o,l=Wt(s[0],t);for(e=0,a=s.length;e<a;++e)o=n,n=l,l=e<a-1&&Wt(s[e+1],t),n&&(i=s[e],o&&(i.cp1x=ls(i.cp1x,t.left,t.right),i.cp1y=ls(i.cp1y,t.top,t.bottom)),l&&(i.cp2x=ls(i.cp2x,t.left,t.right),i.cp2y=ls(i.cp2y,t.top,t.bottom)))}function kc(s,t,e,a,i){let n,o,l,r;if(t.spanGaps&&(s=s.filter(c=>!c.skip)),t.cubicInterpolationMode==="monotone")yc(s,i);else{let c=a?s[s.length-1]:s[0];for(n=0,o=s.length;n<o;++n)l=s[n],r=vc(c,l,s[Math.min(n+1,o-(a?0:1))%o],t.tension),l.cp1x=r.previous.x,l.cp1y=r.previous.y,l.cp2x=r.next.x,l.cp2y=r.next.y,c=l}t.capBezierPoints&&wc(s,e)}function za(){return typeof window<"u"&&typeof document<"u"}function Ba(s){let t=s.parentNode;return t&&t.toString()==="[object ShadowRoot]"&&(t=t.host),t}function Ms(s,t,e){let a;return typeof s=="string"?(a=parseInt(s,10),s.indexOf("%")!==-1&&(a=a/100*t.parentNode[e])):a=s,a}const Rs=s=>s.ownerDocument.defaultView.getComputedStyle(s,null);function Sc(s,t){return Rs(s).getPropertyValue(t)}const _c=["top","right","bottom","left"];function pe(s,t,e){const a={};e=e?"-"+e:"";for(let i=0;i<4;i++){const n=_c[i];a[n]=parseFloat(s[t+"-"+n+e])||0}return a.width=a.left+a.right,a.height=a.top+a.bottom,a}const Cc=(s,t,e)=>(s>0||t>0)&&(!e||!e.shadowRoot);function Mc(s,t){const e=s.touches,a=e&&e.length?e[0]:s,{offsetX:i,offsetY:n}=a;let o=!1,l,r;if(Cc(i,n,s.target))l=i,r=n;else{const c=t.getBoundingClientRect();l=a.clientX-c.left,r=a.clientY-c.top,o=!0}return{x:l,y:r,box:o}}function de(s,t){if("native"in s)return s;const{canvas:e,currentDevicePixelRatio:a}=t,i=Rs(e),n=i.boxSizing==="border-box",o=pe(i,"padding"),l=pe(i,"border","width"),{x:r,y:c,box:d}=Mc(s,e),u=o.left+(d&&l.left),h=o.top+(d&&l.top);let{width:p,height:b}=t;return n&&(p-=o.width+l.width,b-=o.height+l.height),{x:Math.round((r-u)/p*e.width/a),y:Math.round((c-h)/b*e.height/a)}}function Pc(s,t,e){let a,i;if(t===void 0||e===void 0){const n=s&&Ba(s);if(!n)t=s.clientWidth,e=s.clientHeight;else{const o=n.getBoundingClientRect(),l=Rs(n),r=pe(l,"border","width"),c=pe(l,"padding");t=o.width-c.width-r.width,e=o.height-c.height-r.height,a=Ms(l.maxWidth,n,"clientWidth"),i=Ms(l.maxHeight,n,"clientHeight")}}return{width:t,height:e,maxWidth:a||_s,maxHeight:i||_s}}const Kt=s=>Math.round(s*10)/10;function Ac(s,t,e,a){const i=Rs(s),n=pe(i,"margin"),o=Ms(i.maxWidth,s,"clientWidth")||_s,l=Ms(i.maxHeight,s,"clientHeight")||_s,r=Pc(s,t,e);let{width:c,height:d}=r;if(i.boxSizing==="content-box"){const h=pe(i,"border","width"),p=pe(i,"padding");c-=p.width+h.width,d-=p.height+h.height}return c=Math.max(0,c-n.width),d=Math.max(0,a?c/a:d-n.height),c=Kt(Math.min(c,o,r.maxWidth)),d=Kt(Math.min(d,l,r.maxHeight)),c&&!d&&(d=Kt(c/2)),(t!==void 0||e!==void 0)&&a&&r.height&&d>r.height&&(d=r.height,c=Kt(Math.floor(d*a))),{width:c,height:d}}function wi(s,t,e){const a=t||1,i=Kt(s.height*a),n=Kt(s.width*a);s.height=Kt(s.height),s.width=Kt(s.width);const o=s.canvas;return o.style&&(e||!o.style.height&&!o.style.width)&&(o.style.height=`${s.height}px`,o.style.width=`${s.width}px`),s.currentDevicePixelRatio!==a||o.height!==i||o.width!==n?(s.currentDevicePixelRatio=a,o.height=i,o.width=n,s.ctx.setTransform(a,0,0,a,0,0),!0):!1}const Dc=(function(){let s=!1;try{const t={get passive(){return s=!0,!1}};za()&&(window.addEventListener("test",null,t),window.removeEventListener("test",null,t))}catch{}return s})();function ki(s,t){const e=Sc(s,t),a=e&&e.match(/^(\d+)(\.\d+)?px$/);return a?+a[1]:void 0}function ue(s,t,e,a){return{x:s.x+e*(t.x-s.x),y:s.y+e*(t.y-s.y)}}function Tc(s,t,e,a){return{x:s.x+e*(t.x-s.x),y:a==="middle"?e<.5?s.y:t.y:a==="after"?e<1?s.y:t.y:e>0?t.y:s.y}}function Lc(s,t,e,a){const i={x:s.cp2x,y:s.cp2y},n={x:t.cp1x,y:t.cp1y},o=ue(s,i,e),l=ue(i,n,e),r=ue(n,t,e),c=ue(o,l,e),d=ue(l,r,e);return ue(c,d,e)}const Oc=function(s,t){return{x(e){return s+s+t-e},setWidth(e){t=e},textAlign(e){return e==="center"?e:e==="right"?"left":"right"},xPlus(e,a){return e-a},leftForLtr(e,a){return e-a}}},Ec=function(){return{x(s){return s},setWidth(s){},textAlign(s){return s},xPlus(s,t){return s+t},leftForLtr(s,t){return s}}};function we(s,t,e){return s?Oc(t,e):Ec()}function oo(s,t){let e,a;(t==="ltr"||t==="rtl")&&(e=s.canvas.style,a=[e.getPropertyValue("direction"),e.getPropertyPriority("direction")],e.setProperty("direction",t,"important"),s.prevTextDirection=a)}function lo(s,t){t!==void 0&&(delete s.prevTextDirection,s.canvas.style.setProperty("direction",t[0],t[1]))}function ro(s){return s==="angle"?{between:Ge,compare:Ir,normalize:bt}:{between:jt,compare:(t,e)=>t-e,normalize:t=>t}}function Si({start:s,end:t,count:e,loop:a,style:i}){return{start:s%e,end:t%e,loop:a&&(t-s+1)%e===0,style:i}}function Ic(s,t,e){const{property:a,start:i,end:n}=e,{between:o,normalize:l}=ro(a),r=t.length;let{start:c,end:d,loop:u}=s,h,p;if(u){for(c+=r,d+=r,h=0,p=r;h<p&&o(l(t[c%r][a]),i,n);++h)c--,d--;c%=r,d%=r}return d<c&&(d+=r),{start:c,end:d,loop:u,style:s.style}}function co(s,t,e){if(!e)return[s];const{property:a,start:i,end:n}=e,o=t.length,{compare:l,between:r,normalize:c}=ro(a),{start:d,end:u,loop:h,style:p}=Ic(s,t,e),b=[];let f=!1,v=null,x,w,_;const S=()=>r(i,_,x)&&l(i,_)!==0,k=()=>l(n,x)===0||r(n,_,x),P=()=>f||S(),T=()=>!f||k();for(let M=d,O=d;M<=u;++M)w=t[M%o],!w.skip&&(x=c(w[a]),x!==_&&(f=r(x,i,n),v===null&&P()&&(v=l(x,i)===0?M:O),v!==null&&T()&&(b.push(Si({start:v,end:M,loop:h,count:o,style:p})),v=null),O=M,_=x));return v!==null&&b.push(Si({start:v,end:u,loop:h,count:o,style:p})),b}function uo(s,t){const e=[],a=s.segments;for(let i=0;i<a.length;i++){const n=co(a[i],s.points,t);n.length&&e.push(...n)}return e}function Rc(s,t,e,a){let i=0,n=t-1;if(e&&!a)for(;i<t&&!s[i].skip;)i++;for(;i<t&&s[i].skip;)i++;for(i%=t,e&&(n+=i);n>i&&s[n%t].skip;)n--;return n%=t,{start:i,end:n}}function zc(s,t,e,a){const i=s.length,n=[];let o=t,l=s[t],r;for(r=t+1;r<=e;++r){const c=s[r%i];c.skip||c.stop?l.skip||(a=!1,n.push({start:t%i,end:(r-1)%i,loop:a}),t=o=c.stop?r:null):(o=r,l.skip&&(t=r)),l=c}return o!==null&&n.push({start:t%i,end:o%i,loop:a}),n}function Bc(s,t){const e=s.points,a=s.options.spanGaps,i=e.length;if(!i)return[];const n=!!s._loop,{start:o,end:l}=Rc(e,i,n,a);if(a===!0)return _i(s,[{start:o,end:l,loop:n}],e,t);const r=l<o?l+i:l,c=!!s._fullLoop&&o===0&&l===i-1;return _i(s,zc(e,o,r,c),e,t)}function _i(s,t,e,a){return!a||!a.setContext||!e?t:Fc(s,t,e,a)}function Fc(s,t,e,a){const i=s._chart.getContext(),n=Ci(s.options),{_datasetIndex:o,options:{spanGaps:l}}=s,r=e.length,c=[];let d=n,u=t[0].start,h=u;function p(b,f,v,x){const w=l?-1:1;if(b!==f){for(b+=r;e[b%r].skip;)b-=w;for(;e[f%r].skip;)f+=w;b%r!==f%r&&(c.push({start:b%r,end:f%r,loop:v,style:x}),d=x,u=f%r)}}for(const b of t){u=l?u:b.start;let f=e[u%r],v;for(h=u+1;h<=b.end;h++){const x=e[h%r];v=Ci(a.setContext(ee(i,{type:"segment",p0:f,p1:x,p0DataIndex:(h-1)%r,p1DataIndex:h%r,datasetIndex:o}))),Vc(v,d)&&p(u,h-1,b.loop,d),f=x,d=v}u<h-1&&p(u,h-1,b.loop,d)}return c}function Ci(s){return{backgroundColor:s.backgroundColor,borderCapStyle:s.borderCapStyle,borderDash:s.borderDash,borderDashOffset:s.borderDashOffset,borderJoinStyle:s.borderJoinStyle,borderWidth:s.borderWidth,borderColor:s.borderColor}}function Vc(s,t){if(!t)return!1;const e=[],a=function(i,n){return La(n)?(e.includes(n)||e.push(n),e.indexOf(n)):n};return JSON.stringify(s,a)!==JSON.stringify(t,a)}function rs(s,t,e){return s.options.clip?s[e]:t[e]}function Hc(s,t){const{xScale:e,yScale:a}=s;return e&&a?{left:rs(e,t,"left"),right:rs(e,t,"right"),top:rs(a,t,"top"),bottom:rs(a,t,"bottom")}:t}function ho(s,t){const e=t._clip;if(e.disabled)return!1;const a=Hc(t,s.chartArea);return{left:e.left===!1?0:a.left-(e.left===!0?0:e.left),right:e.right===!1?s.width:a.right+(e.right===!0?0:e.right),top:e.top===!1?0:a.top-(e.top===!0?0:e.top),bottom:e.bottom===!1?s.height:a.bottom+(e.bottom===!0?0:e.bottom)}}class jc{constructor(){this._request=null,this._charts=new Map,this._running=!1,this._lastDate=void 0}_notify(t,e,a,i){const n=e.listeners[i],o=e.duration;n.forEach(l=>l({chart:t,initial:e.initial,numSteps:o,currentStep:Math.min(a-e.start,o)}))}_refresh(){this._request||(this._running=!0,this._request=Gn.call(window,()=>{this._update(),this._request=null,this._running&&this._refresh()}))}_update(t=Date.now()){let e=0;this._charts.forEach((a,i)=>{if(!a.running||!a.items.length)return;const n=a.items;let o=n.length-1,l=!1,r;for(;o>=0;--o)r=n[o],r._active?(r._total>a.duration&&(a.duration=r._total),r.tick(t),l=!0):(n[o]=n[n.length-1],n.pop());l&&(i.draw(),this._notify(i,a,t,"progress")),n.length||(a.running=!1,this._notify(i,a,t,"complete"),a.initial=!1),e+=n.length}),this._lastDate=t,e===0&&(this._running=!1)}_getAnims(t){const e=this._charts;let a=e.get(t);return a||(a={running:!1,initial:!0,items:[],listeners:{complete:[],progress:[]}},e.set(t,a)),a}listen(t,e,a){this._getAnims(t).listeners[e].push(a)}add(t,e){!e||!e.length||this._getAnims(t).items.push(...e)}has(t){return this._getAnims(t).items.length>0}start(t){const e=this._charts.get(t);e&&(e.running=!0,e.start=Date.now(),e.duration=e.items.reduce((a,i)=>Math.max(a,i._duration),0),this._refresh())}running(t){if(!this._running)return!1;const e=this._charts.get(t);return!(!e||!e.running||!e.items.length)}stop(t){const e=this._charts.get(t);if(!e||!e.items.length)return;const a=e.items;let i=a.length-1;for(;i>=0;--i)a[i].cancel();e.items=[],this._notify(t,e,Date.now(),"complete")}remove(t){return this._charts.delete(t)}}var Bt=new jc;const Mi="transparent",Nc={boolean(s,t,e){return e>.5?t:s},color(s,t,e){const a=gi(s||Mi),i=a.valid&&gi(t||Mi);return i&&i.valid?i.mix(a,e).hexString():t},number(s,t,e){return s+(t-s)*e}};class Wc{constructor(t,e,a,i){const n=e[a];i=Ie([t.to,i,n,t.from]);const o=Ie([t.from,n,i]);this._active=!0,this._fn=t.fn||Nc[t.type||typeof o],this._easing=He[t.easing]||He.linear,this._start=Math.floor(Date.now()+(t.delay||0)),this._duration=this._total=Math.floor(t.duration),this._loop=!!t.loop,this._target=e,this._prop=a,this._from=o,this._to=i,this._promises=void 0}active(){return this._active}update(t,e,a){if(this._active){this._notify(!1);const i=this._target[this._prop],n=a-this._start,o=this._duration-n;this._start=a,this._duration=Math.floor(Math.max(o,t.duration)),this._total+=n,this._loop=!!t.loop,this._to=Ie([t.to,e,i,t.from]),this._from=Ie([t.from,i,e])}}cancel(){this._active&&(this.tick(Date.now()),this._active=!1,this._notify(!1))}tick(t){const e=t-this._start,a=this._duration,i=this._prop,n=this._from,o=this._loop,l=this._to;let r;if(this._active=n!==l&&(o||e<a),!this._active){this._target[i]=l,this._notify(!0);return}if(e<0){this._target[i]=n;return}r=e/a%2,r=o&&r>1?2-r:r,r=this._easing(Math.min(1,Math.max(0,r))),this._target[i]=this._fn(n,l,r)}wait(){const t=this._promises||(this._promises=[]);return new Promise((e,a)=>{t.push({res:e,rej:a})})}_notify(t){const e=t?"res":"rej",a=this._promises||[];for(let i=0;i<a.length;i++)a[i][e]()}}class po{constructor(t,e){this._chart=t,this._properties=new Map,this.configure(e)}configure(t){if(!V(t))return;const e=Object.keys(K.animation),a=this._properties;Object.getOwnPropertyNames(t).forEach(i=>{const n=t[i];if(!V(n))return;const o={};for(const l of e)o[l]=n[l];(q(n.properties)&&n.properties||[i]).forEach(l=>{(l===i||!a.has(l))&&a.set(l,o)})})}_animateOptions(t,e){const a=e.options,i=$c(t,a);if(!i)return[];const n=this._createAnimations(i,a);return a.$shared&&Uc(t.options.$animations,a).then(()=>{t.options=a},()=>{}),n}_createAnimations(t,e){const a=this._properties,i=[],n=t.$animations||(t.$animations={}),o=Object.keys(e),l=Date.now();let r;for(r=o.length-1;r>=0;--r){const c=o[r];if(c.charAt(0)==="$")continue;if(c==="options"){i.push(...this._animateOptions(t,e));continue}const d=e[c];let u=n[c];const h=a.get(c);if(u)if(h&&u.active()){u.update(h,d,l);continue}else u.cancel();if(!h||!h.duration){t[c]=d;continue}n[c]=u=new Wc(h,t,c,d),i.push(u)}return i}update(t,e){if(this._properties.size===0){Object.assign(t,e);return}const a=this._createAnimations(t,e);if(a.length)return Bt.add(this._chart,a),!0}}function Uc(s,t){const e=[],a=Object.keys(t);for(let i=0;i<a.length;i++){const n=s[a[i]];n&&n.active()&&e.push(n.wait())}return Promise.all(e)}function $c(s,t){if(!t)return;let e=s.options;if(!e){s.options=t;return}return e.$shared&&(s.options=e=Object.assign({},e,{$shared:!1,$animations:{}})),e}function Pi(s,t){const e=s&&s.options||{},a=e.reverse,i=e.min===void 0?t:0,n=e.max===void 0?t:0;return{start:a?n:i,end:a?i:n}}function Yc(s,t,e){if(e===!1)return!1;const a=Pi(s,e),i=Pi(t,e);return{top:i.end,right:a.end,bottom:i.start,left:a.start}}function Gc(s){let t,e,a,i;return V(s)?(t=s.top,e=s.right,a=s.bottom,i=s.left):t=e=a=i=s,{top:t,right:e,bottom:a,left:i,disabled:s===!1}}function fo(s,t){const e=[],a=s._getSortedDatasetMetas(t);let i,n;for(i=0,n=a.length;i<n;++i)e.push(a[i].index);return e}function Ai(s,t,e,a={}){const i=s.keys,n=a.mode==="single";let o,l,r,c;if(t===null)return;let d=!1;for(o=0,l=i.length;o<l;++o){if(r=+i[o],r===e){if(d=!0,a.all)continue;break}c=s.values[r],tt(c)&&(n||t===0||Ot(t)===Ot(c))&&(t+=c)}return!d&&!a.all?0:t}function Xc(s,t){const{iScale:e,vScale:a}=t,i=e.axis==="x"?"x":"y",n=a.axis==="x"?"x":"y",o=Object.keys(s),l=new Array(o.length);let r,c,d;for(r=0,c=o.length;r<c;++r)d=o[r],l[r]={[i]:d,[n]:s[d]};return l}function Qs(s,t){const e=s&&s.options.stacked;return e||e===void 0&&t.stack!==void 0}function qc(s,t,e){return`${s.id}.${t.id}.${e.stack||e.type}`}function Kc(s){const{min:t,max:e,minDefined:a,maxDefined:i}=s.getUserBounds();return{min:a?t:Number.NEGATIVE_INFINITY,max:i?e:Number.POSITIVE_INFINITY}}function Zc(s,t,e){const a=s[t]||(s[t]={});return a[e]||(a[e]={})}function Di(s,t,e,a){for(const i of t.getMatchingVisibleMetas(a).reverse()){const n=s[i.index];if(e&&n>0||!e&&n<0)return i.index}return null}function Ti(s,t){const{chart:e,_cachedMeta:a}=s,i=e._stacks||(e._stacks={}),{iScale:n,vScale:o,index:l}=a,r=n.axis,c=o.axis,d=qc(n,o,a),u=t.length;let h;for(let p=0;p<u;++p){const b=t[p],{[r]:f,[c]:v}=b,x=b._stacks||(b._stacks={});h=x[c]=Zc(i,d,f),h[l]=v,h._top=Di(h,o,!0,a.type),h._bottom=Di(h,o,!1,a.type);const w=h._visualValues||(h._visualValues={});w[l]=v}}function Js(s,t){const e=s.scales;return Object.keys(e).filter(a=>e[a].axis===t).shift()}function Qc(s,t){return ee(s,{active:!1,dataset:void 0,datasetIndex:t,index:t,mode:"default",type:"dataset"})}function Jc(s,t,e){return ee(s,{active:!1,dataIndex:t,parsed:void 0,raw:void 0,element:e,index:t,mode:"default",type:"data"})}function Ae(s,t){const e=s.controller.index,a=s.vScale&&s.vScale.axis;if(a){t=t||s._parsed;for(const i of t){const n=i._stacks;if(!n||n[a]===void 0||n[a][e]===void 0)return;delete n[a][e],n[a]._visualValues!==void 0&&n[a]._visualValues[e]!==void 0&&delete n[a]._visualValues[e]}}}const ta=s=>s==="reset"||s==="none",Li=(s,t)=>t?s:Object.assign({},s),td=(s,t,e)=>s&&!t.hidden&&t._stacked&&{keys:fo(e,!0),values:null};class se{static defaults={};static datasetElementType=null;static dataElementType=null;constructor(t,e){this.chart=t,this._ctx=t.ctx,this.index=e,this._cachedDataOpts={},this._cachedMeta=this.getMeta(),this._type=this._cachedMeta.type,this.options=void 0,this._parsing=!1,this._data=void 0,this._objectData=void 0,this._sharedOptions=void 0,this._drawStart=void 0,this._drawCount=void 0,this.enableOptionSharing=!1,this.supportsDecimation=!1,this.$context=void 0,this._syncList=[],this.datasetElementType=new.target.datasetElementType,this.dataElementType=new.target.dataElementType,this.initialize()}initialize(){const t=this._cachedMeta;this.configure(),this.linkScales(),t._stacked=Qs(t.vScale,t),this.addElements(),this.options.fill&&!this.chart.isPluginEnabled("filler")&&console.warn("Tried to use the 'fill' option without the 'Filler' plugin enabled. Please import and register the 'Filler' plugin and make sure it is not disabled in the options")}updateIndex(t){this.index!==t&&Ae(this._cachedMeta),this.index=t}linkScales(){const t=this.chart,e=this._cachedMeta,a=this.getDataset(),i=(u,h,p,b)=>u==="x"?h:u==="r"?b:p,n=e.xAxisID=I(a.xAxisID,Js(t,"x")),o=e.yAxisID=I(a.yAxisID,Js(t,"y")),l=e.rAxisID=I(a.rAxisID,Js(t,"r")),r=e.indexAxis,c=e.iAxisID=i(r,n,o,l),d=e.vAxisID=i(r,o,n,l);e.xScale=this.getScaleForId(n),e.yScale=this.getScaleForId(o),e.rScale=this.getScaleForId(l),e.iScale=this.getScaleForId(c),e.vScale=this.getScaleForId(d)}getDataset(){return this.chart.data.datasets[this.index]}getMeta(){return this.chart.getDatasetMeta(this.index)}getScaleForId(t){return this.chart.scales[t]}_getOtherScale(t){const e=this._cachedMeta;return t===e.iScale?e.vScale:e.iScale}reset(){this._update("reset")}_destroy(){const t=this._cachedMeta;this._data&&pi(this._data,this),t._stacked&&Ae(t)}_dataCheck(){const t=this.getDataset(),e=t.data||(t.data=[]),a=this._data;if(V(e)){const i=this._cachedMeta;this._data=Xc(e,i)}else if(a!==e){if(a){pi(a,this);const i=this._cachedMeta;Ae(i),i._parsed=[]}e&&Object.isExtensible(e)&&Fr(e,this),this._syncList=[],this._data=e}}addElements(){const t=this._cachedMeta;this._dataCheck(),this.datasetElementType&&(t.dataset=new this.datasetElementType)}buildOrUpdateElements(t){const e=this._cachedMeta,a=this.getDataset();let i=!1;this._dataCheck();const n=e._stacked;e._stacked=Qs(e.vScale,e),e.stack!==a.stack&&(i=!0,Ae(e),e.stack=a.stack),this._resyncElements(t),(i||n!==e._stacked)&&(Ti(this,e._parsed),e._stacked=Qs(e.vScale,e))}configure(){const t=this.chart.config,e=t.datasetScopeKeys(this._type),a=t.getOptionScopes(this.getDataset(),e,!0);this.options=t.createResolver(a,this.getContext()),this._parsing=this.options.parsing,this._cachedDataOpts={}}parse(t,e){const{_cachedMeta:a,_data:i}=this,{iScale:n,_stacked:o}=a,l=n.axis;let r=t===0&&e===i.length?!0:a._sorted,c=t>0&&a._parsed[t-1],d,u,h;if(this._parsing===!1)a._parsed=i,a._sorted=!0,h=i;else{q(i[t])?h=this.parseArrayData(a,i,t,e):V(i[t])?h=this.parseObjectData(a,i,t,e):h=this.parsePrimitiveData(a,i,t,e);const p=()=>u[l]===null||c&&u[l]<c[l];for(d=0;d<e;++d)a._parsed[d+t]=u=h[d],r&&(p()&&(r=!1),c=u);a._sorted=r}o&&Ti(this,h)}parsePrimitiveData(t,e,a,i){const{iScale:n,vScale:o}=t,l=n.axis,r=o.axis,c=n.getLabels(),d=n===o,u=new Array(i);let h,p,b;for(h=0,p=i;h<p;++h)b=h+a,u[h]={[l]:d||n.parse(c[b],b),[r]:o.parse(e[b],b)};return u}parseArrayData(t,e,a,i){const{xScale:n,yScale:o}=t,l=new Array(i);let r,c,d,u;for(r=0,c=i;r<c;++r)d=r+a,u=e[d],l[r]={x:n.parse(u[0],d),y:o.parse(u[1],d)};return l}parseObjectData(t,e,a,i){const{xScale:n,yScale:o}=t,{xAxisKey:l="x",yAxisKey:r="y"}=this._parsing,c=new Array(i);let d,u,h,p;for(d=0,u=i;d<u;++d)h=d+a,p=e[h],c[d]={x:n.parse(Jt(p,l),h),y:o.parse(Jt(p,r),h)};return c}getParsed(t){return this._cachedMeta._parsed[t]}getDataElement(t){return this._cachedMeta.data[t]}applyStack(t,e,a){const i=this.chart,n=this._cachedMeta,o=e[t.axis],l={keys:fo(i,!0),values:e._stacks[t.axis]._visualValues};return Ai(l,o,n.index,{mode:a})}updateRangeFromParsed(t,e,a,i){const n=a[e.axis];let o=n===null?NaN:n;const l=i&&a._stacks[e.axis];i&&l&&(i.values=l,o=Ai(i,n,this._cachedMeta.index)),t.min=Math.min(t.min,o),t.max=Math.max(t.max,o)}getMinMax(t,e){const a=this._cachedMeta,i=a._parsed,n=a._sorted&&t===a.iScale,o=i.length,l=this._getOtherScale(t),r=td(e,a,this.chart),c={min:Number.POSITIVE_INFINITY,max:Number.NEGATIVE_INFINITY},{min:d,max:u}=Kc(l);let h,p;function b(){p=i[h];const f=p[l.axis];return!tt(p[t.axis])||d>f||u<f}for(h=0;h<o&&!(!b()&&(this.updateRangeFromParsed(c,t,p,r),n));++h);if(n){for(h=o-1;h>=0;--h)if(!b()){this.updateRangeFromParsed(c,t,p,r);break}}return c}getAllParsedValues(t){const e=this._cachedMeta._parsed,a=[];let i,n,o;for(i=0,n=e.length;i<n;++i)o=e[i][t.axis],tt(o)&&a.push(o);return a}getMaxOverflow(){return!1}getLabelAndValue(t){const e=this._cachedMeta,a=e.iScale,i=e.vScale,n=this.getParsed(t);return{label:a?""+a.getLabelForValue(n[a.axis]):"",value:i?""+i.getLabelForValue(n[i.axis]):""}}_update(t){const e=this._cachedMeta;this.update(t||"default"),e._clip=Gc(I(this.options.clip,Yc(e.xScale,e.yScale,this.getMaxOverflow())))}update(t){}draw(){const t=this._ctx,e=this.chart,a=this._cachedMeta,i=a.data||[],n=e.chartArea,o=[],l=this._drawStart||0,r=this._drawCount||i.length-l,c=this.options.drawActiveElementsOnTop;let d;for(a.dataset&&a.dataset.draw(t,n,l,r),d=l;d<l+r;++d){const u=i[d];u.hidden||(u.active&&c?o.push(u):u.draw(t,n))}for(d=0;d<o.length;++d)o[d].draw(t,n)}getStyle(t,e){const a=e?"active":"default";return t===void 0&&this._cachedMeta.dataset?this.resolveDatasetElementOptions(a):this.resolveDataElementOptions(t||0,a)}getContext(t,e,a){const i=this.getDataset();let n;if(t>=0&&t<this._cachedMeta.data.length){const o=this._cachedMeta.data[t];n=o.$context||(o.$context=Jc(this.getContext(),t,o)),n.parsed=this.getParsed(t),n.raw=i.data[t],n.index=n.dataIndex=t}else n=this.$context||(this.$context=Qc(this.chart.getContext(),this.index)),n.dataset=i,n.index=n.datasetIndex=this.index;return n.active=!!e,n.mode=a,n}resolveDatasetElementOptions(t){return this._resolveElementOptions(this.datasetElementType.id,t)}resolveDataElementOptions(t,e){return this._resolveElementOptions(this.dataElementType.id,e,t)}_resolveElementOptions(t,e="default",a){const i=e==="active",n=this._cachedDataOpts,o=t+"-"+e,l=n[o],r=this.enableOptionSharing&&Ye(a);if(l)return Li(l,r);const c=this.chart.config,d=c.datasetElementScopeKeys(this._type,t),u=i?[`${t}Hover`,"hover",t,""]:[t,""],h=c.getOptionScopes(this.getDataset(),d),p=Object.keys(K.elements[t]),b=()=>this.getContext(a,i,e),f=c.resolveNamedOptions(h,p,b,u);return f.$shared&&(f.$shared=r,n[o]=Object.freeze(Li(f,r))),f}_resolveAnimations(t,e,a){const i=this.chart,n=this._cachedDataOpts,o=`animation-${e}`,l=n[o];if(l)return l;let r;if(i.options.animation!==!1){const d=this.chart.config,u=d.datasetAnimationScopeKeys(this._type,e),h=d.getOptionScopes(this.getDataset(),u);r=d.createResolver(h,this.getContext(t,a,e))}const c=new po(i,r&&r.animations);return r&&r._cacheable&&(n[o]=Object.freeze(c)),c}getSharedOptions(t){if(t.$shared)return this._sharedOptions||(this._sharedOptions=Object.assign({},t))}includeOptions(t,e){return!e||ta(t)||this.chart._animationsDisabled}_getSharedOptions(t,e){const a=this.resolveDataElementOptions(t,e),i=this._sharedOptions,n=this.getSharedOptions(a),o=this.includeOptions(e,n)||n!==i;return this.updateSharedOptions(n,e,a),{sharedOptions:n,includeOptions:o}}updateElement(t,e,a,i){ta(i)?Object.assign(t,a):this._resolveAnimations(e,i).update(t,a)}updateSharedOptions(t,e,a){t&&!ta(e)&&this._resolveAnimations(void 0,e).update(t,a)}_setStyle(t,e,a,i){t.active=i;const n=this.getStyle(e,i);this._resolveAnimations(e,a,i).update(t,{options:!i&&this.getSharedOptions(n)||n})}removeHoverStyle(t,e,a){this._setStyle(t,a,"active",!1)}setHoverStyle(t,e,a){this._setStyle(t,a,"active",!0)}_removeDatasetHoverStyle(){const t=this._cachedMeta.dataset;t&&this._setStyle(t,void 0,"active",!1)}_setDatasetHoverStyle(){const t=this._cachedMeta.dataset;t&&this._setStyle(t,void 0,"active",!0)}_resyncElements(t){const e=this._data,a=this._cachedMeta.data;for(const[l,r,c]of this._syncList)this[l](r,c);this._syncList=[];const i=a.length,n=e.length,o=Math.min(n,i);o&&this.parse(0,o),n>i?this._insertElements(i,n-i,t):n<i&&this._removeElements(n,i-n)}_insertElements(t,e,a=!0){const i=this._cachedMeta,n=i.data,o=t+e;let l;const r=c=>{for(c.length+=e,l=c.length-1;l>=o;l--)c[l]=c[l-e]};for(r(n),l=t;l<o;++l)n[l]=new this.dataElementType;this._parsing&&r(i._parsed),this.parse(t,e),a&&this.updateElements(n,t,e,"reset")}updateElements(t,e,a,i){}_removeElements(t,e){const a=this._cachedMeta;if(this._parsing){const i=a._parsed.splice(t,e);a._stacked&&Ae(a,i)}a.data.splice(t,e)}_sync(t){if(this._parsing)this._syncList.push(t);else{const[e,a,i]=t;this[e](a,i)}this.chart._dataChanges.push([this.index,...t])}_onDataPush(){const t=arguments.length;this._sync(["_insertElements",this.getDataset().data.length-t,t])}_onDataPop(){this._sync(["_removeElements",this._cachedMeta.data.length-1,1])}_onDataShift(){this._sync(["_removeElements",0,1])}_onDataSplice(t,e){e&&this._sync(["_removeElements",t,e]);const a=arguments.length-2;a&&this._sync(["_insertElements",t,a])}_onDataUnshift(){this._sync(["_insertElements",0,arguments.length])}}function ed(s,t){if(!s._cache.$bar){const e=s.getMatchingVisibleMetas(t);let a=[];for(let i=0,n=e.length;i<n;i++)a=a.concat(e[i].controller.getAllParsedValues(s));s._cache.$bar=Yn(a.sort((i,n)=>i-n))}return s._cache.$bar}function sd(s){const t=s.iScale,e=ed(t,s.type);let a=t._length,i,n,o,l;const r=()=>{o===32767||o===-32768||(Ye(l)&&(a=Math.min(a,Math.abs(o-l)||a)),l=o)};for(i=0,n=e.length;i<n;++i)o=t.getPixelForValue(e[i]),r();for(l=void 0,i=0,n=t.ticks.length;i<n;++i)o=t.getPixelForTick(i),r();return a}function ad(s,t,e,a){const i=e.barThickness;let n,o;return B(i)?(n=t.min*e.categoryPercentage,o=e.barPercentage):(n=i*a,o=1),{chunk:n/a,ratio:o,start:t.pixels[s]-n/2}}function id(s,t,e,a){const i=t.pixels,n=i[s];let o=s>0?i[s-1]:null,l=s<i.length-1?i[s+1]:null;const r=e.categoryPercentage;o===null&&(o=n-(l===null?t.end-t.start:l-n)),l===null&&(l=n+n-o);const c=n-(n-Math.min(o,l))/2*r;return{chunk:Math.abs(l-o)/2*r/a,ratio:e.barPercentage,start:c}}function nd(s,t,e,a){const i=e.parse(s[0],a),n=e.parse(s[1],a),o=Math.min(i,n),l=Math.max(i,n);let r=o,c=l;Math.abs(o)>Math.abs(l)&&(r=l,c=o),t[e.axis]=c,t._custom={barStart:r,barEnd:c,start:i,end:n,min:o,max:l}}function bo(s,t,e,a){return q(s)?nd(s,t,e,a):t[e.axis]=e.parse(s,a),t}function Oi(s,t,e,a){const i=s.iScale,n=s.vScale,o=i.getLabels(),l=i===n,r=[];let c,d,u,h;for(c=e,d=e+a;c<d;++c)h=t[c],u={},u[i.axis]=l||i.parse(o[c],c),r.push(bo(h,u,n,c));return r}function ea(s){return s&&s.barStart!==void 0&&s.barEnd!==void 0}function od(s,t,e){return s!==0?Ot(s):(t.isHorizontal()?1:-1)*(t.min>=e?1:-1)}function ld(s){let t,e,a,i,n;return s.horizontal?(t=s.base>s.x,e="left",a="right"):(t=s.base<s.y,e="bottom",a="top"),t?(i="end",n="start"):(i="start",n="end"),{start:e,end:a,reverse:t,top:i,bottom:n}}function rd(s,t,e,a){let i=t.borderSkipped;const n={};if(!i){s.borderSkipped=n;return}if(i===!0){s.borderSkipped={top:!0,right:!0,bottom:!0,left:!0};return}const{start:o,end:l,reverse:r,top:c,bottom:d}=ld(s);i==="middle"&&e&&(s.enableBorderRadius=!0,(e._top||0)===a?i=c:(e._bottom||0)===a?i=d:(n[Ei(d,o,l,r)]=!0,i=c)),n[Ei(i,o,l,r)]=!0,s.borderSkipped=n}function Ei(s,t,e,a){return a?(s=cd(s,t,e),s=Ii(s,e,t)):s=Ii(s,t,e),s}function cd(s,t,e){return s===t?e:s===e?t:s}function Ii(s,t,e){return s==="start"?t:s==="end"?e:s}function dd(s,{inflateAmount:t},e){s.inflateAmount=t==="auto"?e===1?.33:0:t}class go extends se{static id="bar";static defaults={datasetElementType:!1,dataElementType:"bar",categoryPercentage:.8,barPercentage:.9,grouped:!0,animations:{numbers:{type:"number",properties:["x","y","base","width","height"]}}};static overrides={scales:{_index_:{type:"category",offset:!0,grid:{offset:!0}},_value_:{type:"linear",beginAtZero:!0}}};parsePrimitiveData(t,e,a,i){return Oi(t,e,a,i)}parseArrayData(t,e,a,i){return Oi(t,e,a,i)}parseObjectData(t,e,a,i){const{iScale:n,vScale:o}=t,{xAxisKey:l="x",yAxisKey:r="y"}=this._parsing,c=n.axis==="x"?l:r,d=o.axis==="x"?l:r,u=[];let h,p,b,f;for(h=a,p=a+i;h<p;++h)f=e[h],b={},b[n.axis]=n.parse(Jt(f,c),h),u.push(bo(Jt(f,d),b,o,h));return u}updateRangeFromParsed(t,e,a,i){super.updateRangeFromParsed(t,e,a,i);const n=a._custom;n&&e===this._cachedMeta.vScale&&(t.min=Math.min(t.min,n.min),t.max=Math.max(t.max,n.max))}getMaxOverflow(){return 0}getLabelAndValue(t){const e=this._cachedMeta,{iScale:a,vScale:i}=e,n=this.getParsed(t),o=n._custom,l=ea(o)?"["+o.start+", "+o.end+"]":""+i.getLabelForValue(n[i.axis]);return{label:""+a.getLabelForValue(n[a.axis]),value:l}}initialize(){this.enableOptionSharing=!0,super.initialize();const t=this._cachedMeta;t.stack=this.getDataset().stack}update(t){const e=this._cachedMeta;this.updateElements(e.data,0,e.data.length,t)}updateElements(t,e,a,i){const n=i==="reset",{index:o,_cachedMeta:{vScale:l}}=this,r=l.getBasePixel(),c=l.isHorizontal(),d=this._getRuler(),{sharedOptions:u,includeOptions:h}=this._getSharedOptions(e,i);for(let p=e;p<e+a;p++){const b=this.getParsed(p),f=n||B(b[l.axis])?{base:r,head:r}:this._calculateBarValuePixels(p),v=this._calculateBarIndexPixels(p,d),x=(b._stacks||{})[l.axis],w={horizontal:c,base:f.base,enableBorderRadius:!x||ea(b._custom)||o===x._top||o===x._bottom,x:c?f.head:v.center,y:c?v.center:f.head,height:c?v.size:Math.abs(f.size),width:c?Math.abs(f.size):v.size};h&&(w.options=u||this.resolveDataElementOptions(p,t[p].active?"active":i));const _=w.options||t[p].options;rd(w,_,x,o),dd(w,_,d.ratio),this.updateElement(t[p],p,w,i)}}_getStacks(t,e){const{iScale:a}=this._cachedMeta,i=a.getMatchingVisibleMetas(this._type).filter(d=>d.controller.options.grouped),n=a.options.stacked,o=[],l=this._cachedMeta.controller.getParsed(e),r=l&&l[a.axis],c=d=>{const u=d._parsed.find(p=>p[a.axis]===r),h=u&&u[d.vScale.axis];if(B(h)||isNaN(h))return!0};for(const d of i)if(!(e!==void 0&&c(d))&&((n===!1||o.indexOf(d.stack)===-1||n===void 0&&d.stack===void 0)&&o.push(d.stack),d.index===t))break;return o.length||o.push(void 0),o}_getStackCount(t){return this._getStacks(void 0,t).length}_getAxisCount(){return this._getAxis().length}getFirstScaleIdForIndexAxis(){const t=this.chart.scales,e=this.chart.options.indexAxis;return Object.keys(t).filter(a=>t[a].axis===e).shift()}_getAxis(){const t={},e=this.getFirstScaleIdForIndexAxis();for(const a of this.chart.data.datasets)t[I(this.chart.options.indexAxis==="x"?a.xAxisID:a.yAxisID,e)]=!0;return Object.keys(t)}_getStackIndex(t,e,a){const i=this._getStacks(t,a),n=e!==void 0?i.indexOf(e):-1;return n===-1?i.length-1:n}_getRuler(){const t=this.options,e=this._cachedMeta,a=e.iScale,i=[];let n,o;for(n=0,o=e.data.length;n<o;++n)i.push(a.getPixelForValue(this.getParsed(n)[a.axis],n));const l=t.barThickness;return{min:l||sd(e),pixels:i,start:a._startPixel,end:a._endPixel,stackCount:this._getStackCount(),scale:a,grouped:t.grouped,ratio:l?1:t.categoryPercentage*t.barPercentage}}_calculateBarValuePixels(t){const{_cachedMeta:{vScale:e,_stacked:a,index:i},options:{base:n,minBarLength:o}}=this,l=n||0,r=this.getParsed(t),c=r._custom,d=ea(c);let u=r[e.axis],h=0,p=a?this.applyStack(e,r,a):u,b,f;p!==u&&(h=p-u,p=u),d&&(u=c.barStart,p=c.barEnd-c.barStart,u!==0&&Ot(u)!==Ot(c.barEnd)&&(h=0),h+=u);const v=!B(n)&&!d?n:h;let x=e.getPixelForValue(v);if(this.chart.getDataVisibility(t)?b=e.getPixelForValue(h+p):b=x,f=b-x,Math.abs(f)<o){f=od(f,e,l)*o,u===l&&(x-=f/2);const w=e.getPixelForDecimal(0),_=e.getPixelForDecimal(1),S=Math.min(w,_),k=Math.max(w,_);x=Math.max(Math.min(x,k),S),b=x+f,a&&!d&&(r._stacks[e.axis]._visualValues[i]=e.getValueForPixel(b)-e.getValueForPixel(x))}if(x===e.getPixelForValue(l)){const w=Ot(f)*e.getLineWidthForValue(l)/2;x+=w,f-=w}return{size:f,base:x,head:b,center:b+f/2}}_calculateBarIndexPixels(t,e){const a=e.scale,i=this.options,n=i.skipNull,o=I(i.maxBarThickness,1/0);let l,r;const c=this._getAxisCount();if(e.grouped){const d=n?this._getStackCount(t):e.stackCount,u=i.barThickness==="flex"?id(t,e,i,d*c):ad(t,e,i,d*c),h=this.chart.options.indexAxis==="x"?this.getDataset().xAxisID:this.getDataset().yAxisID,p=this._getAxis().indexOf(I(h,this.getFirstScaleIdForIndexAxis())),b=this._getStackIndex(this.index,this._cachedMeta.stack,n?t:void 0)+p;l=u.start+u.chunk*b+u.chunk/2,r=Math.min(o,u.chunk*u.ratio)}else l=a.getPixelForValue(this.getParsed(t)[a.axis],t),r=Math.min(o,e.min*e.ratio);return{base:l-r/2,head:l+r/2,center:l,size:r}}draw(){const t=this._cachedMeta,e=t.vScale,a=t.data,i=a.length;let n=0;for(;n<i;++n)this.getParsed(n)[e.axis]!==null&&!a[n].hidden&&a[n].draw(this._ctx)}}class ud extends se{static id="bubble";static defaults={datasetElementType:!1,dataElementType:"point",animations:{numbers:{type:"number",properties:["x","y","borderWidth","radius"]}}};static overrides={scales:{x:{type:"linear"},y:{type:"linear"}}};initialize(){this.enableOptionSharing=!0,super.initialize()}parsePrimitiveData(t,e,a,i){const n=super.parsePrimitiveData(t,e,a,i);for(let o=0;o<n.length;o++)n[o]._custom=this.resolveDataElementOptions(o+a).radius;return n}parseArrayData(t,e,a,i){const n=super.parseArrayData(t,e,a,i);for(let o=0;o<n.length;o++){const l=e[a+o];n[o]._custom=I(l[2],this.resolveDataElementOptions(o+a).radius)}return n}parseObjectData(t,e,a,i){const n=super.parseObjectData(t,e,a,i);for(let o=0;o<n.length;o++){const l=e[a+o];n[o]._custom=I(l&&l.r&&+l.r,this.resolveDataElementOptions(o+a).radius)}return n}getMaxOverflow(){const t=this._cachedMeta.data;let e=0;for(let a=t.length-1;a>=0;--a)e=Math.max(e,t[a].size(this.resolveDataElementOptions(a))/2);return e>0&&e}getLabelAndValue(t){const e=this._cachedMeta,a=this.chart.data.labels||[],{xScale:i,yScale:n}=e,o=this.getParsed(t),l=i.getLabelForValue(o.x),r=n.getLabelForValue(o.y),c=o._custom;return{label:a[t]||"",value:"("+l+", "+r+(c?", "+c:"")+")"}}update(t){const e=this._cachedMeta.data;this.updateElements(e,0,e.length,t)}updateElements(t,e,a,i){const n=i==="reset",{iScale:o,vScale:l}=this._cachedMeta,{sharedOptions:r,includeOptions:c}=this._getSharedOptions(e,i),d=o.axis,u=l.axis;for(let h=e;h<e+a;h++){const p=t[h],b=!n&&this.getParsed(h),f={},v=f[d]=n?o.getPixelForDecimal(.5):o.getPixelForValue(b[d]),x=f[u]=n?l.getBasePixel():l.getPixelForValue(b[u]);f.skip=isNaN(v)||isNaN(x),c&&(f.options=r||this.resolveDataElementOptions(h,p.active?"active":i),n&&(f.options.radius=0)),this.updateElement(p,h,f,i)}}resolveDataElementOptions(t,e){const a=this.getParsed(t);let i=super.resolveDataElementOptions(t,e);i.$shared&&(i=Object.assign({},i,{$shared:!1}));const n=i.radius;return e!=="active"&&(i.radius=0),i.radius+=I(a&&a._custom,n),i}}function hd(s,t,e){let a=1,i=1,n=0,o=0;if(t<X){const l=s,r=l+t,c=Math.cos(l),d=Math.sin(l),u=Math.cos(r),h=Math.sin(r),p=(_,S,k)=>Ge(_,l,r,!0)?1:Math.max(S,S*e,k,k*e),b=(_,S,k)=>Ge(_,l,r,!0)?-1:Math.min(S,S*e,k,k*e),f=p(0,c,u),v=p(st,d,h),x=b(j,c,u),w=b(j+st,d,h);a=(f-x)/2,i=(v-w)/2,n=-(f+x)/2,o=-(v+w)/2}return{ratioX:a,ratioY:i,offsetX:n,offsetY:o}}class zs extends se{static id="doughnut";static defaults={datasetElementType:!1,dataElementType:"arc",animation:{animateRotate:!0,animateScale:!1},animations:{numbers:{type:"number",properties:["circumference","endAngle","innerRadius","outerRadius","startAngle","x","y","offset","borderWidth","spacing"]}},cutout:"50%",rotation:0,circumference:360,radius:"100%",spacing:0,indexAxis:"r"};static descriptors={_scriptable:t=>t!=="spacing",_indexable:t=>t!=="spacing"&&!t.startsWith("borderDash")&&!t.startsWith("hoverBorderDash")};static overrides={aspectRatio:1,plugins:{legend:{labels:{generateLabels(t){const e=t.data,{labels:{pointStyle:a,textAlign:i,color:n,useBorderRadius:o,borderRadius:l}}=t.legend.options;return e.labels.length&&e.datasets.length?e.labels.map((r,c)=>{const u=t.getDatasetMeta(0).controller.getStyle(c);return{text:r,fillStyle:u.backgroundColor,fontColor:n,hidden:!t.getDataVisibility(c),lineDash:u.borderDash,lineDashOffset:u.borderDashOffset,lineJoin:u.borderJoinStyle,lineWidth:u.borderWidth,strokeStyle:u.borderColor,textAlign:i,pointStyle:a,borderRadius:o&&(l||u.borderRadius),index:c}}):[]}},onClick(t,e,a){a.chart.toggleDataVisibility(e.index),a.chart.update()}}}};constructor(t,e){super(t,e),this.enableOptionSharing=!0,this.innerRadius=void 0,this.outerRadius=void 0,this.offsetX=void 0,this.offsetY=void 0}linkScales(){}parse(t,e){const a=this.getDataset().data,i=this._cachedMeta;if(this._parsing===!1)i._parsed=a;else{let n=r=>+a[r];if(V(a[t])){const{key:r="value"}=this._parsing;n=c=>+Jt(a[c],r)}let o,l;for(o=t,l=t+e;o<l;++o)i._parsed[o]=n(o)}}_getRotation(){return At(this.options.rotation-90)}_getCircumference(){return At(this.options.circumference)}_getRotationExtents(){let t=X,e=-X;for(let a=0;a<this.chart.data.datasets.length;++a)if(this.chart.isDatasetVisible(a)&&this.chart.getDatasetMeta(a).type===this._type){const i=this.chart.getDatasetMeta(a).controller,n=i._getRotation(),o=i._getCircumference();t=Math.min(t,n),e=Math.max(e,n+o)}return{rotation:t,circumference:e-t}}update(t){const e=this.chart,{chartArea:a}=e,i=this._cachedMeta,n=i.data,o=this.getMaxBorderWidth()+this.getMaxOffset(n)+this.options.spacing,l=Math.max((Math.min(a.width,a.height)-o)/2,0),r=Math.min(Sr(this.options.cutout,l),1),c=this._getRingWeight(this.index),{circumference:d,rotation:u}=this._getRotationExtents(),{ratioX:h,ratioY:p,offsetX:b,offsetY:f}=hd(u,d,r),v=(a.width-o)/h,x=(a.height-o)/p,w=Math.max(Math.min(v,x)/2,0),_=jn(this.options.radius,w),S=Math.max(_*r,0),k=(_-S)/this._getVisibleDatasetWeightTotal();this.offsetX=b*_,this.offsetY=f*_,i.total=this.calculateTotal(),this.outerRadius=_-k*this._getRingWeightOffset(this.index),this.innerRadius=Math.max(this.outerRadius-k*c,0),this.updateElements(n,0,n.length,t)}_circumference(t,e){const a=this.options,i=this._cachedMeta,n=this._getCircumference();return e&&a.animation.animateRotate||!this.chart.getDataVisibility(t)||i._parsed[t]===null||i.data[t].hidden?0:this.calculateCircumference(i._parsed[t]*n/X)}updateElements(t,e,a,i){const n=i==="reset",o=this.chart,l=o.chartArea,c=o.options.animation,d=(l.left+l.right)/2,u=(l.top+l.bottom)/2,h=n&&c.animateScale,p=h?0:this.innerRadius,b=h?0:this.outerRadius,{sharedOptions:f,includeOptions:v}=this._getSharedOptions(e,i);let x=this._getRotation(),w;for(w=0;w<e;++w)x+=this._circumference(w,n);for(w=e;w<e+a;++w){const _=this._circumference(w,n),S=t[w],k={x:d+this.offsetX,y:u+this.offsetY,startAngle:x,endAngle:x+_,circumference:_,outerRadius:b,innerRadius:p};v&&(k.options=f||this.resolveDataElementOptions(w,S.active?"active":i)),x+=_,this.updateElement(S,w,k,i)}}calculateTotal(){const t=this._cachedMeta,e=t.data;let a=0,i;for(i=0;i<e.length;i++){const n=t._parsed[i];n!==null&&!isNaN(n)&&this.chart.getDataVisibility(i)&&!e[i].hidden&&(a+=Math.abs(n))}return a}calculateCircumference(t){const e=this._cachedMeta.total;return e>0&&!isNaN(t)?X*(Math.abs(t)/e):0}getLabelAndValue(t){const e=this._cachedMeta,a=this.chart,i=a.data.labels||[],n=Qe(e._parsed[t],a.options.locale);return{label:i[t]||"",value:n}}getMaxBorderWidth(t){let e=0;const a=this.chart;let i,n,o,l,r;if(!t){for(i=0,n=a.data.datasets.length;i<n;++i)if(a.isDatasetVisible(i)){o=a.getDatasetMeta(i),t=o.data,l=o.controller;break}}if(!t)return 0;for(i=0,n=t.length;i<n;++i)r=l.resolveDataElementOptions(i),r.borderAlign!=="inner"&&(e=Math.max(e,r.borderWidth||0,r.hoverBorderWidth||0));return e}getMaxOffset(t){let e=0;for(let a=0,i=t.length;a<i;++a){const n=this.resolveDataElementOptions(a);e=Math.max(e,n.offset||0,n.hoverOffset||0)}return e}_getRingWeightOffset(t){let e=0;for(let a=0;a<t;++a)this.chart.isDatasetVisible(a)&&(e+=this._getRingWeight(a));return e}_getRingWeight(t){return Math.max(I(this.chart.data.datasets[t].weight,1),0)}_getVisibleDatasetWeightTotal(){return this._getRingWeightOffset(this.chart.data.datasets.length)||1}}class vo extends se{static id="line";static defaults={datasetElementType:"line",dataElementType:"point",showLine:!0,spanGaps:!1};static overrides={scales:{_index_:{type:"category"},_value_:{type:"linear"}}};initialize(){this.enableOptionSharing=!0,this.supportsDecimation=!0,super.initialize()}update(t){const e=this._cachedMeta,{dataset:a,data:i=[],_dataset:n}=e,o=this.chart._animationsDisabled;let{start:l,count:r}=qn(e,i,o);this._drawStart=l,this._drawCount=r,Kn(e)&&(l=0,r=i.length),a._chart=this.chart,a._datasetIndex=this.index,a._decimated=!!n._decimated,a.points=i;const c=this.resolveDatasetElementOptions(t);this.options.showLine||(c.borderWidth=0),c.segment=this.options.segment,this.updateElement(a,void 0,{animated:!o,options:c},t),this.updateElements(i,l,r,t)}updateElements(t,e,a,i){const n=i==="reset",{iScale:o,vScale:l,_stacked:r,_dataset:c}=this._cachedMeta,{sharedOptions:d,includeOptions:u}=this._getSharedOptions(e,i),h=o.axis,p=l.axis,{spanGaps:b,segment:f}=this.options,v=Se(b)?b:Number.POSITIVE_INFINITY,x=this.chart._animationsDisabled||n||i==="none",w=e+a,_=t.length;let S=e>0&&this.getParsed(e-1);for(let k=0;k<_;++k){const P=t[k],T=x?P:{};if(k<e||k>=w){T.skip=!0;continue}const M=this.getParsed(k),O=B(M[p]),R=T[h]=o.getPixelForValue(M[h],k),z=T[p]=n||O?l.getBasePixel():l.getPixelForValue(r?this.applyStack(l,M,r):M[p],k);T.skip=isNaN(R)||isNaN(z)||O,T.stop=k>0&&Math.abs(M[h]-S[h])>v,f&&(T.parsed=M,T.raw=c.data[k]),u&&(T.options=d||this.resolveDataElementOptions(k,P.active?"active":i)),x||this.updateElement(P,k,T,i),S=M}}getMaxOverflow(){const t=this._cachedMeta,e=t.dataset,a=e.options&&e.options.borderWidth||0,i=t.data||[];if(!i.length)return a;const n=i[0].size(this.resolveDataElementOptions(0)),o=i[i.length-1].size(this.resolveDataElementOptions(i.length-1));return Math.max(a,n,o)/2}draw(){const t=this._cachedMeta;t.dataset.updateControlPoints(this.chart.chartArea,t.iScale.axis),super.draw()}}class mo extends se{static id="polarArea";static defaults={dataElementType:"arc",animation:{animateRotate:!0,animateScale:!0},animations:{numbers:{type:"number",properties:["x","y","startAngle","endAngle","innerRadius","outerRadius"]}},indexAxis:"r",startAngle:0};static overrides={aspectRatio:1,plugins:{legend:{labels:{generateLabels(t){const e=t.data;if(e.labels.length&&e.datasets.length){const{labels:{pointStyle:a,color:i}}=t.legend.options;return e.labels.map((n,o)=>{const r=t.getDatasetMeta(0).controller.getStyle(o);return{text:n,fillStyle:r.backgroundColor,strokeStyle:r.borderColor,fontColor:i,lineWidth:r.borderWidth,pointStyle:a,hidden:!t.getDataVisibility(o),index:o}})}return[]}},onClick(t,e,a){a.chart.toggleDataVisibility(e.index),a.chart.update()}}},scales:{r:{type:"radialLinear",angleLines:{display:!1},beginAtZero:!0,grid:{circular:!0},pointLabels:{display:!1},startAngle:0}}};constructor(t,e){super(t,e),this.innerRadius=void 0,this.outerRadius=void 0}getLabelAndValue(t){const e=this._cachedMeta,a=this.chart,i=a.data.labels||[],n=Qe(e._parsed[t].r,a.options.locale);return{label:i[t]||"",value:n}}parseObjectData(t,e,a,i){return io.bind(this)(t,e,a,i)}update(t){const e=this._cachedMeta.data;this._updateRadius(),this.updateElements(e,0,e.length,t)}getMinMax(){const t=this._cachedMeta,e={min:Number.POSITIVE_INFINITY,max:Number.NEGATIVE_INFINITY};return t.data.forEach((a,i)=>{const n=this.getParsed(i).r;!isNaN(n)&&this.chart.getDataVisibility(i)&&(n<e.min&&(e.min=n),n>e.max&&(e.max=n))}),e}_updateRadius(){const t=this.chart,e=t.chartArea,a=t.options,i=Math.min(e.right-e.left,e.bottom-e.top),n=Math.max(i/2,0),o=Math.max(a.cutoutPercentage?n/100*a.cutoutPercentage:1,0),l=(n-o)/t.getVisibleDatasetCount();this.outerRadius=n-l*this.index,this.innerRadius=this.outerRadius-l}updateElements(t,e,a,i){const n=i==="reset",o=this.chart,r=o.options.animation,c=this._cachedMeta.rScale,d=c.xCenter,u=c.yCenter,h=c.getIndexAngle(0)-.5*j;let p=h,b;const f=360/this.countVisibleElements();for(b=0;b<e;++b)p+=this._computeAngle(b,i,f);for(b=e;b<e+a;b++){const v=t[b];let x=p,w=p+this._computeAngle(b,i,f),_=o.getDataVisibility(b)?c.getDistanceFromCenterForValue(this.getParsed(b).r):0;p=w,n&&(r.animateScale&&(_=0),r.animateRotate&&(x=w=h));const S={x:d,y:u,innerRadius:0,outerRadius:_,startAngle:x,endAngle:w,options:this.resolveDataElementOptions(b,v.active?"active":i)};this.updateElement(v,b,S,i)}}countVisibleElements(){const t=this._cachedMeta;let e=0;return t.data.forEach((a,i)=>{!isNaN(this.getParsed(i).r)&&this.chart.getDataVisibility(i)&&e++}),e}_computeAngle(t,e,a){return this.chart.getDataVisibility(t)?At(this.resolveDataElementOptions(t,e).angle||a):0}}class pd extends zs{static id="pie";static defaults={cutout:0,rotation:0,circumference:360,radius:"100%"}}class fd extends se{static id="radar";static defaults={datasetElementType:"line",dataElementType:"point",indexAxis:"r",showLine:!0,elements:{line:{fill:"start"}}};static overrides={aspectRatio:1,scales:{r:{type:"radialLinear"}}};getLabelAndValue(t){const e=this._cachedMeta.vScale,a=this.getParsed(t);return{label:e.getLabels()[t],value:""+e.getLabelForValue(a[e.axis])}}parseObjectData(t,e,a,i){return io.bind(this)(t,e,a,i)}update(t){const e=this._cachedMeta,a=e.dataset,i=e.data||[],n=e.iScale.getLabels();if(a.points=i,t!=="resize"){const o=this.resolveDatasetElementOptions(t);this.options.showLine||(o.borderWidth=0);const l={_loop:!0,_fullLoop:n.length===i.length,options:o};this.updateElement(a,void 0,l,t)}this.updateElements(i,0,i.length,t)}updateElements(t,e,a,i){const n=this._cachedMeta.rScale,o=i==="reset";for(let l=e;l<e+a;l++){const r=t[l],c=this.resolveDataElementOptions(l,r.active?"active":i),d=n.getPointPositionForValue(l,this.getParsed(l).r),u=o?n.xCenter:d.x,h=o?n.yCenter:d.y,p={x:u,y:h,angle:d.angle,skip:isNaN(u)||isNaN(h),options:c};this.updateElement(r,l,p,i)}}}class bd extends se{static id="scatter";static defaults={datasetElementType:!1,dataElementType:"point",showLine:!1,fill:!1};static overrides={interaction:{mode:"point"},scales:{x:{type:"linear"},y:{type:"linear"}}};getLabelAndValue(t){const e=this._cachedMeta,a=this.chart.data.labels||[],{xScale:i,yScale:n}=e,o=this.getParsed(t),l=i.getLabelForValue(o.x),r=n.getLabelForValue(o.y);return{label:a[t]||"",value:"("+l+", "+r+")"}}update(t){const e=this._cachedMeta,{data:a=[]}=e,i=this.chart._animationsDisabled;let{start:n,count:o}=qn(e,a,i);if(this._drawStart=n,this._drawCount=o,Kn(e)&&(n=0,o=a.length),this.options.showLine){this.datasetElementType||this.addElements();const{dataset:l,_dataset:r}=e;l._chart=this.chart,l._datasetIndex=this.index,l._decimated=!!r._decimated,l.points=a;const c=this.resolveDatasetElementOptions(t);c.segment=this.options.segment,this.updateElement(l,void 0,{animated:!i,options:c},t)}else this.datasetElementType&&(delete e.dataset,this.datasetElementType=!1);this.updateElements(a,n,o,t)}addElements(){const{showLine:t}=this.options;!this.datasetElementType&&t&&(this.datasetElementType=this.chart.registry.getElement("line")),super.addElements()}updateElements(t,e,a,i){const n=i==="reset",{iScale:o,vScale:l,_stacked:r,_dataset:c}=this._cachedMeta,d=this.resolveDataElementOptions(e,i),u=this.getSharedOptions(d),h=this.includeOptions(i,u),p=o.axis,b=l.axis,{spanGaps:f,segment:v}=this.options,x=Se(f)?f:Number.POSITIVE_INFINITY,w=this.chart._animationsDisabled||n||i==="none";let _=e>0&&this.getParsed(e-1);for(let S=e;S<e+a;++S){const k=t[S],P=this.getParsed(S),T=w?k:{},M=B(P[b]),O=T[p]=o.getPixelForValue(P[p],S),R=T[b]=n||M?l.getBasePixel():l.getPixelForValue(r?this.applyStack(l,P,r):P[b],S);T.skip=isNaN(O)||isNaN(R)||M,T.stop=S>0&&Math.abs(P[p]-_[p])>x,v&&(T.parsed=P,T.raw=c.data[S]),h&&(T.options=u||this.resolveDataElementOptions(S,k.active?"active":i)),w||this.updateElement(k,S,T,i),_=P}this.updateSharedOptions(u,i,d)}getMaxOverflow(){const t=this._cachedMeta,e=t.data||[];if(!this.options.showLine){let l=0;for(let r=e.length-1;r>=0;--r)l=Math.max(l,e[r].size(this.resolveDataElementOptions(r))/2);return l>0&&l}const a=t.dataset,i=a.options&&a.options.borderWidth||0;if(!e.length)return i;const n=e[0].size(this.resolveDataElementOptions(0)),o=e[e.length-1].size(this.resolveDataElementOptions(e.length-1));return Math.max(i,n,o)/2}}var gd=Object.freeze({__proto__:null,BarController:go,BubbleController:ud,DoughnutController:zs,LineController:vo,PieController:pd,PolarAreaController:mo,RadarController:fd,ScatterController:bd});function re(){throw new Error("This method is not implemented: Check that a complete date adapter is provided.")}class Fa{static override(t){Object.assign(Fa.prototype,t)}options;constructor(t){this.options=t||{}}init(){}formats(){return re()}parse(){return re()}format(){return re()}add(){return re()}diff(){return re()}startOf(){return re()}endOf(){return re()}}var vd={_date:Fa};function md(s,t,e,a){const{controller:i,data:n,_sorted:o}=s,l=i._cachedMeta.iScale,r=s.dataset&&s.dataset.options?s.dataset.options.spanGaps:null;if(l&&t===l.axis&&t!=="r"&&o&&n.length){const c=l._reversePixels?zr:Nt;if(a){if(i._sharedOptions){const d=n[0],u=typeof d.getRange=="function"&&d.getRange(t);if(u){const h=c(n,t,e-u),p=c(n,t,e+u);return{lo:h.lo,hi:p.hi}}}}else{const d=c(n,t,e);if(r){const{vScale:u}=i._cachedMeta,{_parsed:h}=s,p=h.slice(0,d.lo+1).reverse().findIndex(f=>!B(f[u.axis]));d.lo-=Math.max(0,p);const b=h.slice(d.hi).findIndex(f=>!B(f[u.axis]));d.hi+=Math.max(0,b)}return d}}return{lo:0,hi:n.length-1}}function Bs(s,t,e,a,i){const n=s.getSortedVisibleDatasetMetas(),o=e[t];for(let l=0,r=n.length;l<r;++l){const{index:c,data:d}=n[l],{lo:u,hi:h}=md(n[l],t,o,i);for(let p=u;p<=h;++p){const b=d[p];b.skip||a(b,c,p)}}}function xd(s){const t=s.indexOf("x")!==-1,e=s.indexOf("y")!==-1;return function(a,i){const n=t?Math.abs(a.x-i.x):0,o=e?Math.abs(a.y-i.y):0;return Math.sqrt(Math.pow(n,2)+Math.pow(o,2))}}function sa(s,t,e,a,i){const n=[];return!i&&!s.isPointInArea(t)||Bs(s,e,t,function(l,r,c){!i&&!Wt(l,s.chartArea,0)||l.inRange(t.x,t.y,a)&&n.push({element:l,datasetIndex:r,index:c})},!0),n}function yd(s,t,e,a){let i=[];function n(o,l,r){const{startAngle:c,endAngle:d}=o.getProps(["startAngle","endAngle"],a),{angle:u}=Un(o,{x:t.x,y:t.y});Ge(u,c,d)&&i.push({element:o,datasetIndex:l,index:r})}return Bs(s,e,t,n),i}function wd(s,t,e,a,i,n){let o=[];const l=xd(e);let r=Number.POSITIVE_INFINITY;function c(d,u,h){const p=d.inRange(t.x,t.y,i);if(a&&!p)return;const b=d.getCenterPoint(i);if(!(!!n||s.isPointInArea(b))&&!p)return;const v=l(t,b);v<r?(o=[{element:d,datasetIndex:u,index:h}],r=v):v===r&&o.push({element:d,datasetIndex:u,index:h})}return Bs(s,e,t,c),o}function aa(s,t,e,a,i,n){return!n&&!s.isPointInArea(t)?[]:e==="r"&&!a?yd(s,t,e,i):wd(s,t,e,a,i,n)}function Ri(s,t,e,a,i){const n=[],o=e==="x"?"inXRange":"inYRange";let l=!1;return Bs(s,e,t,(r,c,d)=>{r[o]&&r[o](t[e],i)&&(n.push({element:r,datasetIndex:c,index:d}),l=l||r.inRange(t.x,t.y,i))}),a&&!l?[]:n}var kd={modes:{index(s,t,e,a){const i=de(t,s),n=e.axis||"x",o=e.includeInvisible||!1,l=e.intersect?sa(s,i,n,a,o):aa(s,i,n,!1,a,o),r=[];return l.length?(s.getSortedVisibleDatasetMetas().forEach(c=>{const d=l[0].index,u=c.data[d];u&&!u.skip&&r.push({element:u,datasetIndex:c.index,index:d})}),r):[]},dataset(s,t,e,a){const i=de(t,s),n=e.axis||"xy",o=e.includeInvisible||!1;let l=e.intersect?sa(s,i,n,a,o):aa(s,i,n,!1,a,o);if(l.length>0){const r=l[0].datasetIndex,c=s.getDatasetMeta(r).data;l=[];for(let d=0;d<c.length;++d)l.push({element:c[d],datasetIndex:r,index:d})}return l},point(s,t,e,a){const i=de(t,s),n=e.axis||"xy",o=e.includeInvisible||!1;return sa(s,i,n,a,o)},nearest(s,t,e,a){const i=de(t,s),n=e.axis||"xy",o=e.includeInvisible||!1;return aa(s,i,n,e.intersect,a,o)},x(s,t,e,a){const i=de(t,s);return Ri(s,i,"x",e.intersect,a)},y(s,t,e,a){const i=de(t,s);return Ri(s,i,"y",e.intersect,a)}}};const xo=["left","top","right","bottom"];function De(s,t){return s.filter(e=>e.pos===t)}function zi(s,t){return s.filter(e=>xo.indexOf(e.pos)===-1&&e.box.axis===t)}function Te(s,t){return s.sort((e,a)=>{const i=t?a:e,n=t?e:a;return i.weight===n.weight?i.index-n.index:i.weight-n.weight})}function Sd(s){const t=[];let e,a,i,n,o,l;for(e=0,a=(s||[]).length;e<a;++e)i=s[e],{position:n,options:{stack:o,stackWeight:l=1}}=i,t.push({index:e,box:i,pos:n,horizontal:i.isHorizontal(),weight:i.weight,stack:o&&n+o,stackWeight:l});return t}function _d(s){const t={};for(const e of s){const{stack:a,pos:i,stackWeight:n}=e;if(!a||!xo.includes(i))continue;const o=t[a]||(t[a]={count:0,placed:0,weight:0,size:0});o.count++,o.weight+=n}return t}function Cd(s,t){const e=_d(s),{vBoxMaxWidth:a,hBoxMaxHeight:i}=t;let n,o,l;for(n=0,o=s.length;n<o;++n){l=s[n];const{fullSize:r}=l.box,c=e[l.stack],d=c&&l.stackWeight/c.weight;l.horizontal?(l.width=d?d*a:r&&t.availableWidth,l.height=i):(l.width=a,l.height=d?d*i:r&&t.availableHeight)}return e}function Md(s){const t=Sd(s),e=Te(t.filter(c=>c.box.fullSize),!0),a=Te(De(t,"left"),!0),i=Te(De(t,"right")),n=Te(De(t,"top"),!0),o=Te(De(t,"bottom")),l=zi(t,"x"),r=zi(t,"y");return{fullSize:e,leftAndTop:a.concat(n),rightAndBottom:i.concat(r).concat(o).concat(l),chartArea:De(t,"chartArea"),vertical:a.concat(i).concat(r),horizontal:n.concat(o).concat(l)}}function Bi(s,t,e,a){return Math.max(s[e],t[e])+Math.max(s[a],t[a])}function yo(s,t){s.top=Math.max(s.top,t.top),s.left=Math.max(s.left,t.left),s.bottom=Math.max(s.bottom,t.bottom),s.right=Math.max(s.right,t.right)}function Pd(s,t,e,a){const{pos:i,box:n}=e,o=s.maxPadding;if(!V(i)){e.size&&(s[i]-=e.size);const u=a[e.stack]||{size:0,count:1};u.size=Math.max(u.size,e.horizontal?n.height:n.width),e.size=u.size/u.count,s[i]+=e.size}n.getPadding&&yo(o,n.getPadding());const l=Math.max(0,t.outerWidth-Bi(o,s,"left","right")),r=Math.max(0,t.outerHeight-Bi(o,s,"top","bottom")),c=l!==s.w,d=r!==s.h;return s.w=l,s.h=r,e.horizontal?{same:c,other:d}:{same:d,other:c}}function Ad(s){const t=s.maxPadding;function e(a){const i=Math.max(t[a]-s[a],0);return s[a]+=i,i}s.y+=e("top"),s.x+=e("left"),e("right"),e("bottom")}function Dd(s,t){const e=t.maxPadding;function a(i){const n={left:0,top:0,right:0,bottom:0};return i.forEach(o=>{n[o]=Math.max(t[o],e[o])}),n}return a(s?["left","right"]:["top","bottom"])}function Re(s,t,e,a){const i=[];let n,o,l,r,c,d;for(n=0,o=s.length,c=0;n<o;++n){l=s[n],r=l.box,r.update(l.width||t.w,l.height||t.h,Dd(l.horizontal,t));const{same:u,other:h}=Pd(t,e,l,a);c|=u&&i.length,d=d||h,r.fullSize||i.push(l)}return c&&Re(i,t,e,a)||d}function cs(s,t,e,a,i){s.top=e,s.left=t,s.right=t+a,s.bottom=e+i,s.width=a,s.height=i}function Fi(s,t,e,a){const i=e.padding;let{x:n,y:o}=t;for(const l of s){const r=l.box,c=a[l.stack]||{placed:0,weight:1},d=l.stackWeight/c.weight||1;if(l.horizontal){const u=t.w*d,h=c.size||r.height;Ye(c.start)&&(o=c.start),r.fullSize?cs(r,i.left,o,e.outerWidth-i.right-i.left,h):cs(r,t.left+c.placed,o,u,h),c.start=o,c.placed+=u,o=r.bottom}else{const u=t.h*d,h=c.size||r.width;Ye(c.start)&&(n=c.start),r.fullSize?cs(r,n,i.top,h,e.outerHeight-i.bottom-i.top):cs(r,n,t.top+c.placed,h,u),c.start=n,c.placed+=u,n=r.right}}t.x=n,t.y=o}var gt={addBox(s,t){s.boxes||(s.boxes=[]),t.fullSize=t.fullSize||!1,t.position=t.position||"top",t.weight=t.weight||0,t._layers=t._layers||function(){return[{z:0,draw(e){t.draw(e)}}]},s.boxes.push(t)},removeBox(s,t){const e=s.boxes?s.boxes.indexOf(t):-1;e!==-1&&s.boxes.splice(e,1)},configure(s,t,e){t.fullSize=e.fullSize,t.position=e.position,t.weight=e.weight},update(s,t,e,a){if(!s)return;const i=mt(s.options.layout.padding),n=Math.max(t-i.width,0),o=Math.max(e-i.height,0),l=Md(s.boxes),r=l.vertical,c=l.horizontal;W(s.boxes,f=>{typeof f.beforeLayout=="function"&&f.beforeLayout()});const d=r.reduce((f,v)=>v.box.options&&v.box.options.display===!1?f:f+1,0)||1,u=Object.freeze({outerWidth:t,outerHeight:e,padding:i,availableWidth:n,availableHeight:o,vBoxMaxWidth:n/2/d,hBoxMaxHeight:o/2}),h=Object.assign({},i);yo(h,mt(a));const p=Object.assign({maxPadding:h,w:n,h:o,x:i.left,y:i.top},i),b=Cd(r.concat(c),u);Re(l.fullSize,p,u,b),Re(r,p,u,b),Re(c,p,u,b)&&Re(r,p,u,b),Ad(p),Fi(l.leftAndTop,p,u,b),p.x+=p.w,p.y+=p.h,Fi(l.rightAndBottom,p,u,b),s.chartArea={left:p.left,top:p.top,right:p.left+p.w,bottom:p.top+p.h,height:p.h,width:p.w},W(l.chartArea,f=>{const v=f.box;Object.assign(v,s.chartArea),v.update(p.w,p.h,{left:0,top:0,right:0,bottom:0})})}};class wo{acquireContext(t,e){}releaseContext(t){return!1}addEventListener(t,e,a){}removeEventListener(t,e,a){}getDevicePixelRatio(){return 1}getMaximumSize(t,e,a,i){return e=Math.max(0,e||t.width),a=a||t.height,{width:e,height:Math.max(0,i?Math.floor(e/i):a)}}isAttached(t){return!0}updateConfig(t){}}class Td extends wo{acquireContext(t){return t&&t.getContext&&t.getContext("2d")||null}updateConfig(t){t.options.animation=!1}}const xs="$chartjs",Ld={touchstart:"mousedown",touchmove:"mousemove",touchend:"mouseup",pointerenter:"mouseenter",pointerdown:"mousedown",pointermove:"mousemove",pointerup:"mouseup",pointerleave:"mouseout",pointerout:"mouseout"},Vi=s=>s===null||s==="";function Od(s,t){const e=s.style,a=s.getAttribute("height"),i=s.getAttribute("width");if(s[xs]={initial:{height:a,width:i,style:{display:e.display,height:e.height,width:e.width}}},e.display=e.display||"block",e.boxSizing=e.boxSizing||"border-box",Vi(i)){const n=ki(s,"width");n!==void 0&&(s.width=n)}if(Vi(a))if(s.style.height==="")s.height=s.width/(t||2);else{const n=ki(s,"height");n!==void 0&&(s.height=n)}return s}const ko=Dc?{passive:!0}:!1;function Ed(s,t,e){s&&s.addEventListener(t,e,ko)}function Id(s,t,e){s&&s.canvas&&s.canvas.removeEventListener(t,e,ko)}function Rd(s,t){const e=Ld[s.type]||s.type,{x:a,y:i}=de(s,t);return{type:e,chart:t,native:s,x:a!==void 0?a:null,y:i!==void 0?i:null}}function Ps(s,t){for(const e of s)if(e===t||e.contains(t))return!0}function zd(s,t,e){const a=s.canvas,i=new MutationObserver(n=>{let o=!1;for(const l of n)o=o||Ps(l.addedNodes,a),o=o&&!Ps(l.removedNodes,a);o&&e()});return i.observe(document,{childList:!0,subtree:!0}),i}function Bd(s,t,e){const a=s.canvas,i=new MutationObserver(n=>{let o=!1;for(const l of n)o=o||Ps(l.removedNodes,a),o=o&&!Ps(l.addedNodes,a);o&&e()});return i.observe(document,{childList:!0,subtree:!0}),i}const qe=new Map;let Hi=0;function So(){const s=window.devicePixelRatio;s!==Hi&&(Hi=s,qe.forEach((t,e)=>{e.currentDevicePixelRatio!==s&&t()}))}function Fd(s,t){qe.size||window.addEventListener("resize",So),qe.set(s,t)}function Vd(s){qe.delete(s),qe.size||window.removeEventListener("resize",So)}function Hd(s,t,e){const a=s.canvas,i=a&&Ba(a);if(!i)return;const n=Xn((l,r)=>{const c=i.clientWidth;e(l,r),c<i.clientWidth&&e()},window),o=new ResizeObserver(l=>{const r=l[0],c=r.contentRect.width,d=r.contentRect.height;c===0&&d===0||n(c,d)});return o.observe(i),Fd(s,n),o}function ia(s,t,e){e&&e.disconnect(),t==="resize"&&Vd(s)}function jd(s,t,e){const a=s.canvas,i=Xn(n=>{s.ctx!==null&&e(Rd(n,s))},s);return Ed(a,t,i),i}class Nd extends wo{acquireContext(t,e){const a=t&&t.getContext&&t.getContext("2d");return a&&a.canvas===t?(Od(t,e),a):null}releaseContext(t){const e=t.canvas;if(!e[xs])return!1;const a=e[xs].initial;["height","width"].forEach(n=>{const o=a[n];B(o)?e.removeAttribute(n):e.setAttribute(n,o)});const i=a.style||{};return Object.keys(i).forEach(n=>{e.style[n]=i[n]}),e.width=e.width,delete e[xs],!0}addEventListener(t,e,a){this.removeEventListener(t,e);const i=t.$proxies||(t.$proxies={}),o={attach:zd,detach:Bd,resize:Hd}[e]||jd;i[e]=o(t,e,a)}removeEventListener(t,e){const a=t.$proxies||(t.$proxies={}),i=a[e];if(!i)return;({attach:ia,detach:ia,resize:ia}[e]||Id)(t,e,i),a[e]=void 0}getDevicePixelRatio(){return window.devicePixelRatio}getMaximumSize(t,e,a,i){return Ac(t,e,a,i)}isAttached(t){const e=t&&Ba(t);return!!(e&&e.isConnected)}}function Wd(s){return!za()||typeof OffscreenCanvas<"u"&&s instanceof OffscreenCanvas?Td:Nd}class Ut{static defaults={};static defaultRoutes=void 0;x;y;active=!1;options;$animations;tooltipPosition(t){const{x:e,y:a}=this.getProps(["x","y"],t);return{x:e,y:a}}hasValue(){return Se(this.x)&&Se(this.y)}getProps(t,e){const a=this.$animations;if(!e||!a)return this;const i={};return t.forEach(n=>{i[n]=a[n]&&a[n].active()?a[n]._to:this[n]}),i}}function Ud(s,t){const e=s.options.ticks,a=$d(s),i=Math.min(e.maxTicksLimit||a,a),n=e.major.enabled?Gd(t):[],o=n.length,l=n[0],r=n[o-1],c=[];if(o>i)return Xd(t,c,n,o/i),c;const d=Yd(n,t,i);if(o>0){let u,h;const p=o>1?Math.round((r-l)/(o-1)):null;for(ds(t,c,d,B(p)?0:l-p,l),u=0,h=o-1;u<h;u++)ds(t,c,d,n[u],n[u+1]);return ds(t,c,d,r,B(p)?t.length:r+p),c}return ds(t,c,d),c}function $d(s){const t=s.options.offset,e=s._tickSize(),a=s._length/e+(t?0:1),i=s._maxLength/e;return Math.floor(Math.min(a,i))}function Yd(s,t,e){const a=qd(s),i=t.length/e;if(!a)return Math.max(i,1);const n=Lr(a);for(let o=0,l=n.length-1;o<l;o++){const r=n[o];if(r>i)return r}return Math.max(i,1)}function Gd(s){const t=[];let e,a;for(e=0,a=s.length;e<a;e++)s[e].major&&t.push(e);return t}function Xd(s,t,e,a){let i=0,n=e[0],o;for(a=Math.ceil(a),o=0;o<s.length;o++)o===n&&(t.push(s[o]),i++,n=e[i*a])}function ds(s,t,e,a,i){const n=I(a,0),o=Math.min(I(i,s.length),s.length);let l=0,r,c,d;for(e=Math.ceil(e),i&&(r=i-a,e=r/Math.floor(r/e)),d=n;d<0;)l++,d=Math.round(n+l*e);for(c=Math.max(n,0);c<o;c++)c===d&&(t.push(s[c]),l++,d=Math.round(n+l*e))}function qd(s){const t=s.length;let e,a;if(t<2)return!1;for(a=s[0],e=1;e<t;++e)if(s[e]-s[e-1]!==a)return!1;return a}const Kd=s=>s==="left"?"right":s==="right"?"left":s,ji=(s,t,e)=>t==="top"||t==="left"?s[t]+e:s[t]-e,Ni=(s,t)=>Math.min(t||s,s);function Wi(s,t){const e=[],a=s.length/t,i=s.length;let n=0;for(;n<i;n+=a)e.push(s[Math.floor(n)]);return e}function Zd(s,t,e){const a=s.ticks.length,i=Math.min(t,a-1),n=s._startPixel,o=s._endPixel,l=1e-6;let r=s.getPixelForTick(i),c;if(!(e&&(a===1?c=Math.max(r-n,o-r):t===0?c=(s.getPixelForTick(1)-r)/2:c=(r-s.getPixelForTick(i-1))/2,r+=i<t?c:-c,r<n-l||r>o+l)))return r}function Qd(s,t){W(s,e=>{const a=e.gc,i=a.length/2;let n;if(i>t){for(n=0;n<i;++n)delete e.data[a[n]];a.splice(0,i)}})}function Le(s){return s.drawTicks?s.tickLength:0}function Ui(s,t){if(!s.display)return 0;const e=lt(s.font,t),a=mt(s.padding);return(q(s.text)?s.text.length:1)*e.lineHeight+a.height}function Jd(s,t){return ee(s,{scale:t,type:"scale"})}function tu(s,t,e){return ee(s,{tick:e,index:t,type:"tick"})}function eu(s,t,e){let a=Ta(s);return(e&&t!=="right"||!e&&t==="right")&&(a=Kd(a)),a}function su(s,t,e,a){const{top:i,left:n,bottom:o,right:l,chart:r}=s,{chartArea:c,scales:d}=r;let u=0,h,p,b;const f=o-i,v=l-n;if(s.isHorizontal()){if(p=ft(a,n,l),V(e)){const x=Object.keys(e)[0],w=e[x];b=d[x].getPixelForValue(w)+f-t}else e==="center"?b=(c.bottom+c.top)/2+f-t:b=ji(s,e,t);h=l-n}else{if(V(e)){const x=Object.keys(e)[0],w=e[x];p=d[x].getPixelForValue(w)-v+t}else e==="center"?p=(c.left+c.right)/2-v+t:p=ji(s,e,t);b=ft(a,o,i),u=e==="left"?-st:st}return{titleX:p,titleY:b,maxWidth:h,rotation:u}}class ge extends Ut{constructor(t){super(),this.id=t.id,this.type=t.type,this.options=void 0,this.ctx=t.ctx,this.chart=t.chart,this.top=void 0,this.bottom=void 0,this.left=void 0,this.right=void 0,this.width=void 0,this.height=void 0,this._margins={left:0,right:0,top:0,bottom:0},this.maxWidth=void 0,this.maxHeight=void 0,this.paddingTop=void 0,this.paddingBottom=void 0,this.paddingLeft=void 0,this.paddingRight=void 0,this.axis=void 0,this.labelRotation=void 0,this.min=void 0,this.max=void 0,this._range=void 0,this.ticks=[],this._gridLineItems=null,this._labelItems=null,this._labelSizes=null,this._length=0,this._maxLength=0,this._longestTextCache={},this._startPixel=void 0,this._endPixel=void 0,this._reversePixels=!1,this._userMax=void 0,this._userMin=void 0,this._suggestedMax=void 0,this._suggestedMin=void 0,this._ticksLength=0,this._borderValue=0,this._cache={},this._dataLimitsCached=!1,this.$context=void 0}init(t){this.options=t.setContext(this.getContext()),this.axis=t.axis,this._userMin=this.parse(t.min),this._userMax=this.parse(t.max),this._suggestedMin=this.parse(t.suggestedMin),this._suggestedMax=this.parse(t.suggestedMax)}parse(t,e){return t}getUserBounds(){let{_userMin:t,_userMax:e,_suggestedMin:a,_suggestedMax:i}=this;return t=_t(t,Number.POSITIVE_INFINITY),e=_t(e,Number.NEGATIVE_INFINITY),a=_t(a,Number.POSITIVE_INFINITY),i=_t(i,Number.NEGATIVE_INFINITY),{min:_t(t,a),max:_t(e,i),minDefined:tt(t),maxDefined:tt(e)}}getMinMax(t){let{min:e,max:a,minDefined:i,maxDefined:n}=this.getUserBounds(),o;if(i&&n)return{min:e,max:a};const l=this.getMatchingVisibleMetas();for(let r=0,c=l.length;r<c;++r)o=l[r].controller.getMinMax(this,t),i||(e=Math.min(e,o.min)),n||(a=Math.max(a,o.max));return e=n&&e>a?a:e,a=i&&e>a?e:a,{min:_t(e,_t(a,e)),max:_t(a,_t(e,a))}}getPadding(){return{left:this.paddingLeft||0,top:this.paddingTop||0,right:this.paddingRight||0,bottom:this.paddingBottom||0}}getTicks(){return this.ticks}getLabels(){const t=this.chart.data;return this.options.labels||(this.isHorizontal()?t.xLabels:t.yLabels)||t.labels||[]}getLabelItems(t=this.chart.chartArea){return this._labelItems||(this._labelItems=this._computeLabelItems(t))}beforeLayout(){this._cache={},this._dataLimitsCached=!1}beforeUpdate(){G(this.options.beforeUpdate,[this])}update(t,e,a){const{beginAtZero:i,grace:n,ticks:o}=this.options,l=o.sampleSize;this.beforeUpdate(),this.maxWidth=t,this.maxHeight=e,this._margins=a=Object.assign({left:0,right:0,top:0,bottom:0},a),this.ticks=null,this._labelSizes=null,this._gridLineItems=null,this._labelItems=null,this.beforeSetDimensions(),this.setDimensions(),this.afterSetDimensions(),this._maxLength=this.isHorizontal()?this.width+a.left+a.right:this.height+a.top+a.bottom,this._dataLimitsCached||(this.beforeDataLimits(),this.determineDataLimits(),this.afterDataLimits(),this._range=oc(this,n,i),this._dataLimitsCached=!0),this.beforeBuildTicks(),this.ticks=this.buildTicks()||[],this.afterBuildTicks();const r=l<this.ticks.length;this._convertTicksToLabels(r?Wi(this.ticks,l):this.ticks),this.configure(),this.beforeCalculateLabelRotation(),this.calculateLabelRotation(),this.afterCalculateLabelRotation(),o.display&&(o.autoSkip||o.source==="auto")&&(this.ticks=Ud(this,this.ticks),this._labelSizes=null,this.afterAutoSkip()),r&&this._convertTicksToLabels(this.ticks),this.beforeFit(),this.fit(),this.afterFit(),this.afterUpdate()}configure(){let t=this.options.reverse,e,a;this.isHorizontal()?(e=this.left,a=this.right):(e=this.top,a=this.bottom,t=!t),this._startPixel=e,this._endPixel=a,this._reversePixels=t,this._length=a-e,this._alignToPixels=this.options.alignToPixels}afterUpdate(){G(this.options.afterUpdate,[this])}beforeSetDimensions(){G(this.options.beforeSetDimensions,[this])}setDimensions(){this.isHorizontal()?(this.width=this.maxWidth,this.left=0,this.right=this.width):(this.height=this.maxHeight,this.top=0,this.bottom=this.height),this.paddingLeft=0,this.paddingTop=0,this.paddingRight=0,this.paddingBottom=0}afterSetDimensions(){G(this.options.afterSetDimensions,[this])}_callHooks(t){this.chart.notifyPlugins(t,this.getContext()),G(this.options[t],[this])}beforeDataLimits(){this._callHooks("beforeDataLimits")}determineDataLimits(){}afterDataLimits(){this._callHooks("afterDataLimits")}beforeBuildTicks(){this._callHooks("beforeBuildTicks")}buildTicks(){return[]}afterBuildTicks(){this._callHooks("afterBuildTicks")}beforeTickToLabelConversion(){G(this.options.beforeTickToLabelConversion,[this])}generateTickLabels(t){const e=this.options.ticks;let a,i,n;for(a=0,i=t.length;a<i;a++)n=t[a],n.label=G(e.callback,[n.value,a,t],this)}afterTickToLabelConversion(){G(this.options.afterTickToLabelConversion,[this])}beforeCalculateLabelRotation(){G(this.options.beforeCalculateLabelRotation,[this])}calculateLabelRotation(){const t=this.options,e=t.ticks,a=Ni(this.ticks.length,t.ticks.maxTicksLimit),i=e.minRotation||0,n=e.maxRotation;let o=i,l,r,c;if(!this._isVisible()||!e.display||i>=n||a<=1||!this.isHorizontal()){this.labelRotation=i;return}const d=this._getLabelSizes(),u=d.widest.width,h=d.highest.height,p=ct(this.chart.width-u,0,this.maxWidth);l=t.offset?this.maxWidth/a:p/(a-1),u+6>l&&(l=p/(a-(t.offset?.5:1)),r=this.maxHeight-Le(t.grid)-e.padding-Ui(t.title,this.chart.options.font),c=Math.sqrt(u*u+h*h),o=Aa(Math.min(Math.asin(ct((d.highest.height+6)/l,-1,1)),Math.asin(ct(r/c,-1,1))-Math.asin(ct(h/c,-1,1)))),o=Math.max(i,Math.min(n,o))),this.labelRotation=o}afterCalculateLabelRotation(){G(this.options.afterCalculateLabelRotation,[this])}afterAutoSkip(){}beforeFit(){G(this.options.beforeFit,[this])}fit(){const t={width:0,height:0},{chart:e,options:{ticks:a,title:i,grid:n}}=this,o=this._isVisible(),l=this.isHorizontal();if(o){const r=Ui(i,e.options.font);if(l?(t.width=this.maxWidth,t.height=Le(n)+r):(t.height=this.maxHeight,t.width=Le(n)+r),a.display&&this.ticks.length){const{first:c,last:d,widest:u,highest:h}=this._getLabelSizes(),p=a.padding*2,b=At(this.labelRotation),f=Math.cos(b),v=Math.sin(b);if(l){const x=a.mirror?0:v*u.width+f*h.height;t.height=Math.min(this.maxHeight,t.height+x+p)}else{const x=a.mirror?0:f*u.width+v*h.height;t.width=Math.min(this.maxWidth,t.width+x+p)}this._calculatePadding(c,d,v,f)}}this._handleMargins(),l?(this.width=this._length=e.width-this._margins.left-this._margins.right,this.height=t.height):(this.width=t.width,this.height=this._length=e.height-this._margins.top-this._margins.bottom)}_calculatePadding(t,e,a,i){const{ticks:{align:n,padding:o},position:l}=this.options,r=this.labelRotation!==0,c=l!=="top"&&this.axis==="x";if(this.isHorizontal()){const d=this.getPixelForTick(0)-this.left,u=this.right-this.getPixelForTick(this.ticks.length-1);let h=0,p=0;r?c?(h=i*t.width,p=a*e.height):(h=a*t.height,p=i*e.width):n==="start"?p=e.width:n==="end"?h=t.width:n!=="inner"&&(h=t.width/2,p=e.width/2),this.paddingLeft=Math.max((h-d+o)*this.width/(this.width-d),0),this.paddingRight=Math.max((p-u+o)*this.width/(this.width-u),0)}else{let d=e.height/2,u=t.height/2;n==="start"?(d=0,u=t.height):n==="end"&&(d=e.height,u=0),this.paddingTop=d+o,this.paddingBottom=u+o}}_handleMargins(){this._margins&&(this._margins.left=Math.max(this.paddingLeft,this._margins.left),this._margins.top=Math.max(this.paddingTop,this._margins.top),this._margins.right=Math.max(this.paddingRight,this._margins.right),this._margins.bottom=Math.max(this.paddingBottom,this._margins.bottom))}afterFit(){G(this.options.afterFit,[this])}isHorizontal(){const{axis:t,position:e}=this.options;return e==="top"||e==="bottom"||t==="x"}isFullSize(){return this.options.fullSize}_convertTicksToLabels(t){this.beforeTickToLabelConversion(),this.generateTickLabels(t);let e,a;for(e=0,a=t.length;e<a;e++)B(t[e].label)&&(t.splice(e,1),a--,e--);this.afterTickToLabelConversion()}_getLabelSizes(){let t=this._labelSizes;if(!t){const e=this.options.ticks.sampleSize;let a=this.ticks;e<a.length&&(a=Wi(a,e)),this._labelSizes=t=this._computeLabelSizes(a,a.length,this.options.ticks.maxTicksLimit)}return t}_computeLabelSizes(t,e,a){const{ctx:i,_longestTextCache:n}=this,o=[],l=[],r=Math.floor(e/Ni(e,a));let c=0,d=0,u,h,p,b,f,v,x,w,_,S,k;for(u=0;u<e;u+=r){if(b=t[u].label,f=this._resolveTickFontOptions(u),i.font=v=f.string,x=n[v]=n[v]||{data:{},gc:[]},w=f.lineHeight,_=S=0,!B(b)&&!q(b))_=Cs(i,x.data,x.gc,_,b),S=w;else if(q(b))for(h=0,p=b.length;h<p;++h)k=b[h],!B(k)&&!q(k)&&(_=Cs(i,x.data,x.gc,_,k),S+=w);o.push(_),l.push(S),c=Math.max(_,c),d=Math.max(S,d)}Qd(n,e);const P=o.indexOf(c),T=l.indexOf(d),M=O=>({width:o[O]||0,height:l[O]||0});return{first:M(0),last:M(e-1),widest:M(P),highest:M(T),widths:o,heights:l}}getLabelForValue(t){return t}getPixelForValue(t,e){return NaN}getValueForPixel(t){}getPixelForTick(t){const e=this.ticks;return t<0||t>e.length-1?null:this.getPixelForValue(e[t].value)}getPixelForDecimal(t){this._reversePixels&&(t=1-t);const e=this._startPixel+t*this._length;return Rr(this._alignToPixels?le(this.chart,e,0):e)}getDecimalForPixel(t){const e=(t-this._startPixel)/this._length;return this._reversePixels?1-e:e}getBasePixel(){return this.getPixelForValue(this.getBaseValue())}getBaseValue(){const{min:t,max:e}=this;return t<0&&e<0?e:t>0&&e>0?t:0}getContext(t){const e=this.ticks||[];if(t>=0&&t<e.length){const a=e[t];return a.$context||(a.$context=tu(this.getContext(),t,a))}return this.$context||(this.$context=Jd(this.chart.getContext(),this))}_tickSize(){const t=this.options.ticks,e=At(this.labelRotation),a=Math.abs(Math.cos(e)),i=Math.abs(Math.sin(e)),n=this._getLabelSizes(),o=t.autoSkipPadding||0,l=n?n.widest.width+o:0,r=n?n.highest.height+o:0;return this.isHorizontal()?r*a>l*i?l/a:r/i:r*i<l*a?r/a:l/i}_isVisible(){const t=this.options.display;return t!=="auto"?!!t:this.getMatchingVisibleMetas().length>0}_computeGridLineItems(t){const e=this.axis,a=this.chart,i=this.options,{grid:n,position:o,border:l}=i,r=n.offset,c=this.isHorizontal(),u=this.ticks.length+(r?1:0),h=Le(n),p=[],b=l.setContext(this.getContext()),f=b.display?b.width:0,v=f/2,x=function(Y){return le(a,Y,f)};let w,_,S,k,P,T,M,O,R,z,F,it;if(o==="top")w=x(this.bottom),T=this.bottom-h,O=w-v,z=x(t.top)+v,it=t.bottom;else if(o==="bottom")w=x(this.top),z=t.top,it=x(t.bottom)-v,T=w+v,O=this.top+h;else if(o==="left")w=x(this.right),P=this.right-h,M=w-v,R=x(t.left)+v,F=t.right;else if(o==="right")w=x(this.left),R=t.left,F=x(t.right)-v,P=w+v,M=this.left+h;else if(e==="x"){if(o==="center")w=x((t.top+t.bottom)/2+.5);else if(V(o)){const Y=Object.keys(o)[0],Z=o[Y];w=x(this.chart.scales[Y].getPixelForValue(Z))}z=t.top,it=t.bottom,T=w+v,O=T+h}else if(e==="y"){if(o==="center")w=x((t.left+t.right)/2);else if(V(o)){const Y=Object.keys(o)[0],Z=o[Y];w=x(this.chart.scales[Y].getPixelForValue(Z))}P=w-v,M=P-h,R=t.left,F=t.right}const ut=I(i.ticks.maxTicksLimit,u),H=Math.max(1,Math.ceil(u/ut));for(_=0;_<u;_+=H){const Y=this.getContext(_),Z=n.setContext(Y),xt=l.setContext(Y),nt=Z.lineWidth,$t=Z.color,me=xt.dash||[],Et=xt.dashOffset,ae=Z.tickWidth,It=Z.tickColor,Rt=Z.tickBorderDash||[],Pt=Z.tickBorderDashOffset;S=Zd(this,_,r),S!==void 0&&(k=le(a,S,nt),c?P=M=R=F=k:T=O=z=it=k,p.push({tx1:P,ty1:T,tx2:M,ty2:O,x1:R,y1:z,x2:F,y2:it,width:nt,color:$t,borderDash:me,borderDashOffset:Et,tickWidth:ae,tickColor:It,tickBorderDash:Rt,tickBorderDashOffset:Pt}))}return this._ticksLength=u,this._borderValue=w,p}_computeLabelItems(t){const e=this.axis,a=this.options,{position:i,ticks:n}=a,o=this.isHorizontal(),l=this.ticks,{align:r,crossAlign:c,padding:d,mirror:u}=n,h=Le(a.grid),p=h+d,b=u?-d:p,f=-At(this.labelRotation),v=[];let x,w,_,S,k,P,T,M,O,R,z,F,it="middle";if(i==="top")P=this.bottom-b,T=this._getXAxisLabelAlignment();else if(i==="bottom")P=this.top+b,T=this._getXAxisLabelAlignment();else if(i==="left"){const H=this._getYAxisLabelAlignment(h);T=H.textAlign,k=H.x}else if(i==="right"){const H=this._getYAxisLabelAlignment(h);T=H.textAlign,k=H.x}else if(e==="x"){if(i==="center")P=(t.top+t.bottom)/2+p;else if(V(i)){const H=Object.keys(i)[0],Y=i[H];P=this.chart.scales[H].getPixelForValue(Y)+p}T=this._getXAxisLabelAlignment()}else if(e==="y"){if(i==="center")k=(t.left+t.right)/2-p;else if(V(i)){const H=Object.keys(i)[0],Y=i[H];k=this.chart.scales[H].getPixelForValue(Y)}T=this._getYAxisLabelAlignment(h).textAlign}e==="y"&&(r==="start"?it="top":r==="end"&&(it="bottom"));const ut=this._getLabelSizes();for(x=0,w=l.length;x<w;++x){_=l[x],S=_.label;const H=n.setContext(this.getContext(x));M=this.getPixelForTick(x)+n.labelOffset,O=this._resolveTickFontOptions(x),R=O.lineHeight,z=q(S)?S.length:1;const Y=z/2,Z=H.color,xt=H.textStrokeColor,nt=H.textStrokeWidth;let $t=T;o?(k=M,T==="inner"&&(x===w-1?$t=this.options.reverse?"left":"right":x===0?$t=this.options.reverse?"right":"left":$t="center"),i==="top"?c==="near"||f!==0?F=-z*R+R/2:c==="center"?F=-ut.highest.height/2-Y*R+R:F=-ut.highest.height+R/2:c==="near"||f!==0?F=R/2:c==="center"?F=ut.highest.height/2-Y*R:F=ut.highest.height-z*R,u&&(F*=-1),f!==0&&!H.showLabelBackdrop&&(k+=R/2*Math.sin(f))):(P=M,F=(1-z)*R/2);let me;if(H.showLabelBackdrop){const Et=mt(H.backdropPadding),ae=ut.heights[x],It=ut.widths[x];let Rt=F-Et.top,Pt=0-Et.left;switch(it){case"middle":Rt-=ae/2;break;case"bottom":Rt-=ae;break}switch(T){case"center":Pt-=It/2;break;case"right":Pt-=It;break;case"inner":x===w-1?Pt-=It:x>0&&(Pt-=It/2);break}me={left:Pt,top:Rt,width:It+Et.width,height:ae+Et.height,color:H.backdropColor}}v.push({label:S,font:O,textOffset:F,options:{rotation:f,color:Z,strokeColor:xt,strokeWidth:nt,textAlign:$t,textBaseline:it,translation:[k,P],backdrop:me}})}return v}_getXAxisLabelAlignment(){const{position:t,ticks:e}=this.options;if(-At(this.labelRotation))return t==="top"?"left":"right";let i="center";return e.align==="start"?i="left":e.align==="end"?i="right":e.align==="inner"&&(i="inner"),i}_getYAxisLabelAlignment(t){const{position:e,ticks:{crossAlign:a,mirror:i,padding:n}}=this.options,o=this._getLabelSizes(),l=t+n,r=o.widest.width;let c,d;return e==="left"?i?(d=this.right+n,a==="near"?c="left":a==="center"?(c="center",d+=r/2):(c="right",d+=r)):(d=this.right-l,a==="near"?c="right":a==="center"?(c="center",d-=r/2):(c="left",d=this.left)):e==="right"?i?(d=this.left+n,a==="near"?c="right":a==="center"?(c="center",d-=r/2):(c="left",d-=r)):(d=this.left+l,a==="near"?c="left":a==="center"?(c="center",d+=r/2):(c="right",d=this.right)):c="right",{textAlign:c,x:d}}_computeLabelArea(){if(this.options.ticks.mirror)return;const t=this.chart,e=this.options.position;if(e==="left"||e==="right")return{top:0,left:this.left,bottom:t.height,right:this.right};if(e==="top"||e==="bottom")return{top:this.top,left:0,bottom:this.bottom,right:t.width}}drawBackground(){const{ctx:t,options:{backgroundColor:e},left:a,top:i,width:n,height:o}=this;e&&(t.save(),t.fillStyle=e,t.fillRect(a,i,n,o),t.restore())}getLineWidthForValue(t){const e=this.options.grid;if(!this._isVisible()||!e.display)return 0;const i=this.ticks.findIndex(n=>n.value===t);return i>=0?e.setContext(this.getContext(i)).lineWidth:0}drawGrid(t){const e=this.options.grid,a=this.ctx,i=this._gridLineItems||(this._gridLineItems=this._computeGridLineItems(t));let n,o;const l=(r,c,d)=>{!d.width||!d.color||(a.save(),a.lineWidth=d.width,a.strokeStyle=d.color,a.setLineDash(d.borderDash||[]),a.lineDashOffset=d.borderDashOffset,a.beginPath(),a.moveTo(r.x,r.y),a.lineTo(c.x,c.y),a.stroke(),a.restore())};if(e.display)for(n=0,o=i.length;n<o;++n){const r=i[n];e.drawOnChartArea&&l({x:r.x1,y:r.y1},{x:r.x2,y:r.y2},r),e.drawTicks&&l({x:r.tx1,y:r.ty1},{x:r.tx2,y:r.ty2},{color:r.tickColor,width:r.tickWidth,borderDash:r.tickBorderDash,borderDashOffset:r.tickBorderDashOffset})}}drawBorder(){const{chart:t,ctx:e,options:{border:a,grid:i}}=this,n=a.setContext(this.getContext()),o=a.display?n.width:0;if(!o)return;const l=i.setContext(this.getContext(0)).lineWidth,r=this._borderValue;let c,d,u,h;this.isHorizontal()?(c=le(t,this.left,o)-o/2,d=le(t,this.right,l)+l/2,u=h=r):(u=le(t,this.top,o)-o/2,h=le(t,this.bottom,l)+l/2,c=d=r),e.save(),e.lineWidth=n.width,e.strokeStyle=n.color,e.beginPath(),e.moveTo(c,u),e.lineTo(d,h),e.stroke(),e.restore()}drawLabels(t){if(!this.options.ticks.display)return;const a=this.ctx,i=this._computeLabelArea();i&&Es(a,i);const n=this.getLabelItems(t);for(const o of n){const l=o.options,r=o.font,c=o.label,d=o.textOffset;be(a,c,0,d,r,l)}i&&Is(a)}drawTitle(){const{ctx:t,options:{position:e,title:a,reverse:i}}=this;if(!a.display)return;const n=lt(a.font),o=mt(a.padding),l=a.align;let r=n.lineHeight/2;e==="bottom"||e==="center"||V(e)?(r+=o.bottom,q(a.text)&&(r+=n.lineHeight*(a.text.length-1))):r+=o.top;const{titleX:c,titleY:d,maxWidth:u,rotation:h}=su(this,r,e,l);be(t,a.text,0,0,n,{color:a.color,maxWidth:u,rotation:h,textAlign:eu(l,e,i),textBaseline:"middle",translation:[c,d]})}draw(t){this._isVisible()&&(this.drawBackground(),this.drawGrid(t),this.drawBorder(),this.drawTitle(),this.drawLabels(t))}_layers(){const t=this.options,e=t.ticks&&t.ticks.z||0,a=I(t.grid&&t.grid.z,-1),i=I(t.border&&t.border.z,0);return!this._isVisible()||this.draw!==ge.prototype.draw?[{z:e,draw:n=>{this.draw(n)}}]:[{z:a,draw:n=>{this.drawBackground(),this.drawGrid(n),this.drawTitle()}},{z:i,draw:()=>{this.drawBorder()}},{z:e,draw:n=>{this.drawLabels(n)}}]}getMatchingVisibleMetas(t){const e=this.chart.getSortedVisibleDatasetMetas(),a=this.axis+"AxisID",i=[];let n,o;for(n=0,o=e.length;n<o;++n){const l=e[n];l[a]===this.id&&(!t||l.type===t)&&i.push(l)}return i}_resolveTickFontOptions(t){const e=this.options.ticks.setContext(this.getContext(t));return lt(e.font)}_maxDigits(){const t=this._resolveTickFontOptions(0).lineHeight;return(this.isHorizontal()?this.width:this.height)/t}}class us{constructor(t,e,a){this.type=t,this.scope=e,this.override=a,this.items=Object.create(null)}isForType(t){return Object.prototype.isPrototypeOf.call(this.type.prototype,t.prototype)}register(t){const e=Object.getPrototypeOf(t);let a;nu(e)&&(a=this.register(e));const i=this.items,n=t.id,o=this.scope+"."+n;if(!n)throw new Error("class does not have id: "+t);return n in i||(i[n]=t,au(t,o,a),this.override&&K.override(t.id,t.overrides)),o}get(t){return this.items[t]}unregister(t){const e=this.items,a=t.id,i=this.scope;a in e&&delete e[a],i&&a in K[i]&&(delete K[i][a],this.override&&delete fe[a])}}function au(s,t,e){const a=$e(Object.create(null),[e?K.get(e):{},K.get(t),s.defaults]);K.set(t,a),s.defaultRoutes&&iu(t,s.defaultRoutes),s.descriptors&&K.describe(t,s.descriptors)}function iu(s,t){Object.keys(t).forEach(e=>{const a=e.split("."),i=a.pop(),n=[s].concat(a).join("."),o=t[e].split("."),l=o.pop(),r=o.join(".");K.route(n,i,r,l)})}function nu(s){return"id"in s&&"defaults"in s}class ou{constructor(){this.controllers=new us(se,"datasets",!0),this.elements=new us(Ut,"elements"),this.plugins=new us(Object,"plugins"),this.scales=new us(ge,"scales"),this._typedRegistries=[this.controllers,this.scales,this.elements]}add(...t){this._each("register",t)}remove(...t){this._each("unregister",t)}addControllers(...t){this._each("register",t,this.controllers)}addElements(...t){this._each("register",t,this.elements)}addPlugins(...t){this._each("register",t,this.plugins)}addScales(...t){this._each("register",t,this.scales)}getController(t){return this._get(t,this.controllers,"controller")}getElement(t){return this._get(t,this.elements,"element")}getPlugin(t){return this._get(t,this.plugins,"plugin")}getScale(t){return this._get(t,this.scales,"scale")}removeControllers(...t){this._each("unregister",t,this.controllers)}removeElements(...t){this._each("unregister",t,this.elements)}removePlugins(...t){this._each("unregister",t,this.plugins)}removeScales(...t){this._each("unregister",t,this.scales)}_each(t,e,a){[...e].forEach(i=>{const n=a||this._getRegistryForType(i);a||n.isForType(i)||n===this.plugins&&i.id?this._exec(t,n,i):W(i,o=>{const l=a||this._getRegistryForType(o);this._exec(t,l,o)})})}_exec(t,e,a){const i=Pa(t);G(a["before"+i],[],a),e[t](a),G(a["after"+i],[],a)}_getRegistryForType(t){for(let e=0;e<this._typedRegistries.length;e++){const a=this._typedRegistries[e];if(a.isForType(t))return a}return this.plugins}_get(t,e,a){const i=e.get(t);if(i===void 0)throw new Error('"'+t+'" is not a registered '+a+".");return i}}var Lt=new ou;class lu{constructor(){this._init=void 0}notify(t,e,a,i){if(e==="beforeInit"&&(this._init=this._createDescriptors(t,!0),this._notify(this._init,t,"install")),this._init===void 0)return;const n=i?this._descriptors(t).filter(i):this._descriptors(t),o=this._notify(n,t,e,a);return e==="afterDestroy"&&(this._notify(n,t,"stop"),this._notify(this._init,t,"uninstall"),this._init=void 0),o}_notify(t,e,a,i){i=i||{};for(const n of t){const o=n.plugin,l=o[a],r=[e,i,n.options];if(G(l,r,o)===!1&&i.cancelable)return!1}return!0}invalidate(){B(this._cache)||(this._oldCache=this._cache,this._cache=void 0)}_descriptors(t){if(this._cache)return this._cache;const e=this._cache=this._createDescriptors(t);return this._notifyStateChanges(t),e}_createDescriptors(t,e){const a=t&&t.config,i=I(a.options&&a.options.plugins,{}),n=ru(a);return i===!1&&!e?[]:du(t,n,i,e)}_notifyStateChanges(t){const e=this._oldCache||[],a=this._cache,i=(n,o)=>n.filter(l=>!o.some(r=>l.plugin.id===r.plugin.id));this._notify(i(e,a),t,"stop"),this._notify(i(a,e),t,"start")}}function ru(s){const t={},e=[],a=Object.keys(Lt.plugins.items);for(let n=0;n<a.length;n++)e.push(Lt.getPlugin(a[n]));const i=s.plugins||[];for(let n=0;n<i.length;n++){const o=i[n];e.indexOf(o)===-1&&(e.push(o),t[o.id]=!0)}return{plugins:e,localIds:t}}function cu(s,t){return!t&&s===!1?null:s===!0?{}:s}function du(s,{plugins:t,localIds:e},a,i){const n=[],o=s.getContext();for(const l of t){const r=l.id,c=cu(a[r],i);c!==null&&n.push({plugin:l,options:uu(s.config,{plugin:l,local:e[r]},c,o)})}return n}function uu(s,{plugin:t,local:e},a,i){const n=s.pluginScopeKeys(t),o=s.getOptionScopes(a,n);return e&&t.defaults&&o.push(t.defaults),s.createResolver(o,i,[""],{scriptable:!1,indexable:!1,allKeys:!0})}function ba(s,t){const e=K.datasets[s]||{};return((t.datasets||{})[s]||{}).indexAxis||t.indexAxis||e.indexAxis||"x"}function hu(s,t){let e=s;return s==="_index_"?e=t:s==="_value_"&&(e=t==="x"?"y":"x"),e}function pu(s,t){return s===t?"_index_":"_value_"}function $i(s){if(s==="x"||s==="y"||s==="r")return s}function fu(s){if(s==="top"||s==="bottom")return"x";if(s==="left"||s==="right")return"y"}function ga(s,...t){if($i(s))return s;for(const e of t){const a=e.axis||fu(e.position)||s.length>1&&$i(s[0].toLowerCase());if(a)return a}throw new Error(`Cannot determine type of '${s}' axis. Please provide 'axis' or 'position' option.`)}function Yi(s,t,e){if(e[t+"AxisID"]===s)return{axis:t}}function bu(s,t){if(t.data&&t.data.datasets){const e=t.data.datasets.filter(a=>a.xAxisID===s||a.yAxisID===s);if(e.length)return Yi(s,"x",e[0])||Yi(s,"y",e[0])}return{}}function gu(s,t){const e=fe[s.type]||{scales:{}},a=t.scales||{},i=ba(s.type,t),n=Object.create(null);return Object.keys(a).forEach(o=>{const l=a[o];if(!V(l))return console.error(`Invalid scale configuration for scale: ${o}`);if(l._proxy)return console.warn(`Ignoring resolver passed as options for scale: ${o}`);const r=ga(o,l,bu(o,s),K.scales[l.type]),c=pu(r,i),d=e.scales||{};n[o]=Fe(Object.create(null),[{axis:r},l,d[r],d[c]])}),s.data.datasets.forEach(o=>{const l=o.type||s.type,r=o.indexAxis||ba(l,t),d=(fe[l]||{}).scales||{};Object.keys(d).forEach(u=>{const h=hu(u,r),p=o[h+"AxisID"]||h;n[p]=n[p]||Object.create(null),Fe(n[p],[{axis:h},a[p],d[u]])})}),Object.keys(n).forEach(o=>{const l=n[o];Fe(l,[K.scales[l.type],K.scale])}),n}function _o(s){const t=s.options||(s.options={});t.plugins=I(t.plugins,{}),t.scales=gu(s,t)}function Co(s){return s=s||{},s.datasets=s.datasets||[],s.labels=s.labels||[],s}function vu(s){return s=s||{},s.data=Co(s.data),_o(s),s}const Gi=new Map,Mo=new Set;function hs(s,t){let e=Gi.get(s);return e||(e=t(),Gi.set(s,e),Mo.add(e)),e}const Oe=(s,t,e)=>{const a=Jt(t,e);a!==void 0&&s.add(a)};class mu{constructor(t){this._config=vu(t),this._scopeCache=new Map,this._resolverCache=new Map}get platform(){return this._config.platform}get type(){return this._config.type}set type(t){this._config.type=t}get data(){return this._config.data}set data(t){this._config.data=Co(t)}get options(){return this._config.options}set options(t){this._config.options=t}get plugins(){return this._config.plugins}update(){const t=this._config;this.clearCache(),_o(t)}clearCache(){this._scopeCache.clear(),this._resolverCache.clear()}datasetScopeKeys(t){return hs(t,()=>[[`datasets.${t}`,""]])}datasetAnimationScopeKeys(t,e){return hs(`${t}.transition.${e}`,()=>[[`datasets.${t}.transitions.${e}`,`transitions.${e}`],[`datasets.${t}`,""]])}datasetElementScopeKeys(t,e){return hs(`${t}-${e}`,()=>[[`datasets.${t}.elements.${e}`,`datasets.${t}`,`elements.${e}`,""]])}pluginScopeKeys(t){const e=t.id,a=this.type;return hs(`${a}-plugin-${e}`,()=>[[`plugins.${e}`,...t.additionalOptionScopes||[]]])}_cachedScopes(t,e){const a=this._scopeCache;let i=a.get(t);return(!i||e)&&(i=new Map,a.set(t,i)),i}getOptionScopes(t,e,a){const{options:i,type:n}=this,o=this._cachedScopes(t,a),l=o.get(e);if(l)return l;const r=new Set;e.forEach(d=>{t&&(r.add(t),d.forEach(u=>Oe(r,t,u))),d.forEach(u=>Oe(r,i,u)),d.forEach(u=>Oe(r,fe[n]||{},u)),d.forEach(u=>Oe(r,K,u)),d.forEach(u=>Oe(r,pa,u))});const c=Array.from(r);return c.length===0&&c.push(Object.create(null)),Mo.has(e)&&o.set(e,c),c}chartOptionScopes(){const{options:t,type:e}=this;return[t,fe[e]||{},K.datasets[e]||{},{type:e},K,pa]}resolveNamedOptions(t,e,a,i=[""]){const n={$shared:!0},{resolver:o,subPrefixes:l}=Xi(this._resolverCache,t,i);let r=o;if(yu(o,e)){n.$shared=!1,a=te(a)?a():a;const c=this.createResolver(t,a,l);r=_e(o,a,c)}for(const c of e)n[c]=r[c];return n}createResolver(t,e,a=[""],i){const{resolver:n}=Xi(this._resolverCache,t,a);return V(e)?_e(n,e,void 0,i):n}}function Xi(s,t,e){let a=s.get(t);a||(a=new Map,s.set(t,a));const i=e.join();let n=a.get(i);return n||(n={resolver:Ea(t,e),subPrefixes:e.filter(l=>!l.toLowerCase().includes("hover"))},a.set(i,n)),n}const xu=s=>V(s)&&Object.getOwnPropertyNames(s).some(t=>te(s[t]));function yu(s,t){const{isScriptable:e,isIndexable:a}=to(s);for(const i of t){const n=e(i),o=a(i),l=(o||n)&&s[i];if(n&&(te(l)||xu(l))||o&&q(l))return!0}return!1}var wu="4.5.1";const ku=["top","bottom","left","right","chartArea"];function qi(s,t){return s==="top"||s==="bottom"||ku.indexOf(s)===-1&&t==="x"}function Ki(s,t){return function(e,a){return e[s]===a[s]?e[t]-a[t]:e[s]-a[s]}}function Zi(s){const t=s.chart,e=t.options.animation;t.notifyPlugins("afterRender"),G(e&&e.onComplete,[s],t)}function Su(s){const t=s.chart,e=t.options.animation;G(e&&e.onProgress,[s],t)}function Po(s){return za()&&typeof s=="string"?s=document.getElementById(s):s&&s.length&&(s=s[0]),s&&s.canvas&&(s=s.canvas),s}const ys={},Qi=s=>{const t=Po(s);return Object.values(ys).filter(e=>e.canvas===t).pop()};function _u(s,t,e){const a=Object.keys(s);for(const i of a){const n=+i;if(n>=t){const o=s[i];delete s[i],(e>0||n>t)&&(s[n+e]=o)}}}function Cu(s,t,e,a){return!e||s.type==="mouseout"?null:a?t:s}class vt{static defaults=K;static instances=ys;static overrides=fe;static registry=Lt;static version=wu;static getChart=Qi;static register(...t){Lt.add(...t),Ji()}static unregister(...t){Lt.remove(...t),Ji()}constructor(t,e){const a=this.config=new mu(e),i=Po(t),n=Qi(i);if(n)throw new Error("Canvas is already in use. Chart with ID '"+n.id+"' must be destroyed before the canvas with ID '"+n.canvas.id+"' can be reused.");const o=a.createResolver(a.chartOptionScopes(),this.getContext());this.platform=new(a.platform||Wd(i)),this.platform.updateConfig(a);const l=this.platform.acquireContext(i,o.aspectRatio),r=l&&l.canvas,c=r&&r.height,d=r&&r.width;if(this.id=kr(),this.ctx=l,this.canvas=r,this.width=d,this.height=c,this._options=o,this._aspectRatio=this.aspectRatio,this._layers=[],this._metasets=[],this._stacks=void 0,this.boxes=[],this.currentDevicePixelRatio=void 0,this.chartArea=void 0,this._active=[],this._lastEvent=void 0,this._listeners={},this._responsiveListeners=void 0,this._sortedMetasets=[],this.scales={},this._plugins=new lu,this.$proxies={},this._hiddenIndices={},this.attached=!1,this._animationsDisabled=void 0,this.$context=void 0,this._doResize=Vr(u=>this.update(u),o.resizeDelay||0),this._dataChanges=[],ys[this.id]=this,!l||!r){console.error("Failed to create chart: can't acquire context from the given item");return}Bt.listen(this,"complete",Zi),Bt.listen(this,"progress",Su),this._initialize(),this.attached&&this.update()}get aspectRatio(){const{options:{aspectRatio:t,maintainAspectRatio:e},width:a,height:i,_aspectRatio:n}=this;return B(t)?e&&n?n:i?a/i:null:t}get data(){return this.config.data}set data(t){this.config.data=t}get options(){return this._options}set options(t){this.config.options=t}get registry(){return Lt}_initialize(){return this.notifyPlugins("beforeInit"),this.options.responsive?this.resize():wi(this,this.options.devicePixelRatio),this.bindEvents(),this.notifyPlugins("afterInit"),this}clear(){return mi(this.canvas,this.ctx),this}stop(){return Bt.stop(this),this}resize(t,e){Bt.running(this)?this._resizeBeforeDraw={width:t,height:e}:this._resize(t,e)}_resize(t,e){const a=this.options,i=this.canvas,n=a.maintainAspectRatio&&this.aspectRatio,o=this.platform.getMaximumSize(i,t,e,n),l=a.devicePixelRatio||this.platform.getDevicePixelRatio(),r=this.width?"resize":"attach";this.width=o.width,this.height=o.height,this._aspectRatio=this.aspectRatio,wi(this,l,!0)&&(this.notifyPlugins("resize",{size:o}),G(a.onResize,[this,o],this),this.attached&&this._doResize(r)&&this.render())}ensureScalesHaveIDs(){const e=this.options.scales||{};W(e,(a,i)=>{a.id=i})}buildOrUpdateScales(){const t=this.options,e=t.scales,a=this.scales,i=Object.keys(a).reduce((o,l)=>(o[l]=!1,o),{});let n=[];e&&(n=n.concat(Object.keys(e).map(o=>{const l=e[o],r=ga(o,l),c=r==="r",d=r==="x";return{options:l,dposition:c?"chartArea":d?"bottom":"left",dtype:c?"radialLinear":d?"category":"linear"}}))),W(n,o=>{const l=o.options,r=l.id,c=ga(r,l),d=I(l.type,o.dtype);(l.position===void 0||qi(l.position,c)!==qi(o.dposition))&&(l.position=o.dposition),i[r]=!0;let u=null;if(r in a&&a[r].type===d)u=a[r];else{const h=Lt.getScale(d);u=new h({id:r,type:d,ctx:this.ctx,chart:this}),a[u.id]=u}u.init(l,t)}),W(i,(o,l)=>{o||delete a[l]}),W(a,o=>{gt.configure(this,o,o.options),gt.addBox(this,o)})}_updateMetasets(){const t=this._metasets,e=this.data.datasets.length,a=t.length;if(t.sort((i,n)=>i.index-n.index),a>e){for(let i=e;i<a;++i)this._destroyDatasetMeta(i);t.splice(e,a-e)}this._sortedMetasets=t.slice(0).sort(Ki("order","index"))}_removeUnreferencedMetasets(){const{_metasets:t,data:{datasets:e}}=this;t.length>e.length&&delete this._stacks,t.forEach((a,i)=>{e.filter(n=>n===a._dataset).length===0&&this._destroyDatasetMeta(i)})}buildOrUpdateControllers(){const t=[],e=this.data.datasets;let a,i;for(this._removeUnreferencedMetasets(),a=0,i=e.length;a<i;a++){const n=e[a];let o=this.getDatasetMeta(a);const l=n.type||this.config.type;if(o.type&&o.type!==l&&(this._destroyDatasetMeta(a),o=this.getDatasetMeta(a)),o.type=l,o.indexAxis=n.indexAxis||ba(l,this.options),o.order=n.order||0,o.index=a,o.label=""+n.label,o.visible=this.isDatasetVisible(a),o.controller)o.controller.updateIndex(a),o.controller.linkScales();else{const r=Lt.getController(l),{datasetElementType:c,dataElementType:d}=K.datasets[l];Object.assign(r,{dataElementType:Lt.getElement(d),datasetElementType:c&&Lt.getElement(c)}),o.controller=new r(this,a),t.push(o.controller)}}return this._updateMetasets(),t}_resetElements(){W(this.data.datasets,(t,e)=>{this.getDatasetMeta(e).controller.reset()},this)}reset(){this._resetElements(),this.notifyPlugins("reset")}update(t){const e=this.config;e.update();const a=this._options=e.createResolver(e.chartOptionScopes(),this.getContext()),i=this._animationsDisabled=!a.animation;if(this._updateScales(),this._checkEventBindings(),this._updateHiddenIndices(),this._plugins.invalidate(),this.notifyPlugins("beforeUpdate",{mode:t,cancelable:!0})===!1)return;const n=this.buildOrUpdateControllers();this.notifyPlugins("beforeElementsUpdate");let o=0;for(let c=0,d=this.data.datasets.length;c<d;c++){const{controller:u}=this.getDatasetMeta(c),h=!i&&n.indexOf(u)===-1;u.buildOrUpdateElements(h),o=Math.max(+u.getMaxOverflow(),o)}o=this._minPadding=a.layout.autoPadding?o:0,this._updateLayout(o),i||W(n,c=>{c.reset()}),this._updateDatasets(t),this.notifyPlugins("afterUpdate",{mode:t}),this._layers.sort(Ki("z","_idx"));const{_active:l,_lastEvent:r}=this;r?this._eventHandler(r,!0):l.length&&this._updateHoverStyles(l,l,!0),this.render()}_updateScales(){W(this.scales,t=>{gt.removeBox(this,t)}),this.ensureScalesHaveIDs(),this.buildOrUpdateScales()}_checkEventBindings(){const t=this.options,e=new Set(Object.keys(this._listeners)),a=new Set(t.events);(!ci(e,a)||!!this._responsiveListeners!==t.responsive)&&(this.unbindEvents(),this.bindEvents())}_updateHiddenIndices(){const{_hiddenIndices:t}=this,e=this._getUniformDataChanges()||[];for(const{method:a,start:i,count:n}of e){const o=a==="_removeElements"?-n:n;_u(t,i,o)}}_getUniformDataChanges(){const t=this._dataChanges;if(!t||!t.length)return;this._dataChanges=[];const e=this.data.datasets.length,a=n=>new Set(t.filter(o=>o[0]===n).map((o,l)=>l+","+o.splice(1).join(","))),i=a(0);for(let n=1;n<e;n++)if(!ci(i,a(n)))return;return Array.from(i).map(n=>n.split(",")).map(n=>({method:n[1],start:+n[2],count:+n[3]}))}_updateLayout(t){if(this.notifyPlugins("beforeLayout",{cancelable:!0})===!1)return;gt.update(this,this.width,this.height,t);const e=this.chartArea,a=e.width<=0||e.height<=0;this._layers=[],W(this.boxes,i=>{a&&i.position==="chartArea"||(i.configure&&i.configure(),this._layers.push(...i._layers()))},this),this._layers.forEach((i,n)=>{i._idx=n}),this.notifyPlugins("afterLayout")}_updateDatasets(t){if(this.notifyPlugins("beforeDatasetsUpdate",{mode:t,cancelable:!0})!==!1){for(let e=0,a=this.data.datasets.length;e<a;++e)this.getDatasetMeta(e).controller.configure();for(let e=0,a=this.data.datasets.length;e<a;++e)this._updateDataset(e,te(t)?t({datasetIndex:e}):t);this.notifyPlugins("afterDatasetsUpdate",{mode:t})}}_updateDataset(t,e){const a=this.getDatasetMeta(t),i={meta:a,index:t,mode:e,cancelable:!0};this.notifyPlugins("beforeDatasetUpdate",i)!==!1&&(a.controller._update(e),i.cancelable=!1,this.notifyPlugins("afterDatasetUpdate",i))}render(){this.notifyPlugins("beforeRender",{cancelable:!0})!==!1&&(Bt.has(this)?this.attached&&!Bt.running(this)&&Bt.start(this):(this.draw(),Zi({chart:this})))}draw(){let t;if(this._resizeBeforeDraw){const{width:a,height:i}=this._resizeBeforeDraw;this._resizeBeforeDraw=null,this._resize(a,i)}if(this.clear(),this.width<=0||this.height<=0||this.notifyPlugins("beforeDraw",{cancelable:!0})===!1)return;const e=this._layers;for(t=0;t<e.length&&e[t].z<=0;++t)e[t].draw(this.chartArea);for(this._drawDatasets();t<e.length;++t)e[t].draw(this.chartArea);this.notifyPlugins("afterDraw")}_getSortedDatasetMetas(t){const e=this._sortedMetasets,a=[];let i,n;for(i=0,n=e.length;i<n;++i){const o=e[i];(!t||o.visible)&&a.push(o)}return a}getSortedVisibleDatasetMetas(){return this._getSortedDatasetMetas(!0)}_drawDatasets(){if(this.notifyPlugins("beforeDatasetsDraw",{cancelable:!0})===!1)return;const t=this.getSortedVisibleDatasetMetas();for(let e=t.length-1;e>=0;--e)this._drawDataset(t[e]);this.notifyPlugins("afterDatasetsDraw")}_drawDataset(t){const e=this.ctx,a={meta:t,index:t.index,cancelable:!0},i=ho(this,t);this.notifyPlugins("beforeDatasetDraw",a)!==!1&&(i&&Es(e,i),t.controller.draw(),i&&Is(e),a.cancelable=!1,this.notifyPlugins("afterDatasetDraw",a))}isPointInArea(t){return Wt(t,this.chartArea,this._minPadding)}getElementsAtEventForMode(t,e,a,i){const n=kd.modes[e];return typeof n=="function"?n(this,t,a,i):[]}getDatasetMeta(t){const e=this.data.datasets[t],a=this._metasets;let i=a.filter(n=>n&&n._dataset===e).pop();return i||(i={type:null,data:[],dataset:null,controller:null,hidden:null,xAxisID:null,yAxisID:null,order:e&&e.order||0,index:t,_dataset:e,_parsed:[],_sorted:!1},a.push(i)),i}getContext(){return this.$context||(this.$context=ee(null,{chart:this,type:"chart"}))}getVisibleDatasetCount(){return this.getSortedVisibleDatasetMetas().length}isDatasetVisible(t){const e=this.data.datasets[t];if(!e)return!1;const a=this.getDatasetMeta(t);return typeof a.hidden=="boolean"?!a.hidden:!e.hidden}setDatasetVisibility(t,e){const a=this.getDatasetMeta(t);a.hidden=!e}toggleDataVisibility(t){this._hiddenIndices[t]=!this._hiddenIndices[t]}getDataVisibility(t){return!this._hiddenIndices[t]}_updateVisibility(t,e,a){const i=a?"show":"hide",n=this.getDatasetMeta(t),o=n.controller._resolveAnimations(void 0,i);Ye(e)?(n.data[e].hidden=!a,this.update()):(this.setDatasetVisibility(t,a),o.update(n,{visible:a}),this.update(l=>l.datasetIndex===t?i:void 0))}hide(t,e){this._updateVisibility(t,e,!1)}show(t,e){this._updateVisibility(t,e,!0)}_destroyDatasetMeta(t){const e=this._metasets[t];e&&e.controller&&e.controller._destroy(),delete this._metasets[t]}_stop(){let t,e;for(this.stop(),Bt.remove(this),t=0,e=this.data.datasets.length;t<e;++t)this._destroyDatasetMeta(t)}destroy(){this.notifyPlugins("beforeDestroy");const{canvas:t,ctx:e}=this;this._stop(),this.config.clearCache(),t&&(this.unbindEvents(),mi(t,e),this.platform.releaseContext(e),this.canvas=null,this.ctx=null),delete ys[this.id],this.notifyPlugins("afterDestroy")}toBase64Image(...t){return this.canvas.toDataURL(...t)}bindEvents(){this.bindUserEvents(),this.options.responsive?this.bindResponsiveEvents():this.attached=!0}bindUserEvents(){const t=this._listeners,e=this.platform,a=(n,o)=>{e.addEventListener(this,n,o),t[n]=o},i=(n,o,l)=>{n.offsetX=o,n.offsetY=l,this._eventHandler(n)};W(this.options.events,n=>a(n,i))}bindResponsiveEvents(){this._responsiveListeners||(this._responsiveListeners={});const t=this._responsiveListeners,e=this.platform,a=(r,c)=>{e.addEventListener(this,r,c),t[r]=c},i=(r,c)=>{t[r]&&(e.removeEventListener(this,r,c),delete t[r])},n=(r,c)=>{this.canvas&&this.resize(r,c)};let o;const l=()=>{i("attach",l),this.attached=!0,this.resize(),a("resize",n),a("detach",o)};o=()=>{this.attached=!1,i("resize",n),this._stop(),this._resize(0,0),a("attach",l)},e.isAttached(this.canvas)?l():o()}unbindEvents(){W(this._listeners,(t,e)=>{this.platform.removeEventListener(this,e,t)}),this._listeners={},W(this._responsiveListeners,(t,e)=>{this.platform.removeEventListener(this,e,t)}),this._responsiveListeners=void 0}updateHoverStyle(t,e,a){const i=a?"set":"remove";let n,o,l,r;for(e==="dataset"&&(n=this.getDatasetMeta(t[0].datasetIndex),n.controller["_"+i+"DatasetHoverStyle"]()),l=0,r=t.length;l<r;++l){o=t[l];const c=o&&this.getDatasetMeta(o.datasetIndex).controller;c&&c[i+"HoverStyle"](o.element,o.datasetIndex,o.index)}}getActiveElements(){return this._active||[]}setActiveElements(t){const e=this._active||[],a=t.map(({datasetIndex:n,index:o})=>{const l=this.getDatasetMeta(n);if(!l)throw new Error("No dataset found at index "+n);return{datasetIndex:n,element:l.data[o],index:o}});!ks(a,e)&&(this._active=a,this._lastEvent=null,this._updateHoverStyles(a,e))}notifyPlugins(t,e,a){return this._plugins.notify(this,t,e,a)}isPluginEnabled(t){return this._plugins._cache.filter(e=>e.plugin.id===t).length===1}_updateHoverStyles(t,e,a){const i=this.options.hover,n=(r,c)=>r.filter(d=>!c.some(u=>d.datasetIndex===u.datasetIndex&&d.index===u.index)),o=n(e,t),l=a?t:n(t,e);o.length&&this.updateHoverStyle(o,i.mode,!1),l.length&&i.mode&&this.updateHoverStyle(l,i.mode,!0)}_eventHandler(t,e){const a={event:t,replay:e,cancelable:!0,inChartArea:this.isPointInArea(t)},i=o=>(o.options.events||this.options.events).includes(t.native.type);if(this.notifyPlugins("beforeEvent",a,i)===!1)return;const n=this._handleEvent(t,e,a.inChartArea);return a.cancelable=!1,this.notifyPlugins("afterEvent",a,i),(n||a.changed)&&this.render(),this}_handleEvent(t,e,a){const{_active:i=[],options:n}=this,o=e,l=this._getActiveElements(t,i,a,o),r=Ar(t),c=Cu(t,this._lastEvent,a,r);a&&(this._lastEvent=null,G(n.onHover,[t,l,this],this),r&&G(n.onClick,[t,l,this],this));const d=!ks(l,i);return(d||e)&&(this._active=l,this._updateHoverStyles(l,i,e)),this._lastEvent=c,d}_getActiveElements(t,e,a,i){if(t.type==="mouseout")return[];if(!a)return e;const n=this.options.hover;return this.getElementsAtEventForMode(t,n.mode,n,i)}}function Ji(){return W(vt.instances,s=>s._plugins.invalidate())}function Mu(s,t,e){const{startAngle:a,x:i,y:n,outerRadius:o,innerRadius:l,options:r}=t,{borderWidth:c,borderJoinStyle:d}=r,u=Math.min(c/o,bt(a-e));if(s.beginPath(),s.arc(i,n,o-c/2,a+u/2,e-u/2),l>0){const h=Math.min(c/l,bt(a-e));s.arc(i,n,l+c/2,e-h/2,a+h/2,!0)}else{const h=Math.min(c/2,o*bt(a-e));if(d==="round")s.arc(i,n,h,e-j/2,a+j/2,!0);else if(d==="bevel"){const p=2*h*h,b=-p*Math.cos(e+j/2)+i,f=-p*Math.sin(e+j/2)+n,v=p*Math.cos(a+j/2)+i,x=p*Math.sin(a+j/2)+n;s.lineTo(b,f),s.lineTo(v,x)}}s.closePath(),s.moveTo(0,0),s.rect(0,0,s.canvas.width,s.canvas.height),s.clip("evenodd")}function Pu(s,t,e){const{startAngle:a,pixelMargin:i,x:n,y:o,outerRadius:l,innerRadius:r}=t;let c=i/l;s.beginPath(),s.arc(n,o,l,a-c,e+c),r>i?(c=i/r,s.arc(n,o,r,e+c,a-c,!0)):s.arc(n,o,i,e+st,a-st),s.closePath(),s.clip()}function Au(s){return Oa(s,["outerStart","outerEnd","innerStart","innerEnd"])}function Du(s,t,e,a){const i=Au(s.options.borderRadius),n=(e-t)/2,o=Math.min(n,a*t/2),l=r=>{const c=(e-Math.min(n,r))*a/2;return ct(r,0,Math.min(n,c))};return{outerStart:l(i.outerStart),outerEnd:l(i.outerEnd),innerStart:ct(i.innerStart,0,o),innerEnd:ct(i.innerEnd,0,o)}}function ye(s,t,e,a){return{x:e+s*Math.cos(t),y:a+s*Math.sin(t)}}function As(s,t,e,a,i,n){const{x:o,y:l,startAngle:r,pixelMargin:c,innerRadius:d}=t,u=Math.max(t.outerRadius+a+e-c,0),h=d>0?d+a+e+c:0;let p=0;const b=i-r;if(a){const H=d>0?d-a:0,Y=u>0?u-a:0,Z=(H+Y)/2,xt=Z!==0?b*Z/(Z+a):b;p=(b-xt)/2}const f=Math.max(.001,b*u-e/j)/u,v=(b-f)/2,x=r+v+p,w=i-v-p,{outerStart:_,outerEnd:S,innerStart:k,innerEnd:P}=Du(t,h,u,w-x),T=u-_,M=u-S,O=x+_/T,R=w-S/M,z=h+k,F=h+P,it=x+k/z,ut=w-P/F;if(s.beginPath(),n){const H=(O+R)/2;if(s.arc(o,l,u,O,H),s.arc(o,l,u,H,R),S>0){const nt=ye(M,R,o,l);s.arc(nt.x,nt.y,S,R,w+st)}const Y=ye(F,w,o,l);if(s.lineTo(Y.x,Y.y),P>0){const nt=ye(F,ut,o,l);s.arc(nt.x,nt.y,P,w+st,ut+Math.PI)}const Z=(w-P/h+(x+k/h))/2;if(s.arc(o,l,h,w-P/h,Z,!0),s.arc(o,l,h,Z,x+k/h,!0),k>0){const nt=ye(z,it,o,l);s.arc(nt.x,nt.y,k,it+Math.PI,x-st)}const xt=ye(T,x,o,l);if(s.lineTo(xt.x,xt.y),_>0){const nt=ye(T,O,o,l);s.arc(nt.x,nt.y,_,x-st,O)}}else{s.moveTo(o,l);const H=Math.cos(O)*u+o,Y=Math.sin(O)*u+l;s.lineTo(H,Y);const Z=Math.cos(R)*u+o,xt=Math.sin(R)*u+l;s.lineTo(Z,xt)}s.closePath()}function Tu(s,t,e,a,i){const{fullCircles:n,startAngle:o,circumference:l}=t;let r=t.endAngle;if(n){As(s,t,e,a,r,i);for(let c=0;c<n;++c)s.fill();isNaN(l)||(r=o+(l%X||X))}return As(s,t,e,a,r,i),s.fill(),r}function Lu(s,t,e,a,i){const{fullCircles:n,startAngle:o,circumference:l,options:r}=t,{borderWidth:c,borderJoinStyle:d,borderDash:u,borderDashOffset:h,borderRadius:p}=r,b=r.borderAlign==="inner";if(!c)return;s.setLineDash(u||[]),s.lineDashOffset=h,b?(s.lineWidth=c*2,s.lineJoin=d||"round"):(s.lineWidth=c,s.lineJoin=d||"bevel");let f=t.endAngle;if(n){As(s,t,e,a,f,i);for(let v=0;v<n;++v)s.stroke();isNaN(l)||(f=o+(l%X||X))}b&&Pu(s,t,f),r.selfJoin&&f-o>=j&&p===0&&d!=="miter"&&Mu(s,t,f),n||(As(s,t,e,a,f,i),s.stroke())}class Ao extends Ut{static id="arc";static defaults={borderAlign:"center",borderColor:"#fff",borderDash:[],borderDashOffset:0,borderJoinStyle:void 0,borderRadius:0,borderWidth:2,offset:0,spacing:0,angle:void 0,circular:!0,selfJoin:!1};static defaultRoutes={backgroundColor:"backgroundColor"};static descriptors={_scriptable:!0,_indexable:t=>t!=="borderDash"};circumference;endAngle;fullCircles;innerRadius;outerRadius;pixelMargin;startAngle;constructor(t){super(),this.options=void 0,this.circumference=void 0,this.startAngle=void 0,this.endAngle=void 0,this.innerRadius=void 0,this.outerRadius=void 0,this.pixelMargin=0,this.fullCircles=0,t&&Object.assign(this,t)}inRange(t,e,a){const i=this.getProps(["x","y"],a),{angle:n,distance:o}=Un(i,{x:t,y:e}),{startAngle:l,endAngle:r,innerRadius:c,outerRadius:d,circumference:u}=this.getProps(["startAngle","endAngle","innerRadius","outerRadius","circumference"],a),h=(this.options.spacing+this.options.borderWidth)/2,p=I(u,r-l),b=Ge(n,l,r)&&l!==r,f=p>=X||b,v=jt(o,c+h,d+h);return f&&v}getCenterPoint(t){const{x:e,y:a,startAngle:i,endAngle:n,innerRadius:o,outerRadius:l}=this.getProps(["x","y","startAngle","endAngle","innerRadius","outerRadius"],t),{offset:r,spacing:c}=this.options,d=(i+n)/2,u=(o+l+c+r)/2;return{x:e+Math.cos(d)*u,y:a+Math.sin(d)*u}}tooltipPosition(t){return this.getCenterPoint(t)}draw(t){const{options:e,circumference:a}=this,i=(e.offset||0)/4,n=(e.spacing||0)/2,o=e.circular;if(this.pixelMargin=e.borderAlign==="inner"?.33:0,this.fullCircles=a>X?Math.floor(a/X):0,a===0||this.innerRadius<0||this.outerRadius<0)return;t.save();const l=(this.startAngle+this.endAngle)/2;t.translate(Math.cos(l)*i,Math.sin(l)*i);const r=1-Math.sin(Math.min(j,a||0)),c=i*r;t.fillStyle=e.backgroundColor,t.strokeStyle=e.borderColor,Tu(t,this,c,n,o),Lu(t,this,c,n,o),t.restore()}}function Do(s,t,e=t){s.lineCap=I(e.borderCapStyle,t.borderCapStyle),s.setLineDash(I(e.borderDash,t.borderDash)),s.lineDashOffset=I(e.borderDashOffset,t.borderDashOffset),s.lineJoin=I(e.borderJoinStyle,t.borderJoinStyle),s.lineWidth=I(e.borderWidth,t.borderWidth),s.strokeStyle=I(e.borderColor,t.borderColor)}function Ou(s,t,e){s.lineTo(e.x,e.y)}function Eu(s){return s.stepped?Zr:s.tension||s.cubicInterpolationMode==="monotone"?Qr:Ou}function To(s,t,e={}){const a=s.length,{start:i=0,end:n=a-1}=e,{start:o,end:l}=t,r=Math.max(i,o),c=Math.min(n,l),d=i<o&&n<o||i>l&&n>l;return{count:a,start:r,loop:t.loop,ilen:c<r&&!d?a+c-r:c-r}}function Iu(s,t,e,a){const{points:i,options:n}=t,{count:o,start:l,loop:r,ilen:c}=To(i,e,a),d=Eu(n);let{move:u=!0,reverse:h}=a||{},p,b,f;for(p=0;p<=c;++p)b=i[(l+(h?c-p:p))%o],!b.skip&&(u?(s.moveTo(b.x,b.y),u=!1):d(s,f,b,h,n.stepped),f=b);return r&&(b=i[(l+(h?c:0))%o],d(s,f,b,h,n.stepped)),!!r}function Ru(s,t,e,a){const i=t.points,{count:n,start:o,ilen:l}=To(i,e,a),{move:r=!0,reverse:c}=a||{};let d=0,u=0,h,p,b,f,v,x;const w=S=>(o+(c?l-S:S))%n,_=()=>{f!==v&&(s.lineTo(d,v),s.lineTo(d,f),s.lineTo(d,x))};for(r&&(p=i[w(0)],s.moveTo(p.x,p.y)),h=0;h<=l;++h){if(p=i[w(h)],p.skip)continue;const S=p.x,k=p.y,P=S|0;P===b?(k<f?f=k:k>v&&(v=k),d=(u*d+S)/++u):(_(),s.lineTo(S,k),b=P,u=0,f=v=k),x=k}_()}function va(s){const t=s.options,e=t.borderDash&&t.borderDash.length;return!s._decimated&&!s._loop&&!t.tension&&t.cubicInterpolationMode!=="monotone"&&!t.stepped&&!e?Ru:Iu}function zu(s){return s.stepped?Tc:s.tension||s.cubicInterpolationMode==="monotone"?Lc:ue}function Bu(s,t,e,a){let i=t._path;i||(i=t._path=new Path2D,t.path(i,e,a)&&i.closePath()),Do(s,t.options),s.stroke(i)}function Fu(s,t,e,a){const{segments:i,options:n}=t,o=va(t);for(const l of i)Do(s,n,l.style),s.beginPath(),o(s,t,l,{start:e,end:e+a-1})&&s.closePath(),s.stroke()}const Vu=typeof Path2D=="function";function Hu(s,t,e,a){Vu&&!t.options.segment?Bu(s,t,e,a):Fu(s,t,e,a)}class Je extends Ut{static id="line";static defaults={borderCapStyle:"butt",borderDash:[],borderDashOffset:0,borderJoinStyle:"miter",borderWidth:3,capBezierPoints:!0,cubicInterpolationMode:"default",fill:!1,spanGaps:!1,stepped:!1,tension:0};static defaultRoutes={backgroundColor:"backgroundColor",borderColor:"borderColor"};static descriptors={_scriptable:!0,_indexable:t=>t!=="borderDash"&&t!=="fill"};constructor(t){super(),this.animated=!0,this.options=void 0,this._chart=void 0,this._loop=void 0,this._fullLoop=void 0,this._path=void 0,this._points=void 0,this._segments=void 0,this._decimated=!1,this._pointsUpdated=!1,this._datasetIndex=void 0,t&&Object.assign(this,t)}updateControlPoints(t,e){const a=this.options;if((a.tension||a.cubicInterpolationMode==="monotone")&&!a.stepped&&!this._pointsUpdated){const i=a.spanGaps?this._loop:this._fullLoop;kc(this._points,a,t,i,e),this._pointsUpdated=!0}}set points(t){this._points=t,delete this._segments,delete this._path,this._pointsUpdated=!1}get points(){return this._points}get segments(){return this._segments||(this._segments=Bc(this,this.options.segment))}first(){const t=this.segments,e=this.points;return t.length&&e[t[0].start]}last(){const t=this.segments,e=this.points,a=t.length;return a&&e[t[a-1].end]}interpolate(t,e){const a=this.options,i=t[e],n=this.points,o=uo(this,{property:e,start:i,end:i});if(!o.length)return;const l=[],r=zu(a);let c,d;for(c=0,d=o.length;c<d;++c){const{start:u,end:h}=o[c],p=n[u],b=n[h];if(p===b){l.push(p);continue}const f=Math.abs((i-p[e])/(b[e]-p[e])),v=r(p,b,f,a.stepped);v[e]=t[e],l.push(v)}return l.length===1?l[0]:l}pathSegment(t,e,a){return va(this)(t,this,e,a)}path(t,e,a){const i=this.segments,n=va(this);let o=this._loop;e=e||0,a=a||this.points.length-e;for(const l of i)o&=n(t,this,l,{start:e,end:e+a-1});return!!o}draw(t,e,a,i){const n=this.options||{};(this.points||[]).length&&n.borderWidth&&(t.save(),Hu(t,this,a,i),t.restore()),this.animated&&(this._pointsUpdated=!1,this._path=void 0)}}function tn(s,t,e,a){const i=s.options,{[e]:n}=s.getProps([e],a);return Math.abs(t-n)<i.radius+i.hitRadius}class Lo extends Ut{static id="point";parsed;skip;stop;static defaults={borderWidth:1,hitRadius:1,hoverBorderWidth:1,hoverRadius:4,pointStyle:"circle",radius:3,rotation:0};static defaultRoutes={backgroundColor:"backgroundColor",borderColor:"borderColor"};constructor(t){super(),this.options=void 0,this.parsed=void 0,this.skip=void 0,this.stop=void 0,t&&Object.assign(this,t)}inRange(t,e,a){const i=this.options,{x:n,y:o}=this.getProps(["x","y"],a);return Math.pow(t-n,2)+Math.pow(e-o,2)<Math.pow(i.hitRadius+i.radius,2)}inXRange(t,e){return tn(this,t,"x",e)}inYRange(t,e){return tn(this,t,"y",e)}getCenterPoint(t){const{x:e,y:a}=this.getProps(["x","y"],t);return{x:e,y:a}}size(t){t=t||this.options||{};let e=t.radius||0;e=Math.max(e,e&&t.hoverRadius||0);const a=e&&t.borderWidth||0;return(e+a)*2}draw(t,e){const a=this.options;this.skip||a.radius<.1||!Wt(this,e,this.size(a)/2)||(t.strokeStyle=a.borderColor,t.lineWidth=a.borderWidth,t.fillStyle=a.backgroundColor,fa(t,a,this.x,this.y))}getRange(){const t=this.options||{};return t.radius+t.hitRadius}}function Oo(s,t){const{x:e,y:a,base:i,width:n,height:o}=s.getProps(["x","y","base","width","height"],t);let l,r,c,d,u;return s.horizontal?(u=o/2,l=Math.min(e,i),r=Math.max(e,i),c=a-u,d=a+u):(u=n/2,l=e-u,r=e+u,c=Math.min(a,i),d=Math.max(a,i)),{left:l,top:c,right:r,bottom:d}}function Zt(s,t,e,a){return s?0:ct(t,e,a)}function ju(s,t,e){const a=s.options.borderWidth,i=s.borderSkipped,n=Jn(a);return{t:Zt(i.top,n.top,0,e),r:Zt(i.right,n.right,0,t),b:Zt(i.bottom,n.bottom,0,e),l:Zt(i.left,n.left,0,t)}}function Nu(s,t,e){const{enableBorderRadius:a}=s.getProps(["enableBorderRadius"]),i=s.options.borderRadius,n=he(i),o=Math.min(t,e),l=s.borderSkipped,r=a||V(i);return{topLeft:Zt(!r||l.top||l.left,n.topLeft,0,o),topRight:Zt(!r||l.top||l.right,n.topRight,0,o),bottomLeft:Zt(!r||l.bottom||l.left,n.bottomLeft,0,o),bottomRight:Zt(!r||l.bottom||l.right,n.bottomRight,0,o)}}function Wu(s){const t=Oo(s),e=t.right-t.left,a=t.bottom-t.top,i=ju(s,e/2,a/2),n=Nu(s,e/2,a/2);return{outer:{x:t.left,y:t.top,w:e,h:a,radius:n},inner:{x:t.left+i.l,y:t.top+i.t,w:e-i.l-i.r,h:a-i.t-i.b,radius:{topLeft:Math.max(0,n.topLeft-Math.max(i.t,i.l)),topRight:Math.max(0,n.topRight-Math.max(i.t,i.r)),bottomLeft:Math.max(0,n.bottomLeft-Math.max(i.b,i.l)),bottomRight:Math.max(0,n.bottomRight-Math.max(i.b,i.r))}}}}function na(s,t,e,a){const i=t===null,n=e===null,l=s&&!(i&&n)&&Oo(s,a);return l&&(i||jt(t,l.left,l.right))&&(n||jt(e,l.top,l.bottom))}function Uu(s){return s.topLeft||s.topRight||s.bottomLeft||s.bottomRight}function $u(s,t){s.rect(t.x,t.y,t.w,t.h)}function oa(s,t,e={}){const a=s.x!==e.x?-t:0,i=s.y!==e.y?-t:0,n=(s.x+s.w!==e.x+e.w?t:0)-a,o=(s.y+s.h!==e.y+e.h?t:0)-i;return{x:s.x+a,y:s.y+i,w:s.w+n,h:s.h+o,radius:s.radius}}class Eo extends Ut{static id="bar";static defaults={borderSkipped:"start",borderWidth:0,borderRadius:0,inflateAmount:"auto",pointStyle:void 0};static defaultRoutes={backgroundColor:"backgroundColor",borderColor:"borderColor"};constructor(t){super(),this.options=void 0,this.horizontal=void 0,this.base=void 0,this.width=void 0,this.height=void 0,this.inflateAmount=void 0,t&&Object.assign(this,t)}draw(t){const{inflateAmount:e,options:{borderColor:a,backgroundColor:i}}=this,{inner:n,outer:o}=Wu(this),l=Uu(o.radius)?Xe:$u;t.save(),(o.w!==n.w||o.h!==n.h)&&(t.beginPath(),l(t,oa(o,e,n)),t.clip(),l(t,oa(n,-e,o)),t.fillStyle=a,t.fill("evenodd")),t.beginPath(),l(t,oa(n,e)),t.fillStyle=i,t.fill(),t.restore()}inRange(t,e,a){return na(this,t,e,a)}inXRange(t,e){return na(this,t,null,e)}inYRange(t,e){return na(this,null,t,e)}getCenterPoint(t){const{x:e,y:a,base:i,horizontal:n}=this.getProps(["x","y","base","horizontal"],t);return{x:n?(e+i)/2:e,y:n?a:(a+i)/2}}getRange(t){return t==="x"?this.width/2:this.height/2}}var Yu=Object.freeze({__proto__:null,ArcElement:Ao,BarElement:Eo,LineElement:Je,PointElement:Lo});const ma=["rgb(54, 162, 235)","rgb(255, 99, 132)","rgb(255, 159, 64)","rgb(255, 205, 86)","rgb(75, 192, 192)","rgb(153, 102, 255)","rgb(201, 203, 207)"],en=ma.map(s=>s.replace("rgb(","rgba(").replace(")",", 0.5)"));function Io(s){return ma[s%ma.length]}function Ro(s){return en[s%en.length]}function Gu(s,t){return s.borderColor=Io(t),s.backgroundColor=Ro(t),++t}function Xu(s,t){return s.backgroundColor=s.data.map(()=>Io(t++)),t}function qu(s,t){return s.backgroundColor=s.data.map(()=>Ro(t++)),t}function Ku(s){let t=0;return(e,a)=>{const i=s.getDatasetMeta(a).controller;i instanceof zs?t=Xu(e,t):i instanceof mo?t=qu(e,t):i&&(t=Gu(e,t))}}function sn(s){let t;for(t in s)if(s[t].borderColor||s[t].backgroundColor)return!0;return!1}function Zu(s){return s&&(s.borderColor||s.backgroundColor)}function Qu(){return K.borderColor!=="rgba(0,0,0,0.1)"||K.backgroundColor!=="rgba(0,0,0,0.1)"}var Ju={id:"colors",defaults:{enabled:!0,forceOverride:!1},beforeLayout(s,t,e){if(!e.enabled)return;const{data:{datasets:a},options:i}=s.config,{elements:n}=i,o=sn(a)||Zu(i)||n&&sn(n)||Qu();if(!e.forceOverride&&o)return;const l=Ku(s);a.forEach(l)}};function th(s,t,e,a,i){const n=i.samples||a;if(n>=e)return s.slice(t,t+e);const o=[],l=(e-2)/(n-2);let r=0;const c=t+e-1;let d=t,u,h,p,b,f;for(o[r++]=s[d],u=0;u<n-2;u++){let v=0,x=0,w;const _=Math.floor((u+1)*l)+1+t,S=Math.min(Math.floor((u+2)*l)+1,e)+t,k=S-_;for(w=_;w<S;w++)v+=s[w].x,x+=s[w].y;v/=k,x/=k;const P=Math.floor(u*l)+1+t,T=Math.min(Math.floor((u+1)*l)+1,e)+t,{x:M,y:O}=s[d];for(p=b=-1,w=P;w<T;w++)b=.5*Math.abs((M-v)*(s[w].y-O)-(M-s[w].x)*(x-O)),b>p&&(p=b,h=s[w],f=w);o[r++]=h,d=f}return o[r++]=s[c],o}function eh(s,t,e,a){let i=0,n=0,o,l,r,c,d,u,h,p,b,f;const v=[],x=t+e-1,w=s[t].x,S=s[x].x-w;for(o=t;o<t+e;++o){l=s[o],r=(l.x-w)/S*a,c=l.y;const k=r|0;if(k===d)c<b?(b=c,u=o):c>f&&(f=c,h=o),i=(n*i+l.x)/++n;else{const P=o-1;if(!B(u)&&!B(h)){const T=Math.min(u,h),M=Math.max(u,h);T!==p&&T!==P&&v.push({...s[T],x:i}),M!==p&&M!==P&&v.push({...s[M],x:i})}o>0&&P!==p&&v.push(s[P]),v.push(l),d=k,n=0,b=f=c,u=h=p=o}}return v}function zo(s){if(s._decimated){const t=s._data;delete s._decimated,delete s._data,Object.defineProperty(s,"data",{configurable:!0,enumerable:!0,writable:!0,value:t})}}function an(s){s.data.datasets.forEach(t=>{zo(t)})}function sh(s,t){const e=t.length;let a=0,i;const{iScale:n}=s,{min:o,max:l,minDefined:r,maxDefined:c}=n.getUserBounds();return r&&(a=ct(Nt(t,n.axis,o).lo,0,e-1)),c?i=ct(Nt(t,n.axis,l).hi+1,a,e)-a:i=e-a,{start:a,count:i}}var ah={id:"decimation",defaults:{algorithm:"min-max",enabled:!1},beforeElementsUpdate:(s,t,e)=>{if(!e.enabled){an(s);return}const a=s.width;s.data.datasets.forEach((i,n)=>{const{_data:o,indexAxis:l}=i,r=s.getDatasetMeta(n),c=o||i.data;if(Ie([l,s.options.indexAxis])==="y"||!r.controller.supportsDecimation)return;const d=s.scales[r.xAxisID];if(d.type!=="linear"&&d.type!=="time"||s.options.parsing)return;let{start:u,count:h}=sh(r,c);const p=e.threshold||4*a;if(h<=p){zo(i);return}B(o)&&(i._data=c,delete i.data,Object.defineProperty(i,"data",{configurable:!0,enumerable:!0,get:function(){return this._decimated},set:function(f){this._data=f}}));let b;switch(e.algorithm){case"lttb":b=th(c,u,h,a,e);break;case"min-max":b=eh(c,u,h,a);break;default:throw new Error(`Unsupported decimation algorithm '${e.algorithm}'`)}i._decimated=b})},destroy(s){an(s)}};function ih(s,t,e){const a=s.segments,i=s.points,n=t.points,o=[];for(const l of a){let{start:r,end:c}=l;c=Fs(r,c,i);const d=xa(e,i[r],i[c],l.loop);if(!t.segments){o.push({source:l,target:d,start:i[r],end:i[c]});continue}const u=uo(t,d);for(const h of u){const p=xa(e,n[h.start],n[h.end],h.loop),b=co(l,i,p);for(const f of b)o.push({source:f,target:h,start:{[e]:nn(d,p,"start",Math.max)},end:{[e]:nn(d,p,"end",Math.min)}})}}return o}function xa(s,t,e,a){if(a)return;let i=t[s],n=e[s];return s==="angle"&&(i=bt(i),n=bt(n)),{property:s,start:i,end:n}}function nh(s,t){const{x:e=null,y:a=null}=s||{},i=t.points,n=[];return t.segments.forEach(({start:o,end:l})=>{l=Fs(o,l,i);const r=i[o],c=i[l];a!==null?(n.push({x:r.x,y:a}),n.push({x:c.x,y:a})):e!==null&&(n.push({x:e,y:r.y}),n.push({x:e,y:c.y}))}),n}function Fs(s,t,e){for(;t>s;t--){const a=e[t];if(!isNaN(a.x)&&!isNaN(a.y))break}return t}function nn(s,t,e,a){return s&&t?a(s[e],t[e]):s?s[e]:t?t[e]:0}function Bo(s,t){let e=[],a=!1;return q(s)?(a=!0,e=s):e=nh(s,t),e.length?new Je({points:e,options:{tension:0},_loop:a,_fullLoop:a}):null}function on(s){return s&&s.fill!==!1}function oh(s,t,e){let i=s[t].fill;const n=[t];let o;if(!e)return i;for(;i!==!1&&n.indexOf(i)===-1;){if(!tt(i))return i;if(o=s[i],!o)return!1;if(o.visible)return i;n.push(i),i=o.fill}return!1}function lh(s,t,e){const a=uh(s);if(V(a))return isNaN(a.value)?!1:a;let i=parseFloat(a);return tt(i)&&Math.floor(i)===i?rh(a[0],t,i,e):["origin","start","end","stack","shape"].indexOf(a)>=0&&a}function rh(s,t,e,a){return(s==="-"||s==="+")&&(e=t+e),e===t||e<0||e>=a?!1:e}function ch(s,t){let e=null;return s==="start"?e=t.bottom:s==="end"?e=t.top:V(s)?e=t.getPixelForValue(s.value):t.getBasePixel&&(e=t.getBasePixel()),e}function dh(s,t,e){let a;return s==="start"?a=e:s==="end"?a=t.options.reverse?t.min:t.max:V(s)?a=s.value:a=t.getBaseValue(),a}function uh(s){const t=s.options,e=t.fill;let a=I(e&&e.target,e);return a===void 0&&(a=!!t.backgroundColor),a===!1||a===null?!1:a===!0?"origin":a}function hh(s){const{scale:t,index:e,line:a}=s,i=[],n=a.segments,o=a.points,l=ph(t,e);l.push(Bo({x:null,y:t.bottom},a));for(let r=0;r<n.length;r++){const c=n[r];for(let d=c.start;d<=c.end;d++)fh(i,o[d],l)}return new Je({points:i,options:{}})}function ph(s,t){const e=[],a=s.getMatchingVisibleMetas("line");for(let i=0;i<a.length;i++){const n=a[i];if(n.index===t)break;n.hidden||e.unshift(n.dataset)}return e}function fh(s,t,e){const a=[];for(let i=0;i<e.length;i++){const n=e[i],{first:o,last:l,point:r}=bh(n,t,"x");if(!(!r||o&&l)){if(o)a.unshift(r);else if(s.push(r),!l)break}}s.push(...a)}function bh(s,t,e){const a=s.interpolate(t,e);if(!a)return{};const i=a[e],n=s.segments,o=s.points;let l=!1,r=!1;for(let c=0;c<n.length;c++){const d=n[c],u=o[d.start][e],h=o[d.end][e];if(jt(i,u,h)){l=i===u,r=i===h;break}}return{first:l,last:r,point:a}}class Fo{constructor(t){this.x=t.x,this.y=t.y,this.radius=t.radius}pathSegment(t,e,a){const{x:i,y:n,radius:o}=this;return e=e||{start:0,end:X},t.arc(i,n,o,e.end,e.start,!0),!a.bounds}interpolate(t){const{x:e,y:a,radius:i}=this,n=t.angle;return{x:e+Math.cos(n)*i,y:a+Math.sin(n)*i,angle:n}}}function gh(s){const{chart:t,fill:e,line:a}=s;if(tt(e))return vh(t,e);if(e==="stack")return hh(s);if(e==="shape")return!0;const i=mh(s);return i instanceof Fo?i:Bo(i,a)}function vh(s,t){const e=s.getDatasetMeta(t);return e&&s.isDatasetVisible(t)?e.dataset:null}function mh(s){return(s.scale||{}).getPointPositionForValue?yh(s):xh(s)}function xh(s){const{scale:t={},fill:e}=s,a=ch(e,t);if(tt(a)){const i=t.isHorizontal();return{x:i?a:null,y:i?null:a}}return null}function yh(s){const{scale:t,fill:e}=s,a=t.options,i=t.getLabels().length,n=a.reverse?t.max:t.min,o=dh(e,t,n),l=[];if(a.grid.circular){const r=t.getPointPositionForValue(0,n);return new Fo({x:r.x,y:r.y,radius:t.getDistanceFromCenterForValue(o)})}for(let r=0;r<i;++r)l.push(t.getPointPositionForValue(r,o));return l}function la(s,t,e){const a=gh(t),{chart:i,index:n,line:o,scale:l,axis:r}=t,c=o.options,d=c.fill,u=c.backgroundColor,{above:h=u,below:p=u}=d||{},b=i.getDatasetMeta(n),f=ho(i,b);a&&o.points.length&&(Es(s,e),wh(s,{line:o,target:a,above:h,below:p,area:e,scale:l,axis:r,clip:f}),Is(s))}function wh(s,t){const{line:e,target:a,above:i,below:n,area:o,scale:l,clip:r}=t,c=e._loop?"angle":t.axis;s.save();let d=n;n!==i&&(c==="x"?(ln(s,a,o.top),ra(s,{line:e,target:a,color:i,scale:l,property:c,clip:r}),s.restore(),s.save(),ln(s,a,o.bottom)):c==="y"&&(rn(s,a,o.left),ra(s,{line:e,target:a,color:n,scale:l,property:c,clip:r}),s.restore(),s.save(),rn(s,a,o.right),d=i)),ra(s,{line:e,target:a,color:d,scale:l,property:c,clip:r}),s.restore()}function ln(s,t,e){const{segments:a,points:i}=t;let n=!0,o=!1;s.beginPath();for(const l of a){const{start:r,end:c}=l,d=i[r],u=i[Fs(r,c,i)];n?(s.moveTo(d.x,d.y),n=!1):(s.lineTo(d.x,e),s.lineTo(d.x,d.y)),o=!!t.pathSegment(s,l,{move:o}),o?s.closePath():s.lineTo(u.x,e)}s.lineTo(t.first().x,e),s.closePath(),s.clip()}function rn(s,t,e){const{segments:a,points:i}=t;let n=!0,o=!1;s.beginPath();for(const l of a){const{start:r,end:c}=l,d=i[r],u=i[Fs(r,c,i)];n?(s.moveTo(d.x,d.y),n=!1):(s.lineTo(e,d.y),s.lineTo(d.x,d.y)),o=!!t.pathSegment(s,l,{move:o}),o?s.closePath():s.lineTo(e,u.y)}s.lineTo(e,t.first().y),s.closePath(),s.clip()}function ra(s,t){const{line:e,target:a,property:i,color:n,scale:o,clip:l}=t,r=ih(e,a,i);for(const{source:c,target:d,start:u,end:h}of r){const{style:{backgroundColor:p=n}={}}=c,b=a!==!0;s.save(),s.fillStyle=p,kh(s,o,l,b&&xa(i,u,h)),s.beginPath();const f=!!e.pathSegment(s,c);let v;if(b){f?s.closePath():cn(s,a,h,i);const x=!!a.pathSegment(s,d,{move:f,reverse:!0});v=f&&x,v||cn(s,a,u,i)}s.closePath(),s.fill(v?"evenodd":"nonzero"),s.restore()}}function kh(s,t,e,a){const i=t.chart.chartArea,{property:n,start:o,end:l}=a||{};if(n==="x"||n==="y"){let r,c,d,u;n==="x"?(r=o,c=i.top,d=l,u=i.bottom):(r=i.left,c=o,d=i.right,u=l),s.beginPath(),e&&(r=Math.max(r,e.left),d=Math.min(d,e.right),c=Math.max(c,e.top),u=Math.min(u,e.bottom)),s.rect(r,c,d-r,u-c),s.clip()}}function cn(s,t,e,a){const i=t.interpolate(e,a);i&&s.lineTo(i.x,i.y)}var Vo={id:"filler",afterDatasetsUpdate(s,t,e){const a=(s.data.datasets||[]).length,i=[];let n,o,l,r;for(o=0;o<a;++o)n=s.getDatasetMeta(o),l=n.dataset,r=null,l&&l.options&&l instanceof Je&&(r={visible:s.isDatasetVisible(o),index:o,fill:lh(l,o,a),chart:s,axis:n.controller.options.indexAxis,scale:n.vScale,line:l}),n.$filler=r,i.push(r);for(o=0;o<a;++o)r=i[o],!(!r||r.fill===!1)&&(r.fill=oh(i,o,e.propagate))},beforeDraw(s,t,e){const a=e.drawTime==="beforeDraw",i=s.getSortedVisibleDatasetMetas(),n=s.chartArea;for(let o=i.length-1;o>=0;--o){const l=i[o].$filler;l&&(l.line.updateControlPoints(n,l.axis),a&&l.fill&&la(s.ctx,l,n))}},beforeDatasetsDraw(s,t,e){if(e.drawTime!=="beforeDatasetsDraw")return;const a=s.getSortedVisibleDatasetMetas();for(let i=a.length-1;i>=0;--i){const n=a[i].$filler;on(n)&&la(s.ctx,n,s.chartArea)}},beforeDatasetDraw(s,t,e){const a=t.meta.$filler;!on(a)||e.drawTime!=="beforeDatasetDraw"||la(s.ctx,a,s.chartArea)},defaults:{propagate:!0,drawTime:"beforeDatasetDraw"}};const dn=(s,t)=>{let{boxHeight:e=t,boxWidth:a=t}=s;return s.usePointStyle&&(e=Math.min(e,t),a=s.pointStyleWidth||Math.min(a,t)),{boxWidth:a,boxHeight:e,itemHeight:Math.max(t,e)}},Sh=(s,t)=>s!==null&&t!==null&&s.datasetIndex===t.datasetIndex&&s.index===t.index;class un extends Ut{constructor(t){super(),this._added=!1,this.legendHitBoxes=[],this._hoveredItem=null,this.doughnutMode=!1,this.chart=t.chart,this.options=t.options,this.ctx=t.ctx,this.legendItems=void 0,this.columnSizes=void 0,this.lineWidths=void 0,this.maxHeight=void 0,this.maxWidth=void 0,this.top=void 0,this.bottom=void 0,this.left=void 0,this.right=void 0,this.height=void 0,this.width=void 0,this._margins=void 0,this.position=void 0,this.weight=void 0,this.fullSize=void 0}update(t,e,a){this.maxWidth=t,this.maxHeight=e,this._margins=a,this.setDimensions(),this.buildLabels(),this.fit()}setDimensions(){this.isHorizontal()?(this.width=this.maxWidth,this.left=this._margins.left,this.right=this.width):(this.height=this.maxHeight,this.top=this._margins.top,this.bottom=this.height)}buildLabels(){const t=this.options.labels||{};let e=G(t.generateLabels,[this.chart],this)||[];t.filter&&(e=e.filter(a=>t.filter(a,this.chart.data))),t.sort&&(e=e.sort((a,i)=>t.sort(a,i,this.chart.data))),this.options.reverse&&e.reverse(),this.legendItems=e}fit(){const{options:t,ctx:e}=this;if(!t.display){this.width=this.height=0;return}const a=t.labels,i=lt(a.font),n=i.size,o=this._computeTitleHeight(),{boxWidth:l,itemHeight:r}=dn(a,n);let c,d;e.font=i.string,this.isHorizontal()?(c=this.maxWidth,d=this._fitRows(o,n,l,r)+10):(d=this.maxHeight,c=this._fitCols(o,i,l,r)+10),this.width=Math.min(c,t.maxWidth||this.maxWidth),this.height=Math.min(d,t.maxHeight||this.maxHeight)}_fitRows(t,e,a,i){const{ctx:n,maxWidth:o,options:{labels:{padding:l}}}=this,r=this.legendHitBoxes=[],c=this.lineWidths=[0],d=i+l;let u=t;n.textAlign="left",n.textBaseline="middle";let h=-1,p=-d;return this.legendItems.forEach((b,f)=>{const v=a+e/2+n.measureText(b.text).width;(f===0||c[c.length-1]+v+2*l>o)&&(u+=d,c[c.length-(f>0?0:1)]=0,p+=d,h++),r[f]={left:0,top:p,row:h,width:v,height:i},c[c.length-1]+=v+l}),u}_fitCols(t,e,a,i){const{ctx:n,maxHeight:o,options:{labels:{padding:l}}}=this,r=this.legendHitBoxes=[],c=this.columnSizes=[],d=o-t;let u=l,h=0,p=0,b=0,f=0;return this.legendItems.forEach((v,x)=>{const{itemWidth:w,itemHeight:_}=_h(a,e,n,v,i);x>0&&p+_+2*l>d&&(u+=h+l,c.push({width:h,height:p}),b+=h+l,f++,h=p=0),r[x]={left:b,top:p,col:f,width:w,height:_},h=Math.max(h,w),p+=_+l}),u+=h,c.push({width:h,height:p}),u}adjustHitBoxes(){if(!this.options.display)return;const t=this._computeTitleHeight(),{legendHitBoxes:e,options:{align:a,labels:{padding:i},rtl:n}}=this,o=we(n,this.left,this.width);if(this.isHorizontal()){let l=0,r=ft(a,this.left+i,this.right-this.lineWidths[l]);for(const c of e)l!==c.row&&(l=c.row,r=ft(a,this.left+i,this.right-this.lineWidths[l])),c.top+=this.top+t+i,c.left=o.leftForLtr(o.x(r),c.width),r+=c.width+i}else{let l=0,r=ft(a,this.top+t+i,this.bottom-this.columnSizes[l].height);for(const c of e)c.col!==l&&(l=c.col,r=ft(a,this.top+t+i,this.bottom-this.columnSizes[l].height)),c.top=r,c.left+=this.left+i,c.left=o.leftForLtr(o.x(c.left),c.width),r+=c.height+i}}isHorizontal(){return this.options.position==="top"||this.options.position==="bottom"}draw(){if(this.options.display){const t=this.ctx;Es(t,this),this._draw(),Is(t)}}_draw(){const{options:t,columnSizes:e,lineWidths:a,ctx:i}=this,{align:n,labels:o}=t,l=K.color,r=we(t.rtl,this.left,this.width),c=lt(o.font),{padding:d}=o,u=c.size,h=u/2;let p;this.drawTitle(),i.textAlign=r.textAlign("left"),i.textBaseline="middle",i.lineWidth=.5,i.font=c.string;const{boxWidth:b,boxHeight:f,itemHeight:v}=dn(o,u),x=function(P,T,M){if(isNaN(b)||b<=0||isNaN(f)||f<0)return;i.save();const O=I(M.lineWidth,1);if(i.fillStyle=I(M.fillStyle,l),i.lineCap=I(M.lineCap,"butt"),i.lineDashOffset=I(M.lineDashOffset,0),i.lineJoin=I(M.lineJoin,"miter"),i.lineWidth=O,i.strokeStyle=I(M.strokeStyle,l),i.setLineDash(I(M.lineDash,[])),o.usePointStyle){const R={radius:f*Math.SQRT2/2,pointStyle:M.pointStyle,rotation:M.rotation,borderWidth:O},z=r.xPlus(P,b/2),F=T+h;Qn(i,R,z,F,o.pointStyleWidth&&b)}else{const R=T+Math.max((u-f)/2,0),z=r.leftForLtr(P,b),F=he(M.borderRadius);i.beginPath(),Object.values(F).some(it=>it!==0)?Xe(i,{x:z,y:R,w:b,h:f,radius:F}):i.rect(z,R,b,f),i.fill(),O!==0&&i.stroke()}i.restore()},w=function(P,T,M){be(i,M.text,P,T+v/2,c,{strikethrough:M.hidden,textAlign:r.textAlign(M.textAlign)})},_=this.isHorizontal(),S=this._computeTitleHeight();_?p={x:ft(n,this.left+d,this.right-a[0]),y:this.top+d+S,line:0}:p={x:this.left+d,y:ft(n,this.top+S+d,this.bottom-e[0].height),line:0},oo(this.ctx,t.textDirection);const k=v+d;this.legendItems.forEach((P,T)=>{i.strokeStyle=P.fontColor,i.fillStyle=P.fontColor;const M=i.measureText(P.text).width,O=r.textAlign(P.textAlign||(P.textAlign=o.textAlign)),R=b+h+M;let z=p.x,F=p.y;r.setWidth(this.width),_?T>0&&z+R+d>this.right&&(F=p.y+=k,p.line++,z=p.x=ft(n,this.left+d,this.right-a[p.line])):T>0&&F+k>this.bottom&&(z=p.x=z+e[p.line].width+d,p.line++,F=p.y=ft(n,this.top+S+d,this.bottom-e[p.line].height));const it=r.x(z);if(x(it,F,P),z=Hr(O,z+b+h,_?z+R:this.right,t.rtl),w(r.x(z),F,P),_)p.x+=R+d;else if(typeof P.text!="string"){const ut=c.lineHeight;p.y+=Ho(P,ut)+d}else p.y+=k}),lo(this.ctx,t.textDirection)}drawTitle(){const t=this.options,e=t.title,a=lt(e.font),i=mt(e.padding);if(!e.display)return;const n=we(t.rtl,this.left,this.width),o=this.ctx,l=e.position,r=a.size/2,c=i.top+r;let d,u=this.left,h=this.width;if(this.isHorizontal())h=Math.max(...this.lineWidths),d=this.top+c,u=ft(t.align,u,this.right-h);else{const b=this.columnSizes.reduce((f,v)=>Math.max(f,v.height),0);d=c+ft(t.align,this.top,this.bottom-b-t.labels.padding-this._computeTitleHeight())}const p=ft(l,u,u+h);o.textAlign=n.textAlign(Ta(l)),o.textBaseline="middle",o.strokeStyle=e.color,o.fillStyle=e.color,o.font=a.string,be(o,e.text,p,d,a)}_computeTitleHeight(){const t=this.options.title,e=lt(t.font),a=mt(t.padding);return t.display?e.lineHeight+a.height:0}_getLegendItemAt(t,e){let a,i,n;if(jt(t,this.left,this.right)&&jt(e,this.top,this.bottom)){for(n=this.legendHitBoxes,a=0;a<n.length;++a)if(i=n[a],jt(t,i.left,i.left+i.width)&&jt(e,i.top,i.top+i.height))return this.legendItems[a]}return null}handleEvent(t){const e=this.options;if(!Ph(t.type,e))return;const a=this._getLegendItemAt(t.x,t.y);if(t.type==="mousemove"||t.type==="mouseout"){const i=this._hoveredItem,n=Sh(i,a);i&&!n&&G(e.onLeave,[t,i,this],this),this._hoveredItem=a,a&&!n&&G(e.onHover,[t,a,this],this)}else a&&G(e.onClick,[t,a,this],this)}}function _h(s,t,e,a,i){const n=Ch(a,s,t,e),o=Mh(i,a,t.lineHeight);return{itemWidth:n,itemHeight:o}}function Ch(s,t,e,a){let i=s.text;return i&&typeof i!="string"&&(i=i.reduce((n,o)=>n.length>o.length?n:o)),t+e.size/2+a.measureText(i).width}function Mh(s,t,e){let a=s;return typeof t.text!="string"&&(a=Ho(t,e)),a}function Ho(s,t){const e=s.text?s.text.length:0;return t*e}function Ph(s,t){return!!((s==="mousemove"||s==="mouseout")&&(t.onHover||t.onLeave)||t.onClick&&(s==="click"||s==="mouseup"))}var jo={id:"legend",_element:un,start(s,t,e){const a=s.legend=new un({ctx:s.ctx,options:e,chart:s});gt.configure(s,a,e),gt.addBox(s,a)},stop(s){gt.removeBox(s,s.legend),delete s.legend},beforeUpdate(s,t,e){const a=s.legend;gt.configure(s,a,e),a.options=e},afterUpdate(s){const t=s.legend;t.buildLabels(),t.adjustHitBoxes()},afterEvent(s,t){t.replay||s.legend.handleEvent(t.event)},defaults:{display:!0,position:"top",align:"center",fullSize:!0,reverse:!1,weight:1e3,onClick(s,t,e){const a=t.datasetIndex,i=e.chart;i.isDatasetVisible(a)?(i.hide(a),t.hidden=!0):(i.show(a),t.hidden=!1)},onHover:null,onLeave:null,labels:{color:s=>s.chart.options.color,boxWidth:40,padding:10,generateLabels(s){const t=s.data.datasets,{labels:{usePointStyle:e,pointStyle:a,textAlign:i,color:n,useBorderRadius:o,borderRadius:l}}=s.legend.options;return s._getSortedDatasetMetas().map(r=>{const c=r.controller.getStyle(e?0:void 0),d=mt(c.borderWidth);return{text:t[r.index].label,fillStyle:c.backgroundColor,fontColor:n,hidden:!r.visible,lineCap:c.borderCapStyle,lineDash:c.borderDash,lineDashOffset:c.borderDashOffset,lineJoin:c.borderJoinStyle,lineWidth:(d.width+d.height)/4,strokeStyle:c.borderColor,pointStyle:a||c.pointStyle,rotation:c.rotation,textAlign:i||c.textAlign,borderRadius:o&&(l||c.borderRadius),datasetIndex:r.index}},this)}},title:{color:s=>s.chart.options.color,display:!1,position:"center",text:""}},descriptors:{_scriptable:s=>!s.startsWith("on"),labels:{_scriptable:s=>!["generateLabels","filter","sort"].includes(s)}}};class Va extends Ut{constructor(t){super(),this.chart=t.chart,this.options=t.options,this.ctx=t.ctx,this._padding=void 0,this.top=void 0,this.bottom=void 0,this.left=void 0,this.right=void 0,this.width=void 0,this.height=void 0,this.position=void 0,this.weight=void 0,this.fullSize=void 0}update(t,e){const a=this.options;if(this.left=0,this.top=0,!a.display){this.width=this.height=this.right=this.bottom=0;return}this.width=this.right=t,this.height=this.bottom=e;const i=q(a.text)?a.text.length:1;this._padding=mt(a.padding);const n=i*lt(a.font).lineHeight+this._padding.height;this.isHorizontal()?this.height=n:this.width=n}isHorizontal(){const t=this.options.position;return t==="top"||t==="bottom"}_drawArgs(t){const{top:e,left:a,bottom:i,right:n,options:o}=this,l=o.align;let r=0,c,d,u;return this.isHorizontal()?(d=ft(l,a,n),u=e+t,c=n-a):(o.position==="left"?(d=a+t,u=ft(l,i,e),r=j*-.5):(d=n-t,u=ft(l,e,i),r=j*.5),c=i-e),{titleX:d,titleY:u,maxWidth:c,rotation:r}}draw(){const t=this.ctx,e=this.options;if(!e.display)return;const a=lt(e.font),n=a.lineHeight/2+this._padding.top,{titleX:o,titleY:l,maxWidth:r,rotation:c}=this._drawArgs(n);be(t,e.text,0,0,a,{color:e.color,maxWidth:r,rotation:c,textAlign:Ta(e.align),textBaseline:"middle",translation:[o,l]})}}function Ah(s,t){const e=new Va({ctx:s.ctx,options:t,chart:s});gt.configure(s,e,t),gt.addBox(s,e),s.titleBlock=e}var Dh={id:"title",_element:Va,start(s,t,e){Ah(s,e)},stop(s){const t=s.titleBlock;gt.removeBox(s,t),delete s.titleBlock},beforeUpdate(s,t,e){const a=s.titleBlock;gt.configure(s,a,e),a.options=e},defaults:{align:"center",display:!1,font:{weight:"bold"},fullSize:!0,padding:10,position:"top",text:"",weight:2e3},defaultRoutes:{color:"color"},descriptors:{_scriptable:!0,_indexable:!1}};const ps=new WeakMap;var Th={id:"subtitle",start(s,t,e){const a=new Va({ctx:s.ctx,options:e,chart:s});gt.configure(s,a,e),gt.addBox(s,a),ps.set(s,a)},stop(s){gt.removeBox(s,ps.get(s)),ps.delete(s)},beforeUpdate(s,t,e){const a=ps.get(s);gt.configure(s,a,e),a.options=e},defaults:{align:"center",display:!1,font:{weight:"normal"},fullSize:!0,padding:0,position:"top",text:"",weight:1500},defaultRoutes:{color:"color"},descriptors:{_scriptable:!0,_indexable:!1}};const ze={average(s){if(!s.length)return!1;let t,e,a=new Set,i=0,n=0;for(t=0,e=s.length;t<e;++t){const l=s[t].element;if(l&&l.hasValue()){const r=l.tooltipPosition();a.add(r.x),i+=r.y,++n}}return n===0||a.size===0?!1:{x:[...a].reduce((l,r)=>l+r)/a.size,y:i/n}},nearest(s,t){if(!s.length)return!1;let e=t.x,a=t.y,i=Number.POSITIVE_INFINITY,n,o,l;for(n=0,o=s.length;n<o;++n){const r=s[n].element;if(r&&r.hasValue()){const c=r.getCenterPoint(),d=ha(t,c);d<i&&(i=d,l=r)}}if(l){const r=l.tooltipPosition();e=r.x,a=r.y}return{x:e,y:a}}};function Tt(s,t){return t&&(q(t)?Array.prototype.push.apply(s,t):s.push(t)),s}function Ft(s){return(typeof s=="string"||s instanceof String)&&s.indexOf(`
+`)>-1?s.split(`
+`):s}function Lh(s,t){const{element:e,datasetIndex:a,index:i}=t,n=s.getDatasetMeta(a).controller,{label:o,value:l}=n.getLabelAndValue(i);return{chart:s,label:o,parsed:n.getParsed(i),raw:s.data.datasets[a].data[i],formattedValue:l,dataset:n.getDataset(),dataIndex:i,datasetIndex:a,element:e}}function hn(s,t){const e=s.chart.ctx,{body:a,footer:i,title:n}=s,{boxWidth:o,boxHeight:l}=t,r=lt(t.bodyFont),c=lt(t.titleFont),d=lt(t.footerFont),u=n.length,h=i.length,p=a.length,b=mt(t.padding);let f=b.height,v=0,x=a.reduce((S,k)=>S+k.before.length+k.lines.length+k.after.length,0);if(x+=s.beforeBody.length+s.afterBody.length,u&&(f+=u*c.lineHeight+(u-1)*t.titleSpacing+t.titleMarginBottom),x){const S=t.displayColors?Math.max(l,r.lineHeight):r.lineHeight;f+=p*S+(x-p)*r.lineHeight+(x-1)*t.bodySpacing}h&&(f+=t.footerMarginTop+h*d.lineHeight+(h-1)*t.footerSpacing);let w=0;const _=function(S){v=Math.max(v,e.measureText(S).width+w)};return e.save(),e.font=c.string,W(s.title,_),e.font=r.string,W(s.beforeBody.concat(s.afterBody),_),w=t.displayColors?o+2+t.boxPadding:0,W(a,S=>{W(S.before,_),W(S.lines,_),W(S.after,_)}),w=0,e.font=d.string,W(s.footer,_),e.restore(),v+=b.width,{width:v,height:f}}function Oh(s,t){const{y:e,height:a}=t;return e<a/2?"top":e>s.height-a/2?"bottom":"center"}function Eh(s,t,e,a){const{x:i,width:n}=a,o=e.caretSize+e.caretPadding;if(s==="left"&&i+n+o>t.width||s==="right"&&i-n-o<0)return!0}function Ih(s,t,e,a){const{x:i,width:n}=e,{width:o,chartArea:{left:l,right:r}}=s;let c="center";return a==="center"?c=i<=(l+r)/2?"left":"right":i<=n/2?c="left":i>=o-n/2&&(c="right"),Eh(c,s,t,e)&&(c="center"),c}function pn(s,t,e){const a=e.yAlign||t.yAlign||Oh(s,e);return{xAlign:e.xAlign||t.xAlign||Ih(s,t,e,a),yAlign:a}}function Rh(s,t){let{x:e,width:a}=s;return t==="right"?e-=a:t==="center"&&(e-=a/2),e}function zh(s,t,e){let{y:a,height:i}=s;return t==="top"?a+=e:t==="bottom"?a-=i+e:a-=i/2,a}function fn(s,t,e,a){const{caretSize:i,caretPadding:n,cornerRadius:o}=s,{xAlign:l,yAlign:r}=e,c=i+n,{topLeft:d,topRight:u,bottomLeft:h,bottomRight:p}=he(o);let b=Rh(t,l);const f=zh(t,r,c);return r==="center"?l==="left"?b+=c:l==="right"&&(b-=c):l==="left"?b-=Math.max(d,h)+i:l==="right"&&(b+=Math.max(u,p)+i),{x:ct(b,0,a.width-t.width),y:ct(f,0,a.height-t.height)}}function fs(s,t,e){const a=mt(e.padding);return t==="center"?s.x+s.width/2:t==="right"?s.x+s.width-a.right:s.x+a.left}function bn(s){return Tt([],Ft(s))}function Bh(s,t,e){return ee(s,{tooltip:t,tooltipItems:e,type:"tooltip"})}function gn(s,t){const e=t&&t.dataset&&t.dataset.tooltip&&t.dataset.tooltip.callbacks;return e?s.override(e):s}const No={beforeTitle:zt,title(s){if(s.length>0){const t=s[0],e=t.chart.data.labels,a=e?e.length:0;if(this&&this.options&&this.options.mode==="dataset")return t.dataset.label||"";if(t.label)return t.label;if(a>0&&t.dataIndex<a)return e[t.dataIndex]}return""},afterTitle:zt,beforeBody:zt,beforeLabel:zt,label(s){if(this&&this.options&&this.options.mode==="dataset")return s.label+": "+s.formattedValue||s.formattedValue;let t=s.dataset.label||"";t&&(t+=": ");const e=s.formattedValue;return B(e)||(t+=e),t},labelColor(s){const e=s.chart.getDatasetMeta(s.datasetIndex).controller.getStyle(s.dataIndex);return{borderColor:e.borderColor,backgroundColor:e.backgroundColor,borderWidth:e.borderWidth,borderDash:e.borderDash,borderDashOffset:e.borderDashOffset,borderRadius:0}},labelTextColor(){return this.options.bodyColor},labelPointStyle(s){const e=s.chart.getDatasetMeta(s.datasetIndex).controller.getStyle(s.dataIndex);return{pointStyle:e.pointStyle,rotation:e.rotation}},afterLabel:zt,afterBody:zt,beforeFooter:zt,footer:zt,afterFooter:zt};function wt(s,t,e,a){const i=s[t].call(e,a);return typeof i>"u"?No[t].call(e,a):i}class vn extends Ut{static positioners=ze;constructor(t){super(),this.opacity=0,this._active=[],this._eventPosition=void 0,this._size=void 0,this._cachedAnimations=void 0,this._tooltipItems=[],this.$animations=void 0,this.$context=void 0,this.chart=t.chart,this.options=t.options,this.dataPoints=void 0,this.title=void 0,this.beforeBody=void 0,this.body=void 0,this.afterBody=void 0,this.footer=void 0,this.xAlign=void 0,this.yAlign=void 0,this.x=void 0,this.y=void 0,this.height=void 0,this.width=void 0,this.caretX=void 0,this.caretY=void 0,this.labelColors=void 0,this.labelPointStyles=void 0,this.labelTextColors=void 0}initialize(t){this.options=t,this._cachedAnimations=void 0,this.$context=void 0}_resolveAnimations(){const t=this._cachedAnimations;if(t)return t;const e=this.chart,a=this.options.setContext(this.getContext()),i=a.enabled&&e.options.animation&&a.animations,n=new po(this.chart,i);return i._cacheable&&(this._cachedAnimations=Object.freeze(n)),n}getContext(){return this.$context||(this.$context=Bh(this.chart.getContext(),this,this._tooltipItems))}getTitle(t,e){const{callbacks:a}=e,i=wt(a,"beforeTitle",this,t),n=wt(a,"title",this,t),o=wt(a,"afterTitle",this,t);let l=[];return l=Tt(l,Ft(i)),l=Tt(l,Ft(n)),l=Tt(l,Ft(o)),l}getBeforeBody(t,e){return bn(wt(e.callbacks,"beforeBody",this,t))}getBody(t,e){const{callbacks:a}=e,i=[];return W(t,n=>{const o={before:[],lines:[],after:[]},l=gn(a,n);Tt(o.before,Ft(wt(l,"beforeLabel",this,n))),Tt(o.lines,wt(l,"label",this,n)),Tt(o.after,Ft(wt(l,"afterLabel",this,n))),i.push(o)}),i}getAfterBody(t,e){return bn(wt(e.callbacks,"afterBody",this,t))}getFooter(t,e){const{callbacks:a}=e,i=wt(a,"beforeFooter",this,t),n=wt(a,"footer",this,t),o=wt(a,"afterFooter",this,t);let l=[];return l=Tt(l,Ft(i)),l=Tt(l,Ft(n)),l=Tt(l,Ft(o)),l}_createItems(t){const e=this._active,a=this.chart.data,i=[],n=[],o=[];let l=[],r,c;for(r=0,c=e.length;r<c;++r)l.push(Lh(this.chart,e[r]));return t.filter&&(l=l.filter((d,u,h)=>t.filter(d,u,h,a))),t.itemSort&&(l=l.sort((d,u)=>t.itemSort(d,u,a))),W(l,d=>{const u=gn(t.callbacks,d);i.push(wt(u,"labelColor",this,d)),n.push(wt(u,"labelPointStyle",this,d)),o.push(wt(u,"labelTextColor",this,d))}),this.labelColors=i,this.labelPointStyles=n,this.labelTextColors=o,this.dataPoints=l,l}update(t,e){const a=this.options.setContext(this.getContext()),i=this._active;let n,o=[];if(!i.length)this.opacity!==0&&(n={opacity:0});else{const l=ze[a.position].call(this,i,this._eventPosition);o=this._createItems(a),this.title=this.getTitle(o,a),this.beforeBody=this.getBeforeBody(o,a),this.body=this.getBody(o,a),this.afterBody=this.getAfterBody(o,a),this.footer=this.getFooter(o,a);const r=this._size=hn(this,a),c=Object.assign({},l,r),d=pn(this.chart,a,c),u=fn(a,c,d,this.chart);this.xAlign=d.xAlign,this.yAlign=d.yAlign,n={opacity:1,x:u.x,y:u.y,width:r.width,height:r.height,caretX:l.x,caretY:l.y}}this._tooltipItems=o,this.$context=void 0,n&&this._resolveAnimations().update(this,n),t&&a.external&&a.external.call(this,{chart:this.chart,tooltip:this,replay:e})}drawCaret(t,e,a,i){const n=this.getCaretPosition(t,a,i);e.lineTo(n.x1,n.y1),e.lineTo(n.x2,n.y2),e.lineTo(n.x3,n.y3)}getCaretPosition(t,e,a){const{xAlign:i,yAlign:n}=this,{caretSize:o,cornerRadius:l}=a,{topLeft:r,topRight:c,bottomLeft:d,bottomRight:u}=he(l),{x:h,y:p}=t,{width:b,height:f}=e;let v,x,w,_,S,k;return n==="center"?(S=p+f/2,i==="left"?(v=h,x=v-o,_=S+o,k=S-o):(v=h+b,x=v+o,_=S-o,k=S+o),w=v):(i==="left"?x=h+Math.max(r,d)+o:i==="right"?x=h+b-Math.max(c,u)-o:x=this.caretX,n==="top"?(_=p,S=_-o,v=x-o,w=x+o):(_=p+f,S=_+o,v=x+o,w=x-o),k=_),{x1:v,x2:x,x3:w,y1:_,y2:S,y3:k}}drawTitle(t,e,a){const i=this.title,n=i.length;let o,l,r;if(n){const c=we(a.rtl,this.x,this.width);for(t.x=fs(this,a.titleAlign,a),e.textAlign=c.textAlign(a.titleAlign),e.textBaseline="middle",o=lt(a.titleFont),l=a.titleSpacing,e.fillStyle=a.titleColor,e.font=o.string,r=0;r<n;++r)e.fillText(i[r],c.x(t.x),t.y+o.lineHeight/2),t.y+=o.lineHeight+l,r+1===n&&(t.y+=a.titleMarginBottom-l)}}_drawColorBox(t,e,a,i,n){const o=this.labelColors[a],l=this.labelPointStyles[a],{boxHeight:r,boxWidth:c}=n,d=lt(n.bodyFont),u=fs(this,"left",n),h=i.x(u),p=r<d.lineHeight?(d.lineHeight-r)/2:0,b=e.y+p;if(n.usePointStyle){const f={radius:Math.min(c,r)/2,pointStyle:l.pointStyle,rotation:l.rotation,borderWidth:1},v=i.leftForLtr(h,c)+c/2,x=b+r/2;t.strokeStyle=n.multiKeyBackground,t.fillStyle=n.multiKeyBackground,fa(t,f,v,x),t.strokeStyle=o.borderColor,t.fillStyle=o.backgroundColor,fa(t,f,v,x)}else{t.lineWidth=V(o.borderWidth)?Math.max(...Object.values(o.borderWidth)):o.borderWidth||1,t.strokeStyle=o.borderColor,t.setLineDash(o.borderDash||[]),t.lineDashOffset=o.borderDashOffset||0;const f=i.leftForLtr(h,c),v=i.leftForLtr(i.xPlus(h,1),c-2),x=he(o.borderRadius);Object.values(x).some(w=>w!==0)?(t.beginPath(),t.fillStyle=n.multiKeyBackground,Xe(t,{x:f,y:b,w:c,h:r,radius:x}),t.fill(),t.stroke(),t.fillStyle=o.backgroundColor,t.beginPath(),Xe(t,{x:v,y:b+1,w:c-2,h:r-2,radius:x}),t.fill()):(t.fillStyle=n.multiKeyBackground,t.fillRect(f,b,c,r),t.strokeRect(f,b,c,r),t.fillStyle=o.backgroundColor,t.fillRect(v,b+1,c-2,r-2))}t.fillStyle=this.labelTextColors[a]}drawBody(t,e,a){const{body:i}=this,{bodySpacing:n,bodyAlign:o,displayColors:l,boxHeight:r,boxWidth:c,boxPadding:d}=a,u=lt(a.bodyFont);let h=u.lineHeight,p=0;const b=we(a.rtl,this.x,this.width),f=function(M){e.fillText(M,b.x(t.x+p),t.y+h/2),t.y+=h+n},v=b.textAlign(o);let x,w,_,S,k,P,T;for(e.textAlign=o,e.textBaseline="middle",e.font=u.string,t.x=fs(this,v,a),e.fillStyle=a.bodyColor,W(this.beforeBody,f),p=l&&v!=="right"?o==="center"?c/2+d:c+2+d:0,S=0,P=i.length;S<P;++S){for(x=i[S],w=this.labelTextColors[S],e.fillStyle=w,W(x.before,f),_=x.lines,l&&_.length&&(this._drawColorBox(e,t,S,b,a),h=Math.max(u.lineHeight,r)),k=0,T=_.length;k<T;++k)f(_[k]),h=u.lineHeight;W(x.after,f)}p=0,h=u.lineHeight,W(this.afterBody,f),t.y-=n}drawFooter(t,e,a){const i=this.footer,n=i.length;let o,l;if(n){const r=we(a.rtl,this.x,this.width);for(t.x=fs(this,a.footerAlign,a),t.y+=a.footerMarginTop,e.textAlign=r.textAlign(a.footerAlign),e.textBaseline="middle",o=lt(a.footerFont),e.fillStyle=a.footerColor,e.font=o.string,l=0;l<n;++l)e.fillText(i[l],r.x(t.x),t.y+o.lineHeight/2),t.y+=o.lineHeight+a.footerSpacing}}drawBackground(t,e,a,i){const{xAlign:n,yAlign:o}=this,{x:l,y:r}=t,{width:c,height:d}=a,{topLeft:u,topRight:h,bottomLeft:p,bottomRight:b}=he(i.cornerRadius);e.fillStyle=i.backgroundColor,e.strokeStyle=i.borderColor,e.lineWidth=i.borderWidth,e.beginPath(),e.moveTo(l+u,r),o==="top"&&this.drawCaret(t,e,a,i),e.lineTo(l+c-h,r),e.quadraticCurveTo(l+c,r,l+c,r+h),o==="center"&&n==="right"&&this.drawCaret(t,e,a,i),e.lineTo(l+c,r+d-b),e.quadraticCurveTo(l+c,r+d,l+c-b,r+d),o==="bottom"&&this.drawCaret(t,e,a,i),e.lineTo(l+p,r+d),e.quadraticCurveTo(l,r+d,l,r+d-p),o==="center"&&n==="left"&&this.drawCaret(t,e,a,i),e.lineTo(l,r+u),e.quadraticCurveTo(l,r,l+u,r),e.closePath(),e.fill(),i.borderWidth>0&&e.stroke()}_updateAnimationTarget(t){const e=this.chart,a=this.$animations,i=a&&a.x,n=a&&a.y;if(i||n){const o=ze[t.position].call(this,this._active,this._eventPosition);if(!o)return;const l=this._size=hn(this,t),r=Object.assign({},o,this._size),c=pn(e,t,r),d=fn(t,r,c,e);(i._to!==d.x||n._to!==d.y)&&(this.xAlign=c.xAlign,this.yAlign=c.yAlign,this.width=l.width,this.height=l.height,this.caretX=o.x,this.caretY=o.y,this._resolveAnimations().update(this,d))}}_willRender(){return!!this.opacity}draw(t){const e=this.options.setContext(this.getContext());let a=this.opacity;if(!a)return;this._updateAnimationTarget(e);const i={width:this.width,height:this.height},n={x:this.x,y:this.y};a=Math.abs(a)<.001?0:a;const o=mt(e.padding),l=this.title.length||this.beforeBody.length||this.body.length||this.afterBody.length||this.footer.length;e.enabled&&l&&(t.save(),t.globalAlpha=a,this.drawBackground(n,t,i,e),oo(t,e.textDirection),n.y+=o.top,this.drawTitle(n,t,e),this.drawBody(n,t,e),this.drawFooter(n,t,e),lo(t,e.textDirection),t.restore())}getActiveElements(){return this._active||[]}setActiveElements(t,e){const a=this._active,i=t.map(({datasetIndex:l,index:r})=>{const c=this.chart.getDatasetMeta(l);if(!c)throw new Error("Cannot find a dataset at index "+l);return{datasetIndex:l,element:c.data[r],index:r}}),n=!ks(a,i),o=this._positionChanged(i,e);(n||o)&&(this._active=i,this._eventPosition=e,this._ignoreReplayEvents=!0,this.update(!0))}handleEvent(t,e,a=!0){if(e&&this._ignoreReplayEvents)return!1;this._ignoreReplayEvents=!1;const i=this.options,n=this._active||[],o=this._getActiveElements(t,n,e,a),l=this._positionChanged(o,t),r=e||!ks(o,n)||l;return r&&(this._active=o,(i.enabled||i.external)&&(this._eventPosition={x:t.x,y:t.y},this.update(!0,e))),r}_getActiveElements(t,e,a,i){const n=this.options;if(t.type==="mouseout")return[];if(!i)return e.filter(l=>this.chart.data.datasets[l.datasetIndex]&&this.chart.getDatasetMeta(l.datasetIndex).controller.getParsed(l.index)!==void 0);const o=this.chart.getElementsAtEventForMode(t,n.mode,n,a);return n.reverse&&o.reverse(),o}_positionChanged(t,e){const{caretX:a,caretY:i,options:n}=this,o=ze[n.position].call(this,t,e);return o!==!1&&(a!==o.x||i!==o.y)}}var Wo={id:"tooltip",_element:vn,positioners:ze,afterInit(s,t,e){e&&(s.tooltip=new vn({chart:s,options:e}))},beforeUpdate(s,t,e){s.tooltip&&s.tooltip.initialize(e)},reset(s,t,e){s.tooltip&&s.tooltip.initialize(e)},afterDraw(s){const t=s.tooltip;if(t&&t._willRender()){const e={tooltip:t};if(s.notifyPlugins("beforeTooltipDraw",{...e,cancelable:!0})===!1)return;t.draw(s.ctx),s.notifyPlugins("afterTooltipDraw",e)}},afterEvent(s,t){if(s.tooltip){const e=t.replay;s.tooltip.handleEvent(t.event,e,t.inChartArea)&&(t.changed=!0)}},defaults:{enabled:!0,external:null,position:"average",backgroundColor:"rgba(0,0,0,0.8)",titleColor:"#fff",titleFont:{weight:"bold"},titleSpacing:2,titleMarginBottom:6,titleAlign:"left",bodyColor:"#fff",bodySpacing:2,bodyFont:{},bodyAlign:"left",footerColor:"#fff",footerSpacing:2,footerMarginTop:6,footerFont:{weight:"bold"},footerAlign:"left",padding:6,caretPadding:2,caretSize:5,cornerRadius:6,boxHeight:(s,t)=>t.bodyFont.size,boxWidth:(s,t)=>t.bodyFont.size,multiKeyBackground:"#fff",displayColors:!0,boxPadding:0,borderColor:"rgba(0,0,0,0)",borderWidth:0,animation:{duration:400,easing:"easeOutQuart"},animations:{numbers:{type:"number",properties:["x","y","width","height","caretX","caretY"]},opacity:{easing:"linear",duration:200}},callbacks:No},defaultRoutes:{bodyFont:"font",footerFont:"font",titleFont:"font"},descriptors:{_scriptable:s=>s!=="filter"&&s!=="itemSort"&&s!=="external",_indexable:!1,callbacks:{_scriptable:!1,_indexable:!1},animation:{_fallback:!1},animations:{_fallback:"animation"}},additionalOptionScopes:["interaction"]},Fh=Object.freeze({__proto__:null,Colors:Ju,Decimation:ah,Filler:Vo,Legend:jo,SubTitle:Th,Title:Dh,Tooltip:Wo});const Vh=(s,t,e,a)=>(typeof t=="string"?(e=s.push(t)-1,a.unshift({index:e,label:t})):isNaN(t)&&(e=null),e);function Hh(s,t,e,a){const i=s.indexOf(t);if(i===-1)return Vh(s,t,e,a);const n=s.lastIndexOf(t);return i!==n?e:i}const jh=(s,t)=>s===null?null:ct(Math.round(s),0,t);function mn(s){const t=this.getLabels();return s>=0&&s<t.length?t[s]:s}class Uo extends ge{static id="category";static defaults={ticks:{callback:mn}};constructor(t){super(t),this._startValue=void 0,this._valueRange=0,this._addedLabels=[]}init(t){const e=this._addedLabels;if(e.length){const a=this.getLabels();for(const{index:i,label:n}of e)a[i]===n&&a.splice(i,1);this._addedLabels=[]}super.init(t)}parse(t,e){if(B(t))return null;const a=this.getLabels();return e=isFinite(e)&&a[e]===t?e:Hh(a,t,I(e,t),this._addedLabels),jh(e,a.length-1)}determineDataLimits(){const{minDefined:t,maxDefined:e}=this.getUserBounds();let{min:a,max:i}=this.getMinMax(!0);this.options.bounds==="ticks"&&(t||(a=0),e||(i=this.getLabels().length-1)),this.min=a,this.max=i}buildTicks(){const t=this.min,e=this.max,a=this.options.offset,i=[];let n=this.getLabels();n=t===0&&e===n.length-1?n:n.slice(t,e+1),this._valueRange=Math.max(n.length-(a?0:1),1),this._startValue=this.min-(a?.5:0);for(let o=t;o<=e;o++)i.push({value:o});return i}getLabelForValue(t){return mn.call(this,t)}configure(){super.configure(),this.isHorizontal()||(this._reversePixels=!this._reversePixels)}getPixelForValue(t){return typeof t!="number"&&(t=this.parse(t)),t===null?NaN:this.getPixelForDecimal((t-this._startValue)/this._valueRange)}getPixelForTick(t){const e=this.ticks;return t<0||t>e.length-1?null:this.getPixelForValue(e[t].value)}getValueForPixel(t){return Math.round(this._startValue+this.getDecimalForPixel(t)*this._valueRange)}getBasePixel(){return this.bottom}}function Nh(s,t){const e=[],{bounds:i,step:n,min:o,max:l,precision:r,count:c,maxTicks:d,maxDigits:u,includeBounds:h}=s,p=n||1,b=d-1,{min:f,max:v}=t,x=!B(o),w=!B(l),_=!B(c),S=(v-f)/(u+1);let k=ui((v-f)/b/p)*p,P,T,M,O;if(k<1e-14&&!x&&!w)return[{value:f},{value:v}];O=Math.ceil(v/k)-Math.floor(f/k),O>b&&(k=ui(O*k/b/p)*p),B(r)||(P=Math.pow(10,r),k=Math.ceil(k*P)/P),i==="ticks"?(T=Math.floor(f/k)*k,M=Math.ceil(v/k)*k):(T=f,M=v),x&&w&&n&&Er((l-o)/n,k/1e3)?(O=Math.round(Math.min((l-o)/k,d)),k=(l-o)/O,T=o,M=l):_?(T=x?o:T,M=w?l:M,O=c-1,k=(M-T)/O):(O=(M-T)/k,Ve(O,Math.round(O),k/1e3)?O=Math.round(O):O=Math.ceil(O));const R=Math.max(hi(k),hi(T));P=Math.pow(10,B(r)?R:r),T=Math.round(T*P)/P,M=Math.round(M*P)/P;let z=0;for(x&&(h&&T!==o?(e.push({value:o}),T<o&&z++,Ve(Math.round((T+z*k)*P)/P,o,xn(o,S,s))&&z++):T<o&&z++);z<O;++z){const F=Math.round((T+z*k)*P)/P;if(w&&F>l)break;e.push({value:F})}return w&&h&&M!==l?e.length&&Ve(e[e.length-1].value,l,xn(l,S,s))?e[e.length-1].value=l:e.push({value:l}):(!w||M===l)&&e.push({value:M}),e}function xn(s,t,{horizontal:e,minRotation:a}){const i=At(a),n=(e?Math.sin(i):Math.cos(i))||.001,o=.75*t*(""+s).length;return Math.min(t/n,o)}class Ds extends ge{constructor(t){super(t),this.start=void 0,this.end=void 0,this._startValue=void 0,this._endValue=void 0,this._valueRange=0}parse(t,e){return B(t)||(typeof t=="number"||t instanceof Number)&&!isFinite(+t)?null:+t}handleTickRangeOptions(){const{beginAtZero:t}=this.options,{minDefined:e,maxDefined:a}=this.getUserBounds();let{min:i,max:n}=this;const o=r=>i=e?i:r,l=r=>n=a?n:r;if(t){const r=Ot(i),c=Ot(n);r<0&&c<0?l(0):r>0&&c>0&&o(0)}if(i===n){let r=n===0?1:Math.abs(n*.05);l(n+r),t||o(i-r)}this.min=i,this.max=n}getTickLimit(){const t=this.options.ticks;let{maxTicksLimit:e,stepSize:a}=t,i;return a?(i=Math.ceil(this.max/a)-Math.floor(this.min/a)+1,i>1e3&&(console.warn(`scales.${this.id}.ticks.stepSize: ${a} would result generating up to ${i} ticks. Limiting to 1000.`),i=1e3)):(i=this.computeTickLimit(),e=e||11),e&&(i=Math.min(e,i)),i}computeTickLimit(){return Number.POSITIVE_INFINITY}buildTicks(){const t=this.options,e=t.ticks;let a=this.getTickLimit();a=Math.max(2,a);const i={maxTicks:a,bounds:t.bounds,min:t.min,max:t.max,precision:e.precision,step:e.stepSize,count:e.count,maxDigits:this._maxDigits(),horizontal:this.isHorizontal(),minRotation:e.minRotation||0,includeBounds:e.includeBounds!==!1},n=this._range||this,o=Nh(i,n);return t.bounds==="ticks"&&Wn(o,this,"value"),t.reverse?(o.reverse(),this.start=this.max,this.end=this.min):(this.start=this.min,this.end=this.max),o}configure(){const t=this.ticks;let e=this.min,a=this.max;if(super.configure(),this.options.offset&&t.length){const i=(a-e)/Math.max(t.length-1,1)/2;e-=i,a+=i}this._startValue=e,this._endValue=a,this._valueRange=a-e}getLabelForValue(t){return Qe(t,this.chart.options.locale,this.options.ticks.format)}}class $o extends Ds{static id="linear";static defaults={ticks:{callback:Os.formatters.numeric}};determineDataLimits(){const{min:t,max:e}=this.getMinMax(!0);this.min=tt(t)?t:0,this.max=tt(e)?e:1,this.handleTickRangeOptions()}computeTickLimit(){const t=this.isHorizontal(),e=t?this.width:this.height,a=At(this.options.ticks.minRotation),i=(t?Math.sin(a):Math.cos(a))||.001,n=this._resolveTickFontOptions(0);return Math.ceil(e/Math.min(40,n.lineHeight/i))}getPixelForValue(t){return t===null?NaN:this.getPixelForDecimal((t-this._startValue)/this._valueRange)}getValueForPixel(t){return this._startValue+this.getDecimalForPixel(t)*this._valueRange}}const Ke=s=>Math.floor(qt(s)),ce=(s,t)=>Math.pow(10,Ke(s)+t);function yn(s){return s/Math.pow(10,Ke(s))===1}function wn(s,t,e){const a=Math.pow(10,e),i=Math.floor(s/a);return Math.ceil(t/a)-i}function Wh(s,t){const e=t-s;let a=Ke(e);for(;wn(s,t,a)>10;)a++;for(;wn(s,t,a)<10;)a--;return Math.min(a,Ke(s))}function Uh(s,{min:t,max:e}){t=_t(s.min,t);const a=[],i=Ke(t);let n=Wh(t,e),o=n<0?Math.pow(10,Math.abs(n)):1;const l=Math.pow(10,n),r=i>n?Math.pow(10,i):0,c=Math.round((t-r)*o)/o,d=Math.floor((t-r)/l/10)*l*10;let u=Math.floor((c-d)/Math.pow(10,n)),h=_t(s.min,Math.round((r+d+u*Math.pow(10,n))*o)/o);for(;h<e;)a.push({value:h,major:yn(h),significand:u}),u>=10?u=u<15?15:20:u++,u>=20&&(n++,u=2,o=n>=0?1:o),h=Math.round((r+d+u*Math.pow(10,n))*o)/o;const p=_t(s.max,h);return a.push({value:p,major:yn(p),significand:u}),a}class $h extends ge{static id="logarithmic";static defaults={ticks:{callback:Os.formatters.logarithmic,major:{enabled:!0}}};constructor(t){super(t),this.start=void 0,this.end=void 0,this._startValue=void 0,this._valueRange=0}parse(t,e){const a=Ds.prototype.parse.apply(this,[t,e]);if(a===0){this._zero=!0;return}return tt(a)&&a>0?a:null}determineDataLimits(){const{min:t,max:e}=this.getMinMax(!0);this.min=tt(t)?Math.max(0,t):null,this.max=tt(e)?Math.max(0,e):null,this.options.beginAtZero&&(this._zero=!0),this._zero&&this.min!==this._suggestedMin&&!tt(this._userMin)&&(this.min=t===ce(this.min,0)?ce(this.min,-1):ce(this.min,0)),this.handleTickRangeOptions()}handleTickRangeOptions(){const{minDefined:t,maxDefined:e}=this.getUserBounds();let a=this.min,i=this.max;const n=l=>a=t?a:l,o=l=>i=e?i:l;a===i&&(a<=0?(n(1),o(10)):(n(ce(a,-1)),o(ce(i,1)))),a<=0&&n(ce(i,-1)),i<=0&&o(ce(a,1)),this.min=a,this.max=i}buildTicks(){const t=this.options,e={min:this._userMin,max:this._userMax},a=Uh(e,this);return t.bounds==="ticks"&&Wn(a,this,"value"),t.reverse?(a.reverse(),this.start=this.max,this.end=this.min):(this.start=this.min,this.end=this.max),a}getLabelForValue(t){return t===void 0?"0":Qe(t,this.chart.options.locale,this.options.ticks.format)}configure(){const t=this.min;super.configure(),this._startValue=qt(t),this._valueRange=qt(this.max)-qt(t)}getPixelForValue(t){return(t===void 0||t===0)&&(t=this.min),t===null||isNaN(t)?NaN:this.getPixelForDecimal(t===this.min?0:(qt(t)-this._startValue)/this._valueRange)}getValueForPixel(t){const e=this.getDecimalForPixel(t);return Math.pow(10,this._startValue+e*this._valueRange)}}function ya(s){const t=s.ticks;if(t.display&&s.display){const e=mt(t.backdropPadding);return I(t.font&&t.font.size,K.font.size)+e.height}return 0}function Yh(s,t,e){return e=q(e)?e:[e],{w:Kr(s,t.string,e),h:e.length*t.lineHeight}}function kn(s,t,e,a,i){return s===a||s===i?{start:t-e/2,end:t+e/2}:s<a||s>i?{start:t-e,end:t}:{start:t,end:t+e}}function Gh(s){const t={l:s.left+s._padding.left,r:s.right-s._padding.right,t:s.top+s._padding.top,b:s.bottom-s._padding.bottom},e=Object.assign({},t),a=[],i=[],n=s._pointLabels.length,o=s.options.pointLabels,l=o.centerPointLabels?j/n:0;for(let r=0;r<n;r++){const c=o.setContext(s.getPointLabelContext(r));i[r]=c.padding;const d=s.getPointPosition(r,s.drawingArea+i[r],l),u=lt(c.font),h=Yh(s.ctx,u,s._pointLabels[r]);a[r]=h;const p=bt(s.getIndexAngle(r)+l),b=Math.round(Aa(p)),f=kn(b,d.x,h.w,0,180),v=kn(b,d.y,h.h,90,270);Xh(e,t,p,f,v)}s.setCenterPoint(t.l-e.l,e.r-t.r,t.t-e.t,e.b-t.b),s._pointLabelItems=Zh(s,a,i)}function Xh(s,t,e,a,i){const n=Math.abs(Math.sin(e)),o=Math.abs(Math.cos(e));let l=0,r=0;a.start<t.l?(l=(t.l-a.start)/n,s.l=Math.min(s.l,t.l-l)):a.end>t.r&&(l=(a.end-t.r)/n,s.r=Math.max(s.r,t.r+l)),i.start<t.t?(r=(t.t-i.start)/o,s.t=Math.min(s.t,t.t-r)):i.end>t.b&&(r=(i.end-t.b)/o,s.b=Math.max(s.b,t.b+r))}function qh(s,t,e){const a=s.drawingArea,{extra:i,additionalAngle:n,padding:o,size:l}=e,r=s.getPointPosition(t,a+i+o,n),c=Math.round(Aa(bt(r.angle+st))),d=tp(r.y,l.h,c),u=Qh(c),h=Jh(r.x,l.w,u);return{visible:!0,x:r.x,y:d,textAlign:u,left:h,top:d,right:h+l.w,bottom:d+l.h}}function Kh(s,t){if(!t)return!0;const{left:e,top:a,right:i,bottom:n}=s;return!(Wt({x:e,y:a},t)||Wt({x:e,y:n},t)||Wt({x:i,y:a},t)||Wt({x:i,y:n},t))}function Zh(s,t,e){const a=[],i=s._pointLabels.length,n=s.options,{centerPointLabels:o,display:l}=n.pointLabels,r={extra:ya(n)/2,additionalAngle:o?j/i:0};let c;for(let d=0;d<i;d++){r.padding=e[d],r.size=t[d];const u=qh(s,d,r);a.push(u),l==="auto"&&(u.visible=Kh(u,c),u.visible&&(c=u))}return a}function Qh(s){return s===0||s===180?"center":s<180?"left":"right"}function Jh(s,t,e){return e==="right"?s-=t:e==="center"&&(s-=t/2),s}function tp(s,t,e){return e===90||e===270?s-=t/2:(e>270||e<90)&&(s-=t),s}function ep(s,t,e){const{left:a,top:i,right:n,bottom:o}=e,{backdropColor:l}=t;if(!B(l)){const r=he(t.borderRadius),c=mt(t.backdropPadding);s.fillStyle=l;const d=a-c.left,u=i-c.top,h=n-a+c.width,p=o-i+c.height;Object.values(r).some(b=>b!==0)?(s.beginPath(),Xe(s,{x:d,y:u,w:h,h:p,radius:r}),s.fill()):s.fillRect(d,u,h,p)}}function sp(s,t){const{ctx:e,options:{pointLabels:a}}=s;for(let i=t-1;i>=0;i--){const n=s._pointLabelItems[i];if(!n.visible)continue;const o=a.setContext(s.getPointLabelContext(i));ep(e,o,n);const l=lt(o.font),{x:r,y:c,textAlign:d}=n;be(e,s._pointLabels[i],r,c+l.lineHeight/2,l,{color:o.color,textAlign:d,textBaseline:"middle"})}}function Yo(s,t,e,a){const{ctx:i}=s;if(e)i.arc(s.xCenter,s.yCenter,t,0,X);else{let n=s.getPointPosition(0,t);i.moveTo(n.x,n.y);for(let o=1;o<a;o++)n=s.getPointPosition(o,t),i.lineTo(n.x,n.y)}}function ap(s,t,e,a,i){const n=s.ctx,o=t.circular,{color:l,lineWidth:r}=t;!o&&!a||!l||!r||e<0||(n.save(),n.strokeStyle=l,n.lineWidth=r,n.setLineDash(i.dash||[]),n.lineDashOffset=i.dashOffset,n.beginPath(),Yo(s,e,o,a),n.closePath(),n.stroke(),n.restore())}function ip(s,t,e){return ee(s,{label:e,index:t,type:"pointLabel"})}class np extends Ds{static id="radialLinear";static defaults={display:!0,animate:!0,position:"chartArea",angleLines:{display:!0,lineWidth:1,borderDash:[],borderDashOffset:0},grid:{circular:!1},startAngle:0,ticks:{showLabelBackdrop:!0,callback:Os.formatters.numeric},pointLabels:{backdropColor:void 0,backdropPadding:2,display:!0,font:{size:10},callback(t){return t},padding:5,centerPointLabels:!1}};static defaultRoutes={"angleLines.color":"borderColor","pointLabels.color":"color","ticks.color":"color"};static descriptors={angleLines:{_fallback:"grid"}};constructor(t){super(t),this.xCenter=void 0,this.yCenter=void 0,this.drawingArea=void 0,this._pointLabels=[],this._pointLabelItems=[]}setDimensions(){const t=this._padding=mt(ya(this.options)/2),e=this.width=this.maxWidth-t.width,a=this.height=this.maxHeight-t.height;this.xCenter=Math.floor(this.left+e/2+t.left),this.yCenter=Math.floor(this.top+a/2+t.top),this.drawingArea=Math.floor(Math.min(e,a)/2)}determineDataLimits(){const{min:t,max:e}=this.getMinMax(!1);this.min=tt(t)&&!isNaN(t)?t:0,this.max=tt(e)&&!isNaN(e)?e:0,this.handleTickRangeOptions()}computeTickLimit(){return Math.ceil(this.drawingArea/ya(this.options))}generateTickLabels(t){Ds.prototype.generateTickLabels.call(this,t),this._pointLabels=this.getLabels().map((e,a)=>{const i=G(this.options.pointLabels.callback,[e,a],this);return i||i===0?i:""}).filter((e,a)=>this.chart.getDataVisibility(a))}fit(){const t=this.options;t.display&&t.pointLabels.display?Gh(this):this.setCenterPoint(0,0,0,0)}setCenterPoint(t,e,a,i){this.xCenter+=Math.floor((t-e)/2),this.yCenter+=Math.floor((a-i)/2),this.drawingArea-=Math.min(this.drawingArea/2,Math.max(t,e,a,i))}getIndexAngle(t){const e=X/(this._pointLabels.length||1),a=this.options.startAngle||0;return bt(t*e+At(a))}getDistanceFromCenterForValue(t){if(B(t))return NaN;const e=this.drawingArea/(this.max-this.min);return this.options.reverse?(this.max-t)*e:(t-this.min)*e}getValueForDistanceFromCenter(t){if(B(t))return NaN;const e=t/(this.drawingArea/(this.max-this.min));return this.options.reverse?this.max-e:this.min+e}getPointLabelContext(t){const e=this._pointLabels||[];if(t>=0&&t<e.length){const a=e[t];return ip(this.getContext(),t,a)}}getPointPosition(t,e,a=0){const i=this.getIndexAngle(t)-st+a;return{x:Math.cos(i)*e+this.xCenter,y:Math.sin(i)*e+this.yCenter,angle:i}}getPointPositionForValue(t,e){return this.getPointPosition(t,this.getDistanceFromCenterForValue(e))}getBasePosition(t){return this.getPointPositionForValue(t||0,this.getBaseValue())}getPointLabelPosition(t){const{left:e,top:a,right:i,bottom:n}=this._pointLabelItems[t];return{left:e,top:a,right:i,bottom:n}}drawBackground(){const{backgroundColor:t,grid:{circular:e}}=this.options;if(t){const a=this.ctx;a.save(),a.beginPath(),Yo(this,this.getDistanceFromCenterForValue(this._endValue),e,this._pointLabels.length),a.closePath(),a.fillStyle=t,a.fill(),a.restore()}}drawGrid(){const t=this.ctx,e=this.options,{angleLines:a,grid:i,border:n}=e,o=this._pointLabels.length;let l,r,c;if(e.pointLabels.display&&sp(this,o),i.display&&this.ticks.forEach((d,u)=>{if(u!==0||u===0&&this.min<0){r=this.getDistanceFromCenterForValue(d.value);const h=this.getContext(u),p=i.setContext(h),b=n.setContext(h);ap(this,p,r,o,b)}}),a.display){for(t.save(),l=o-1;l>=0;l--){const d=a.setContext(this.getPointLabelContext(l)),{color:u,lineWidth:h}=d;!h||!u||(t.lineWidth=h,t.strokeStyle=u,t.setLineDash(d.borderDash),t.lineDashOffset=d.borderDashOffset,r=this.getDistanceFromCenterForValue(e.reverse?this.min:this.max),c=this.getPointPosition(l,r),t.beginPath(),t.moveTo(this.xCenter,this.yCenter),t.lineTo(c.x,c.y),t.stroke())}t.restore()}}drawBorder(){}drawLabels(){const t=this.ctx,e=this.options,a=e.ticks;if(!a.display)return;const i=this.getIndexAngle(0);let n,o;t.save(),t.translate(this.xCenter,this.yCenter),t.rotate(i),t.textAlign="center",t.textBaseline="middle",this.ticks.forEach((l,r)=>{if(r===0&&this.min>=0&&!e.reverse)return;const c=a.setContext(this.getContext(r)),d=lt(c.font);if(n=this.getDistanceFromCenterForValue(this.ticks[r].value),c.showLabelBackdrop){t.font=d.string,o=t.measureText(l.label).width,t.fillStyle=c.backdropColor;const u=mt(c.backdropPadding);t.fillRect(-o/2-u.left,-n-d.size/2-u.top,o+u.width,d.size+u.height)}be(t,l.label,0,-n,d,{color:c.color,strokeColor:c.textStrokeColor,strokeWidth:c.textStrokeWidth})}),t.restore()}drawTitle(){}}const Vs={millisecond:{common:!0,size:1,steps:1e3},second:{common:!0,size:1e3,steps:60},minute:{common:!0,size:6e4,steps:60},hour:{common:!0,size:36e5,steps:24},day:{common:!0,size:864e5,steps:30},week:{common:!1,size:6048e5,steps:4},month:{common:!0,size:2628e6,steps:12},quarter:{common:!1,size:7884e6,steps:4},year:{common:!0,size:3154e7}},St=Object.keys(Vs);function Sn(s,t){return s-t}function _n(s,t){if(B(t))return null;const e=s._adapter,{parser:a,round:i,isoWeekday:n}=s._parseOpts;let o=t;return typeof a=="function"&&(o=a(o)),tt(o)||(o=typeof a=="string"?e.parse(o,a):e.parse(o)),o===null?null:(i&&(o=i==="week"&&(Se(n)||n===!0)?e.startOf(o,"isoWeek",n):e.startOf(o,i)),+o)}function Cn(s,t,e,a){const i=St.length;for(let n=St.indexOf(s);n<i-1;++n){const o=Vs[St[n]],l=o.steps?o.steps:Number.MAX_SAFE_INTEGER;if(o.common&&Math.ceil((e-t)/(l*o.size))<=a)return St[n]}return St[i-1]}function op(s,t,e,a,i){for(let n=St.length-1;n>=St.indexOf(e);n--){const o=St[n];if(Vs[o].common&&s._adapter.diff(i,a,o)>=t-1)return o}return St[e?St.indexOf(e):0]}function lp(s){for(let t=St.indexOf(s)+1,e=St.length;t<e;++t)if(Vs[St[t]].common)return St[t]}function Mn(s,t,e){if(!e)s[t]=!0;else if(e.length){const{lo:a,hi:i}=Da(e,t),n=e[a]>=t?e[a]:e[i];s[n]=!0}}function rp(s,t,e,a){const i=s._adapter,n=+i.startOf(t[0].value,a),o=t[t.length-1].value;let l,r;for(l=n;l<=o;l=+i.add(l,1,a))r=e[l],r>=0&&(t[r].major=!0);return t}function Pn(s,t,e){const a=[],i={},n=t.length;let o,l;for(o=0;o<n;++o)l=t[o],i[l]=o,a.push({value:l,major:!1});return n===0||!e?a:rp(s,a,i,e)}class wa extends ge{static id="time";static defaults={bounds:"data",adapters:{},time:{parser:!1,unit:!1,round:!1,isoWeekday:!1,minUnit:"millisecond",displayFormats:{}},ticks:{source:"auto",callback:!1,major:{enabled:!1}}};constructor(t){super(t),this._cache={data:[],labels:[],all:[]},this._unit="day",this._majorUnit=void 0,this._offsets={},this._normalized=!1,this._parseOpts=void 0}init(t,e={}){const a=t.time||(t.time={}),i=this._adapter=new vd._date(t.adapters.date);i.init(e),Fe(a.displayFormats,i.formats()),this._parseOpts={parser:a.parser,round:a.round,isoWeekday:a.isoWeekday},super.init(t),this._normalized=e.normalized}parse(t,e){return t===void 0?null:_n(this,t)}beforeLayout(){super.beforeLayout(),this._cache={data:[],labels:[],all:[]}}determineDataLimits(){const t=this.options,e=this._adapter,a=t.time.unit||"day";let{min:i,max:n,minDefined:o,maxDefined:l}=this.getUserBounds();function r(c){!o&&!isNaN(c.min)&&(i=Math.min(i,c.min)),!l&&!isNaN(c.max)&&(n=Math.max(n,c.max))}(!o||!l)&&(r(this._getLabelBounds()),(t.bounds!=="ticks"||t.ticks.source!=="labels")&&r(this.getMinMax(!1))),i=tt(i)&&!isNaN(i)?i:+e.startOf(Date.now(),a),n=tt(n)&&!isNaN(n)?n:+e.endOf(Date.now(),a)+1,this.min=Math.min(i,n-1),this.max=Math.max(i+1,n)}_getLabelBounds(){const t=this.getLabelTimestamps();let e=Number.POSITIVE_INFINITY,a=Number.NEGATIVE_INFINITY;return t.length&&(e=t[0],a=t[t.length-1]),{min:e,max:a}}buildTicks(){const t=this.options,e=t.time,a=t.ticks,i=a.source==="labels"?this.getLabelTimestamps():this._generate();t.bounds==="ticks"&&i.length&&(this.min=this._userMin||i[0],this.max=this._userMax||i[i.length-1]);const n=this.min,o=this.max,l=Br(i,n,o);return this._unit=e.unit||(a.autoSkip?Cn(e.minUnit,this.min,this.max,this._getLabelCapacity(n)):op(this,l.length,e.minUnit,this.min,this.max)),this._majorUnit=!a.major.enabled||this._unit==="year"?void 0:lp(this._unit),this.initOffsets(i),t.reverse&&l.reverse(),Pn(this,l,this._majorUnit)}afterAutoSkip(){this.options.offsetAfterAutoskip&&this.initOffsets(this.ticks.map(t=>+t.value))}initOffsets(t=[]){let e=0,a=0,i,n;this.options.offset&&t.length&&(i=this.getDecimalForValue(t[0]),t.length===1?e=1-i:e=(this.getDecimalForValue(t[1])-i)/2,n=this.getDecimalForValue(t[t.length-1]),t.length===1?a=n:a=(n-this.getDecimalForValue(t[t.length-2]))/2);const o=t.length<3?.5:.25;e=ct(e,0,o),a=ct(a,0,o),this._offsets={start:e,end:a,factor:1/(e+1+a)}}_generate(){const t=this._adapter,e=this.min,a=this.max,i=this.options,n=i.time,o=n.unit||Cn(n.minUnit,e,a,this._getLabelCapacity(e)),l=I(i.ticks.stepSize,1),r=o==="week"?n.isoWeekday:!1,c=Se(r)||r===!0,d={};let u=e,h,p;if(c&&(u=+t.startOf(u,"isoWeek",r)),u=+t.startOf(u,c?"day":o),t.diff(a,e,o)>1e5*l)throw new Error(e+" and "+a+" are too far apart with stepSize of "+l+" "+o);const b=i.ticks.source==="data"&&this.getDataTimestamps();for(h=u,p=0;h<a;h=+t.add(h,l,o),p++)Mn(d,h,b);return(h===a||i.bounds==="ticks"||p===1)&&Mn(d,h,b),Object.keys(d).sort(Sn).map(f=>+f)}getLabelForValue(t){const e=this._adapter,a=this.options.time;return a.tooltipFormat?e.format(t,a.tooltipFormat):e.format(t,a.displayFormats.datetime)}format(t,e){const i=this.options.time.displayFormats,n=this._unit,o=e||i[n];return this._adapter.format(t,o)}_tickFormatFunction(t,e,a,i){const n=this.options,o=n.ticks.callback;if(o)return G(o,[t,e,a],this);const l=n.time.displayFormats,r=this._unit,c=this._majorUnit,d=r&&l[r],u=c&&l[c],h=a[e],p=c&&u&&h&&h.major;return this._adapter.format(t,i||(p?u:d))}generateTickLabels(t){let e,a,i;for(e=0,a=t.length;e<a;++e)i=t[e],i.label=this._tickFormatFunction(i.value,e,t)}getDecimalForValue(t){return t===null?NaN:(t-this.min)/(this.max-this.min)}getPixelForValue(t){const e=this._offsets,a=this.getDecimalForValue(t);return this.getPixelForDecimal((e.start+a)*e.factor)}getValueForPixel(t){const e=this._offsets,a=this.getDecimalForPixel(t)/e.factor-e.end;return this.min+a*(this.max-this.min)}_getLabelSize(t){const e=this.options.ticks,a=this.ctx.measureText(t).width,i=At(this.isHorizontal()?e.maxRotation:e.minRotation),n=Math.cos(i),o=Math.sin(i),l=this._resolveTickFontOptions(0).size;return{w:a*n+l*o,h:a*o+l*n}}_getLabelCapacity(t){const e=this.options.time,a=e.displayFormats,i=a[e.unit]||a.millisecond,n=this._tickFormatFunction(t,0,Pn(this,[t],this._majorUnit),i),o=this._getLabelSize(n),l=Math.floor(this.isHorizontal()?this.width/o.w:this.height/o.h)-1;return l>0?l:1}getDataTimestamps(){let t=this._cache.data||[],e,a;if(t.length)return t;const i=this.getMatchingVisibleMetas();if(this._normalized&&i.length)return this._cache.data=i[0].controller.getAllParsedValues(this);for(e=0,a=i.length;e<a;++e)t=t.concat(i[e].controller.getAllParsedValues(this));return this._cache.data=this.normalize(t)}getLabelTimestamps(){const t=this._cache.labels||[];let e,a;if(t.length)return t;const i=this.getLabels();for(e=0,a=i.length;e<a;++e)t.push(_n(this,i[e]));return this._cache.labels=this._normalized?t:this.normalize(t)}normalize(t){return Yn(t.sort(Sn))}}function bs(s,t,e){let a=0,i=s.length-1,n,o,l,r;e?(t>=s[a].pos&&t<=s[i].pos&&({lo:a,hi:i}=Nt(s,"pos",t)),{pos:n,time:l}=s[a],{pos:o,time:r}=s[i]):(t>=s[a].time&&t<=s[i].time&&({lo:a,hi:i}=Nt(s,"time",t)),{time:n,pos:l}=s[a],{time:o,pos:r}=s[i]);const c=o-n;return c?l+(r-l)*(t-n)/c:l}class cp extends wa{static id="timeseries";static defaults=wa.defaults;constructor(t){super(t),this._table=[],this._minPos=void 0,this._tableRange=void 0}initOffsets(){const t=this._getTimestampsForTable(),e=this._table=this.buildLookupTable(t);this._minPos=bs(e,this.min),this._tableRange=bs(e,this.max)-this._minPos,super.initOffsets(t)}buildLookupTable(t){const{min:e,max:a}=this,i=[],n=[];let o,l,r,c,d;for(o=0,l=t.length;o<l;++o)c=t[o],c>=e&&c<=a&&i.push(c);if(i.length<2)return[{time:e,pos:0},{time:a,pos:1}];for(o=0,l=i.length;o<l;++o)d=i[o+1],r=i[o-1],c=i[o],Math.round((d+r)/2)!==c&&n.push({time:c,pos:o/(l-1)});return n}_generate(){const t=this.min,e=this.max;let a=super.getDataTimestamps();return(!a.includes(t)||!a.length)&&a.splice(0,0,t),(!a.includes(e)||a.length===1)&&a.push(e),a.sort((i,n)=>i-n)}_getTimestampsForTable(){let t=this._cache.all||[];if(t.length)return t;const e=this.getDataTimestamps(),a=this.getLabelTimestamps();return e.length&&a.length?t=this.normalize(e.concat(a)):t=e.length?e:a,t=this._cache.all=t,t}getDecimalForValue(t){return(bs(this._table,t)-this._minPos)/this._tableRange}getValueForPixel(t){const e=this._offsets,a=this.getDecimalForPixel(t)/e.factor-e.end;return bs(this._table,a*this._tableRange+this._minPos,!0)}}var dp=Object.freeze({__proto__:null,CategoryScale:Uo,LinearScale:$o,LogarithmicScale:$h,RadialLinearScale:np,TimeScale:wa,TimeSeriesScale:cp});const up=[gd,Yu,Fh,dp];vt.register(...up);const Go={},ve=window.IO_LINK_API_BASE||"http://localhost:8000",hp=ve.replace(/^http/,"ws");function pp(){return`
+    <div class="space-y-4">
+      <h1 class="text-2xl font-bold text-base-content">IO-Link Master</h1>
+      <p class="text-base-content/70">IFM IO-Link Master – Port status, supervision, and software versions</p>
 
-// Register Chart.js components
-Chart.register(
-  LineController,
-  BarController,
-  DoughnutController,
-  CategoryScale,
-  LinearScale,
-  PointElement,
-  LineElement,
-  BarElement,
-  ArcElement,
-  Tooltip,
-  Legend,
-  Filler
-);
+      <!-- Status card + device image -->
+      <div class="grid grid-cols-1 lg:grid-cols-4 gap-4">
+        <div class="card bg-base-200 shadow-xl">
+          <div class="card-body items-center text-center">
+            <img id="productImage" src="${typeof import.meta<"u"&&Go?"/IM-Smart-Sensors/assets/img/AL1300.png":"/assets/img/AL1300.png"}" alt="AL1300 IO-Link Master" class="max-h-48 object-contain" onerror="this.style.display='none'; document.getElementById('productImagePlaceholder')?.classList.remove('hidden');" />
+            <div id="productImagePlaceholder" class="hidden text-base-content/60">AL1300 IO-Link Master</div>
+          </div>
+        </div>
+        <div class="lg:col-span-3 card bg-base-200 shadow-xl">
+          <div class="card-body">
+            <h2 class="card-title text-base-content" id="deviceName">IO-Link Master</h2>
+            <p class="text-sm text-base-content/70">Connection and data source</p>
+            <style>
+              .connection-glow-dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 6px; vertical-align: middle; }
+              .connection-glow-dot.glow-green { background: #22c55e; box-shadow: 0 0 10px #22c55e, 0 0 20px #22c55e; }
+              .connection-glow-dot.glow-red { background: #ef4444; box-shadow: 0 0 10px #ef4444, 0 0 20px #ef4444; }
+              .connection-glow-dot.glow-checking { background: #eab308; box-shadow: 0 0 8px #eab308; }
+            </style>
+            <div class="grid grid-cols-2 gap-2 mt-2 text-sm">
+              <div class="flex items-center gap-1"><span class="text-base-content/60">Connection:</span> <span id="connectionGlow" class="connection-glow-dot glow-checking" title="Status"></span><span id="connectionStatus" class="font-medium">Checking...</span></div>
+              <div><span class="text-base-content/60">Data Source:</span> <span id="dataSource">-</span></div>
+              <div><span class="text-base-content/60">Last Update:</span> <span id="lastUpdate">-</span></div>
+              <div><span class="text-base-content/60">Poll:</span> <span id="pollInterval">-</span></div>
+            </div>
+            <div class="flex gap-2 mt-3">
+              <button type="button" class="btn btn-primary btn-sm" id="io-link-refresh-btn">Refresh Now</button>
+            </div>
+            <div class="mt-3 pt-3 border-t border-base-300">
+              <p class="text-xs text-base-content/60 mb-2">IO-Link Master address</p>
+              <div class="flex flex-wrap items-center gap-2">
+                <input type="text" id="masterIpInput" placeholder="192.168.7.4" class="input input-bordered input-sm w-36" />
+                <span class="text-base-content/60 text-sm">Port</span>
+                <input type="number" id="masterPortInput" placeholder="80" min="1" max="65535" class="input input-bordered input-sm w-20" />
+                <button type="button" class="btn btn-primary btn-sm" id="io-link-save-config-btn">Save</button>
+                <span id="configMessage" class="text-sm text-success"></span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
 
-// ================================================================
-// SIMPLE TEMPLATE SYSTEM (PHASE 1)
-// ================================================================
-// - All "pages" are plain functions that return HTML strings.
-// - Navigation swaps the innerHTML of the <main> element.
-// - No router library, no complex state – good for a beginner.
-// - In Phase 2 we can:
-//   - Move these templates into separate files (e.g. templates/home.js).
-//   - Replace the manual navigation with a tiny router (page.js / navigo).
+      <!-- Port Status Table -->
+      <div class="card bg-base-200 shadow-xl">
+        <div class="card-body">
+          <h2 class="card-title text-base-content">Port Status</h2>
+          <p class="text-sm text-base-content/70">IO-Link ports and connected devices</p>
+          <div class="overflow-x-auto">
+            <table class="table table-zebra table-pin-rows">
+              <thead>
+                <tr>
+                  <th>Port</th>
+                  <th>Mode</th>
+                  <th>Comm. Mode</th>
+                  <th>MasterCycle</th>
+                  <th>Vendor ID</th>
+                  <th>Device ID</th>
+                  <th>Name</th>
+                  <th>Serial</th>
+                  <th>PD In</th>
+                  <th>PD Out</th>
+                </tr>
+              </thead>
+              <tbody id="portTableBody">
+                <tr><td colspan="10" class="text-center">Loading...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
 
-// ================================================================
-// HOME TEMPLATES (Gauges + Graphs / 3)
-// ================================================================
+      <!-- Supervision Trends (charts) -->
+      <div class="card bg-base-200 shadow-xl">
+        <div class="card-body">
+          <h2 class="card-title text-base-content">Supervision Trends</h2>
+          <p class="text-sm text-base-content/70">Current, Voltage, Temperature over time</p>
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-2">
+            <div><p class="text-sm font-semibold text-center">Current (mA)</p><div class="h-48"><canvas id="chartCurrent"></canvas></div></div>
+            <div><p class="text-sm font-semibold text-center">Voltage (mV)</p><div class="h-48"><canvas id="chartVoltage"></canvas></div></div>
+            <div><p class="text-sm font-semibold text-center">Temperature (°C)</p><div class="h-48"><canvas id="chartTemp"></canvas></div></div>
+          </div>
+        </div>
+      </div>
 
-function renderHomeTemplate1() {
-  return `
+      <!-- Supervision + Software -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div class="card bg-base-200 shadow-xl">
+          <div class="card-body">
+            <h2 class="card-title text-base-content">Supervision</h2>
+            <div class="overflow-x-auto">
+              <table class="table table-sm">
+                <tbody id="supervisionTableBody">
+                  <tr><td colspan="2" class="text-center">-</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+        <div class="card bg-base-200 shadow-xl">
+          <div class="card-body">
+            <h2 class="card-title text-base-content">Software Versions</h2>
+            <div class="overflow-x-auto">
+              <table class="table table-sm">
+                <tbody id="softwareTableBody">
+                  <tr><td colspan="2" class="text-center">-</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Active Port Details -->
+      <div class="card bg-base-200 shadow-xl">
+        <div class="card-body">
+          <h2 class="card-title text-base-content">Active Port Details</h2>
+          <p class="text-sm text-base-content/70">Process data and decoded device status</p>
+          <div id="portDetailsContainer"><p class="text-center">Loading...</p></div>
+        </div>
+      </div>
+    </div>
+  `}function ot(s){if(s==null)return"-";const t=document.createElement("div");return t.textContent=String(s),t.innerHTML}let Ht=[],Xo=null,kt=null,ke=null,gs=0;const An=10,fp=5e3;function Be(s,t){const e=document.getElementById("connectionStatus");e&&(e.textContent=s,e.className="font-medium text-error");const a=document.getElementById("connectionGlow");a&&(a.className="connection-glow-dot glow-red");const i=document.getElementById("dataSource");i&&(i.textContent="-"),Xo||(qo([]),Ko({}),Zo({}))}function ka(s){if(!s||!s.success){s&&s.error&&Be("Error: "+s.error);return}Xo=s;const t=document.getElementById("connectionStatus");t&&(t.textContent="Connected",t.className="font-medium text-success");const e=document.getElementById("connectionGlow");e&&(e.className="connection-glow-dot glow-green");const a=document.getElementById("dataSource");a&&(a.textContent=s.source||"WebSocket");const i=document.getElementById("deviceName");i&&(i.textContent=s.device_name||"IO-Link Master");const n=document.getElementById("lastUpdate");n&&(n.textContent=new Date().toLocaleTimeString());const o=document.getElementById("pollInterval");o&&(o.textContent="Real-time"),qo(s.ports||[]),Ko(s.supervision||{}),Zo(s.software||{}),vp();const l=document.getElementById("productImage"),r=document.getElementById("productImagePlaceholder");l&&(l.src=s.device_icon_url||(typeof import.meta<"u"&&Go?"/IM-Smart-Sensors/assets/img/AL1300.png":"/assets/img/AL1300.png"),l.classList.remove("hidden"),r&&r.classList.add("hidden"))}function qo(s){const t=document.getElementById("portTableBody");if(t){if(t.innerHTML="",!s||s.length===0){t.innerHTML='<tr><td colspan="10" class="text-center">No port data</td></tr>';return}for(const e of s){const a=(e.mode||"").toLowerCase().includes("io-link"),i=e.pdin?e.pdin.length<=8?e.pdin:e.pdin.substring(0,8)+"...":"-",n=e.pdout?e.pdout.length<=8?e.pdout:e.pdout.substring(0,8)+"...":"-",o=document.createElement("tr");a&&(o.className="bg-success/20"),o.innerHTML=`
+      <td>${e.port}</td>
+      <td>${ot(e.mode||"-")}</td>
+      <td>${ot(e.comm_mode||"-")}</td>
+      <td>${ot(e.master_cycle_time||"-")}</td>
+      <td>${ot(e.vendor_id||"-")}</td>
+      <td>${ot(e.device_id||"-")}</td>
+      <td>${ot(e.name||"-")}</td>
+      <td>${ot(e.serial||"-")}</td>
+      <td><code class="text-xs">${ot(i)}</code></td>
+      <td><code class="text-xs">${ot(n)}</code></td>
+    `,t.appendChild(o)}bp(s)}}async function bp(s){const t=document.getElementById("portDetailsContainer");if(!t)return;const e=(s||[]).filter(i=>(i.mode||"").toLowerCase().includes("io-link"));if(e.length===0){t.innerHTML='<p class="text-center">No active IO-Link ports</p>';return}let a="";for(const i of e)try{const o=await(await fetch(`${ve}/api/io-link/port/${i.port}`,{signal:AbortSignal.timeout(1e4)})).json();o.success&&o.port?a+=gp(o.port):a+=`<div class="alert alert-warning">Port ${i.port}: No data</div>`}catch{a+=`<div class="alert alert-warning">Port ${i.port}: Error</div>`}t.innerHTML=a||'<p class="text-center">No details</p>'}function gp(s){let t='<div class="rounded-lg border border-base-300 bg-base-100 p-4 mb-3">';if(t+=`<h3 class="font-semibold text-primary">Port ${s.port} – ${ot(s.name||"Unknown")}</h3>`,t+=`<p class="text-sm opacity-80">Vendor: ${ot(s.vendor_id||"-")} | Device: ${ot(s.device_id||"-")} | Serial: ${ot(s.serial||"-")}</p>`,s.pdout&&s.pdout.raw&&(t+=`<p class="text-xs mt-2"><strong>PD Out:</strong> <code>${ot(s.pdout.raw)}</code></p>`,s.pdout.decoded&&s.pdout.decoded.color1)){const e=s.pdout.decoded;t+=`<p class="text-xs">LED: ${e.color1} / ${e.color2} | ${e.animation} | ${e.pulse_pattern}</p>`}return s.pdin&&s.pdin.raw&&(t+=`<p class="text-xs"><strong>PD In:</strong> <code>${ot(s.pdin.raw)}</code></p>`),t+="</div>",t}function Ko(s){const t=document.getElementById("supervisionTableBody");if(!t)return;t.innerHTML="";const e=Object.entries(s||{});if(e.length===0){t.innerHTML='<tr><td colspan="2" class="text-center">No supervision data</td></tr>';return}for(const[a,i]of e){const n=document.createElement("tr");n.innerHTML=`<td>${ot(a)}</td><td>${ot(i)}</td>`,t.appendChild(n)}}function Zo(s){const t=document.getElementById("softwareTableBody");if(!t)return;t.innerHTML="";const e=Object.entries(s||{});if(e.length===0){t.innerHTML='<tr><td colspan="2" class="text-center">No software data</td></tr>';return}for(const[a,i]of e){const n=document.createElement("tr");n.innerHTML=`<td>${ot(a)}</td><td>${ot(i)}</td>`,t.appendChild(n)}}function vp(){fetch(`${ve}/api/io-link/supervision-history`,{signal:AbortSignal.timeout(5e3)}).then(s=>s.json()).then(s=>{const t=s.history||[];if(t.length<2)return;const e=t.map((d,u)=>u%Math.max(1,Math.floor(t.length/8))===0||u===t.length-1?new Date(d.ts*1e3).toLocaleTimeString([],{hour:"2-digit",minute:"2-digit"}):""),a=t.map(d=>d.current),i=t.map(d=>d.voltage),n=t.map(d=>d.temperature);Ht.forEach(d=>d.destroy()),Ht=[];const o={responsive:!0,maintainAspectRatio:!1,plugins:{legend:{display:!1}},scales:{x:{display:!0},y:{beginAtZero:!0}}},l=document.getElementById("chartCurrent"),r=document.getElementById("chartVoltage"),c=document.getElementById("chartTemp");l&&Ht.push(new vt(l.getContext("2d"),{type:"line",data:{labels:e,datasets:[{label:"Current",data:a,borderColor:"#4caf50",fill:!0,tension:.3}]},options:o})),r&&Ht.push(new vt(r.getContext("2d"),{type:"line",data:{labels:e,datasets:[{label:"Voltage",data:i,borderColor:"#ff9800",fill:!0,tension:.3}]},options:o})),c&&Ht.push(new vt(c.getContext("2d"),{type:"line",data:{labels:e,datasets:[{label:"Temp",data:n,borderColor:"#f44336",fill:!0,tension:.3}]},options:o}))}).catch(()=>{})}function Qo(){kt&&(kt.close(),kt=null);try{const s=`${hp}/ws`;kt=new WebSocket(s),kt.onopen=()=>{gs=0;const t=document.getElementById("connectionStatus");t&&(t.textContent="Connecting...");const e=document.getElementById("connectionGlow");e&&(e.className="connection-glow-dot glow-checking")},kt.onmessage=t=>{try{const e=JSON.parse(t.data);if(e.type==="ping")return;ka(e)}catch{}},kt.onerror=()=>Be("WebSocket error",!1),kt.onclose=()=>{kt=null,gs<An?(gs++,Be(`Reconnecting (${gs}/${An})...`,!1),ke=setTimeout(Qo,fp)):Be("Connection lost. Refresh the page.",!1)}}catch{Be("WebSocket failed"),setTimeout(()=>{const t=document.getElementById("pollInterval");t&&(t.textContent="5s (HTTP)");const e=()=>fetch(`${ve}/api/io-link/status`).then(a=>a.json()).then(ka).catch(()=>{});e(),setInterval(e,5e3)},2e3)}}function mp(){fetch(`${ve}/api/io-link/config`).then(s=>s.json()).then(s=>{if(s.success&&s.io_link){const t=document.getElementById("masterIpInput");t&&(t.value=s.io_link.master_ip||"");const e=document.getElementById("masterPortInput");e&&(e.value=s.io_link.port!=null?s.io_link.port:"80")}}).catch(()=>{})}function xp(){const s=document.getElementById("masterIpInput"),t=document.getElementById("masterPortInput"),e=document.getElementById("configMessage"),a=s&&s.value?s.value.trim():"";if(!a){e&&(e.textContent="Enter an IP address",e.className="text-sm text-error");return}let i=t&&t.value?parseInt(t.value,10):80;(isNaN(i)||i<1||i>65535)&&(i=80),e&&(e.textContent="Saving...",e.className="text-sm"),fetch(`${ve}/api/io-link/config`,{method:"PUT",headers:{"Content-Type":"application/json"},body:JSON.stringify({master_ip:a,port:i})}).then(n=>n.json()).then(n=>{e&&(e.textContent=n.success?"Saved.":n.detail||"Error",e.className=n.success?"text-sm text-success":"text-sm text-error"),setTimeout(()=>{e&&(e.textContent="")},4e3)}).catch(n=>{e&&(e.textContent="Error",e.className="text-sm text-error")})}function yp(){ke&&clearTimeout(ke),ke=null,kt&&(kt.close(),kt=null),Ht.forEach(s=>s.destroy()),Ht=[]}function wp(){Ht.forEach(e=>e.destroy()),Ht=[],ke&&clearTimeout(ke),mp(),Qo();const s=document.getElementById("io-link-refresh-btn");s&&(s.onclick=()=>{(!kt||kt.readyState!==WebSocket.OPEN)&&fetch(`${ve}/api/io-link/status`).then(e=>e.json()).then(ka).catch(()=>{})});const t=document.getElementById("io-link-save-config-btn");t&&(t.onclick=xp)}const kp={};vt.register(vo,go,zs,Uo,$o,Lo,Je,Eo,Ao,Wo,jo,Vo);function Sp(){return`
     <!-- Gauges – Various styles and options -->
     <div class="mb-6">
       <h1 class="text-2xl font-bold text-base-content">Gauges</h1>
@@ -245,11 +332,7 @@ function renderHomeTemplate1() {
         </div>
       </div>
     </section>
-  `;
-}
-
-function renderHomeTemplate2() {
-  return `
+  `}function _p(){return`
     <!-- Graphs - chart showcase -->
     <section class="space-y-4">
       <div class="card bg-base-200 shadow">
@@ -336,10 +419,7 @@ function renderHomeTemplate2() {
         </div>
       </div>
     </section>
-  `;
-}
-function renderHomeTemplate3() {
-  return `
+  `}function Cp(){return`
     <!-- Home Template 3 - engineering tables showcase -->
     <section class="space-y-4">
       <div class="card bg-base-200 shadow">
@@ -531,10 +611,7 @@ function renderHomeTemplate3() {
         </div>
       </div>
     </section>
-  `;
-}
-function renderHMIDashboard1() {
-  return `
+  `}function Mp(){return`
     <!-- Electrical Machines – Industrial Control Interface -->
 
     <!-- ── Top Status Bar ──────────────────────────────────── -->
@@ -1013,11 +1090,7 @@ function renderHMIDashboard1() {
       </div>
     </div>
 
-  `;
-}
-
-function renderHMIDashboard2() {
-  return `
+  `}function Pp(){return`
     <!-- Wind Tunnel – Open Circuit Sub-Sonic, Bench-Top Training System -->
 
     <!-- System Title (structural: neutral only) -->
@@ -1292,11 +1365,7 @@ function renderHMIDashboard2() {
         </div>
       </div>
     </div>
-  `;
-}
-
-function renderHMIDashboard3() {
-  return `
+  `}function Ap(){return`
     <!-- Process Control Temperature – PID Controller Tuning System -->
 
     <!-- Top Status Bar: normal data = grey; colour only for state (running = green, AUTO = green) -->
@@ -1591,11 +1660,7 @@ function renderHMIDashboard3() {
         </div>
       </div>
     </div>
-  `;
-}
-
-function renderHMIDashboard4() {
-  return `
+  `}function Dp(){return`
     <!-- HMI Dashboard 4 – Matrix Fundamental Fluids -->
 
     <!-- Top Status Bar -->
@@ -2044,15 +2109,7 @@ function renderHMIDashboard4() {
         <p class="text-xs text-center">Pressure drops at the throat (P3) as velocity increases — Bernoulli's principle. Note partial pressure recovery in diverging section due to friction losses.</p>
       </div>
     </div>
-  `;
-}
-
-// ================================================================
-// ADMIN PANEL TEMPLATES (Admin Panel 1 / 2 / 3)
-// ================================================================
-
-function renderAdminPanel1() {
-  return `
+  `}function Tp(){return`
     <!-- Admin Panel 1 – Sensor & Actuator Calibration (production / pre-ship) -->
     
     <div class="mb-4 p-3 bg-base-200 rounded-lg border-l-4 border-base-300">
@@ -2257,11 +2314,7 @@ function renderAdminPanel1() {
         </div>
       </div>
     </section>
-  `;
-}
-
-function renderAdminPanel2() {
-  return `
+  `}function Lp(){return`
     <!-- Debugging – USB, network, datalog, events, console -->
     
     <div class="mb-4 p-3 bg-base-200 rounded-lg border-l-4 border-base-300">
@@ -2424,11 +2477,7 @@ function renderAdminPanel2() {
         </div>
       </div>
     </div>
-  `;
-}
-
-function renderAdminPanel3() {
-  return `
+  `}function Op(){return`
     <!-- Bootloader – PBC hardware firmware management -->
     
     <div class="mb-4">
@@ -2684,15 +2733,7 @@ function renderAdminPanel3() {
         </div>
       </div>
     </section>
-  `;
-}
-
-// ================================================================
-// CONTROL / I/O / FAULTS / TASKS TEMPLATES
-// ================================================================
-
-function renderControlTemplate1() {
-  return `
+  `}function Ep(){return`
     <!-- Control Template 1 – Enhanced Control System -->
     
     <!-- Top Status Bar -->
@@ -2990,11 +3031,7 @@ function renderControlTemplate1() {
         </div>
       </div>
     </section>
-  `;
-}
-
-function renderIoTemplate1() {
-  return `
+  `}function Ip(){return`
     <!-- I/O Template 1 – Enhanced I/O Monitoring & Control -->
     
     <!-- Top Stats -->
@@ -3512,11 +3549,7 @@ function renderIoTemplate1() {
         </div>
       </div>
     </section>
-  `;
-}
-
-function renderFaultsTemplate1() {
-  return `
+  `}function Rp(){return`
     <!-- Faults Template 1 – Enhanced Fault Monitoring & Management -->
     
     <!-- Top Status Bar -->
@@ -3997,11 +4030,7 @@ function renderFaultsTemplate1() {
         </div>
       </div>
     </section>
-  `;
-}
-
-function renderTasksTemplate1() {
-  return `
+  `}function zp(){return`
     <!-- Tasks Template 1 – Enhanced Worksheet & Task Management -->
     
     <!-- Top Stats -->
@@ -4479,15 +4508,7 @@ function renderTasksTemplate1() {
         </div>
       </div>
     </section>
-  `;
-}
-
-// ================================================================
-// COMPONENT GALLERY / SETTINGS / ABOUT
-// ================================================================
-
-function renderComponentGallery() {
-  return `
+  `}function Bp(){return`
     <!-- Component Gallery - broad DaisyUI component coverage -->
     <section class="space-y-4">
       <div class="card bg-base-200 shadow">
@@ -4975,10 +4996,7 @@ function renderComponentGallery() {
         </div>
       </div>
     </section>
-  `;
-}
-function renderSettingsPage() {
-  return `
+  `}function Fp(){return`
     <!-- Settings Page - engineering control software -->
     <section class="space-y-4">
       <div class="card bg-base-200 shadow">
@@ -5211,11 +5229,7 @@ function renderSettingsPage() {
         </div>
       </div>
     </section>
-  `;
-}
-
-function renderAboutPage() {
-  return `
+  `}function Vp(){return`
     <!-- About / Help Page – Comprehensive Information -->
     
     <!-- Application Information Stats -->
@@ -5894,60 +5908,15 @@ function renderAboutPage() {
         </div>
       </div>
     </section>
-  `;
-}
-
-// ================================================================
-// GENERIC PLACEHOLDER
-// ================================================================
-
-function renderPlaceholder(title) {
-  return `
+  `}function Hp(s){return`
     <div class="card bg-base-200 shadow">
       <div class="card-body">
-        <h2 class="card-title">${title}</h2>
+        <h2 class="card-title">${s}</h2>
         <p>This template is planned but not fully implemented yet.</p>
         <p class="text-sm opacity-70">You can extend this section later with more detailed UI.</p>
       </div>
     </div>
-  `;
-}
-
-// ================================================================
-// PAGE REGISTRY
-// ================================================================
-// Simple map from page keys (used by data-page attributes) to
-// template functions. Later, this can be replaced or extended
-// by a proper router if we need deep links or browser history.
-
-const PAGES = {
-  'hmi-dashboard-1': renderHMIDashboard1,
-  'hmi-dashboard-2': renderHMIDashboard2,
-  'hmi-dashboard-3': renderHMIDashboard3,
-  'hmi-dashboard-4': renderHMIDashboard4,
-  'home-1': renderHomeTemplate1,
-  'home-2': renderHomeTemplate2,
-  'home-3': renderHomeTemplate3,
-  'admin-1': renderAdminPanel1,
-  'admin-2': renderAdminPanel2,
-  'admin-3': renderAdminPanel3,
-  'control-1': renderControlTemplate1,
-  'io-1': renderIoTemplate1,
-  'faults-1': renderFaultsTemplate1,
-  'tasks-1': renderTasksTemplate1,
-  'components': renderComponentGallery,
-  'settings': renderSettingsPage,
-  'about': renderAboutPage,
-  'io-link-master': renderIOLinkMaster
-};
-
-// ================================================================
-// APP SHELL (header, sidebar, main content, footer)
-// ================================================================
-
-const app = document.querySelector('#app');
-
-app.innerHTML = `
+  `}const jp={"hmi-dashboard-1":Mp,"hmi-dashboard-2":Pp,"hmi-dashboard-3":Ap,"hmi-dashboard-4":Dp,"home-1":Sp,"home-2":_p,"home-3":Cp,"admin-1":Tp,"admin-2":Lp,"admin-3":Op,"control-1":Ep,"io-1":Ip,"faults-1":Rp,"tasks-1":zp,components:Bp,settings:Fp,about:Vp,"io-link-master":pp},Np=document.querySelector("#app");Np.innerHTML=`
   <div class="min-h-screen flex flex-col">
     <!-- Header -->
     <header class="navbar bg-base-200 px-4">
@@ -5958,7 +5927,7 @@ app.innerHTML = `
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
           </svg>
         </button>
-        <img id="header-matrix-logo" src="${import.meta.env.BASE_URL}matrix.png" alt="Matrix Logo" class="h-8 w-auto" />
+        <img id="header-matrix-logo" src="/IM-Smart-Sensors/matrix.png" alt="Matrix Logo" class="h-8 w-auto" />
       </div>
       <!-- Center: Title -->
       <div class="flex-1 flex justify-center">
@@ -6097,1187 +6066,4 @@ app.innerHTML = `
       </form>
     </dialog>
   </div>
-`;
-
-// ================================================================
-// RENDERING & NAVIGATION
-// ================================================================
-
-// Store chart instances to clean them up when switching pages
-let activeCharts = [];
-
-// Simple function to render the requested page into the main content area.
-function renderPage(pageKey) {
-  // Clean up existing charts and IO-Link page (WebSocket, charts)
-  destroyIOLinkPage();
-  activeCharts.forEach(chart => chart.destroy());
-  activeCharts = [];
-
-  const mainContent = document.getElementById('main-content');
-  const templateFn = PAGES[pageKey];
-  if (!templateFn) {
-    mainContent.innerHTML = renderPlaceholder('Page not found');
-    return;
-  }
-  mainContent.innerHTML = templateFn();
-
-  // Update active class in sidebar
-  const sidebarMenu = document.getElementById('sidebar-menu');
-  if (sidebarMenu) {
-    sidebarMenu.querySelectorAll('a[data-page]').forEach((a) => {
-      a.classList.toggle('active', a.getAttribute('data-page') === pageKey);
-    });
-  }
-
-  // Initialize charts for pages that use Chart.js
-  if (pageKey === 'home-2') {
-    initializeHomeTemplate2Charts();
-  } else if (pageKey === 'hmi-dashboard-1') {
-    initializeHMICharts1();
-  } else if (pageKey === 'hmi-dashboard-2') {
-    initializeHMICharts2();
-  } else if (pageKey === 'hmi-dashboard-3') {
-    initializeHMICharts3();
-  } else if (pageKey === 'hmi-dashboard-4') {
-    initializeHMICharts4();
-  } else if (pageKey === 'components') {
-    initializeComponentLibraryTabs();
-  } else if (pageKey === 'io-link-master') {
-    initIOLinkPage();
-  }
-}
-
-// ================================================================
-// HOME TEMPLATE CHART INITIALIZATION
-// ================================================================
-function initializeHomeTemplate2Charts() {
-  setTimeout(() => {
-    function addChart(id, config) {
-      const canvas = document.getElementById(id);
-      if (!canvas) return;
-      const chart = new Chart(canvas.getContext('2d'), config);
-      activeCharts.push(chart);
-    }
-
-    addChart('home2-trend-chart', {
-      type: 'line',
-      data: {
-        labels: ['08:00', '09:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00'],
-        datasets: [
-          {
-            label: 'Temperature (C)',
-            data: [24.1, 24.6, 25.2, 26.1, 26.8, 26.4, 25.9, 25.3],
-            borderColor: 'rgb(59, 130, 246)',
-            backgroundColor: 'rgba(59, 130, 246, 0.16)',
-            tension: 0.35,
-            fill: true,
-            pointRadius: 3
-          },
-          {
-            label: 'Setpoint',
-            data: [25, 25, 25, 25, 25, 25, 25, 25],
-            borderColor: 'rgb(251, 191, 36)',
-            borderDash: [6, 4],
-            fill: false,
-            pointRadius: 0
-          }
-        ]
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        interaction: { mode: 'index', intersect: false },
-        plugins: { legend: { position: 'top' } },
-        scales: { y: { beginAtZero: false } }
-      }
-    });
-
-    addChart('home2-combo-chart', {
-      type: 'bar',
-      data: {
-        labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'],
-        datasets: [
-          {
-            type: 'bar',
-            label: 'kWh',
-            data: [340, 360, 395, 410, 420, 300],
-            backgroundColor: 'rgba(14, 165, 233, 0.35)',
-            borderColor: 'rgb(14, 165, 233)',
-            borderWidth: 1,
-            yAxisID: 'y'
-          },
-          {
-            type: 'line',
-            label: 'Cost ($)',
-            data: [49, 52, 58, 60, 63, 45],
-            borderColor: 'rgb(244, 63, 94)',
-            backgroundColor: 'rgba(244, 63, 94, 0.2)',
-            tension: 0.3,
-            yAxisID: 'y1'
-          }
-        ]
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: { legend: { position: 'top' } },
-        scales: {
-          y: { type: 'linear', position: 'left', title: { display: true, text: 'kWh' } },
-          y1: { type: 'linear', position: 'right', grid: { drawOnChartArea: false }, title: { display: true, text: '$' } }
-        }
-      }
-    });
-
-    addChart('home2-stacked-chart', {
-      type: 'bar',
-      data: {
-        labels: ['Line A', 'Line B', 'Line C', 'Line D'],
-        datasets: [
-          { label: 'Good', data: [120, 98, 115, 108], backgroundColor: 'rgba(34, 197, 94, 0.65)' },
-          { label: 'Rework', data: [15, 19, 12, 14], backgroundColor: 'rgba(250, 204, 21, 0.7)' },
-          { label: 'Scrap', data: [5, 8, 6, 7], backgroundColor: 'rgba(239, 68, 68, 0.7)' }
-        ]
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        scales: {
-          x: { stacked: true },
-          y: { stacked: true, beginAtZero: true }
-        }
-      }
-    });
-
-    addChart('home2-horizontal-chart', {
-      type: 'bar',
-      data: {
-        labels: ['Pack', 'Mix', 'Heat', 'Dose', 'Inspect'],
-        datasets: [
-          {
-            label: 'Utilization %',
-            data: [91, 77, 84, 69, 88],
-            backgroundColor: [
-              'rgba(59, 130, 246, 0.7)',
-              'rgba(20, 184, 166, 0.7)',
-              'rgba(168, 85, 247, 0.7)',
-              'rgba(245, 158, 11, 0.7)',
-              'rgba(34, 197, 94, 0.7)'
-            ],
-            borderColor: 'rgba(15, 23, 42, 0.25)',
-            borderWidth: 1
-          }
-        ]
-      },
-      options: {
-        indexAxis: 'y',
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: { legend: { display: false } },
-        scales: { x: { min: 0, max: 100 } }
-      }
-    });
-
-    addChart('home2-doughnut-chart', {
-      type: 'doughnut',
-      data: {
-        labels: ['High', 'Medium', 'Low', 'Info'],
-        datasets: [
-          {
-            data: [6, 14, 21, 38],
-            backgroundColor: [
-              'rgba(239, 68, 68, 0.85)',
-              'rgba(249, 115, 22, 0.8)',
-              'rgba(234, 179, 8, 0.8)',
-              'rgba(59, 130, 246, 0.8)'
-            ],
-            borderColor: 'rgba(15, 23, 42, 0.25)',
-            borderWidth: 1,
-            hoverOffset: 8
-          }
-        ]
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        cutout: '58%',
-        plugins: { legend: { position: 'bottom' } }
-      }
-    });
-
-    addChart('home2-step-chart', {
-      type: 'line',
-      data: {
-        labels: ['0s', '1s', '2s', '3s', '4s', '5s', '6s', '7s', '8s', '9s', '10s'],
-        datasets: [
-          {
-            label: 'Setpoint',
-            data: [40, 40, 40, 55, 55, 55, 55, 55, 55, 55, 55],
-            borderColor: 'rgb(99, 102, 241)',
-            stepped: true,
-            pointRadius: 0
-          },
-          {
-            label: 'Process Value',
-            data: [39, 39.5, 40, 44, 49, 54, 57, 56, 55.5, 55.2, 55.0],
-            borderColor: 'rgb(16, 185, 129)',
-            backgroundColor: 'rgba(16, 185, 129, 0.15)',
-            fill: true,
-            tension: 0.25,
-            pointRadius: 2
-          }
-        ]
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: { legend: { position: 'top' } },
-        scales: { y: { beginAtZero: false } }
-      }
-    });
-  }, 10);
-}
-
-// ================================================================
-// HMI CHART INITIALIZATION
-// ================================================================
-function initializeHMICharts1() {
-  setTimeout(() => {
-    // RPM sparkline — small trend, no axes, neutral colour
-    const rpmCanvas = document.getElementById('rpmSparkline');
-    if (rpmCanvas) {
-      const ctx = rpmCanvas.getContext('2d');
-      const chart = new Chart(ctx, {
-        type: 'line',
-        data: {
-          labels: Array.from({ length: 20 }, (_, i) => i),
-          datasets: [{
-            data: [1200, 1260, 1320, 1370, 1410, 1440, 1465, 1488, 1500, 1510,
-                   1516, 1521, 1525, 1527, 1529, 1530, 1530, 1530, 1530, 1530],
-            borderColor: 'rgb(148, 163, 184)',
-            backgroundColor: 'rgba(148, 163, 184, 0.1)',
-            fill: true,
-            tension: 0.4,
-            pointRadius: 0,
-            borderWidth: 2
-          }]
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          plugins: { legend: { display: false }, tooltip: { enabled: false } },
-          scales: {
-            x: { display: false },
-            y: { display: false, min: 0, max: 3000 }
-          }
-        }
-      });
-      activeCharts.push(chart);
-    }
-
-    const commonWaveOptions = {
-      responsive: true,
-      maintainAspectRatio: false,
-      interaction: { mode: 'index', intersect: false },
-      plugins: { legend: { display: true, position: 'top', labels: { boxWidth: 10 } } },
-      scales: {
-        x: { display: false },
-        y: { beginAtZero: false }
-      },
-      elements: { point: { radius: 0 } }
-    };
-
-    const phaseLabels = Array.from({ length: 48 }, (_, i) => i);
-
-    const voltageCanvas = document.getElementById('acVoltage3PhaseChart');
-    if (voltageCanvas) {
-      const voltageChart = new Chart(voltageCanvas.getContext('2d'), {
-        type: 'line',
-        data: {
-          labels: phaseLabels,
-          datasets: [
-            {
-              label: 'L1',
-              data: phaseLabels.map(i => 230 + 8 * Math.sin((i / 48) * 2 * Math.PI)),
-              borderColor: 'rgb(59, 130, 246)',
-              tension: 0.25
-            },
-            {
-              label: 'L2',
-              data: phaseLabels.map(i => 230 + 8 * Math.sin((i / 48) * 2 * Math.PI - (2 * Math.PI / 3))),
-              borderColor: 'rgb(16, 185, 129)',
-              tension: 0.25
-            },
-            {
-              label: 'L3',
-              data: phaseLabels.map(i => 230 + 8 * Math.sin((i / 48) * 2 * Math.PI + (2 * Math.PI / 3))),
-              borderColor: 'rgb(249, 115, 22)',
-              tension: 0.25
-            }
-          ]
-        },
-        options: {
-          ...commonWaveOptions,
-          scales: {
-            ...commonWaveOptions.scales,
-            y: { min: 215, max: 245, title: { display: true, text: 'V' } }
-          }
-        }
-      });
-      activeCharts.push(voltageChart);
-    }
-
-    const currentCanvas = document.getElementById('acCurrent3PhaseChart');
-    if (currentCanvas) {
-      const currentChart = new Chart(currentCanvas.getContext('2d'), {
-        type: 'line',
-        data: {
-          labels: phaseLabels,
-          datasets: [
-            {
-              label: 'L1',
-              data: phaseLabels.map(i => 1.8 + 0.25 * Math.sin((i / 48) * 2 * Math.PI)),
-              borderColor: 'rgb(59, 130, 246)',
-              tension: 0.25
-            },
-            {
-              label: 'L2',
-              data: phaseLabels.map(i => 1.7 + 0.25 * Math.sin((i / 48) * 2 * Math.PI - (2 * Math.PI / 3))),
-              borderColor: 'rgb(16, 185, 129)',
-              tension: 0.25
-            },
-            {
-              label: 'L3',
-              data: phaseLabels.map(i => 1.9 + 0.25 * Math.sin((i / 48) * 2 * Math.PI + (2 * Math.PI / 3))),
-              borderColor: 'rgb(249, 115, 22)',
-              tension: 0.25
-            }
-          ]
-        },
-        options: {
-          ...commonWaveOptions,
-          scales: {
-            ...commonWaveOptions.scales,
-            y: { min: 1.2, max: 2.4, title: { display: true, text: 'A' } }
-          }
-        }
-      });
-      activeCharts.push(currentChart);
-    }
-  }, 10);
-}
-
-function initializeHMICharts2() {
-  setTimeout(() => {
-    // Air Speed Chart
-    const airSpeedCanvas = document.getElementById('airSpeedChart');
-    if (airSpeedCanvas) {
-      const airSpeedCtx = airSpeedCanvas.getContext('2d');
-      const airSpeedChart = new Chart(airSpeedCtx, {
-        type: 'line',
-        data: {
-          labels: ['00:00', '00:10', '00:20', '00:30', '00:40', '00:50', '01:00'],
-          datasets: [
-            {
-              label: 'Air Speed (m/s)',
-              data: [26.5, 27.2, 27.8, 28.2, 28.4, 28.4, 28.4],
-              borderColor: 'rgb(59, 130, 246)',
-              backgroundColor: 'rgba(59, 130, 246, 0.1)',
-              fill: true,
-              tension: 0.4,
-              pointRadius: 4,
-              pointHoverRadius: 6
-            },
-            {
-              label: 'Setpoint (m/s)',
-              data: [28, 28, 28, 28, 28, 28, 28],
-              borderColor: 'rgb(251, 146, 60)',
-              backgroundColor: 'rgba(251, 146, 60, 0.1)',
-              borderDash: [5, 5],
-              fill: false,
-              tension: 0
-            }
-          ]
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          plugins: {
-            legend: {
-              display: true,
-              position: 'top'
-            },
-            tooltip: {
-              mode: 'index',
-              intersect: false
-            }
-          },
-          scales: {
-            y: {
-              beginAtZero: true,
-              min: 0,
-              max: 35,
-              title: {
-                display: true,
-                text: 'Air Speed (m/s) · 125 mm test section'
-              }
-            },
-            x: {
-              title: {
-                display: true,
-                text: 'Time'
-              }
-            }
-          }
-        }
-      });
-      activeCharts.push(airSpeedChart);
-    }
-
-    // Pressure Distribution Chart
-    const pressureCanvas = document.getElementById('pressureChart2');
-    if (pressureCanvas) {
-      const pressureCtx = pressureCanvas.getContext('2d');
-      const pressureChart = new Chart(pressureCtx, {
-        type: 'bar',
-        data: {
-          labels: ['Inlet', 'Test 1', 'Test 2', 'Test 3', 'Diffuser'],
-          datasets: [{
-            label: 'Static Pressure (kPa)',
-            data: [101.3, 100.8, 100.5, 100.2, 100.9],
-            backgroundColor: [
-              'rgba(59, 130, 246, 0.8)',
-              'rgba(139, 92, 246, 0.8)',
-              'rgba(236, 72, 153, 0.8)',
-              'rgba(34, 197, 94, 0.8)',
-              'rgba(251, 146, 60, 0.8)'
-            ],
-            borderColor: [
-              'rgb(59, 130, 246)',
-              'rgb(139, 92, 246)',
-              'rgb(236, 72, 153)',
-              'rgb(34, 197, 94)',
-              'rgb(251, 146, 60)'
-            ],
-            borderWidth: 2
-          }]
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          plugins: {
-            legend: {
-              display: false
-            }
-          },
-          scales: {
-            y: {
-              beginAtZero: false,
-              min: 99,
-              max: 102,
-              title: {
-                display: true,
-                text: 'Pressure (kPa)'
-              }
-            }
-          }
-        }
-      });
-      activeCharts.push(pressureChart);
-    }
-  }, 10);
-}
-
-function initializeHMICharts3() {
-  setTimeout(() => {
-    // Step Response Chart
-    const stepResponseCanvas = document.getElementById('stepResponseChart');
-    if (stepResponseCanvas) {
-      const stepResponseCtx = stepResponseCanvas.getContext('2d');
-      const stepResponseChart = new Chart(stepResponseCtx, {
-        type: 'line',
-        data: {
-          labels: ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12', '13', '14', '15'],
-          datasets: [
-            {
-              label: 'Process Value (°C)',
-              data: [25, 25, 25, 30, 38, 44, 48, 50.5, 51.2, 50.8, 50.2, 50.0, 49.9, 50.0, 50.0, 50.0],
-              borderColor: 'rgb(59, 130, 246)',
-              backgroundColor: 'rgba(59, 130, 246, 0.1)',
-              fill: true,
-              tension: 0.4,
-              pointRadius: 3,
-              pointHoverRadius: 5
-            },
-            {
-              label: 'Setpoint (°C)',
-              data: [25, 25, 25, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50],
-              borderColor: 'rgb(251, 146, 60)',
-              backgroundColor: 'rgba(251, 146, 60, 0.1)',
-              borderDash: [5, 5],
-              fill: false,
-              tension: 0,
-              pointRadius: 0
-            },
-            {
-              label: 'Control Output (%)',
-              data: [50, 50, 50, 80, 75, 70, 65, 62, 60, 61, 62, 62, 62, 62, 62, 62],
-              borderColor: 'rgb(34, 197, 94)',
-              backgroundColor: 'rgba(34, 197, 94, 0.1)',
-              fill: false,
-              tension: 0.3,
-              pointRadius: 2,
-              yAxisID: 'y1'
-            }
-          ]
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          interaction: {
-            mode: 'index',
-            intersect: false
-          },
-          plugins: {
-            legend: {
-              display: true,
-              position: 'top'
-            },
-            tooltip: {
-              mode: 'index',
-              intersect: false
-            }
-          },
-          scales: {
-            y: {
-              type: 'linear',
-              display: true,
-              position: 'left',
-              min: 0,
-              max: 60,
-              title: {
-                display: true,
-                text: 'Temperature (°C)'
-              }
-            },
-            y1: {
-              type: 'linear',
-              display: true,
-              position: 'right',
-              min: 0,
-              max: 100,
-              title: {
-                display: true,
-                text: 'Control Output (%)'
-              },
-              grid: {
-                drawOnChartArea: false
-              }
-            },
-            x: {
-              title: {
-                display: true,
-                text: 'Time (seconds)'
-              }
-            }
-          }
-        }
-      });
-      activeCharts.push(stepResponseChart);
-    }
-  }, 10);
-}
-
-function initializeComponentGallerySliders() {
-  const base = {
-    orientation: 'vertical',
-    direction: 'rtl',
-    range: { min: 0, max: 100 },
-    format: { to: v => Math.round(v), from: v => parseInt(v) }
-  };
-  function make(id, config, valId) {
-    const el = document.getElementById(id);
-    if (!el || el.noUiSlider) return;
-    noUiSlider.create(el, config);
-    el.noUiSlider.on('update', (v) => {
-      const d = document.getElementById(valId);
-      if (d) d.textContent = v[0] + '%';
-    });
-  }
-  make('gallery-slider-1', { ...base, start: 60 }, 'gal1-val');
-  make('gallery-slider-2', { ...base, start: 60, connect: 'lower' }, 'gal2-val');
-  make('gallery-slider-3', { ...base, start: 60, connect: 'lower',
-    pips: { mode: 'values', values: [0, 25, 50, 75, 100], density: 5 }
-  }, 'gal3-val');
-  make('gallery-slider-4', { ...base, start: 50, step: 25, connect: 'lower',
-    pips: { mode: 'steps', density: 100 }
-  }, 'gal4-val');
-  make('gallery-slider-5', { ...base, start: 60, connect: 'lower',
-    tooltips: { to: v => Math.round(v) + '%' }
-  }, 'gal5-val');
-}
-
-function initializeComponentLibraryTabs() {
-  const tabButtons = Array.from(document.querySelectorAll('[data-lib-tab]'));
-  const sections = Array.from(document.querySelectorAll('[data-lib-section]'));
-  if (!tabButtons.length || !sections.length) return;
-
-  function activateTab(tabKey) {
-    tabButtons.forEach((btn) => {
-      btn.classList.toggle('tab-active', btn.getAttribute('data-lib-tab') === tabKey);
-    });
-    sections.forEach((section) => {
-      const isActive = section.getAttribute('data-lib-section') === tabKey;
-      section.classList.toggle('hidden', !isActive);
-    });
-    if (tabKey === 'vertical-sliders') {
-      initializeComponentGallerySliders();
-    } else if (tabKey === 'overlays-interaction') {
-      initializeBeforeAfterDemo();
-    }
-  }
-
-  tabButtons.forEach((btn) => {
-    btn.addEventListener('click', () => {
-      activateTab(btn.getAttribute('data-lib-tab'));
-    });
-  });
-
-  const defaultTab = tabButtons.find((btn) => btn.classList.contains('tab-active')) || tabButtons[0];
-  activateTab(defaultTab.getAttribute('data-lib-tab'));
-}
-
-function initializeBeforeAfterDemo() {
-  const range = document.getElementById('before-after-range');
-  const afterLayer = document.getElementById('before-after-after-layer');
-  const divider = document.getElementById('before-after-divider');
-  if (!range || !afterLayer || !divider) return;
-  if (range.dataset.initialized === 'true') return;
-
-  const update = () => {
-    const position = Math.max(0, Math.min(100, Number(range.value) || 50));
-    afterLayer.style.clipPath = `inset(0 0 0 ${position}%)`;
-    divider.style.left = `${position}%`;
-  };
-
-  range.addEventListener('input', update);
-  range.dataset.initialized = 'true';
-  update();
-}
-
-function initializeHMICharts4() {
-  // Shared noUiSlider config — vertical, 0 at bottom, 100 at top
-  const sliderBase = {
-    orientation: 'vertical',
-    direction: 'rtl',
-    range: { min: 0, max: 100 },
-    format: { to: v => Math.round(v), from: v => parseInt(v) }
-  };
-
-  // Helper — creates a noUiSlider only if not already initialised
-  function createSlider(id, config, onUpdate) {
-    const el = document.getElementById(id);
-    if (!el || el.noUiSlider) return;
-    noUiSlider.create(el, config);
-    if (onUpdate) el.noUiSlider.on('update', onUpdate);
-  }
-
-  // Pump 1 & 2 — using Style 3 (Pips + Fill) until user picks a preference
-  createSlider('pump1-slider', { ...sliderBase, start: 60, connect: 'lower',
-    pips: { mode: 'values', values: [0, 25, 50, 75, 100], density: 5 }
-  }, (v) => { const d = document.getElementById('pump1-val'); if (d) d.textContent = v[0] + '%'; });
-
-  createSlider('pump2-slider', { ...sliderBase, start: 45, connect: 'lower',
-    pips: { mode: 'values', values: [0, 25, 50, 75, 100], density: 5 }
-  }, (v) => { const d = document.getElementById('pump2-val'); if (d) d.textContent = v[0] + '%'; });
-
-  // Preset button handler
-  window.setFluidPump = function(pumpId, value) {
-    const el = document.getElementById(pumpId + '-slider');
-    if (el && el.noUiSlider) el.noUiSlider.set(value);
-  };
-
-
-  setTimeout(() => {
-    // Bernoulli Pressure Profile — measured vs theoretical
-    const bernoulliCanvas = document.getElementById('bernoulliChart');
-    if (bernoulliCanvas) {
-      const ctx = bernoulliCanvas.getContext('2d');
-      const chart = new Chart(ctx, {
-        type: 'bar',
-        data: {
-          labels: ['P1 Inlet', 'P2 Converge', 'P3 Throat', 'P4 Diverge', 'P5 Outlet'],
-          datasets: [
-            {
-              label: 'Measured (kPa)',
-              data: [118.2, 105.4, 76.8, 93.1, 108.6],
-              backgroundColor: 'rgba(148, 163, 184, 0.7)',
-              borderColor: 'rgb(148, 163, 184)',
-              borderWidth: 2
-            },
-            {
-              label: 'Theoretical (kPa)',
-              data: [118.2, 104.8, 75.2, 91.8, 107.4],
-              backgroundColor: 'rgba(251, 146, 60, 0.15)',
-              borderColor: 'rgb(251, 146, 60)',
-              borderWidth: 2,
-              type: 'line',
-              tension: 0.4,
-              pointRadius: 4,
-              fill: false
-            }
-          ]
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          interaction: { mode: 'index', intersect: false },
-          plugins: { legend: { display: true, position: 'top' } },
-          scales: {
-            y: {
-              min: 60,
-              max: 130,
-              title: { display: true, text: 'Pressure (kPa)' }
-            },
-            x: {
-              title: { display: true, text: 'Tapping Position' }
-            }
-          }
-        }
-      });
-      activeCharts.push(chart);
-    }
-
-    // Flow Rate over time
-    const flowTimeCanvas = document.getElementById('flowTimeChart');
-    if (flowTimeCanvas) {
-      const ctx2 = flowTimeCanvas.getContext('2d');
-      const chart2 = new Chart(ctx2, {
-        type: 'line',
-        data: {
-          labels: ['0', '5', '10', '15', '20', '25', '30', '35', '40', '45', '50', '55', '60', '65', '70'],
-          datasets: [
-            {
-              label: 'Flow Rate (L/min)',
-              data: [0, 10.2, 18.6, 22.9, 24.8, 25.8, 26.2, 26.4, 26.3, 26.4, 26.5, 26.4, 26.4, 26.3, 26.4],
-              borderColor: 'rgb(59, 130, 246)',
-              backgroundColor: 'rgba(59, 130, 246, 0.08)',
-              fill: true,
-              tension: 0.4,
-              pointRadius: 2,
-              pointHoverRadius: 4
-            }
-          ]
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          plugins: { legend: { display: false } },
-          scales: {
-            y: {
-              min: 0,
-              max: 35,
-              title: { display: true, text: 'L/min' }
-            },
-            x: {
-              title: { display: true, text: 'Time (seconds)' }
-            }
-          }
-        }
-      });
-      activeCharts.push(chart2);
-    }
-
-    // Flow vs Differential Pressure (system curve + measured points)
-    const flowPressureCanvas = document.getElementById('flowPressureChart');
-    if (flowPressureCanvas) {
-      const ctx3 = flowPressureCanvas.getContext('2d');
-      const chart3 = new Chart(ctx3, {
-        type: 'line',
-        data: {
-          datasets: [
-            {
-              label: 'Measured (kPa)',
-              data: [
-                {x: 5,    y: 1.8},
-                {x: 10,   y: 5.9},
-                {x: 15,   y: 11.2},
-                {x: 20,   y: 18.8},
-                {x: 25,   y: 28.6},
-                {x: 26.4, y: 31.8},
-                {x: 30,   y: 38.2},
-                {x: 35,   y: 50.4}
-              ],
-              borderColor: 'rgb(148, 163, 184)',
-              backgroundColor: 'rgba(148, 163, 184, 0.8)',
-              pointRadius: 5,
-              pointHoverRadius: 7,
-              showLine: true,
-              tension: 0.3
-            },
-            {
-              label: 'Theoretical — Darcy-Weisbach (kPa)',
-              data: [
-                {x: 0,  y: 0},
-                {x: 5,  y: 1.5},
-                {x: 10, y: 5.9},
-                {x: 15, y: 13.3},
-                {x: 20, y: 23.7},
-                {x: 25, y: 37.1},
-                {x: 30, y: 53.4},
-                {x: 35, y: 72.7}
-              ],
-              borderColor: 'rgb(251, 146, 60)',
-              backgroundColor: 'transparent',
-              borderDash: [5, 5],
-              pointRadius: 0,
-              showLine: true,
-              tension: 0.4
-            }
-          ]
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          interaction: { mode: 'nearest', intersect: false },
-          plugins: { legend: { display: true, position: 'top' } },
-          scales: {
-            x: {
-              type: 'linear',
-              min: 0,
-              max: 40,
-              title: { display: true, text: 'Flow Rate (L/min)' }
-            },
-            y: {
-              min: 0,
-              max: 80,
-              title: { display: true, text: 'Differential Pressure (kPa)' }
-            }
-          }
-        }
-      });
-      activeCharts.push(chart3);
-    }
-  }, 10);
-}
-
-// Sidebar navigation click handling.
-const sidebarMenu = document.getElementById('sidebar-menu');
-sidebarMenu.addEventListener('click', (event) => {
-  const link = event.target.closest('a[data-page]');
-  if (!link) return;
-  event.preventDefault();
-
-  const pageKey = link.getAttribute('data-page');
-
-  // Update active class.
-  sidebarMenu.querySelectorAll('a[data-page]').forEach((a) => {
-    a.classList.toggle('active', a === link);
-  });
-
-  renderPage(pageKey);
-});
-
-// Admin button click handling (in header) - set up after DOM is created
-setTimeout(() => {
-  const adminButton = document.getElementById('admin-button');
-  const adminPasswordModal = document.getElementById('adminPasswordModal');
-  const adminPasswordInput = document.getElementById('admin-password-input');
-  const adminPasswordSubmit = document.getElementById('admin-password-submit');
-  const adminPasswordCancel = document.getElementById('admin-password-cancel');
-  const adminPasswordError = document.getElementById('admin-password-error');
-  const ADMIN_PASSWORD = 'matrix123';
-
-  if (adminButton && adminPasswordModal) {
-    // Open password modal when Admin button is clicked
-    adminButton.addEventListener('click', () => {
-      adminPasswordModal.showModal();
-      adminPasswordInput.value = '';
-      adminPasswordError.style.display = 'none';
-      adminPasswordInput.focus();
-    });
-
-    // Handle password submission
-    if (adminPasswordSubmit) {
-      adminPasswordSubmit.addEventListener('click', () => {
-        const enteredPassword = adminPasswordInput.value;
-        
-        if (enteredPassword === ADMIN_PASSWORD) {
-          // Password correct - close modal and navigate to admin page
-          adminPasswordModal.close();
-          const pageKey = adminButton.getAttribute('data-page');
-          
-          // Update active class in sidebar
-          const sidebarMenu = document.getElementById('sidebar-menu');
-          if (sidebarMenu) {
-            sidebarMenu.querySelectorAll('a[data-page]').forEach((a) => {
-              a.classList.toggle('active', a.getAttribute('data-page') === pageKey);
-            });
-          }
-          
-          renderPage(pageKey);
-        } else {
-          // Password incorrect - show error
-          adminPasswordError.style.display = 'block';
-          adminPasswordInput.value = '';
-          adminPasswordInput.focus();
-        }
-      });
-    }
-
-    // Handle Enter key in password input
-    if (adminPasswordInput) {
-      adminPasswordInput.addEventListener('keypress', (e) => {
-        if (e.key === 'Enter') {
-          adminPasswordSubmit.click();
-        }
-      });
-    }
-
-    // Handle cancel button
-    if (adminPasswordCancel) {
-      adminPasswordCancel.addEventListener('click', () => {
-        adminPasswordModal.close();
-        adminPasswordInput.value = '';
-        adminPasswordError.style.display = 'none';
-      });
-    }
-  }
-}, 0);
-
-// ================================================================
-// THEME SWITCHER (Light / Dark)
-// ================================================================
-
-const baseUrl = typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.BASE_URL ? import.meta.env.BASE_URL : '';
-
-function setMatrixLogoForTheme(theme) {
-  const logo = document.getElementById('header-matrix-logo');
-  if (logo) logo.src = theme === 'dark' ? baseUrl + 'matrix.png' : baseUrl + 'matrix.svg';
-}
-
-// Simple theme switcher (Light / Dark)
-const html = document.documentElement;
-const themeSelect = document.getElementById('theme-select');
-
-// Load saved theme if it exists; otherwise default to dark
-const savedTheme = localStorage.getItem('matrix-theme');
-if (savedTheme === 'light' || savedTheme === 'dark') {
-  html.setAttribute('data-theme', savedTheme);
-  themeSelect.value = savedTheme;
-} else {
-  html.setAttribute('data-theme', 'dark');
-  if (themeSelect) themeSelect.value = 'dark';
-}
-setMatrixLogoForTheme(html.getAttribute('data-theme'));
-
-// When user changes theme
-themeSelect.addEventListener('change', () => {
-  const newTheme = themeSelect.value;
-  html.setAttribute('data-theme', newTheme);
-  localStorage.setItem('matrix-theme', newTheme);
-  setMatrixLogoForTheme(newTheme);
-});
-
-// ================================================================
-// SIDEBAR COLLAPSE/EXPAND FUNCTIONALITY
-// ================================================================
-
-setTimeout(() => {
-  const sidebar = document.getElementById('sidebar');
-  const sidebarToggle = document.getElementById('sidebar-toggle');
-  const sidebarBackdrop = document.getElementById('sidebar-backdrop');
-  const sidebarClose = document.getElementById('sidebar-close');
-
-  if (!sidebar || !sidebarToggle) return;
-
-  // Load saved sidebar state (desktop only)
-  const savedSidebarState = localStorage.getItem('matrix-sidebar-collapsed');
-  const isCollapsed = savedSidebarState === 'true';
-
-  // Apply saved state on page load (desktop only)
-  if (isCollapsed && window.innerWidth >= 768) {
-    sidebar.classList.add('w-0', 'overflow-hidden');
-    sidebar.classList.remove('w-72');
-  }
-
-  // Toggle sidebar function
-  function toggleSidebar() {
-    const isMobile = window.innerWidth < 768;
-    
-    if (isMobile) {
-      // Mobile: toggle drawer (translate-x)
-      const isOpen = !sidebar.classList.contains('-translate-x-full');
-      
-      if (isOpen) {
-        // Close drawer
-        sidebar.classList.add('-translate-x-full');
-        if (sidebarBackdrop) sidebarBackdrop.classList.add('hidden');
-        // Re-enable body scroll
-        document.body.style.overflow = '';
-      } else {
-        // Open drawer
-        sidebar.classList.remove('-translate-x-full');
-        if (sidebarBackdrop) sidebarBackdrop.classList.remove('hidden');
-        // Prevent body scroll when sidebar is open
-        document.body.style.overflow = 'hidden';
-      }
-    } else {
-      // Desktop: toggle width
-      const currentlyCollapsed = sidebar.classList.contains('w-0');
-      
-      if (currentlyCollapsed) {
-        // Expand
-        sidebar.classList.remove('w-0', 'overflow-hidden');
-        sidebar.classList.add('w-72');
-        localStorage.setItem('matrix-sidebar-collapsed', 'false');
-      } else {
-        // Collapse
-        sidebar.classList.remove('w-72');
-        sidebar.classList.add('w-0', 'overflow-hidden');
-        localStorage.setItem('matrix-sidebar-collapsed', 'true');
-      }
-    }
-  }
-
-  // Add event listener to toggle button
-  sidebarToggle.addEventListener('click', toggleSidebar);
-  
-  // Add event listener to close button (mobile)
-  if (sidebarClose) {
-    sidebarClose.addEventListener('click', () => {
-      const isMobile = window.innerWidth < 768;
-      if (isMobile) {
-        toggleSidebar();
-      }
-    });
-  }
-  
-  // Close mobile sidebar when clicking backdrop
-  if (sidebarBackdrop) {
-    sidebarBackdrop.addEventListener('click', () => {
-      const isMobile = window.innerWidth < 768;
-      if (isMobile && !sidebar.classList.contains('-translate-x-full')) {
-        toggleSidebar();
-      }
-    });
-  }
-  
-  // Close mobile sidebar when clicking a menu item
-  const sidebarMenu = document.getElementById('sidebar-menu');
-  if (sidebarMenu) {
-    sidebarMenu.addEventListener('click', (e) => {
-      const link = e.target.closest('a[data-page]');
-      if (link && window.innerWidth < 768) {
-        // Close sidebar on mobile after selecting a menu item
-        setTimeout(() => {
-          if (!sidebar.classList.contains('-translate-x-full')) {
-            toggleSidebar();
-          }
-        }, 100);
-      }
-    });
-  }
-  
-  // Prevent scroll events from propagating from sidebar to body
-  if (sidebar) {
-    const sidebarScrollContainer = sidebar.querySelector('.overflow-y-auto');
-    if (sidebarScrollContainer) {
-      // Stop wheel events from propagating to body when scrolling within sidebar
-      sidebarScrollContainer.addEventListener('wheel', (e) => {
-        const { scrollTop, scrollHeight, clientHeight } = sidebarScrollContainer;
-        const isAtTop = scrollTop === 0;
-        const isAtBottom = scrollTop + clientHeight >= scrollHeight - 1;
-        
-        // If we can scroll within the sidebar, prevent body scroll
-        if ((!isAtTop && e.deltaY < 0) || (!isAtBottom && e.deltaY > 0)) {
-          e.stopPropagation();
-        }
-      }, { passive: false });
-      
-      // Prevent touchmove events from propagating on mobile
-      sidebarScrollContainer.addEventListener('touchmove', (e) => {
-        e.stopPropagation();
-      }, { passive: false });
-    }
-  }
-  
-  // Handle window resize - ensure proper state
-  let resizeTimer;
-  window.addEventListener('resize', () => {
-    clearTimeout(resizeTimer);
-    resizeTimer = setTimeout(() => {
-      const isMobile = window.innerWidth < 768;
-      if (isMobile) {
-        // On mobile, ensure sidebar is closed by default
-        sidebar.classList.add('-translate-x-full');
-        if (sidebarBackdrop) sidebarBackdrop.classList.add('hidden');
-        // Restore body scroll
-        document.body.style.overflow = '';
-      } else {
-        // On desktop, restore saved state
-        sidebar.classList.remove('-translate-x-full');
-        if (sidebarBackdrop) sidebarBackdrop.classList.add('hidden');
-        const savedState = localStorage.getItem('matrix-sidebar-collapsed');
-        if (savedState === 'true') {
-          sidebar.classList.add('w-0', 'overflow-hidden');
-          sidebar.classList.remove('w-72');
-        } else {
-          sidebar.classList.remove('w-0', 'overflow-hidden');
-          sidebar.classList.add('w-72');
-        }
-      }
-    }, 250);
-  });
-}, 0);
-
-// ================================================================
-// CONNECTION STATUS MANAGEMENT (TEMPLATE STUB)
-// ================================================================
-// TODO: Implement actual device connection detection logic here
-// This is a placeholder template for future Matrix TSL projects
-
-setTimeout(() => {
-  const connectionIndicator = document.getElementById('connection-indicator');
-  const connectionText = document.getElementById('connection-text');
-  const connectionTime = document.getElementById('connection-time');
-
-  if (!connectionIndicator || !connectionText || !connectionTime) return;
-
-  // Template function to update connection status UI
-  // TODO: Replace with actual connection status from device communication
-  function updateConnectionStatusUI(isConnected) {
-    if (isConnected) {
-      connectionIndicator.classList.remove('bg-error');
-      connectionIndicator.classList.add('bg-success');
-      connectionText.textContent = 'Connected';
-      connectionText.classList.remove('text-error');
-      connectionText.classList.add('text-success');
-      const now = new Date();
-      const timeStr = now.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-      connectionTime.textContent = `Last connected: ${timeStr}`;
-    } else {
-      connectionIndicator.classList.remove('bg-success');
-      connectionIndicator.classList.add('bg-error');
-      connectionText.textContent = 'Disconnected';
-      connectionText.classList.remove('text-success');
-      connectionText.classList.add('text-error');
-      const now = new Date();
-      const timeStr = now.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-      connectionTime.textContent = `Last disconnected: ${timeStr}`;
-    }
-  }
-
-  // TEMPLATE STUB: Initialize connection status
-  // TODO: Replace with actual device connection check
-  // Example: checkDeviceConnection().then(status => updateConnectionStatusUI(status))
-  const isConnected = true; // Placeholder: default to connected for template
-  updateConnectionStatusUI(isConnected);
-
-  // TEMPLATE STUB: Expose function for device communication integration
-  // TODO: Call this function when device connection status changes
-  // Example: window.updateConnectionStatus = (status) => updateConnectionStatusUI(status);
-  window.updateConnectionStatus = updateConnectionStatusUI;
-}, 0);
-
-// Initial page: IO-Link Master dashboard
-renderPage('io-link-master');
+`;let Mt=[];function Ha(s){yp(),Mt.forEach(i=>i.destroy()),Mt=[];const t=document.getElementById("main-content"),e=jp[s];if(!e){t.innerHTML=Hp("Page not found");return}t.innerHTML=e();const a=document.getElementById("sidebar-menu");a&&a.querySelectorAll("a[data-page]").forEach(i=>{i.classList.toggle("active",i.getAttribute("data-page")===s)}),s==="home-2"?Wp():s==="hmi-dashboard-1"?Up():s==="hmi-dashboard-2"?$p():s==="hmi-dashboard-3"?Yp():s==="hmi-dashboard-4"?Kp():s==="components"?Xp():s==="io-link-master"&&wp()}function Wp(){setTimeout(()=>{function s(t,e){const a=document.getElementById(t);if(!a)return;const i=new vt(a.getContext("2d"),e);Mt.push(i)}s("home2-trend-chart",{type:"line",data:{labels:["08:00","09:00","10:00","11:00","12:00","13:00","14:00","15:00"],datasets:[{label:"Temperature (C)",data:[24.1,24.6,25.2,26.1,26.8,26.4,25.9,25.3],borderColor:"rgb(59, 130, 246)",backgroundColor:"rgba(59, 130, 246, 0.16)",tension:.35,fill:!0,pointRadius:3},{label:"Setpoint",data:[25,25,25,25,25,25,25,25],borderColor:"rgb(251, 191, 36)",borderDash:[6,4],fill:!1,pointRadius:0}]},options:{responsive:!0,maintainAspectRatio:!1,interaction:{mode:"index",intersect:!1},plugins:{legend:{position:"top"}},scales:{y:{beginAtZero:!1}}}}),s("home2-combo-chart",{type:"bar",data:{labels:["Mon","Tue","Wed","Thu","Fri","Sat"],datasets:[{type:"bar",label:"kWh",data:[340,360,395,410,420,300],backgroundColor:"rgba(14, 165, 233, 0.35)",borderColor:"rgb(14, 165, 233)",borderWidth:1,yAxisID:"y"},{type:"line",label:"Cost ($)",data:[49,52,58,60,63,45],borderColor:"rgb(244, 63, 94)",backgroundColor:"rgba(244, 63, 94, 0.2)",tension:.3,yAxisID:"y1"}]},options:{responsive:!0,maintainAspectRatio:!1,plugins:{legend:{position:"top"}},scales:{y:{type:"linear",position:"left",title:{display:!0,text:"kWh"}},y1:{type:"linear",position:"right",grid:{drawOnChartArea:!1},title:{display:!0,text:"$"}}}}}),s("home2-stacked-chart",{type:"bar",data:{labels:["Line A","Line B","Line C","Line D"],datasets:[{label:"Good",data:[120,98,115,108],backgroundColor:"rgba(34, 197, 94, 0.65)"},{label:"Rework",data:[15,19,12,14],backgroundColor:"rgba(250, 204, 21, 0.7)"},{label:"Scrap",data:[5,8,6,7],backgroundColor:"rgba(239, 68, 68, 0.7)"}]},options:{responsive:!0,maintainAspectRatio:!1,scales:{x:{stacked:!0},y:{stacked:!0,beginAtZero:!0}}}}),s("home2-horizontal-chart",{type:"bar",data:{labels:["Pack","Mix","Heat","Dose","Inspect"],datasets:[{label:"Utilization %",data:[91,77,84,69,88],backgroundColor:["rgba(59, 130, 246, 0.7)","rgba(20, 184, 166, 0.7)","rgba(168, 85, 247, 0.7)","rgba(245, 158, 11, 0.7)","rgba(34, 197, 94, 0.7)"],borderColor:"rgba(15, 23, 42, 0.25)",borderWidth:1}]},options:{indexAxis:"y",responsive:!0,maintainAspectRatio:!1,plugins:{legend:{display:!1}},scales:{x:{min:0,max:100}}}}),s("home2-doughnut-chart",{type:"doughnut",data:{labels:["High","Medium","Low","Info"],datasets:[{data:[6,14,21,38],backgroundColor:["rgba(239, 68, 68, 0.85)","rgba(249, 115, 22, 0.8)","rgba(234, 179, 8, 0.8)","rgba(59, 130, 246, 0.8)"],borderColor:"rgba(15, 23, 42, 0.25)",borderWidth:1,hoverOffset:8}]},options:{responsive:!0,maintainAspectRatio:!1,cutout:"58%",plugins:{legend:{position:"bottom"}}}}),s("home2-step-chart",{type:"line",data:{labels:["0s","1s","2s","3s","4s","5s","6s","7s","8s","9s","10s"],datasets:[{label:"Setpoint",data:[40,40,40,55,55,55,55,55,55,55,55],borderColor:"rgb(99, 102, 241)",stepped:!0,pointRadius:0},{label:"Process Value",data:[39,39.5,40,44,49,54,57,56,55.5,55.2,55],borderColor:"rgb(16, 185, 129)",backgroundColor:"rgba(16, 185, 129, 0.15)",fill:!0,tension:.25,pointRadius:2}]},options:{responsive:!0,maintainAspectRatio:!1,plugins:{legend:{position:"top"}},scales:{y:{beginAtZero:!1}}}})},10)}function Up(){setTimeout(()=>{const s=document.getElementById("rpmSparkline");if(s){const n=s.getContext("2d"),o=new vt(n,{type:"line",data:{labels:Array.from({length:20},(l,r)=>r),datasets:[{data:[1200,1260,1320,1370,1410,1440,1465,1488,1500,1510,1516,1521,1525,1527,1529,1530,1530,1530,1530,1530],borderColor:"rgb(148, 163, 184)",backgroundColor:"rgba(148, 163, 184, 0.1)",fill:!0,tension:.4,pointRadius:0,borderWidth:2}]},options:{responsive:!0,maintainAspectRatio:!1,plugins:{legend:{display:!1},tooltip:{enabled:!1}},scales:{x:{display:!1},y:{display:!1,min:0,max:3e3}}}});Mt.push(o)}const t={responsive:!0,maintainAspectRatio:!1,interaction:{mode:"index",intersect:!1},plugins:{legend:{display:!0,position:"top",labels:{boxWidth:10}}},scales:{x:{display:!1},y:{beginAtZero:!1}},elements:{point:{radius:0}}},e=Array.from({length:48},(n,o)=>o),a=document.getElementById("acVoltage3PhaseChart");if(a){const n=new vt(a.getContext("2d"),{type:"line",data:{labels:e,datasets:[{label:"L1",data:e.map(o=>230+8*Math.sin(o/48*2*Math.PI)),borderColor:"rgb(59, 130, 246)",tension:.25},{label:"L2",data:e.map(o=>230+8*Math.sin(o/48*2*Math.PI-2*Math.PI/3)),borderColor:"rgb(16, 185, 129)",tension:.25},{label:"L3",data:e.map(o=>230+8*Math.sin(o/48*2*Math.PI+2*Math.PI/3)),borderColor:"rgb(249, 115, 22)",tension:.25}]},options:{...t,scales:{...t.scales,y:{min:215,max:245,title:{display:!0,text:"V"}}}}});Mt.push(n)}const i=document.getElementById("acCurrent3PhaseChart");if(i){const n=new vt(i.getContext("2d"),{type:"line",data:{labels:e,datasets:[{label:"L1",data:e.map(o=>1.8+.25*Math.sin(o/48*2*Math.PI)),borderColor:"rgb(59, 130, 246)",tension:.25},{label:"L2",data:e.map(o=>1.7+.25*Math.sin(o/48*2*Math.PI-2*Math.PI/3)),borderColor:"rgb(16, 185, 129)",tension:.25},{label:"L3",data:e.map(o=>1.9+.25*Math.sin(o/48*2*Math.PI+2*Math.PI/3)),borderColor:"rgb(249, 115, 22)",tension:.25}]},options:{...t,scales:{...t.scales,y:{min:1.2,max:2.4,title:{display:!0,text:"A"}}}}});Mt.push(n)}},10)}function $p(){setTimeout(()=>{const s=document.getElementById("airSpeedChart");if(s){const e=s.getContext("2d"),a=new vt(e,{type:"line",data:{labels:["00:00","00:10","00:20","00:30","00:40","00:50","01:00"],datasets:[{label:"Air Speed (m/s)",data:[26.5,27.2,27.8,28.2,28.4,28.4,28.4],borderColor:"rgb(59, 130, 246)",backgroundColor:"rgba(59, 130, 246, 0.1)",fill:!0,tension:.4,pointRadius:4,pointHoverRadius:6},{label:"Setpoint (m/s)",data:[28,28,28,28,28,28,28],borderColor:"rgb(251, 146, 60)",backgroundColor:"rgba(251, 146, 60, 0.1)",borderDash:[5,5],fill:!1,tension:0}]},options:{responsive:!0,maintainAspectRatio:!1,plugins:{legend:{display:!0,position:"top"},tooltip:{mode:"index",intersect:!1}},scales:{y:{beginAtZero:!0,min:0,max:35,title:{display:!0,text:"Air Speed (m/s) · 125 mm test section"}},x:{title:{display:!0,text:"Time"}}}}});Mt.push(a)}const t=document.getElementById("pressureChart2");if(t){const e=t.getContext("2d"),a=new vt(e,{type:"bar",data:{labels:["Inlet","Test 1","Test 2","Test 3","Diffuser"],datasets:[{label:"Static Pressure (kPa)",data:[101.3,100.8,100.5,100.2,100.9],backgroundColor:["rgba(59, 130, 246, 0.8)","rgba(139, 92, 246, 0.8)","rgba(236, 72, 153, 0.8)","rgba(34, 197, 94, 0.8)","rgba(251, 146, 60, 0.8)"],borderColor:["rgb(59, 130, 246)","rgb(139, 92, 246)","rgb(236, 72, 153)","rgb(34, 197, 94)","rgb(251, 146, 60)"],borderWidth:2}]},options:{responsive:!0,maintainAspectRatio:!1,plugins:{legend:{display:!1}},scales:{y:{beginAtZero:!1,min:99,max:102,title:{display:!0,text:"Pressure (kPa)"}}}}});Mt.push(a)}},10)}function Yp(){setTimeout(()=>{const s=document.getElementById("stepResponseChart");if(s){const t=s.getContext("2d"),e=new vt(t,{type:"line",data:{labels:["0","1","2","3","4","5","6","7","8","9","10","11","12","13","14","15"],datasets:[{label:"Process Value (°C)",data:[25,25,25,30,38,44,48,50.5,51.2,50.8,50.2,50,49.9,50,50,50],borderColor:"rgb(59, 130, 246)",backgroundColor:"rgba(59, 130, 246, 0.1)",fill:!0,tension:.4,pointRadius:3,pointHoverRadius:5},{label:"Setpoint (°C)",data:[25,25,25,50,50,50,50,50,50,50,50,50,50,50,50,50],borderColor:"rgb(251, 146, 60)",backgroundColor:"rgba(251, 146, 60, 0.1)",borderDash:[5,5],fill:!1,tension:0,pointRadius:0},{label:"Control Output (%)",data:[50,50,50,80,75,70,65,62,60,61,62,62,62,62,62,62],borderColor:"rgb(34, 197, 94)",backgroundColor:"rgba(34, 197, 94, 0.1)",fill:!1,tension:.3,pointRadius:2,yAxisID:"y1"}]},options:{responsive:!0,maintainAspectRatio:!1,interaction:{mode:"index",intersect:!1},plugins:{legend:{display:!0,position:"top"},tooltip:{mode:"index",intersect:!1}},scales:{y:{type:"linear",display:!0,position:"left",min:0,max:60,title:{display:!0,text:"Temperature (°C)"}},y1:{type:"linear",display:!0,position:"right",min:0,max:100,title:{display:!0,text:"Control Output (%)"},grid:{drawOnChartArea:!1}},x:{title:{display:!0,text:"Time (seconds)"}}}}});Mt.push(e)}},10)}function Gp(){const s={orientation:"vertical",direction:"rtl",range:{min:0,max:100},format:{to:e=>Math.round(e),from:e=>parseInt(e)}};function t(e,a,i){const n=document.getElementById(e);!n||n.noUiSlider||(Bn.create(n,a),n.noUiSlider.on("update",o=>{const l=document.getElementById(i);l&&(l.textContent=o[0]+"%")}))}t("gallery-slider-1",{...s,start:60},"gal1-val"),t("gallery-slider-2",{...s,start:60,connect:"lower"},"gal2-val"),t("gallery-slider-3",{...s,start:60,connect:"lower",pips:{mode:"values",values:[0,25,50,75,100],density:5}},"gal3-val"),t("gallery-slider-4",{...s,start:50,step:25,connect:"lower",pips:{mode:"steps",density:100}},"gal4-val"),t("gallery-slider-5",{...s,start:60,connect:"lower",tooltips:{to:e=>Math.round(e)+"%"}},"gal5-val")}function Xp(){const s=Array.from(document.querySelectorAll("[data-lib-tab]")),t=Array.from(document.querySelectorAll("[data-lib-section]"));if(!s.length||!t.length)return;function e(i){s.forEach(n=>{n.classList.toggle("tab-active",n.getAttribute("data-lib-tab")===i)}),t.forEach(n=>{const o=n.getAttribute("data-lib-section")===i;n.classList.toggle("hidden",!o)}),i==="vertical-sliders"?Gp():i==="overlays-interaction"&&qp()}s.forEach(i=>{i.addEventListener("click",()=>{e(i.getAttribute("data-lib-tab"))})});const a=s.find(i=>i.classList.contains("tab-active"))||s[0];e(a.getAttribute("data-lib-tab"))}function qp(){const s=document.getElementById("before-after-range"),t=document.getElementById("before-after-after-layer"),e=document.getElementById("before-after-divider");if(!s||!t||!e||s.dataset.initialized==="true")return;const a=()=>{const i=Math.max(0,Math.min(100,Number(s.value)||50));t.style.clipPath=`inset(0 0 0 ${i}%)`,e.style.left=`${i}%`};s.addEventListener("input",a),s.dataset.initialized="true",a()}function Kp(){const s={orientation:"vertical",direction:"rtl",range:{min:0,max:100},format:{to:e=>Math.round(e),from:e=>parseInt(e)}};function t(e,a,i){const n=document.getElementById(e);!n||n.noUiSlider||(Bn.create(n,a),i&&n.noUiSlider.on("update",i))}t("pump1-slider",{...s,start:60,connect:"lower",pips:{mode:"values",values:[0,25,50,75,100],density:5}},e=>{const a=document.getElementById("pump1-val");a&&(a.textContent=e[0]+"%")}),t("pump2-slider",{...s,start:45,connect:"lower",pips:{mode:"values",values:[0,25,50,75,100],density:5}},e=>{const a=document.getElementById("pump2-val");a&&(a.textContent=e[0]+"%")}),window.setFluidPump=function(e,a){const i=document.getElementById(e+"-slider");i&&i.noUiSlider&&i.noUiSlider.set(a)},setTimeout(()=>{const e=document.getElementById("bernoulliChart");if(e){const n=e.getContext("2d"),o=new vt(n,{type:"bar",data:{labels:["P1 Inlet","P2 Converge","P3 Throat","P4 Diverge","P5 Outlet"],datasets:[{label:"Measured (kPa)",data:[118.2,105.4,76.8,93.1,108.6],backgroundColor:"rgba(148, 163, 184, 0.7)",borderColor:"rgb(148, 163, 184)",borderWidth:2},{label:"Theoretical (kPa)",data:[118.2,104.8,75.2,91.8,107.4],backgroundColor:"rgba(251, 146, 60, 0.15)",borderColor:"rgb(251, 146, 60)",borderWidth:2,type:"line",tension:.4,pointRadius:4,fill:!1}]},options:{responsive:!0,maintainAspectRatio:!1,interaction:{mode:"index",intersect:!1},plugins:{legend:{display:!0,position:"top"}},scales:{y:{min:60,max:130,title:{display:!0,text:"Pressure (kPa)"}},x:{title:{display:!0,text:"Tapping Position"}}}}});Mt.push(o)}const a=document.getElementById("flowTimeChart");if(a){const n=a.getContext("2d"),o=new vt(n,{type:"line",data:{labels:["0","5","10","15","20","25","30","35","40","45","50","55","60","65","70"],datasets:[{label:"Flow Rate (L/min)",data:[0,10.2,18.6,22.9,24.8,25.8,26.2,26.4,26.3,26.4,26.5,26.4,26.4,26.3,26.4],borderColor:"rgb(59, 130, 246)",backgroundColor:"rgba(59, 130, 246, 0.08)",fill:!0,tension:.4,pointRadius:2,pointHoverRadius:4}]},options:{responsive:!0,maintainAspectRatio:!1,plugins:{legend:{display:!1}},scales:{y:{min:0,max:35,title:{display:!0,text:"L/min"}},x:{title:{display:!0,text:"Time (seconds)"}}}}});Mt.push(o)}const i=document.getElementById("flowPressureChart");if(i){const n=i.getContext("2d"),o=new vt(n,{type:"line",data:{datasets:[{label:"Measured (kPa)",data:[{x:5,y:1.8},{x:10,y:5.9},{x:15,y:11.2},{x:20,y:18.8},{x:25,y:28.6},{x:26.4,y:31.8},{x:30,y:38.2},{x:35,y:50.4}],borderColor:"rgb(148, 163, 184)",backgroundColor:"rgba(148, 163, 184, 0.8)",pointRadius:5,pointHoverRadius:7,showLine:!0,tension:.3},{label:"Theoretical — Darcy-Weisbach (kPa)",data:[{x:0,y:0},{x:5,y:1.5},{x:10,y:5.9},{x:15,y:13.3},{x:20,y:23.7},{x:25,y:37.1},{x:30,y:53.4},{x:35,y:72.7}],borderColor:"rgb(251, 146, 60)",backgroundColor:"transparent",borderDash:[5,5],pointRadius:0,showLine:!0,tension:.4}]},options:{responsive:!0,maintainAspectRatio:!1,interaction:{mode:"nearest",intersect:!1},plugins:{legend:{display:!0,position:"top"}},scales:{x:{type:"linear",min:0,max:40,title:{display:!0,text:"Flow Rate (L/min)"}},y:{min:0,max:80,title:{display:!0,text:"Differential Pressure (kPa)"}}}}});Mt.push(o)}},10)}const Dn=document.getElementById("sidebar-menu");Dn.addEventListener("click",s=>{const t=s.target.closest("a[data-page]");if(!t)return;s.preventDefault();const e=t.getAttribute("data-page");Dn.querySelectorAll("a[data-page]").forEach(a=>{a.classList.toggle("active",a===t)}),Ha(e)});setTimeout(()=>{const s=document.getElementById("admin-button"),t=document.getElementById("adminPasswordModal"),e=document.getElementById("admin-password-input"),a=document.getElementById("admin-password-submit"),i=document.getElementById("admin-password-cancel"),n=document.getElementById("admin-password-error"),o="matrix123";s&&t&&(s.addEventListener("click",()=>{t.showModal(),e.value="",n.style.display="none",e.focus()}),a&&a.addEventListener("click",()=>{if(e.value===o){t.close();const r=s.getAttribute("data-page"),c=document.getElementById("sidebar-menu");c&&c.querySelectorAll("a[data-page]").forEach(d=>{d.classList.toggle("active",d.getAttribute("data-page")===r)}),Ha(r)}else n.style.display="block",e.value="",e.focus()}),e&&e.addEventListener("keypress",l=>{l.key==="Enter"&&a.click()}),i&&i.addEventListener("click",()=>{t.close(),e.value="",n.style.display="none"}))},0);const Tn=typeof import.meta<"u"&&kp?"/IM-Smart-Sensors/":"";function Jo(s){const t=document.getElementById("header-matrix-logo");t&&(t.src=s==="dark"?Tn+"matrix.png":Tn+"matrix.svg")}const Ts=document.documentElement,Ne=document.getElementById("theme-select"),vs=localStorage.getItem("matrix-theme");vs==="light"||vs==="dark"?(Ts.setAttribute("data-theme",vs),Ne.value=vs):(Ts.setAttribute("data-theme","dark"),Ne&&(Ne.value="dark"));Jo(Ts.getAttribute("data-theme"));Ne.addEventListener("change",()=>{const s=Ne.value;Ts.setAttribute("data-theme",s),localStorage.setItem("matrix-theme",s),Jo(s)});setTimeout(()=>{const s=document.getElementById("sidebar"),t=document.getElementById("sidebar-toggle"),e=document.getElementById("sidebar-backdrop"),a=document.getElementById("sidebar-close");if(!s||!t)return;localStorage.getItem("matrix-sidebar-collapsed")==="true"&&window.innerWidth>=768&&(s.classList.add("w-0","overflow-hidden"),s.classList.remove("w-72"));function o(){window.innerWidth<768?!s.classList.contains("-translate-x-full")?(s.classList.add("-translate-x-full"),e&&e.classList.add("hidden"),document.body.style.overflow=""):(s.classList.remove("-translate-x-full"),e&&e.classList.remove("hidden"),document.body.style.overflow="hidden"):s.classList.contains("w-0")?(s.classList.remove("w-0","overflow-hidden"),s.classList.add("w-72"),localStorage.setItem("matrix-sidebar-collapsed","false")):(s.classList.remove("w-72"),s.classList.add("w-0","overflow-hidden"),localStorage.setItem("matrix-sidebar-collapsed","true"))}t.addEventListener("click",o),a&&a.addEventListener("click",()=>{window.innerWidth<768&&o()}),e&&e.addEventListener("click",()=>{window.innerWidth<768&&!s.classList.contains("-translate-x-full")&&o()});const l=document.getElementById("sidebar-menu");if(l&&l.addEventListener("click",c=>{c.target.closest("a[data-page]")&&window.innerWidth<768&&setTimeout(()=>{s.classList.contains("-translate-x-full")||o()},100)}),s){const c=s.querySelector(".overflow-y-auto");c&&(c.addEventListener("wheel",d=>{const{scrollTop:u,scrollHeight:h,clientHeight:p}=c,b=u===0,f=u+p>=h-1;(!b&&d.deltaY<0||!f&&d.deltaY>0)&&d.stopPropagation()},{passive:!1}),c.addEventListener("touchmove",d=>{d.stopPropagation()},{passive:!1}))}let r;window.addEventListener("resize",()=>{clearTimeout(r),r=setTimeout(()=>{window.innerWidth<768?(s.classList.add("-translate-x-full"),e&&e.classList.add("hidden"),document.body.style.overflow=""):(s.classList.remove("-translate-x-full"),e&&e.classList.add("hidden"),localStorage.getItem("matrix-sidebar-collapsed")==="true"?(s.classList.add("w-0","overflow-hidden"),s.classList.remove("w-72")):(s.classList.remove("w-0","overflow-hidden"),s.classList.add("w-72")))},250)})},0);setTimeout(()=>{const s=document.getElementById("connection-indicator"),t=document.getElementById("connection-text"),e=document.getElementById("connection-time");if(!s||!t||!e)return;function a(n){if(n){s.classList.remove("bg-error"),s.classList.add("bg-success"),t.textContent="Connected",t.classList.remove("text-error"),t.classList.add("text-success");const l=new Date().toLocaleTimeString("en-GB",{hour:"2-digit",minute:"2-digit",second:"2-digit"});e.textContent=`Last connected: ${l}`}else{s.classList.remove("bg-success"),s.classList.add("bg-error"),t.textContent="Disconnected",t.classList.remove("text-success"),t.classList.add("text-error");const l=new Date().toLocaleTimeString("en-GB",{hour:"2-digit",minute:"2-digit",second:"2-digit"});e.textContent=`Last disconnected: ${l}`}}a(!0),window.updateConnectionStatus=a},0);Ha("io-link-master");
