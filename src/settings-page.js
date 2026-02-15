@@ -19,7 +19,7 @@ function applyTheme(theme) {
   const headerSelect = document.getElementById('theme-select');
   if (headerSelect) headerSelect.value = theme;
   const logo = document.getElementById('header-matrix-logo');
-  if (logo) logo.src = getBaseUrl() + (theme === 'light' ? 'matrix2.png' : 'matrix.svg');
+  if (logo) logo.src = getBaseUrl() + (theme === 'light' ? 'matrix2.png' : 'matrix.png');
 }
 
 function applyConnectionBarVisible(visible) {

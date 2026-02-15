@@ -5966,7 +5966,7 @@ app.innerHTML = `
           </svg>
         </button>
         <a href="#" data-page="home" class="flex items-center" title="Home">
-          <img id="header-matrix-logo" src="${import.meta.env.BASE_URL}matrix.svg" alt="Matrix Logo" class="h-8 w-auto" />
+          <img id="header-matrix-logo" src="${import.meta.env.BASE_URL}matrix.png" alt="Matrix Logo" class="h-8 w-auto" />
         </a>
       </div>
       <!-- Center: Title -->
@@ -5976,7 +5976,7 @@ app.innerHTML = `
       <!-- Right: IO-Link logo + Theme -->
       <div class="flex-none flex items-center gap-4">
         <a href="https://io-link.com/" target="_blank" rel="noopener noreferrer" class="io-link-header-logo flex items-center shrink-0" id="header-io-link-logo" title="IO-Link - the first globally standardized IO technology">
-          <img src="${import.meta.env.BASE_URL}assets/img/Logo_IO-link.jpg" alt="IO-Link" class="h-8 w-auto max-h-8 object-contain" />
+          <img src="${import.meta.env.BASE_URL}assets/img/Logo_IO-link.svg" alt="IO-Link" class="h-8 w-auto max-h-8 object-contain" />
         </a>
         <div class="form-control">
           <label class="label cursor-pointer gap-2">
@@ -7091,7 +7091,7 @@ const baseUrl = typeof import.meta !== 'undefined' && import.meta.env && import.
 
 function setMatrixLogoForTheme(theme) {
   const logo = document.getElementById('header-matrix-logo');
-  if (logo) logo.src = theme === 'light' ? baseUrl + 'matrix2.png' : baseUrl + 'matrix.svg';
+  if (logo) logo.src = theme === 'light' ? baseUrl + 'matrix2.png' : baseUrl + 'matrix.png';
 }
 
 // Simple theme switcher (Light / Dark)
