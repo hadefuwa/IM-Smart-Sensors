@@ -2,7 +2,7 @@
 
 Web dashboard for monitoring **IFM IO-Link Master** devices (e.g. AL1100/AL1300). Real-time status, port data, supervision trends, industrial HMI-style homepage, and optional CL50 LED decoding.
 
-**Repository:** [github.com/hadefuwa/IM-Smart-Sensors](https://github.com/hadefuwa/IM-Smart-Sensors)
+**Repository:** [github.com/hadefuwa/IM-Smart-Sensors](https://github.com/hadefuwa/IM-Smart-Sensors) · **Live app:** [hadefuwa.github.io/IM-Smart-Sensors](https://hadefuwa.github.io/IM-Smart-Sensors/)
 
 ---
 
