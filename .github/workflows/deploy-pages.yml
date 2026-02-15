@@ -24,7 +24,7 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '22'
           cache: 'npm'
           cache-dependency-path: package-lock.json
 
@@ -33,6 +33,12 @@ jobs:
 
       - name: Build
         run: npm run build
+
+      - name: Verify build output
+        run: |
+          test -f dist/index.html || (echo "Missing dist/index.html" && exit 1)
+          grep -q '/IM-Smart-Sensors/assets/' dist/index.html || (echo "Built index should reference assets/, not src/" && exit 1)
+          ls -la dist/ dist/assets/ 2>/dev/null || true
 
       - name: Setup Pages
         uses: actions/configure-pages@v5
