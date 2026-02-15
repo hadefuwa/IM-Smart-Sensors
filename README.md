@@ -77,7 +77,7 @@ The default homepage provides:
 - **Datastream Terminal** – Command-line style log showing live PDin/PDout bytes and decoded values, with filtering by port and CSV export.
 - **Health & Heartbeat** – Diagnostic status table and recent events log.
 
-See **QUICK_START.md** and **TESTING.md** in the repo for more detail.
+See the [docs/](docs/) folder for detailed guides.
 
 ---
 
@@ -110,34 +110,38 @@ The repo includes a built version of the UI for [GitHub Pages](https://hadefuwa.
 ## Project Layout
 
 ```
-├── backend/
-│   ├── io_link_fastapi.py   # FastAPI app, WebSocket, polling
+├── backend/           # FastAPI IO-Link API & WebSocket
+│   ├── io_link_fastapi.py
 │   ├── run_io_link_fastapi.py
-│   ├── decoder.py           # CL50 LED + sensor decoders
+│   ├── decoder.py
 │   ├── config.json
 │   └── requirements.txt
-├── frontend/
-│   ├── io-link.html         # Simple dashboard (optional)
+├── docs/              # Documentation
+│   ├── README.md
+│   ├── QUICK_START.md
+│   ├── TESTING.md
+│   ├── IMPLEMENTATION_SUMMARY.md
+│   ├── THEME_UPDATES.md
+│   └── Plan.md
+├── frontend/          # Simple HTML dashboard (optional)
+│   ├── io-link.html
+│   └── assets/
+├── public/            # Static assets (logos, favicons, images)
+│   ├── matrix.svg
+│   ├── matrix2.png
 │   └── assets/img/
-├── src/
-│   ├── main.js              # App shell, navigation
-│   ├── home-page.js         # HMI Dashboard (default page)
-│   ├── io-link-page.js      # IO-Link Master detail page
+├── src/               # Vite app source
+│   ├── main.js
+│   ├── home-page.js
+│   ├── io-link-page.js
 │   ├── worksheets-page.js
 │   ├── learn-page.js
 │   ├── settings-page.js
 │   ├── style.css
 │   └── components/
-│       ├── terminal-log.js
-│       └── mimic-components.js
 ├── index.html
 ├── package.json
 ├── vite.config.js
-├── QUICK_START.md
-├── TESTING.md
-├── IMPLEMENTATION_SUMMARY.md
-├── THEME_UPDATES.md
-├── Plan.md
 └── README.md
 ```
 
@@ -158,12 +162,13 @@ The repo includes a built version of the UI for [GitHub Pages](https://hadefuwa.
 
 ## Documentation
 
-| File | Description |
-|------|-------------|
-| **QUICK_START.md** | Get started in 3 steps |
-| **TESTING.md** | Test scenarios for the HMI dashboard |
-| **IMPLEMENTATION_SUMMARY.md** | Feature list and implementation details |
-| **THEME_UPDATES.md** | Light/dark theme behaviour |
+| Document | Description |
+|----------|-------------|
+| [docs/README.md](docs/README.md) | Index of all documentation |
+| [docs/QUICK_START.md](docs/QUICK_START.md) | Get started in 3 steps |
+| [docs/TESTING.md](docs/TESTING.md) | Test scenarios for the HMI dashboard |
+| [docs/IMPLEMENTATION_SUMMARY.md](docs/IMPLEMENTATION_SUMMARY.md) | Feature list and implementation details |
+| [docs/THEME_UPDATES.md](docs/THEME_UPDATES.md) | Light/dark theme behaviour |
 
 ---
 

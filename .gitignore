@@ -10,9 +10,10 @@ env/
 *.egg-info/
 .eggs/
 
-# Node (Matrix template – now merged to root)
+# Node
 node_modules/
 dist/
+/assets/
 
 # Old location (merged into root; leave ignored if folder still on disk)
 matrix-template/

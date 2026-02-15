@@ -5965,14 +5965,19 @@ app.innerHTML = `
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
           </svg>
         </button>
-        <img id="header-matrix-logo" src="${import.meta.env.BASE_URL}matrix.svg" alt="Matrix Logo" class="h-8 w-auto" />
+        <a href="#" data-page="home" class="flex items-center" title="Home">
+          <img id="header-matrix-logo" src="${import.meta.env.BASE_URL}matrix.svg" alt="Matrix Logo" class="h-8 w-auto" />
+        </a>
       </div>
       <!-- Center: Title -->
       <div class="flex-1 flex justify-center">
-        <span class="text-xl font-bold">IO-Link Master</span>
+        <span class="text-xl font-bold">Industrial Maintenance - Smart Sensors</span>
       </div>
-      <!-- Right: Theme -->
+      <!-- Right: IO-Link logo + Theme -->
       <div class="flex-none flex items-center gap-4">
+        <a href="https://io-link.com/" target="_blank" rel="noopener noreferrer" class="io-link-header-logo flex items-center shrink-0" id="header-io-link-logo" title="IO-Link - the first globally standardized IO technology">
+          <img src="${import.meta.env.BASE_URL}assets/img/Logo_IO-link.svg" alt="IO-Link" class="h-8 w-auto max-h-8 object-contain" />
+        </a>
         <div class="form-control">
           <label class="label cursor-pointer gap-2">
             <span class="label-text">Theme</span>

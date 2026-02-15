@@ -3,6 +3,20 @@
 @tailwind utilities;
 
 /* ================================================================
+   HEADER - IO-Link logo
+   ================================================================ */
+.io-link-header-logo {
+  cursor: pointer;
+}
+/* Disable link on small screens to avoid accidental clicks on tablet/mobile */
+@media (max-width: 768px) {
+  .io-link-header-logo {
+    pointer-events: none;
+    cursor: default;
+  }
+}
+
+/* ================================================================
    INDUSTRIAL HMI STYLES
    ================================================================ */
 
