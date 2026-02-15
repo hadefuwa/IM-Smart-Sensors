@@ -103,7 +103,9 @@ You can run the backend on a Raspberry Pi on your network so the dashboard is al
 
 ## GitHub Pages (UI only)
 
-The repo includes a built version of the UI for [GitHub Pages](https://hadefuwa.github.io/IM-Smart-Sensors/). That site is **static** – it cannot run the backend. To see live data, run the backend (on your PC or a Pi) and point the Pages UI at your backend (e.g. set `window.IO_LINK_API_BASE = 'http://<backend-host>:8000'` then refresh).
+The repo builds and deploys the UI to [GitHub Pages](https://hadefuwa.github.io/IM-Smart-Sensors/). That site is **static** – it cannot run the backend. To see live data, run the backend (on your PC or a Pi) and point the Pages UI at your backend (e.g. set `window.IO_LINK_API_BASE = 'http://<backend-host>:8000'` then refresh).
+
+**If the live app shows a white screen:** In the repo go to **Settings → Pages → Build and deployment**. Set **Source** to **GitHub Actions** (not "Deploy from a branch"). The workflow [.github/workflows/deploy-pages.yml](.github/workflows/deploy-pages.yml) runs `npm run build` and deploys the `dist/` folder. The app uses bundled JS (e.g. Chart.js); serving the raw branch would load unbundled modules and fail.
 
 ---
 
