@@ -1,6 +1,6 @@
 # IM-Smart-Sensors
 
-Web dashboard for monitoring **IFM IO-Link Master** devices (e.g. AL1100/AL1300). Real-time status, port data, supervision trends, and optional CL50 LED decoding.
+Web dashboard for monitoring **IFM IO-Link Master** devices (e.g. AL1100/AL1300). Real-time status, port data, supervision trends, industrial HMI-style homepage, and optional CL50 LED decoding.
 
 **Repository:** [github.com/hadefuwa/IM-Smart-Sensors](https://github.com/hadefuwa/IM-Smart-Sensors)
 
@@ -8,13 +8,15 @@ Web dashboard for monitoring **IFM IO-Link Master** devices (e.g. AL1100/AL1300)
 
 ## Features
 
+- **Industrial HMI Dashboard** – Mimic-style homepage with real-time sensor status (Temperature, Photoelectric, Proximity, Status LED), condition monitoring charts, and live datastream terminal log
 - **Real-time updates** via WebSocket (no polling from the browser)
 - **Port status** – mode, vendor/device ID, process data (PDin/PDout)
 - **Supervision trends** – current, voltage, temperature over time
 - **Active port details** – per-port process data and optional CL50 LED decode
 - **Connection indicator** – green when connected, red when disconnected
-- **Two frontends** – simple HTML or Matrix-style UI (Tailwind + DaisyUI)
+- **Light & dark theme** – theme-aware styling for all components and chart axes
 - **Change Master IP from the UI** – no need to edit config files
+- **Worksheets & Further Study** – training content and learning resources
 
 ---
 
@@ -23,7 +25,7 @@ Web dashboard for monitoring **IFM IO-Link Master** devices (e.g. AL1100/AL1300)
 | Layer    | Technology |
 |----------|------------|
 | Backend  | Python 3, FastAPI, WebSockets, httpx |
-| Frontend | HTML/JS (Bootstrap) or Vite + Tailwind + DaisyUI (Matrix template) |
+| Frontend | Vite, Tailwind CSS, DaisyUI, Chart.js |
 | API      | REST + WebSocket `/ws` |
 
 ---
@@ -32,7 +34,7 @@ Web dashboard for monitoring **IFM IO-Link Master** devices (e.g. AL1100/AL1300)
 
 ### 1. Configure IO-Link Master
 
-Edit `backend/config.json` and set your master’s IP:
+Edit `backend/config.json` and set your master’s IP (or change it later from the dashboard Settings):
 
 ```json
 {
@@ -55,24 +57,27 @@ python run_io_link_fastapi.py
 
 Server runs at **http://localhost:8000** (API docs at http://localhost:8000/docs).
 
-### 3. Open the dashboard
-
-**Option A – Simple frontend (same origin)**  
-With the backend running, open:
-
-- **http://localhost:8000/**  
-  Serves `frontend/io-link.html` with WebSocket to the same host.
-
-**Option B – Matrix template UI (Vite)**  
-Separate dev server for the Matrix-style UI:
+### 3. Install and run the frontend
 
 ```bash
-cd matrix-template/ui
 npm install
 npm run dev
 ```
 
-Then open the URL shown (e.g. http://localhost:5173). Set the API base if needed, e.g. `window.IO_LINK_API_BASE = 'http://localhost:8000'` (default when backend is on 8000).
+Then open the URL shown (e.g. **http://localhost:5173**). The **HMI Dashboard** loads as the default page. The frontend connects to the backend at `http://localhost:8000` by default; to use a different host set `window.IO_LINK_API_BASE` before loading (e.g. in browser console or in your build).
+
+---
+
+## HMI Dashboard
+
+The default homepage provides:
+
+- **Current State Overview** – Clickable mimic components for IO-Link Master, Temperature (PT100), Photoelectric, Proximity, and Status LED (CL50). Click any component to open its configuration modal.
+- **Condition Monitoring** – Temperature trend chart, signal quality bar, and cycle counter with alerts (e.g. “Clean lens”, “Service due”).
+- **Datastream Terminal** – Command-line style log showing live PDin/PDout bytes and decoded values, with filtering by port and CSV export.
+- **Health & Heartbeat** – Diagnostic status table and recent events log.
+
+See **QUICK_START.md** and **TESTING.md** in the repo for more detail.
 
 ---
 
@@ -89,16 +94,16 @@ You can run the backend on a Raspberry Pi on your network so the dashboard is al
    Or run in the background (e.g. with `nohup`, `screen`, or a systemd service).
 
 2. **Open the dashboard** from any device on the same network:
-   - **http://\<pi-ip\>:8000/** – backend serves the simple frontend.
-   - Or use the [GitHub Pages](https://hadefuwa.github.io/IM-Smart-Sensors/) UI and set the API base to `http://<pi-ip>:8000` (e.g. in browser console: `window.IO_LINK_API_BASE = 'http://192.168.7.10:8000'` then refresh).
+   - Run the frontend locally and set the API base to `http://<pi-ip>:8000` (e.g. in browser console: `window.IO_LINK_API_BASE = 'http://192.168.7.10:8000'` then refresh).
+   - Or use [GitHub Pages](https://hadefuwa.github.io/IM-Smart-Sensors/) and set the API base to your Pi’s backend URL.
 
-3. **Optional:** Put the Pi’s IP in `config.json` as `master_ip` if the IO-Link Master is at a different IP, or change it from the dashboard’s “IO-Link Master address” section.
+3. **Optional:** Put the Pi’s IP in `config.json` as `master_ip` if the IO-Link Master is at a different IP, or change it from the dashboard Settings.
 
 ---
 
 ## GitHub Pages (UI only)
 
-The repo includes a built version of the Matrix template for [GitHub Pages](https://hadefuwa.github.io/IM-Smart-Sensors/). That site is **static** – it cannot run the backend. To see live data, run the backend (on your PC or a Pi) and open **http://\<backend-host\>:8000/** or point the Pages UI at your backend as above.
+The repo includes a built version of the UI for [GitHub Pages](https://hadefuwa.github.io/IM-Smart-Sensors/). That site is **static** – it cannot run the backend. To see live data, run the backend (on your PC or a Pi) and point the Pages UI at your backend (e.g. set `window.IO_LINK_API_BASE = 'http://<backend-host>:8000'` then refresh).
 
 ---
 
@@ -108,21 +113,30 @@ The repo includes a built version of the Matrix template for [GitHub Pages](http
 ├── backend/
 │   ├── io_link_fastapi.py   # FastAPI app, WebSocket, polling
 │   ├── run_io_link_fastapi.py
-│   ├── decoder.py           # CL50 LED decoder
+│   ├── decoder.py           # CL50 LED + sensor decoders
 │   ├── config.json
 │   └── requirements.txt
 ├── frontend/
-│   ├── io-link.html         # Simple dashboard
-│   └── assets/
-│       └── img/
-│           └── AL1300.png
-├── matrix-template/         # Matrix-style UI (from Matrix-Template-App)
-│   └── ui/                  # Vite + Tailwind + DaisyUI
-│       ├── src/
-│       │   ├── main.js
-│       │   └── io-link-page.js   # IO-Link Master page + WebSocket
-│       └── public/
-│           └── assets/img/AL1300.png
+│   ├── io-link.html         # Simple dashboard (optional)
+│   └── assets/img/
+├── src/
+│   ├── main.js              # App shell, navigation
+│   ├── home-page.js         # HMI Dashboard (default page)
+│   ├── io-link-page.js      # IO-Link Master detail page
+│   ├── worksheets-page.js
+│   ├── learn-page.js
+│   ├── settings-page.js
+│   ├── style.css
+│   └── components/
+│       ├── terminal-log.js
+│       └── mimic-components.js
+├── index.html
+├── package.json
+├── vite.config.js
+├── QUICK_START.md
+├── TESTING.md
+├── IMPLEMENTATION_SUMMARY.md
+├── THEME_UPDATES.md
 ├── Plan.md
 └── README.md
 ```
@@ -133,7 +147,6 @@ The repo includes a built version of the Matrix template for [GitHub Pages](http
 
 | Endpoint | Description |
 |----------|-------------|
-| `GET /` | Serves the Matrix template dashboard (or simple frontend) |
 | `GET /api/io-link/config` | Get IO-Link Master IP/port config |
 | `PUT /api/io-link/config` | Update Master IP/port (saved to config.json) |
 | `GET /api/io-link/status` | Full status (ports, supervision, software) |
@@ -143,16 +156,27 @@ The repo includes a built version of the Matrix template for [GitHub Pages](http
 
 ---
 
+## Documentation
+
+| File | Description |
+|------|-------------|
+| **QUICK_START.md** | Get started in 3 steps |
+| **TESTING.md** | Test scenarios for the HMI dashboard |
+| **IMPLEMENTATION_SUMMARY.md** | Feature list and implementation details |
+| **THEME_UPDATES.md** | Light/dark theme behaviour |
+
+---
+
 ## Troubleshooting
 
 - **“Connection” shows red / errors**  
-  Check: master powered and on network, correct IP in `config.json`, and that you can reach it (e.g. `ping 192.168.7.4`).
+  Check: master powered and on network, correct IP in `config.json` (or Settings), and that you can reach it (e.g. `ping 192.168.7.4`).
 
 - **Port 8000 in use**  
-  Change the port in `run_io_link_fastapi.py` (e.g. `port=8001`) and in the frontend (e.g. `IO_LINK_API_BASE` or backend URL).
+  Change the port in `run_io_link_fastapi.py` (e.g. `port=8001`) and point the frontend at the new URL (e.g. `IO_LINK_API_BASE`).
 
-- **Matrix UI can’t reach API**  
-  If the UI runs on another port (e.g. 5173), ensure `IO_LINK_API_BASE` points to the backend (e.g. `http://localhost:8000`).
+- **Frontend can’t reach API**  
+  If the UI runs on another port (e.g. 5173), ensure `IO_LINK_API_BASE` points to the backend (e.g. `http://localhost:8000`). Check CORS if you see cross-origin errors.
 
 ---
 
