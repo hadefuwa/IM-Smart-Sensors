@@ -158,6 +158,9 @@ The repo builds and deploys the UI to [GitHub Pages](https://hadefuwa.github.io/
 | `GET /api/io-link/status` | Full status (ports, supervision, software) |
 | `GET /api/io-link/port/<port_num>` | Detailed port data (e.g. PDin/PDout decoded) |
 | `GET /api/io-link/supervision-history` | Time-series for charts |
+| `GET /api/io-link/diagnostics` | Connection + transport + link diagnostics |
+| `GET /api/system/health` | Pi runtime stats (CPU, memory, temp, load) |
+| `POST /api/io-link/iotsetup/network/setblock` | Atomic IoT network config write |
 | `WS /ws` | Real-time JSON pushes (same shape as status) |
 
 ---
@@ -171,6 +174,7 @@ The repo builds and deploys the UI to [GitHub Pages](https://hadefuwa.github.io/
 | [docs/TESTING.md](docs/TESTING.md) | Test scenarios for the HMI dashboard |
 | [docs/IMPLEMENTATION_SUMMARY.md](docs/IMPLEMENTATION_SUMMARY.md) | Feature list and implementation details |
 | [docs/THEME_UPDATES.md](docs/THEME_UPDATES.md) | Light/dark theme behaviour |
+| [docs/PI_OPERATIONS.md](docs/PI_OPERATIONS.md) | Local/GitHub/Pi sync, deploy, health checks, rollback |
 
 ---
 
@@ -190,3 +194,45 @@ The repo builds and deploys the UI to [GitHub Pages](https://hadefuwa.github.io/
 ## License
 
 Use and adapt as needed for your IO-Link / smart sensor projects.
+
+---
+
+## Reliability and Touchscreen Notes
+
+The current implementation includes:
+
+- Shared AL1350 HTTP client with strict connection cap of `max_connections=3` (required for AL1350 HTTP behavior)
+- Retry with jittered backoff and circuit breaker protection
+- Protocol-aware service attempts (`gettree`, `getdatamulti`, `subscribe`) with safe endpoint fallback
+- Mode normalization to string enum (`inactive`, `digital_in`, `digital_out`, `io-link`) for frontend stability
+- Additive diagnostics in `/api/io-link/diagnostics` and runtime stats in `/api/system/health`
+- Touchscreen hardening for 7-inch displays (minimum 44px controls, no horizontal app drift, safer wrapping)
+
+---
+
+## Pi Deploy and Ops (Quick)
+
+Scripts included in this repo:
+
+- `scripts/pi/deploy_pull_build_restart.sh`
+- `scripts/pi/post_deploy_health.sh`
+- `scripts/pi/fix_hostname.sh`
+- `scripts/pi/disable_hostname_overrides.sh`
+- `scripts/pi/boot_verify.sh`
+
+Typical flow on Pi:
+
+```bash
+cd /home/hamed/io-link
+bash scripts/pi/deploy_pull_build_restart.sh /home/hamed/io-link main
+bash scripts/pi/post_deploy_health.sh http://127.0.0.1:8000
+```
+
+Hostname persistence flow:
+
+```bash
+cd /home/hamed/io-link
+bash scripts/pi/fix_hostname.sh iolink
+bash scripts/pi/disable_hostname_overrides.sh mycloud.service
+bash scripts/pi/boot_verify.sh iolink http://127.0.0.1:8000/health 192.168.7.4
+```

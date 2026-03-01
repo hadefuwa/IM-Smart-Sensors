@@ -889,13 +889,13 @@ body {
     width: 100%;
     justify-content: flex-start;
     gap: 0.4rem;
-    flex-wrap: nowrap;
+    flex-wrap: wrap;
   }
 
   .touch-terminal-controls .terminal-filter-select {
-    flex: 1 1 auto;
+    flex: 1 1 9rem;
     min-width: 0;
-    max-width: 9rem;
+    max-width: 100%;
     min-height: 44px;
     height: 44px;
     font-size: 0.95rem;
@@ -947,6 +947,36 @@ body {
 .learn-chapter-card:focus-visible {
   outline: 2px solid #22c55e;
   outline-offset: 2px;
+}
+
+/* 7-inch touchscreen baseline: larger hit targets and no horizontal drift. */
+.btn,
+.menu li > a,
+.select,
+.input,
+.tab,
+.badge {
+  min-height: 44px;
+}
+
+#app,
+#main-content,
+.io-link-page,
+.hmi-homepage {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
+/* Keep one primary vertical scroll region (main content); hide sidebar scrollbar visuals. */
+#sidebar .overflow-y-auto {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+#sidebar .overflow-y-auto::-webkit-scrollbar {
+  width: 0;
+  height: 0;
 }
 
 @media (prefers-reduced-motion: reduce) {

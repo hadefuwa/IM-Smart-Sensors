@@ -15,6 +15,7 @@ import time
 import logging
 from typing import Dict, List, Optional, Set
 from datetime import datetime
+import socket
 
 from decoder import (
     decode_cl50_led,
@@ -30,6 +31,7 @@ from decoder import (
     DEVICE_TYPE_PROXIMITY,
     DEVICE_TYPE_CAPACITIVE,
 )
+from al1350_client import AL1350ClientManager
 
 # Configure logging
 logging.basicConfig(
@@ -151,6 +153,8 @@ POLL_INTERVAL = 1.0  # Poll every 1 second
 STATIC_REFRESH_EVERY_CYCLES = 6  # refresh static metadata every N polls
 
 
+
+
 def load_config():
     """Load configuration from config.json"""
     config_path = os.path.join(os.path.dirname(__file__), 'config.json')
@@ -181,6 +185,10 @@ def save_config(io_link_updates: dict):
     with open(config_path, 'w') as f:
         json.dump(config, f, indent=2)
     return config
+
+
+# Shared AL1350 client manager (single AsyncClient + retries/circuit/diagnostics)
+al1350 = AL1350ClientManager(config_loader=load_config, logger=logger)
 
 
 def parse_supervision_number(val, default=0):
@@ -457,46 +465,20 @@ async def poll_io_link_master():
     
     cycle_count = 0
     while True:
-        # Load config each time so IP/port changes from the UI take effect without restart
         config = load_config()
         io_config = config.get('io_link', {})
-        ip = io_config.get('master_ip', IFM_MASTER_IP)
-        port = io_config.get('port', IFM_MASTER_PORT)
-        timeout = io_config.get('timeout_sec', IFM_TIMEOUT)
-        scheme = 'https' if io_config.get('use_https', False) else 'http'
-        default_port = 443 if scheme == 'https' else 80
-        base_url = f'{scheme}://{ip}' if port == default_port else f'{scheme}://{ip}:{port}'
-        
         include_static = (cycle_count % STATIC_REFRESH_EVERY_CYCLES == 0)
         cycle_count += 1
 
         try:
-            # Fetch all data in parallel, timing the round-trip for diagnostics
+            await al1350.on_config_changed()
             poll_start = time.time()
-            ports_task = poll_all_ports(base_url, include_static=include_static)
-            device_info_task = get_device_info(base_url) if include_static or not system_state.get('device_name') else None
-
-            if device_info_task is not None:
-                ports, device_info = await asyncio.gather(ports_task, device_info_task, return_exceptions=True)
-            else:
-                ports = await ports_task
-                device_info = {
-                    'device_name': system_state.get('device_name', 'IO-Link Master'),
-                    'software': system_state.get('software', {}),
-                    'device_icon_url': system_state.get('device_icon_url')
-                }
+            ports, device_info = await al1350.poll_snapshot(include_static=include_static)
 
             poll_ms = round((time.time() - poll_start) * 1000)
             poll_latencies.append({'ts': time.time(), 'latency_ms': poll_ms})
             while len(poll_latencies) > MAX_LATENCIES:
                 poll_latencies.pop(0)
-
-            if isinstance(ports, Exception):
-                logger.error(f"Error polling ports: {ports}")
-                ports = []
-            if isinstance(device_info, Exception):
-                logger.error(f"Error fetching device info: {device_info}")
-                device_info = {'device_name': 'IO-Link Master', 'software': {}, 'device_icon_url': None}
 
             # Preserve static metadata between lightweight poll cycles.
             prev_ports = {p.get('port'): p for p in (system_state.get('ports') or []) if isinstance(p, dict)}
@@ -516,14 +498,18 @@ async def poll_io_link_master():
 
             # Update global state
             system_state = {
-                'device_name': device_info.get('device_name', 'IO-Link Master'),
+                'device_name': (device_info.get('device_name') or system_state.get('device_name') or 'IO-Link Master'),
                 'ports': ports if isinstance(ports, list) else [],
                 'supervision': supervision,
-                'software': device_info.get('software', {}),
-                'device_icon_url': device_info.get('device_icon_url'),
+                'software': device_info.get('software') or system_state.get('software', {}),
+                'device_icon_url': device_info.get('device_icon_url') or system_state.get('device_icon_url'),
                 'product_image_url': '/api/io-link/product-image',
                 'timestamp': time.time(),
-                'source': 'iot_core',
+                'source': 'subscription' if al1350.subscription_enabled and not al1350.degraded_mode else 'fallback',
+                'degraded_mode': al1350.degraded_mode,
+                'degraded_reason': al1350.degraded_reason,
+                'last_good_data_ts': al1350.last_good_data_ts or None,
+                'error': None,
                 'success': True
             }
 
@@ -538,6 +524,8 @@ async def poll_io_link_master():
             logger.error(f"Error in polling loop: {e}")
             system_state['success'] = False
             system_state['error'] = str(e)
+            al1350.last_error = str(e)
+            al1350.degraded_mode = True
 
         # Track connected/disconnected transitions for diagnostics
         global _prev_success, _transition_ts, consecutive_failures
@@ -568,6 +556,10 @@ async def poll_io_link_master():
 async def start_background_polling():
     """Start IO-Link polling loop when API starts."""
     global polling_task
+    try:
+        await al1350.refresh_gettree(force=True)
+    except Exception as e:
+        logger.warning(f"Initial gettree warmup failed: {e}")
     if polling_task is None or polling_task.done():
         polling_task = asyncio.create_task(poll_io_link_master())
         logger.info("IO-Link background polling task started")
@@ -584,6 +576,7 @@ async def stop_background_polling():
         except asyncio.CancelledError:
             pass
         logger.info("IO-Link background polling task stopped")
+    await al1350.close()
 
 
 async def broadcast_to_clients(data: Dict):
@@ -689,12 +682,32 @@ async def update_io_link_config(request: Request):
     if not updates:
         return JSONResponse(content={"success": True, "message": "No changes", "io_link": load_config().get("io_link", {})})
     config = save_config(updates)
+    await al1350.on_config_changed()
     logger.info(f"Config updated: {updates}")
     return JSONResponse(content={
         "success": True,
         "message": "Config saved",
         "io_link": config.get("io_link", {})
     })
+
+
+@app.post("/api/io-link/iotsetup/network/setblock")
+async def io_link_iot_network_setblock(request: Request):
+    """Atomic write of IoT network settings using AL1350 setblock service."""
+    try:
+        body = await request.json()
+    except Exception:
+        raise HTTPException(status_code=400, detail="Invalid JSON body")
+
+    result = await al1350.write_iot_network_setblock(
+        dhcp=body.get("dhcp"),
+        ipaddress_value=body.get("ipaddress"),
+        subnetmask=body.get("subnetmask"),
+        gateway=body.get("ipdefaultgateway"),
+    )
+    if not result.get("success"):
+        raise HTTPException(status_code=502, detail=result.get("error", "setblock failed"))
+    return JSONResponse(content=result)
 
 
 @app.post("/api/io-link/simulate-fault")
@@ -752,6 +765,7 @@ async def io_link_diagnostics():
     disc_secs = sum(e['duration_sec'] for e in recent if e['status'] == 'disconnected')
     uptime_pct = round(max(0.0, (3600 - disc_secs) / 3600 * 100), 1)
     avg_lat = round(sum(p['latency_ms'] for p in poll_latencies) / len(poll_latencies)) if poll_latencies else None
+    extra = al1350.diagnostics_snapshot()
     return JSONResponse({
         'success': True,
         'events': connection_events[-200:],
@@ -763,6 +777,18 @@ async def io_link_diagnostics():
             'avg_latency_ms': avg_lat,
             'current_connected': system_state.get('success', False),
             'last_error': system_state.get('error'),
+            'request_success_rate_pct': extra.get('request_success_rate_pct'),
+            'request_rtt_p50_ms': extra.get('request_rtt_p50_ms'),
+            'request_rtt_p95_ms': extra.get('request_rtt_p95_ms'),
+            'reconnect_count': extra.get('reconnect_count'),
+            'circuit_state': extra.get('circuit_state'),
+            'degraded_mode': extra.get('degraded_mode'),
+            'degraded_reason': extra.get('degraded_reason'),
+            'last_good_data_ts': extra.get('last_good_data_ts'),
+            'port_freshness_age_sec': extra.get('port_freshness_age_sec'),
+            'link': extra.get('link'),
+            'system': extra.get('system'),
+            'master_target': extra.get('master_target'),
         }
     })
 
@@ -772,15 +798,6 @@ async def io_link_port_detail(port_num: int):
     """Get detailed data for a specific IO-Link port including decoded process data"""
     if port_num < 1 or port_num > 4:
         raise HTTPException(status_code=400, detail="Port must be between 1 and 4")
-    
-    config = load_config()
-    io_config = config.get('io_link', {})
-    ip = io_config.get('master_ip', IFM_MASTER_IP)
-    port = io_config.get('port', IFM_MASTER_PORT)
-    timeout = io_config.get('timeout_sec', IFM_TIMEOUT)
-    scheme = 'https' if io_config.get('use_https', False) else 'http'
-    default_port = 443 if scheme == 'https' else 80
-    base_url = f'{scheme}://{ip}' if port == default_port else f'{scheme}://{ip}:{port}'
     
     port_data = {
         'port': port_num,
@@ -796,65 +813,63 @@ async def io_link_port_detail(port_num: int):
         'parameters': {},
         'events': []
     }
-    
-    limits = httpx.Limits(max_connections=3, max_keepalive_connections=0)
-    async with httpx.AsyncClient(limits=limits) as client:
-        # Get port info
-        port_info = await get_ifm_port_info(client, base_url, port_num)
-        port_data.update({
-            'mode': port_info.get('mode', ''),
-            'comm_mode': port_info.get('comm_mode', ''),
-            'vendor_id': port_info.get('vendor_id', ''),
-            'device_id': port_info.get('device_id', ''),
-            'name': port_info.get('name', ''),
-            'serial': port_info.get('serial', '')
-        })
-        
-        # Device type (name-based first, then fallback table)
-        port_data['device_type'] = get_device_type(
-            port_data['vendor_id'],
-            port_data['device_id'],
-            port_data['name']
-        )
-        
-        # Get PDin
-        pdin_raw = port_info.get('pdin', '')
-        if pdin_raw:
-            pdin_hex = pdin_raw.replace(' ', '').replace('0x', '')
-            pdin_bytes = parse_hex_to_bytes(pdin_raw)
-            port_data['pdin'] = {
-                'raw': pdin_raw,
-                'hex': pdin_hex,
-                'bytes': pdin_bytes,
-                'decoded': {}
-            }
-            # Decode PDin by device type
-            dtype = port_data['device_type']
-            if dtype == DEVICE_TYPE_PHOTO_ELECTRIC and pdin_bytes:
-                port_data['pdin']['decoded'] = decode_photo_electric_pdin(pdin_bytes)
-            elif dtype == DEVICE_TYPE_TEMPERATURE and len(pdin_bytes) >= 2:
-                port_data['pdin']['decoded'] = decode_temperature_pdin(pdin_bytes)
-            elif dtype == DEVICE_TYPE_PROXIMITY and pdin_bytes:
-                port_data['pdin']['decoded'] = decode_proximity_pdin(pdin_bytes)
-            elif dtype == DEVICE_TYPE_CAPACITIVE and pdin_bytes:
-                port_data['pdin']['decoded'] = decode_capacitive_pdin(pdin_bytes)
-        
-        # Get PDout and decode
-        pdout_raw = port_info.get('pdout', '')
-        if pdout_raw:
-            pdout_hex = pdout_raw.replace(' ', '').replace('0x', '')
-            pdout_bytes = parse_hex_to_bytes(pdout_raw)
-            port_data['pdout'] = {
-                'raw': pdout_raw,
-                'hex': pdout_hex,
-                'bytes': pdout_bytes,
-                'decoded': {}
-            }
-            if port_data['device_type'] == DEVICE_TYPE_STATUS_LED and len(pdout_bytes) >= 3:
-                port_data['pdout']['decoded'] = decode_cl50_led(pdout_bytes)
-        
-        # Events: overlay simulated faults (real device events would come from a separate Master API if available)
-        port_data['events'] = list(simulated_events_by_port.get(port_num) or [])
+
+    await al1350.on_config_changed()
+    port_info = await al1350.get_port_info(port_num, include_static=True)
+    port_data.update({
+        'mode': port_info.get('mode', ''),
+        'comm_mode': port_info.get('comm_mode', ''),
+        'vendor_id': port_info.get('vendor_id', ''),
+        'device_id': port_info.get('device_id', ''),
+        'name': port_info.get('name', ''),
+        'serial': port_info.get('serial', '')
+    })
+
+    # Device type (name-based first, then fallback table)
+    port_data['device_type'] = get_device_type(
+        port_data['vendor_id'],
+        port_data['device_id'],
+        port_data['name']
+    )
+
+    # Get PDin
+    pdin_raw = port_info.get('pdin', '')
+    if pdin_raw:
+        pdin_hex = pdin_raw.replace(' ', '').replace('0x', '')
+        pdin_bytes = parse_hex_to_bytes(pdin_raw)
+        port_data['pdin'] = {
+            'raw': pdin_raw,
+            'hex': pdin_hex,
+            'bytes': pdin_bytes,
+            'decoded': {}
+        }
+        # Decode PDin by device type
+        dtype = port_data['device_type']
+        if dtype == DEVICE_TYPE_PHOTO_ELECTRIC and pdin_bytes:
+            port_data['pdin']['decoded'] = decode_photo_electric_pdin(pdin_bytes)
+        elif dtype == DEVICE_TYPE_TEMPERATURE and len(pdin_bytes) >= 2:
+            port_data['pdin']['decoded'] = decode_temperature_pdin(pdin_bytes)
+        elif dtype == DEVICE_TYPE_PROXIMITY and pdin_bytes:
+            port_data['pdin']['decoded'] = decode_proximity_pdin(pdin_bytes)
+        elif dtype == DEVICE_TYPE_CAPACITIVE and pdin_bytes:
+            port_data['pdin']['decoded'] = decode_capacitive_pdin(pdin_bytes)
+
+    # Get PDout and decode
+    pdout_raw = port_info.get('pdout', '')
+    if pdout_raw:
+        pdout_hex = pdout_raw.replace(' ', '').replace('0x', '')
+        pdout_bytes = parse_hex_to_bytes(pdout_raw)
+        port_data['pdout'] = {
+            'raw': pdout_raw,
+            'hex': pdout_hex,
+            'bytes': pdout_bytes,
+            'decoded': {}
+        }
+        if port_data['device_type'] == DEVICE_TYPE_STATUS_LED and len(pdout_bytes) >= 3:
+            port_data['pdout']['decoded'] = decode_cl50_led(pdout_bytes)
+
+    # Events: overlay simulated faults (real device events would come from a separate Master API if available)
+    port_data['events'] = list(simulated_events_by_port.get(port_num) or [])
     
     return JSONResponse(content={
         'success': True,
@@ -940,6 +955,24 @@ async def favicon():
 async def health_check():
     """Health check endpoint"""
     return {"status": "healthy", "clients": len(connected_clients)}
+
+
+@app.get("/api/system/health")
+async def system_health():
+    """System health for admin observability."""
+    diag = al1350.diagnostics_snapshot()
+    return JSONResponse(
+        {
+            "success": True,
+            "timestamp": time.time(),
+            "hostname": socket.gethostname(),
+            "io_link_connected": bool(system_state.get("success")),
+            "degraded_mode": bool(diag.get("degraded_mode")),
+            "system": diag.get("system", {}),
+            "link": diag.get("link", {}),
+            "master_target": diag.get("master_target", {}),
+        }
+    )
 
 
 @app.get("/{file_name}", include_in_schema=False)

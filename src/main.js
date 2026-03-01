@@ -6176,6 +6176,7 @@ app.innerHTML = `
       <span class="text-base-content/60 text-sm">Data source: <span id="dataSource">-</span></span>
       <span class="text-base-content/60 text-sm">Last update: <span id="lastUpdate">-</span></span>
       <span class="text-base-content/60 text-sm">Poll: <span id="pollInterval">-</span></span>
+      <span id="connDegraded" class="badge badge-warning badge-sm hidden">Degraded</span>
       <a href="#" data-page="settings" class="btn btn-ghost btn-sm ml-2">Settings</a>
     </div>
 
@@ -7498,27 +7499,38 @@ setTimeout(() => {
     return fetch(url, { signal: controller.signal }).finally(() => clearTimeout(timer));
   }
 
-  function updateBar(success, source, error) {
+  function updateBar(success, source, error, degradedMode, degradedReason) {
     const glow = document.getElementById('connectionGlow');
     const status = document.getElementById('connectionStatus');
     const ds = document.getElementById('dataSource');
     const last = document.getElementById('lastUpdate');
+    const degraded = document.getElementById('connDegraded');
     if (success) {
       if (glow) glow.className = 'connection-glow-dot glow-green';
       if (status) { status.textContent = 'Connected'; status.className = 'font-medium text-success'; }
       if (ds) ds.textContent = source || 'iot_core';
       if (last) last.textContent = new Date().toLocaleTimeString();
+      if (degraded) {
+        if (degradedMode) {
+          degraded.classList.remove('hidden');
+          degraded.title = degradedReason || 'Running in fallback mode';
+        } else {
+          degraded.classList.add('hidden');
+          degraded.title = '';
+        }
+      }
     } else {
       if (glow) glow.className = 'connection-glow-dot glow-red';
       if (status) { status.textContent = error ? 'Error' : 'Disconnected'; status.className = 'font-medium text-error'; }
+      if (degraded) degraded.classList.add('hidden');
     }
   }
 
   function poll() {
     fetchWithTimeout(`${_apiBase}/api/io-link/status`, 4000)
       .then(r => r.json())
-      .then(d => updateBar(d.success, d.source, d.error))
-      .catch(() => updateBar(false, null, true));
+      .then(d => updateBar(d.success, d.source, d.error, d.degraded_mode, d.degraded_reason))
+      .catch(() => updateBar(false, null, true, false, ''));
   }
 
   poll();
