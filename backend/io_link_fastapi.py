@@ -7,7 +7,6 @@ from fastapi import FastAPI, WebSocket, WebSocketDisconnect, HTTPException, Requ
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, FileResponse, HTMLResponse, RedirectResponse, Response
 from fastapi.staticfiles import StaticFiles
-from starlette.middleware.base import BaseHTTPMiddleware
 import asyncio
 import httpx
 import json
@@ -40,12 +39,41 @@ logger = logging.getLogger(__name__)
 # Get directory paths
 _BACKEND_DIR = os.path.dirname(os.path.abspath(__file__))
 _FRONTEND_DIR = os.path.normpath(os.path.join(_BACKEND_DIR, '..', 'frontend'))
+_DIST_DIR = os.path.normpath(os.path.join(_BACKEND_DIR, '..', 'dist'))
+_PUBLIC_DIR = os.path.normpath(os.path.join(_BACKEND_DIR, '..', 'public'))
 logger.info(f"Backend directory: {_BACKEND_DIR}")
 logger.info(f"Frontend directory: {_FRONTEND_DIR}")
+logger.info(f"Dist directory: {_DIST_DIR}")
+logger.info(f"Public directory: {_PUBLIC_DIR}")
 logger.info(f"Frontend exists: {os.path.exists(_FRONTEND_DIR)}")
 if os.path.exists(_FRONTEND_DIR):
     io_link_html = os.path.join(_FRONTEND_DIR, 'io-link.html')
     logger.info(f"io-link.html exists: {os.path.exists(io_link_html)}")
+logger.info(f"Dist exists: {os.path.exists(_DIST_DIR)}")
+
+
+def get_frontend_entry_path() -> Optional[str]:
+    """Return the preferred HTML entry file for the UI."""
+    candidates = [
+        os.path.join(_DIST_DIR, 'index.html'),
+        os.path.join(_FRONTEND_DIR, 'index.html'),
+        os.path.join(_FRONTEND_DIR, 'io-link.html'),
+    ]
+    for path in candidates:
+        if os.path.exists(path):
+            return path
+    return None
+
+
+def get_root_static_file_path(file_name: str) -> Optional[str]:
+    """Return absolute path for root-level static files used by the frontend."""
+    if not file_name or '/' in file_name or '\\' in file_name:
+        return None
+    for base_dir in (_DIST_DIR, _PUBLIC_DIR, _FRONTEND_DIR):
+        candidate = os.path.join(base_dir, file_name)
+        if os.path.isfile(candidate):
+            return candidate
+    return None
 
 # Create FastAPI app - disable default root
 app = FastAPI(
@@ -56,12 +84,17 @@ app = FastAPI(
 )
 
 # Mount static files FIRST (before routes) - this is important!
-if os.path.exists(_FRONTEND_DIR):
-    # Mount assets directory for CSS, JS, images
-    assets_dir = os.path.join(_FRONTEND_DIR, 'assets')
-    if os.path.exists(assets_dir):
-        app.mount("/assets", StaticFiles(directory=assets_dir), name="assets")
-        logger.info(f"Mounted /assets from {assets_dir}")
+assets_dir = None
+dist_assets_dir = os.path.join(_DIST_DIR, 'assets')
+legacy_assets_dir = os.path.join(_FRONTEND_DIR, 'assets')
+if os.path.exists(dist_assets_dir):
+    assets_dir = dist_assets_dir
+elif os.path.exists(legacy_assets_dir):
+    assets_dir = legacy_assets_dir
+
+if assets_dir:
+    app.mount("/assets", StaticFiles(directory=assets_dir), name="assets")
+    logger.info(f"Mounted /assets from {assets_dir}")
 
 # Enable CORS for frontend
 app.add_middleware(
@@ -71,22 +104,6 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
-# Middleware to serve frontend at root
-class RootMiddleware(BaseHTTPMiddleware):
-    async def dispatch(self, request: Request, call_next):
-        if request.url.path == "/" and request.method == "GET":
-            index_path = os.path.join(_FRONTEND_DIR, 'io-link.html')
-            if os.path.exists(index_path):
-                try:
-                    with open(index_path, 'r', encoding='utf-8') as f:
-                        html_content = f.read()
-                    return HTMLResponse(content=html_content)
-                except Exception as e:
-                    logger.error(f"Error serving root: {e}")
-        return await call_next(request)
-
-app.add_middleware(RootMiddleware)
 
 # Global state
 system_state = {
@@ -710,7 +727,9 @@ async def io_link_port_detail(port_num: int):
 
 @app.get("/learn", response_class=HTMLResponse)
 async def serve_learn_page():
-    """Serve the Learn page (Smart Sensors, Industry 4.0, IoT)."""
+    """Serve the Learn page; when SPA build exists, route back to root app."""
+    if os.path.exists(os.path.join(_DIST_DIR, 'index.html')):
+        return RedirectResponse(url="/", status_code=307)
     learn_path = os.path.join(_FRONTEND_DIR, 'learn.html')
     if not os.path.exists(learn_path):
         raise HTTPException(status_code=404, detail="learn.html not found")
@@ -720,7 +739,9 @@ async def serve_learn_page():
 
 @app.get("/worksheets", response_class=HTMLResponse)
 async def serve_worksheets_page():
-    """Serve the Worksheets page (IO-Link Industrial Maintenance)."""
+    """Serve the Worksheets page; when SPA build exists, route back to root app."""
+    if os.path.exists(os.path.join(_DIST_DIR, 'index.html')):
+        return RedirectResponse(url="/", status_code=307)
     worksheets_path = os.path.join(_FRONTEND_DIR, 'worksheets.html')
     if not os.path.exists(worksheets_path):
         raise HTTPException(status_code=404, detail="worksheets.html not found")
@@ -730,12 +751,8 @@ async def serve_worksheets_page():
 
 @app.get("/io-link.html", response_class=HTMLResponse)
 async def io_link_page():
-    """Serve the IO-Link HTML page"""
-    index_path = r'c:\Users\HamedA\Documents\IO-Link IM\frontend\io-link.html'
-    if os.path.exists(index_path):
-        with open(index_path, 'r', encoding='utf-8') as f:
-            return HTMLResponse(content=f.read())
-    raise HTTPException(status_code=404, detail=f"io-link.html not found at {index_path}")
+    """Compatibility route for legacy bookmarks."""
+    return await serve_frontend()
 
 
 @app.get("/test-root")
@@ -747,15 +764,15 @@ async def test_root():
 # Define root route - MUST be after all other route definitions
 @app.get("/", response_class=HTMLResponse, include_in_schema=False)
 async def serve_frontend():
-    """Serve the IO-Link frontend page at root URL"""
-    index_path = os.path.join(_FRONTEND_DIR, 'io-link.html')
+    """Serve frontend entry at root URL (dist first, then legacy fallback)."""
+    index_path = get_frontend_entry_path()
     
     logger.info(f"Root route called - serving: {index_path}")
     
-    if not os.path.exists(index_path):
+    if not index_path:
         logger.error(f"Frontend file not found: {index_path}")
         return HTMLResponse(
-            content=f"<h1>Frontend Not Found</h1><p>File: {index_path}</p>",
+            content="<h1>Frontend Not Found</h1><p>No usable frontend entry file found.</p>",
             status_code=404
         )
     
@@ -774,7 +791,10 @@ async def serve_frontend():
 
 @app.get("/favicon.ico")
 async def favicon():
-    """Serve favicon to avoid 404. 204 = no body; browser uses link tag icon from page."""
+    """Serve favicon if present; fallback to 204."""
+    icon_path = get_root_static_file_path("favicon.ico")
+    if icon_path:
+        return FileResponse(icon_path)
     return Response(status_code=204)
 
 
@@ -782,3 +802,12 @@ async def favicon():
 async def health_check():
     """Health check endpoint"""
     return {"status": "healthy", "clients": len(connected_clients)}
+
+
+@app.get("/{file_name}", include_in_schema=False)
+async def serve_root_static(file_name: str):
+    """Serve root-level frontend static files (e.g., matrix.png, favicon.svg)."""
+    static_path = get_root_static_file_path(file_name)
+    if static_path:
+        return FileResponse(static_path)
+    raise HTTPException(status_code=404, detail="Not found")

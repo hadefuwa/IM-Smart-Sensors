@@ -26,7 +26,7 @@ let cycleCountHistory = [];
 const MAX_HISTORY_POINTS = 50;
 
 // API/WebSocket base
-const API_BASE = window.IO_LINK_API_BASE || 'http://localhost:8000';
+const API_BASE = window.IO_LINK_API_BASE || window.location.origin;
 const WS_BASE = API_BASE.replace(/^http/, 'ws');
 
 /**
@@ -125,7 +125,7 @@ export function renderHomePage() {
         <!-- Terminal Log (Right column) -->
         <div class="lg:col-span-1">
           <div class="card bg-base-200 shadow-xl h-full">
-            <div class="card-body p-0 flex flex-col" style="min-height: 500px;">
+            <div class="card-body p-0 flex flex-col terminal-panel-body">
               <div id="terminal-log-container" class="flex-1"></div>
             </div>
           </div>
@@ -138,7 +138,7 @@ export function renderHomePage() {
           <h2 class="card-title text-base-content mb-4">Health & Heartbeat</h2>
           
           <div class="overflow-x-auto">
-            <table class="table table-zebra">
+            <table class="table table-zebra touch-stack-table">
               <thead>
                 <tr>
                   <th>Component</th>
@@ -149,10 +149,10 @@ export function renderHomePage() {
               </thead>
               <tbody id="health-table-body">
                 <tr>
-                  <td>IO-Link Master</td>
-                  <td><span class="badge badge-ghost">Checking...</span></td>
-                  <td>-</td>
-                  <td>-</td>
+                  <td data-label="Component">IO-Link Master</td>
+                  <td data-label="Status"><span class="badge badge-ghost">Checking...</span></td>
+                  <td data-label="Last Update">-</td>
+                  <td data-label="Events">-</td>
                 </tr>
               </tbody>
             </table>
@@ -818,16 +818,16 @@ function updateHealthTable(data) {
 
   tbody.innerHTML = `
     <tr>
-      <td>IO-Link Master</td>
-      <td><span class="badge ${isConnected ? 'badge-success' : 'badge-error'}">${isConnected ? 'Connected' : 'Disconnected'}</span></td>
-      <td>${lastUpdate}</td>
-      <td>${activePortsCount} active ports</td>
+      <td data-label="Component">IO-Link Master</td>
+      <td data-label="Status"><span class="badge ${isConnected ? 'badge-success' : 'badge-error'}">${isConnected ? 'Connected' : 'Disconnected'}</span></td>
+      <td data-label="Last Update">${lastUpdate}</td>
+      <td data-label="Events">${activePortsCount} active ports</td>
     </tr>
     <tr>
-      <td>All Sensors</td>
-      <td><span class="badge badge-success">Online</span></td>
-      <td>${lastUpdate}</td>
-      <td>No faults</td>
+      <td data-label="Component">All Sensors</td>
+      <td data-label="Status"><span class="badge badge-success">Online</span></td>
+      <td data-label="Last Update">${lastUpdate}</td>
+      <td data-label="Events">No faults</td>
     </tr>
   `;
 }

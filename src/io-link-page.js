@@ -6,13 +6,13 @@
 import Chart from 'chart.js/auto';
 
 // API/WebSocket base – when using Vite dev server (e.g. 5173), point to FastAPI (8000)
-const API_BASE = window.IO_LINK_API_BASE || 'http://localhost:8000';
+const API_BASE = window.IO_LINK_API_BASE || window.location.origin;
 const WS_BASE = API_BASE.replace(/^http/, 'ws');
 
 export function renderIOLinkMaster() {
   const learnUrl = `${API_BASE}/learn`;
   return `
-    <div class="space-y-4">
+    <div class="space-y-4 io-link-page">
       <div class="flex flex-wrap items-center justify-between gap-2">
         <div>
           <h1 class="text-2xl font-bold text-base-content">IO-Link Master</h1>
@@ -43,7 +43,7 @@ export function renderIOLinkMaster() {
           <h2 class="card-title text-base-content">Port Status</h2>
           <p class="text-sm text-base-content/70">IO-Link ports and connected devices</p>
           <div class="overflow-x-auto">
-            <table class="table table-zebra table-pin-rows">
+            <table class="table table-zebra table-pin-rows touch-stack-table">
               <thead>
                 <tr>
                   <th>Port</th>
@@ -114,14 +114,14 @@ export function renderIOLinkMaster() {
           <p class="text-sm text-base-content/70">See how the dashboard reacts to a fault without touching hardware</p>
           <div class="flex flex-wrap items-center gap-3 mt-2">
             <span class="text-sm">Port:</span>
-            <select id="simulateFaultPort" class="select select-bordered select-sm w-20">
+            <select id="simulateFaultPort" class="select select-bordered select-sm touch-fault-port">
               <option value="1">1</option>
               <option value="2">2</option>
               <option value="3">3</option>
               <option value="4">4</option>
             </select>
             <span class="text-sm">Fault:</span>
-            <select id="simulateFaultEvent" class="select select-bordered select-sm w-48">
+            <select id="simulateFaultEvent" class="select select-bordered select-sm touch-fault-event">
               <option value="">-- Select fault --</option>
               <option value='{"code":"0x01","label":"Wire break"}'>Wire break</option>
               <option value='{"code":"0x02","label":"Short circuit"}'>Short circuit</option>
@@ -230,16 +230,16 @@ function updatePortTable(ports) {
     const row = document.createElement('tr');
     if (isActive) row.className = 'bg-success/20';
     row.innerHTML = `
-      <td>${p.port}</td>
-      <td>${escapeHtml(p.mode || '-')}</td>
-      <td>${escapeHtml(p.comm_mode || '-')}</td>
-      <td>${escapeHtml(p.master_cycle_time || '-')}</td>
-      <td>${escapeHtml(p.vendor_id || '-')}</td>
-      <td>${escapeHtml(p.device_id || '-')}</td>
-      <td>${escapeHtml(p.name || '-')}</td>
-      <td>${escapeHtml(p.serial || '-')}</td>
-      <td><code class="text-xs">${escapeHtml(pdin)}</code></td>
-      <td><code class="text-xs">${escapeHtml(pdout)}</code></td>
+      <td data-label="Port">${p.port}</td>
+      <td data-label="Mode">${escapeHtml(p.mode || '-')}</td>
+      <td data-label="Comm. Mode">${escapeHtml(p.comm_mode || '-')}</td>
+      <td data-label="MasterCycle">${escapeHtml(p.master_cycle_time || '-')}</td>
+      <td data-label="Vendor ID">${escapeHtml(p.vendor_id || '-')}</td>
+      <td data-label="Device ID">${escapeHtml(p.device_id || '-')}</td>
+      <td data-label="Name">${escapeHtml(p.name || '-')}</td>
+      <td data-label="Serial">${escapeHtml(p.serial || '-')}</td>
+      <td data-label="PD In"><code class="text-xs">${escapeHtml(pdin)}</code></td>
+      <td data-label="PD Out"><code class="text-xs">${escapeHtml(pdout)}</code></td>
     `;
     tbody.appendChild(row);
   }

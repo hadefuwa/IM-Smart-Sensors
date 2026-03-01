@@ -5957,7 +5957,7 @@ const app = document.querySelector('#app');
 app.innerHTML = `
   <div class="min-h-screen flex flex-col">
     <!-- Header -->
-    <header class="navbar bg-base-200 px-4">
+    <header class="navbar bg-base-200 px-3 touch-navbar">
       <!-- Left: Menu Toggle + Matrix Logo -->
       <div class="flex-none flex items-center gap-2">
         <button id="sidebar-toggle" class="btn btn-ghost btn-sm btn-square">
@@ -5970,15 +5970,15 @@ app.innerHTML = `
         </a>
       </div>
       <!-- Center: Title -->
-      <div class="flex-1 flex justify-center">
-        <span class="text-xl font-bold">Industrial Maintenance - Smart Sensors</span>
+      <div class="flex-1 flex justify-center min-w-0 px-2">
+        <span class="text-xl font-bold truncate touch-header-title" title="Industrial Maintenance - Smart Sensors">Industrial Maintenance - Smart Sensors</span>
       </div>
       <!-- Right: IO-Link logo + Theme -->
-      <div class="flex-none flex items-center gap-4">
+      <div class="flex-none flex items-center gap-3 touch-header-actions">
         <a href="https://io-link.com/" target="_blank" rel="noopener noreferrer" class="io-link-header-logo flex items-center shrink-0" id="header-io-link-logo" title="IO-Link - the first globally standardized IO technology">
           <img src="${import.meta.env.BASE_URL}assets/img/Logo_IO-link.svg" alt="IO-Link" class="h-8 w-auto max-h-8 object-contain" />
         </a>
-        <div class="form-control">
+        <div class="form-control touch-theme-control">
           <label class="label cursor-pointer gap-2">
             <span class="label-text">Theme</span>
             <select id="theme-select" class="select select-bordered select-sm">

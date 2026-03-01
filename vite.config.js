@@ -1,6 +1,6 @@
 import { defineConfig } from 'vite';
 
 export default defineConfig({
-  // GitHub Pages project site base path: https://hadefuwa.github.io/IM-Smart-Sensors/
-  base: '/IM-Smart-Sensors/'
+  // Default to root for local/Pi hosting; override in CI for GitHub Pages.
+  base: process.env.VITE_BASE_PATH || '/'
 });

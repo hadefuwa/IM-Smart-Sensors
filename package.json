@@ -17,6 +17,7 @@
   },
   "dependencies": {
     "chart.js": "^4.5.1",
-    "nouislider": "^15.8.1"
+    "nouislider": "^15.8.1",
+    "ssh2": "^1.17.0"
   }
 }
