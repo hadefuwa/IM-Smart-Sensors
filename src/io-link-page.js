@@ -22,7 +22,7 @@ export function renderIOLinkMaster() {
       </div>
 
       <!-- Status card + device image -->
-      <div class="grid grid-cols-1 lg:grid-cols-4 gap-4">
+      <div class="grid grid-cols-1 xl:grid-cols-4 gap-4">
         <div class="card bg-base-200 shadow-xl min-h-0 flex flex-col">
           <div class="card-body items-center justify-center text-center flex-1 min-h-[16rem] lg:min-h-[20rem]">
             <img id="productImage" src="${typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.BASE_URL ? import.meta.env.BASE_URL + 'assets/img/AL1350.png' : '/assets/img/AL1350.png'}" alt="AL1350 IO-Link Master" class="w-full max-w-full h-auto max-h-72 object-contain" onerror="this.style.display='none'; document.getElementById('productImagePlaceholder')?.classList.remove('hidden');" />

@@ -49,7 +49,7 @@ export function renderHomePage() {
           <h2 class="card-title text-base-content mb-4">Current State Overview</h2>
           
           <!-- Mimic Components Grid -->
-          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
+          <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-5 gap-4">
             <!-- IO-Link Master Status -->
             <div id="mimic-master" class="mimic-component"></div>
             
@@ -69,9 +69,9 @@ export function renderHomePage() {
       </div>
 
       <!-- Main Content: Condition Monitoring + Terminal Log -->
-      <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+      <div class="grid grid-cols-1 xl:grid-cols-3 gap-4">
         <!-- Condition Monitoring Zone (Left 2 columns) -->
-        <div class="lg:col-span-2 space-y-4">
+        <div class="xl:col-span-2 space-y-4">
           <!-- Temperature Trend -->
           <div class="card bg-base-200 shadow-xl">
             <div class="card-body">

@@ -5938,11 +5938,19 @@ function renderDatasheetPage() {
 
       <div class="card bg-base-200 shadow-xl">
         <div class="card-body p-2 md:p-3">
-          <iframe
-            title="AL1350 Datasheet"
-            src="${pdfPath}#view=FitH"
+          <object
+            data="${pdfPath}#view=FitH"
+            type="application/pdf"
             class="w-full h-[68vh] min-h-[460px] rounded-lg border border-base-300 bg-base-100"
-          ></iframe>
+          >
+            <div class="flex flex-col items-center justify-center h-full p-8 text-center">
+              <svg class="w-16 h-16 text-base-content/30 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/>
+              </svg>
+              <p class="text-base-content/70 mb-4">PDF viewer not available in your browser.</p>
+              <a href="${pdfPath}" target="_blank" rel="noopener noreferrer" class="btn btn-primary btn-sm">Open PDF in New Tab</a>
+            </div>
+          </object>
         </div>
       </div>
     </div>
@@ -6056,11 +6064,19 @@ function renderUserManualPage() {
 
       <div class="card bg-base-200 shadow-xl">
         <div class="card-body p-2 md:p-3">
-          <iframe
-            title="AL1350 User Manual"
-            src="${manualPath}#view=FitH"
+          <object
+            data="${manualPath}#view=FitH"
+            type="application/pdf"
             class="w-full h-[68vh] min-h-[460px] rounded-lg border border-base-300 bg-base-100"
-          ></iframe>
+          >
+            <div class="flex flex-col items-center justify-center h-full p-8 text-center">
+              <svg class="w-16 h-16 text-base-content/30 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/>
+              </svg>
+              <p class="text-base-content/70 mb-4">PDF viewer not available in your browser.</p>
+              <a href="${manualPath}" target="_blank" rel="noopener noreferrer" class="btn btn-primary btn-sm">Open PDF in New Tab</a>
+            </div>
+          </object>
         </div>
       </div>
     </div>
@@ -7314,19 +7330,23 @@ setTimeout(() => {
 
   if (!sidebar || !sidebarToggle) return;
 
+  const isTouchKioskLayout = () =>
+    window.matchMedia('(pointer: coarse)').matches ||
+    (window.innerWidth <= 1280 && window.innerHeight <= 900);
+
   // Load saved sidebar state (desktop only)
   const savedSidebarState = localStorage.getItem('matrix-sidebar-collapsed');
   const isCollapsed = savedSidebarState === 'true';
 
   // Apply saved state on page load (desktop only)
-  if (isCollapsed && window.innerWidth >= 768) {
+  if (isCollapsed && window.innerWidth >= 768 && !isTouchKioskLayout()) {
     sidebar.classList.add('w-0', 'overflow-hidden');
     sidebar.classList.remove('w-72');
   }
 
   // Toggle sidebar function
   function toggleSidebar() {
-    const isMobile = window.innerWidth < 768;
+    const isMobile = window.innerWidth < 768 || isTouchKioskLayout();
     
     if (isMobile) {
       // Mobile: toggle drawer (translate-x)
@@ -7369,7 +7389,7 @@ setTimeout(() => {
   // Add event listener to close button (mobile)
   if (sidebarClose) {
     sidebarClose.addEventListener('click', () => {
-      const isMobile = window.innerWidth < 768;
+      const isMobile = window.innerWidth < 768 || isTouchKioskLayout();
       if (isMobile) {
         toggleSidebar();
       }
@@ -7379,7 +7399,7 @@ setTimeout(() => {
   // Close mobile sidebar when clicking backdrop
   if (sidebarBackdrop) {
     sidebarBackdrop.addEventListener('click', () => {
-      const isMobile = window.innerWidth < 768;
+      const isMobile = window.innerWidth < 768 || isTouchKioskLayout();
       if (isMobile && !sidebar.classList.contains('-translate-x-full')) {
         toggleSidebar();
       }
@@ -7391,7 +7411,7 @@ setTimeout(() => {
   if (sidebarMenu) {
     sidebarMenu.addEventListener('click', (e) => {
       const link = e.target.closest('a[data-page]');
-      if (link && window.innerWidth < 768) {
+      if (link && (window.innerWidth < 768 || isTouchKioskLayout())) {
         // Close sidebar on mobile after selecting a menu item
         setTimeout(() => {
           if (!sidebar.classList.contains('-translate-x-full')) {
@@ -7430,7 +7450,7 @@ setTimeout(() => {
   window.addEventListener('resize', () => {
     clearTimeout(resizeTimer);
     resizeTimer = setTimeout(() => {
-      const isMobile = window.innerWidth < 768;
+      const isMobile = window.innerWidth < 768 || isTouchKioskLayout();
       if (isMobile) {
         // On mobile, ensure sidebar is closed by default
         sidebar.classList.add('-translate-x-full');
