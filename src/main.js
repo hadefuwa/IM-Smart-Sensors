@@ -7490,6 +7490,15 @@ setTimeout(() => {
 (function startGlobalConnectionPoller() {
   const _apiBase = window.IO_LINK_API_BASE || window.location.origin;
 
+  function fetchWithTimeout(url, timeoutMs) {
+    if (typeof AbortSignal !== 'undefined' && typeof AbortSignal.timeout === 'function') {
+      return fetch(url, { signal: AbortSignal.timeout(timeoutMs) });
+    }
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), timeoutMs);
+    return fetch(url, { signal: controller.signal }).finally(() => clearTimeout(timer));
+  }
+
   function updateBar(success, source, error) {
     const glow = document.getElementById('connectionGlow');
     const status = document.getElementById('connectionStatus');
@@ -7507,7 +7516,7 @@ setTimeout(() => {
   }
 
   function poll() {
-    fetch(`${_apiBase}/api/io-link/status`, { signal: AbortSignal.timeout(4000) })
+    fetchWithTimeout(`${_apiBase}/api/io-link/status`, 4000)
       .then(r => r.json())
       .then(d => updateBar(d.success, d.source, d.error))
       .catch(() => updateBar(false, null, true));
