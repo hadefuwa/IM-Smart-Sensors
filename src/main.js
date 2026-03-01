@@ -5949,6 +5949,53 @@ function renderDatasheetPage() {
   `;
 }
 
+function render3DModelsPage() {
+  const stpPath = `${import.meta.env.BASE_URL}assets/CAD_STP_ASI_0183.stp`;
+  const satPath = `${import.meta.env.BASE_URL}assets/CAD_SAT_ASI_0183.sat`;
+  return `
+    <div class="space-y-4">
+      <div class="card bg-base-200 shadow-xl">
+        <div class="card-body">
+          <h1 class="text-2xl font-bold text-base-content">3D Models</h1>
+          <p class="text-base-content/70">CAD files for ALI_0183. Open or download the source model files below.</p>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <div class="card bg-base-200 shadow-xl">
+          <div class="card-body">
+            <h2 class="card-title text-base-content">CAD_STP_ASI_0183.stp</h2>
+            <p class="text-sm text-base-content/70">STEP format, suitable for CAD interchange and manufacturing workflows.</p>
+            <div class="mockup-code text-xs mt-2">
+              <pre><code>Format: STEP (.stp)</code></pre>
+              <pre><code>Asset: /assets/CAD_STP_ASI_0183.stp</code></pre>
+            </div>
+            <div class="card-actions justify-end mt-3">
+              <a href="${stpPath}" target="_blank" rel="noopener noreferrer" class="btn btn-outline btn-sm">Open File</a>
+              <a href="${stpPath}" download class="btn btn-primary btn-sm">Download</a>
+            </div>
+          </div>
+        </div>
+
+        <div class="card bg-base-200 shadow-xl">
+          <div class="card-body">
+            <h2 class="card-title text-base-content">CAD_SAT_ASI_0183.sat</h2>
+            <p class="text-sm text-base-content/70">ACIS SAT format, commonly used for solid geometry exchange.</p>
+            <div class="mockup-code text-xs mt-2">
+              <pre><code>Format: ACIS SAT (.sat)</code></pre>
+              <pre><code>Asset: /assets/CAD_SAT_ASI_0183.sat</code></pre>
+            </div>
+            <div class="card-actions justify-end mt-3">
+              <a href="${satPath}" target="_blank" rel="noopener noreferrer" class="btn btn-outline btn-sm">Open File</a>
+              <a href="${satPath}" download class="btn btn-primary btn-sm">Download</a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
 // ================================================================
 // PAGE REGISTRY
 // ================================================================
@@ -5976,6 +6023,7 @@ const PAGES = {
   'about': renderAboutPage,
   'io-link-master': renderIOLinkMaster,
   'datasheet': renderDatasheetPage,
+  'models-3d': render3DModelsPage,
   'learn': renderLearnPage,
   'worksheets': renderWorksheetsPage,
   'settings': renderSettingsPage
@@ -6070,6 +6118,7 @@ app.innerHTML = `
           <li><a href="#" data-page="home">HMI Dashboard</a></li>
           <li><a href="#" data-page="io-link-master">IO-Link Master</a></li>
           <li><a href="#" data-page="datasheet">Datasheet</a></li>
+          <li><a href="#" data-page="models-3d">3D Models</a></li>
           <li><a href="#" data-page="worksheets">Worksheets</a></li>
           <li><a href="#" data-page="learn">Further Study</a></li>
           <li><a href="#" data-page="settings">Settings</a></li>
