@@ -5955,7 +5955,7 @@ const PAGES = {
 const app = document.querySelector('#app');
 
 app.innerHTML = `
-  <div class="min-h-screen flex flex-col">
+  <div class="h-screen overflow-hidden flex flex-col">
     <!-- Header -->
     <header class="navbar bg-base-200 px-3 touch-navbar">
       <!-- Left: Menu Toggle + Matrix Logo -->
@@ -6009,12 +6009,12 @@ app.innerHTML = `
     </div>
 
     <!-- Body with sidebar + main content -->
-    <div class="flex flex-1 bg-base-100 relative">
+    <div class="flex flex-1 min-h-0 bg-base-100 relative overflow-hidden">
       <!-- Mobile backdrop overlay -->
       <div id="sidebar-backdrop" class="fixed inset-0 bg-black/50 z-40 hidden transition-opacity duration-300 md:hidden"></div>
       
       <!-- Sidebar -->
-      <aside id="sidebar" class="fixed md:static inset-y-0 left-0 z-50 w-72 border-r border-base-300 bg-base-200 transition-all duration-300 ease-in-out transform -translate-x-full md:translate-x-0 md:block flex flex-col overflow-hidden">
+      <aside id="sidebar" class="fixed md:static inset-y-0 left-0 z-50 w-72 border-r border-base-300 bg-base-200 transition-all duration-300 ease-in-out transform -translate-x-full md:translate-x-0 md:block flex flex-col overflow-hidden min-h-0">
         <!-- Close button for mobile -->
         <div class="flex justify-end p-4 md:hidden border-b border-base-300 flex-shrink-0">
           <button id="sidebar-close" class="btn btn-ghost btn-sm btn-square">
@@ -6067,7 +6067,7 @@ app.innerHTML = `
       </aside>
 
       <!-- Main content -->
-      <main id="main-content" class="flex-1 p-4 space-y-4">
+      <main id="main-content" class="flex-1 min-h-0 overflow-y-auto overscroll-contain p-4 space-y-4">
         <!-- Content will be inserted here based on selected page -->
       </main>
     </div>
