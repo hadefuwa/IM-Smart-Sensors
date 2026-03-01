@@ -10,6 +10,14 @@ body,
   overflow-x: hidden;
 }
 
+:root {
+  --motion-ease-standard: cubic-bezier(0.22, 1, 0.36, 1);
+  --motion-ease-spring: cubic-bezier(0.175, 0.885, 0.32, 1.1);
+  --motion-fast: 180ms;
+  --motion-mid: 360ms;
+  --motion-slow: 700ms;
+}
+
 /* ================================================================
    HEADER - IO-Link logo
    ================================================================ */
@@ -481,11 +489,126 @@ body,
 
 /* Card Hover Effects */
 .card {
-  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+  transition:
+    transform var(--motion-mid) var(--motion-ease-standard),
+    box-shadow var(--motion-mid) var(--motion-ease-standard),
+    border-color var(--motion-mid) var(--motion-ease-standard);
+}
+
+.card::before {
+  content: "";
+  position: absolute;
+  inset: -45%;
+  background: radial-gradient(circle, rgba(34, 197, 94, 0.18) 0%, rgba(34, 197, 94, 0) 62%);
+  opacity: 0;
+  transform: translate3d(-16%, -16%, 0);
+  transition:
+    opacity var(--motion-mid) var(--motion-ease-standard),
+    transform var(--motion-slow) var(--motion-ease-standard);
+  pointer-events: none;
 }
 
 .card:hover {
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+  transform: translateY(-4px) scale(1.004);
+  box-shadow: 0 16px 36px rgba(0, 0, 0, 0.35);
+}
+
+.card:hover::before,
+.card:focus-within::before {
+  opacity: 1;
+  transform: translate3d(0, 0, 0);
+}
+
+.btn,
+.menu li > a,
+.select,
+.input {
+  transition:
+    transform var(--motion-fast) var(--motion-ease-standard),
+    box-shadow var(--motion-fast) var(--motion-ease-standard),
+    background-color var(--motion-fast) var(--motion-ease-standard),
+    border-color var(--motion-fast) var(--motion-ease-standard);
+}
+
+.btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 8px 20px rgba(34, 197, 94, 0.22);
+}
+
+.btn:active {
+  transform: scale(0.97);
+}
+
+#main-content {
+  position: relative;
+  isolation: isolate;
+}
+
+[data-theme="dark"] #main-content::before {
+  content: "";
+  position: absolute;
+  inset: -28% -24%;
+  z-index: -1;
+  pointer-events: none;
+  background:
+    radial-gradient(circle at 18% 18%, rgba(56, 189, 248, 0.16) 0%, rgba(56, 189, 248, 0) 42%),
+    radial-gradient(circle at 86% 10%, rgba(34, 197, 94, 0.14) 0%, rgba(34, 197, 94, 0) 44%),
+    radial-gradient(circle at 55% 88%, rgba(15, 23, 42, 0.6) 0%, rgba(15, 23, 42, 0) 52%);
+  animation: ambientShift 18s ease-in-out infinite alternate;
+}
+
+[data-theme="light"] #main-content::before {
+  content: "";
+  position: absolute;
+  inset: -28% -24%;
+  z-index: -1;
+  pointer-events: none;
+  background:
+    radial-gradient(circle at 18% 18%, rgba(14, 165, 233, 0.12) 0%, rgba(14, 165, 233, 0) 40%),
+    radial-gradient(circle at 86% 10%, rgba(34, 197, 94, 0.1) 0%, rgba(34, 197, 94, 0) 44%),
+    radial-gradient(circle at 52% 88%, rgba(148, 163, 184, 0.2) 0%, rgba(148, 163, 184, 0) 54%);
+  animation: ambientShift 20s ease-in-out infinite alternate;
+}
+
+@keyframes ambientShift {
+  0% {
+    transform: translate3d(-1%, -1%, 0) scale(1);
+  }
+  50% {
+    transform: translate3d(1.2%, 0.8%, 0) scale(1.02);
+  }
+  100% {
+    transform: translate3d(0.6%, -0.8%, 0) scale(1.01);
+  }
+}
+
+#main-content.page-enter {
+  opacity: 0;
+  transform: translateY(8px);
+}
+
+#main-content.page-enter.page-enter-active {
+  opacity: 1;
+  transform: translateY(0);
+  transition:
+    opacity 420ms var(--motion-ease-standard),
+    transform 420ms var(--motion-ease-standard);
+}
+
+.stagger-in {
+  opacity: 0;
+  transform: translateY(12px) scale(0.992);
+}
+
+#main-content.page-enter.page-enter-active .stagger-in {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+  transition:
+    opacity var(--motion-mid) var(--motion-ease-standard),
+    transform 520ms var(--motion-ease-spring);
+  transition-delay: calc(var(--stagger-index, 0) * 48ms);
 }
 
 /* Input Focus Styles */
@@ -718,6 +841,19 @@ body,
     min-width: 0;
     overflow-x: hidden;
   }
+
+  .card:hover {
+    transform: none;
+    box-shadow: 0 10px 24px rgba(0, 0, 0, 0.32);
+  }
+
+  .card:active {
+    transform: scale(0.99);
+  }
+
+  #main-content.page-enter.page-enter-active .stagger-in {
+    transition-delay: calc(var(--stagger-index, 0) * 28ms);
+  }
 }
 
 /* Shared touch/keyboard feedback (not hover-only). */
@@ -739,4 +875,21 @@ body,
 .learn-chapter-card:focus-visible {
   outline: 2px solid #22c55e;
   outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation: none !important;
+    transition-duration: 1ms !important;
+    transition-delay: 0ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  #main-content.page-enter,
+  .stagger-in {
+    opacity: 1 !important;
+    transform: none !important;
+  }
 }

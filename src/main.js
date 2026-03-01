@@ -6127,6 +6127,28 @@ app.innerHTML = `
 // Store chart instances to clean them up when switching pages
 let activeCharts = [];
 
+function applyPageMotion(mainContent) {
+  if (!mainContent) return;
+
+  mainContent.classList.remove('page-enter', 'page-enter-active');
+
+  const motionTargets = mainContent.querySelectorAll(
+    '.card, .mimic-component, .terminal-log-wrapper, .alert, .stats, section'
+  );
+
+  motionTargets.forEach((el, index) => {
+    el.classList.add('stagger-in');
+    el.style.setProperty('--stagger-index', String(Math.min(index, 14)));
+  });
+
+  requestAnimationFrame(() => {
+    mainContent.classList.add('page-enter');
+    requestAnimationFrame(() => {
+      mainContent.classList.add('page-enter-active');
+    });
+  });
+}
+
 // Simple function to render the requested page into the main content area.
 function renderPage(pageKey) {
   // Clean up existing charts, IO-Link page, and home page (WebSocket, charts)
@@ -6139,9 +6161,11 @@ function renderPage(pageKey) {
   const templateFn = PAGES[pageKey];
   if (!templateFn) {
     mainContent.innerHTML = renderPlaceholder('Page not found');
+    applyPageMotion(mainContent);
     return;
   }
   mainContent.innerHTML = templateFn();
+  applyPageMotion(mainContent);
 
   // Update active class in sidebar
   const sidebarMenu = document.getElementById('sidebar-menu');
