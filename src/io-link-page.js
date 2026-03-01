@@ -25,8 +25,8 @@ export function renderIOLinkMaster() {
       <div class="grid grid-cols-1 lg:grid-cols-4 gap-4">
         <div class="card bg-base-200 shadow-xl min-h-0 flex flex-col">
           <div class="card-body items-center justify-center text-center flex-1 min-h-[16rem] lg:min-h-[20rem]">
-            <img id="productImage" src="${typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.BASE_URL ? import.meta.env.BASE_URL + 'assets/img/AL1300.png' : '/assets/img/AL1300.png'}" alt="AL1300 IO-Link Master" class="w-full max-w-full h-auto max-h-72 object-contain" onerror="this.style.display='none'; document.getElementById('productImagePlaceholder')?.classList.remove('hidden');" />
-            <div id="productImagePlaceholder" class="hidden text-base-content/60">AL1300 IO-Link Master</div>
+            <img id="productImage" src="${typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.BASE_URL ? import.meta.env.BASE_URL + 'assets/img/AL1350.png' : '/assets/img/AL1350.png'}" alt="AL1350 IO-Link Master" class="w-full max-w-full h-auto max-h-72 object-contain" onerror="this.style.display='none'; document.getElementById('productImagePlaceholder')?.classList.remove('hidden');" />
+            <div id="productImagePlaceholder" class="hidden text-base-content/60">AL1350 IO-Link Master</div>
           </div>
         </div>
         <div class="lg:col-span-3 card bg-base-200 shadow-xl">
@@ -209,7 +209,7 @@ function updateUI(data) {
   const img = document.getElementById('productImage');
   const placeholder = document.getElementById('productImagePlaceholder');
   if (img) {
-    img.src = data.device_icon_url || (typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.BASE_URL ? import.meta.env.BASE_URL + 'assets/img/AL1300.png' : '/assets/img/AL1300.png');
+    img.src = data.device_icon_url || (typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.BASE_URL ? import.meta.env.BASE_URL + 'assets/img/AL1350.png' : '/assets/img/AL1350.png');
     img.classList.remove('hidden');
     if (placeholder) placeholder.classList.add('hidden');
   }
@@ -431,10 +431,17 @@ export function loadMasterConfig() {
     .then(r => r.json())
     .then(data => {
       if (data.success && data.io_link) {
+        const c = data.io_link;
         const ipEl = document.getElementById('masterIpInput');
-        if (ipEl) ipEl.value = data.io_link.master_ip || '';
+        if (ipEl) ipEl.value = c.master_ip || '';
         const portEl = document.getElementById('masterPortInput');
-        if (portEl) portEl.value = data.io_link.port != null ? data.io_link.port : '80';
+        if (portEl) portEl.value = c.port != null ? c.port : '80';
+        const timeoutEl = document.getElementById('masterTimeoutInput');
+        if (timeoutEl) timeoutEl.value = c.timeout_sec != null ? c.timeout_sec : '2';
+        const httpsEl = document.getElementById('masterHttpsInput');
+        if (httpsEl) httpsEl.checked = !!c.use_https;
+        const pollEl = document.getElementById('masterPollInput');
+        if (pollEl) pollEl.value = c.poll_interval_sec != null ? c.poll_interval_sec : '1';
       }
     })
     .catch(() => {});
@@ -443,7 +450,11 @@ export function loadMasterConfig() {
 export function saveMasterConfig() {
   const ipEl = document.getElementById('masterIpInput');
   const portEl = document.getElementById('masterPortInput');
+  const timeoutEl = document.getElementById('masterTimeoutInput');
+  const httpsEl = document.getElementById('masterHttpsInput');
+  const pollEl = document.getElementById('masterPollInput');
   const msgEl = document.getElementById('configMessage');
+
   const ip = ipEl && ipEl.value ? ipEl.value.trim() : '';
   if (!ip) {
     if (msgEl) { msgEl.textContent = 'Enter an IP address'; msgEl.className = 'text-sm text-error'; }
@@ -451,11 +462,18 @@ export function saveMasterConfig() {
   }
   let port = portEl && portEl.value ? parseInt(portEl.value, 10) : 80;
   if (isNaN(port) || port < 1 || port > 65535) port = 80;
+  let timeout_sec = timeoutEl && timeoutEl.value ? parseFloat(timeoutEl.value) : 2;
+  if (isNaN(timeout_sec) || timeout_sec < 0.5) timeout_sec = 2;
+  const use_https = httpsEl ? httpsEl.checked : false;
+  let poll_interval_sec = pollEl && pollEl.value ? parseFloat(pollEl.value) : 1;
+  if (isNaN(poll_interval_sec) || poll_interval_sec < 0.5) poll_interval_sec = 1;
+  if (poll_interval_sec > 30) poll_interval_sec = 30;
+
   if (msgEl) { msgEl.textContent = 'Saving...'; msgEl.className = 'text-sm'; }
   fetch(`${API_BASE}/api/io-link/config`, {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ master_ip: ip, port })
+    body: JSON.stringify({ master_ip: ip, port, timeout_sec, use_https, poll_interval_sec })
   })
     .then(r => r.json())
     .then(data => {
@@ -465,8 +483,29 @@ export function saveMasterConfig() {
       }
       setTimeout(() => { if (msgEl) msgEl.textContent = ''; }, 4000);
     })
+    .catch(() => {
+      if (msgEl) { msgEl.textContent = 'Error saving config'; msgEl.className = 'text-sm text-error'; }
+    });
+}
+
+/** Test the current connection to the IO-Link master and update the result element. */
+export function testConnection() {
+  const resultEl = document.getElementById('connectionTestResult');
+  if (resultEl) { resultEl.textContent = 'Testing...'; resultEl.className = 'badge badge-ghost'; }
+  fetch(`${API_BASE}/api/io-link/status`)
+    .then(r => r.json())
+    .then(data => {
+      if (!resultEl) return;
+      if (data.success) {
+        resultEl.textContent = `OK – ${data.device_name || 'Device found'}`;
+        resultEl.className = 'badge badge-success';
+      } else {
+        resultEl.textContent = data.error ? `Failed: ${data.error}` : 'Could not connect';
+        resultEl.className = 'badge badge-error';
+      }
+    })
     .catch(err => {
-      if (msgEl) { msgEl.textContent = 'Error'; msgEl.className = 'text-sm text-error'; }
+      if (resultEl) { resultEl.textContent = 'Network error'; resultEl.className = 'badge badge-error'; }
     });
 }
 

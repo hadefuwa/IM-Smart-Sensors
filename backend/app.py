@@ -3175,20 +3175,20 @@ def io_link_status():
         default_port = 443 if scheme == 'https' else 80
         base_url = f'{scheme}://{ip}' if port == default_port else f'{scheme}://{ip}:{port}'
 
-        # Try web scrape first (1 request) - lighter on device, more stable
-        result = _fetch_io_link_via_web_scrape(base_url, timeout)
+        # Try IoT Core API first (AL1350 is IoT-native; structured JSON response is reliable)
+        result = _fetch_io_link_via_iot_core(base_url, timeout)
         if result is not None:
-            result['source'] = 'web_scrape'
+            result['source'] = 'iot_core'
             result['success'] = True
             result.setdefault('product_image_url', '/api/io-link/product-image')
             result.setdefault('device_icon_url', None)
             _append_supervision_history(result.get('supervision', {}))
             return jsonify(result)
 
-        # Fallback: IoT Core API (many requests - can overwhelm device if polled often)
-        result = _fetch_io_link_via_iot_core(base_url, timeout)
+        # Fallback: HTML scraping (may work with older AL1300-style web UIs)
+        result = _fetch_io_link_via_web_scrape(base_url, timeout)
         if result is not None:
-            result['source'] = 'iot_core'
+            result['source'] = 'web_scrape'
             result['success'] = True
             result.setdefault('product_image_url', '/api/io-link/product-image')
             _append_supervision_history(result.get('supervision', {}))
@@ -3432,12 +3432,12 @@ _IO_LINK_SVG_FALLBACK = '''<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 
   <rect fill="#555" x="58" y="45" width="12" height="20" rx="1"/>
   <rect fill="#555" x="76" y="45" width="12" height="20" rx="1"/>
   <rect fill="#555" x="94" y="45" width="12" height="20" rx="1"/>
-  <text fill="white" font-family="sans-serif" font-size="12" x="100" y="105" text-anchor="middle">AL1300 IO-Link Master</text>
+  <text fill="white" font-family="sans-serif" font-size="12" x="100" y="105" text-anchor="middle">AL1350 IO-Link Master</text>
 </svg>'''
 
 _IO_LINK_PRODUCT_IMAGE_URLS = [
-    'https://www.ifm.com/shared/media/product/AL1300.png',
-    'https://media.ifm.com/images/oe_extern/ifm/gimg/AL1300.png',
+    'https://www.ifm.com/shared/media/product/AL1350.png',
+    'https://media.ifm.com/images/oe_extern/ifm/gimg/AL1350.png',
 ]
 
 
@@ -3445,7 +3445,7 @@ _IO_LINK_PRODUCT_IMAGE_URLS = [
 def io_link_product_image():
     """Serve local product image, proxy from IFM, or SVG fallback (never 404)"""
     try:
-        for fname in ('AL1300.png', 'io-link-master.png'):
+        for fname in ('AL1350.png', 'AL1300.png', 'io-link-master.png'):
             local_path = os.path.normpath(os.path.join(_FRONTEND_DIR, 'assets', 'img', fname))
             if os.path.exists(local_path):
                 return send_from_directory(os.path.dirname(local_path), fname, mimetype='image/png')

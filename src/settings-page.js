@@ -2,7 +2,7 @@
  * Settings page – App settings (theme, etc.) and IO-Link Master connection config.
  */
 
-import { loadMasterConfig, saveMasterConfig, refreshIOLinkData } from './io-link-page.js';
+import { loadMasterConfig, saveMasterConfig, testConnection } from './io-link-page.js';
 
 const APP_THEME_KEY = 'matrix-theme';
 const APP_CONNECTION_BAR_KEY = 'matrix-show-connection-bar';
@@ -33,7 +33,7 @@ export function renderSettingsPage() {
     <div class="max-w-2xl mx-auto space-y-6">
       <header class="pb-4 border-b border-base-300">
         <h1 class="text-3xl font-bold text-base-content tracking-tight">Settings</h1>
-        <p class="mt-2 text-base-content/80">App appearance and IO-Link Master connection.</p>
+        <p class="mt-2 text-base-content/80">App appearance and IFM AL1350 IO-Link Master connection.</p>
       </header>
 
       <div class="card bg-base-200 shadow-xl border border-base-300">
@@ -61,23 +61,56 @@ export function renderSettingsPage() {
 
       <div class="card bg-base-200 shadow-xl border border-base-300">
         <div class="card-body gap-4">
-          <h2 class="card-title text-lg text-base-content border-b border-base-300 pb-2">IO-Link Master</h2>
-          <div class="form-control gap-2">
-            <label class="label" for="masterIpInput">
-              <span class="label-text font-medium text-base-content">Host (IP or hostname)</span>
-            </label>
-            <input type="text" id="masterIpInput" placeholder="192.168.7.4" class="input input-bordered input-sm w-full max-w-xs" />
+          <h2 class="card-title text-lg text-base-content border-b border-base-300 pb-2">IO-Link Master (AL1350)</h2>
+          <p class="text-xs text-base-content/60">Configure the connection to your IFM AL1350 IoT IO-Link master. Changes take effect immediately — no restart required.</p>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div class="form-control gap-1">
+              <label class="label py-0" for="masterIpInput">
+                <span class="label-text font-medium text-base-content">Host / IP address</span>
+              </label>
+              <input type="text" id="masterIpInput" placeholder="192.168.7.4" class="input input-bordered input-sm w-full" />
+              <p class="text-xs text-base-content/50">IP or hostname of the AL1350</p>
+            </div>
+
+            <div class="form-control gap-1">
+              <label class="label py-0" for="masterPortInput">
+                <span class="label-text font-medium text-base-content">HTTP port</span>
+              </label>
+              <input type="number" id="masterPortInput" placeholder="80" min="1" max="65535" class="input input-bordered input-sm w-full" />
+              <p class="text-xs text-base-content/50">Default is 80 (or 443 for HTTPS)</p>
+            </div>
+
+            <div class="form-control gap-1">
+              <label class="label py-0" for="masterTimeoutInput">
+                <span class="label-text font-medium text-base-content">Request timeout (s)</span>
+              </label>
+              <input type="number" id="masterTimeoutInput" placeholder="2" min="0.5" max="30" step="0.5" class="input input-bordered input-sm w-full" />
+              <p class="text-xs text-base-content/50">Seconds before a request is abandoned (0.5–30)</p>
+            </div>
+
+            <div class="form-control gap-1">
+              <label class="label py-0" for="masterPollInput">
+                <span class="label-text font-medium text-base-content">Poll interval (s)</span>
+              </label>
+              <input type="number" id="masterPollInput" placeholder="1" min="0.5" max="30" step="0.5" class="input input-bordered input-sm w-full" />
+              <p class="text-xs text-base-content/50">How often the backend queries the master (0.5–30)</p>
+            </div>
           </div>
-          <div class="form-control gap-2">
-            <label class="label" for="masterPortInput">
-              <span class="label-text font-medium text-base-content">Port</span>
+
+          <div class="form-control gap-1">
+            <label class="label cursor-pointer gap-2 justify-start py-0">
+              <input type="checkbox" id="masterHttpsInput" class="checkbox checkbox-sm" />
+              <span class="label-text font-medium text-base-content">Use HTTPS</span>
             </label>
-            <input type="number" id="masterPortInput" placeholder="80" min="1" max="65535" class="input input-bordered input-sm w-24" />
+            <p class="text-xs text-base-content/50">Enable if your AL1350 is configured for HTTPS. Ensure the port above matches (typically 443).</p>
           </div>
-          <div class="flex flex-wrap items-center gap-2 pt-2">
+
+          <div class="flex flex-wrap items-center gap-3 pt-2 border-t border-base-300">
             <button type="button" class="btn btn-primary btn-sm" id="io-link-save-config-btn">Save</button>
-            <button type="button" class="btn btn-ghost btn-sm" id="io-link-refresh-btn">Refresh</button>
+            <button type="button" class="btn btn-outline btn-sm" id="io-link-test-btn">Test connection</button>
             <span id="configMessage" class="text-sm text-success"></span>
+            <span id="connectionTestResult" class="badge badge-ghost hidden"></span>
           </div>
         </div>
       </div>
@@ -91,9 +124,13 @@ export function renderSettingsPage() {
 export function initSettingsPage() {
   loadMasterConfig();
   const saveBtn = document.getElementById('io-link-save-config-btn');
-  const refreshBtn = document.getElementById('io-link-refresh-btn');
   if (saveBtn) saveBtn.onclick = saveMasterConfig;
-  if (refreshBtn) refreshBtn.onclick = refreshIOLinkData;
+  const testBtn = document.getElementById('io-link-test-btn');
+  if (testBtn) testBtn.onclick = () => {
+    const resultEl = document.getElementById('connectionTestResult');
+    if (resultEl) resultEl.classList.remove('hidden');
+    testConnection();
+  };
 
   const themeSelect = document.getElementById('settings-theme-select');
   if (themeSelect) {

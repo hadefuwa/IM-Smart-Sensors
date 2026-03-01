@@ -148,7 +148,8 @@ def load_config():
                 "master_ip": "192.168.7.4",
                 "port": 80,
                 "timeout_sec": 2.0,
-                "use_https": False
+                "use_https": False,
+                "poll_interval_sec": 1.0
             }
         }
 
@@ -478,8 +479,9 @@ async def poll_io_link_master():
             system_state['success'] = False
             system_state['error'] = str(e)
         
-        # Wait before next poll
-        await asyncio.sleep(POLL_INTERVAL)
+        # Wait before next poll (re-reads config each loop so interval changes take effect)
+        poll_interval = max(0.5, float(io_config.get('poll_interval_sec', POLL_INTERVAL)))
+        await asyncio.sleep(poll_interval)
 
 
 async def broadcast_to_clients(data: Dict):
@@ -576,6 +578,12 @@ async def update_io_link_config(request: Request):
             raise HTTPException(status_code=400, detail="timeout_sec must be a number")
     if body.get("use_https") is not None:
         updates["use_https"] = bool(body["use_https"])
+    if body.get("poll_interval_sec") is not None:
+        try:
+            val = float(body["poll_interval_sec"])
+            updates["poll_interval_sec"] = max(0.5, min(30.0, val))
+        except (TypeError, ValueError):
+            raise HTTPException(status_code=400, detail="poll_interval_sec must be a number")
     if not updates:
         return JSONResponse(content={"success": True, "message": "No changes", "io_link": load_config().get("io_link", {})})
     config = save_config(updates)
