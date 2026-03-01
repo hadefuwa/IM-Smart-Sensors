@@ -6207,14 +6207,13 @@ app.innerHTML = `
           </li>
           <li><a href="#" data-page="home">HMI Dashboard</a></li>
           <li><a href="#" data-page="io-link-master">IO-Link Master</a></li>
+          <li><a href="#" data-page="admin">Connection Diagnostics</a></li>
           <li><a href="#" data-page="datasheet">Datasheet</a></li>
           <li><a href="#" data-page="models-3d">3D Models</a></li>
           <li><a href="#" data-page="user-manual">User Manual</a></li>
           <li><a href="#" data-page="worksheets">Worksheets</a></li>
           <li><a href="#" data-page="learn">Further Study</a></li>
           <li><a href="#" data-page="settings">Settings</a></li>
-          <li class="menu-title mt-4">Admin</li>
-          <li><a href="#" data-page="admin">Diagnostics</a></li>
           <!-- Commented out: other template pages (uncomment to restore)
           <li><a href="#" data-page="hmi-dashboard-1">Electrical Machines</a></li>
           <li><a href="#" data-page="hmi-dashboard-2">Wind Tunnel</a></li>
