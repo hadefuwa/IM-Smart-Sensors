@@ -5996,6 +5996,38 @@ function render3DModelsPage() {
   `;
 }
 
+function renderUserManualPage() {
+  const manualPath = `${import.meta.env.BASE_URL}assets/80284128UK.pdf`;
+  return `
+    <div class="space-y-4">
+      <div class="card bg-base-200 shadow-xl">
+        <div class="card-body">
+          <div class="flex flex-wrap items-start justify-between gap-3">
+            <div>
+              <h1 class="text-2xl font-bold text-base-content">User Manual</h1>
+              <p class="text-base-content/70">AL1350 user manual</p>
+            </div>
+            <div class="flex flex-wrap gap-2">
+              <a href="${manualPath}" target="_blank" rel="noopener noreferrer" class="btn btn-outline btn-sm">Open Fullscreen</a>
+              <a href="${manualPath}" download class="btn btn-primary btn-sm">Download PDF</a>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card bg-base-200 shadow-xl">
+        <div class="card-body p-2 md:p-3">
+          <iframe
+            title="AL1350 User Manual"
+            src="${manualPath}#view=FitH"
+            class="w-full h-[68vh] min-h-[460px] rounded-lg border border-base-300 bg-base-100"
+          ></iframe>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
 // ================================================================
 // PAGE REGISTRY
 // ================================================================
@@ -6024,6 +6056,7 @@ const PAGES = {
   'io-link-master': renderIOLinkMaster,
   'datasheet': renderDatasheetPage,
   'models-3d': render3DModelsPage,
+  'user-manual': renderUserManualPage,
   'learn': renderLearnPage,
   'worksheets': renderWorksheetsPage,
   'settings': renderSettingsPage
@@ -6119,6 +6152,7 @@ app.innerHTML = `
           <li><a href="#" data-page="io-link-master">IO-Link Master</a></li>
           <li><a href="#" data-page="datasheet">Datasheet</a></li>
           <li><a href="#" data-page="models-3d">3D Models</a></li>
+          <li><a href="#" data-page="user-manual">User Manual</a></li>
           <li><a href="#" data-page="worksheets">Worksheets</a></li>
           <li><a href="#" data-page="learn">Further Study</a></li>
           <li><a href="#" data-page="settings">Settings</a></li>
