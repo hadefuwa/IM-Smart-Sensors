@@ -144,8 +144,9 @@ consecutive_failures: int = 0
 # Configuration
 IFM_MASTER_IP = "192.168.7.4"
 IFM_MASTER_PORT = 80
-IFM_TIMEOUT = 2.0  # 2 seconds timeout
+IFM_TIMEOUT = 4.0  # 4 seconds timeout for better link resilience
 POLL_INTERVAL = 1.0  # Poll every 1 second
+STATIC_REFRESH_EVERY_CYCLES = 6  # refresh static metadata every N polls
 
 
 def load_config():
@@ -274,7 +275,12 @@ async def get_ifm_port_pdout(client: httpx.AsyncClient, base_url: str, port_numb
         return None
 
 
-async def get_ifm_port_info(client: httpx.AsyncClient, base_url: str, port_number: int) -> Dict:
+async def get_ifm_port_info(
+    client: httpx.AsyncClient,
+    base_url: str,
+    port_number: int,
+    include_static: bool = True
+) -> Dict:
     """Get all information for a single port"""
     port_data = {
         'port': port_number,
@@ -294,13 +300,17 @@ async def get_ifm_port_info(client: httpx.AsyncClient, base_url: str, port_numbe
         (f'/iolinkmaster/port[{port_number}]/mode/getdata', 'mode'),
         (f'/iolinkmaster/port[{port_number}]/comcode/getdata', 'comm_mode'),
         (f'/iolinkmaster/port[{port_number}]/mastercycle/getdata', 'master_cycle_time'),
-        (f'/iolinkmaster/port[{port_number}]/iolinkdevice/vendorid/getdata', 'vendor_id'),
-        (f'/iolinkmaster/port[{port_number}]/iolinkdevice/deviceid/getdata', 'device_id'),
-        (f'/iolinkmaster/port[{port_number}]/iolinkdevice/productname/getdata', 'name'),
-        (f'/iolinkmaster/port[{port_number}]/iolinkdevice/serialnumber/getdata', 'serial'),
         (f'/iolinkmaster/port[{port_number}]/iolinkdevice/pdin/getdata', 'pdin'),
         (f'/iolinkmaster/port[{port_number}]/iolinkdevice/pdout/getdata', 'pdout'),
     ]
+
+    if include_static:
+        endpoints.extend([
+            (f'/iolinkmaster/port[{port_number}]/iolinkdevice/vendorid/getdata', 'vendor_id'),
+            (f'/iolinkmaster/port[{port_number}]/iolinkdevice/deviceid/getdata', 'device_id'),
+            (f'/iolinkmaster/port[{port_number}]/iolinkdevice/productname/getdata', 'name'),
+            (f'/iolinkmaster/port[{port_number}]/iolinkdevice/serialnumber/getdata', 'serial'),
+        ])
     
     # Fetch all endpoints in parallel
     tasks = []
@@ -328,11 +338,11 @@ async def get_ifm_port_info(client: httpx.AsyncClient, base_url: str, port_numbe
     return port_data
 
 
-async def poll_all_ports(base_url: str) -> List[Dict]:
+async def poll_all_ports(base_url: str, include_static: bool = True) -> List[Dict]:
     """Fetch data from all ports in parallel"""
     async with httpx.AsyncClient() as client:
         # Create tasks for all ports
-        tasks = [get_ifm_port_info(client, base_url, i) for i in range(1, 5)]
+        tasks = [get_ifm_port_info(client, base_url, i, include_static=include_static) for i in range(1, 5)]
         
         # Run all tasks in parallel
         ports = await asyncio.gather(*tasks, return_exceptions=True)
@@ -436,6 +446,7 @@ async def poll_io_link_master():
     
     logger.info("Starting IO-Link Master polling loop")
     
+    cycle_count = 0
     while True:
         # Load config each time so IP/port changes from the UI take effect without restart
         config = load_config()
@@ -447,13 +458,24 @@ async def poll_io_link_master():
         default_port = 443 if scheme == 'https' else 80
         base_url = f'{scheme}://{ip}' if port == default_port else f'{scheme}://{ip}:{port}'
         
+        include_static = (cycle_count % STATIC_REFRESH_EVERY_CYCLES == 0)
+        cycle_count += 1
+
         try:
             # Fetch all data in parallel, timing the round-trip for diagnostics
             poll_start = time.time()
-            ports_task = poll_all_ports(base_url)
-            device_info_task = get_device_info(base_url)
+            ports_task = poll_all_ports(base_url, include_static=include_static)
+            device_info_task = get_device_info(base_url) if include_static or not system_state.get('device_name') else None
 
-            ports, device_info = await asyncio.gather(ports_task, device_info_task, return_exceptions=True)
+            if device_info_task is not None:
+                ports, device_info = await asyncio.gather(ports_task, device_info_task, return_exceptions=True)
+            else:
+                ports = await ports_task
+                device_info = {
+                    'device_name': system_state.get('device_name', 'IO-Link Master'),
+                    'software': system_state.get('software', {}),
+                    'device_icon_url': system_state.get('device_icon_url')
+                }
 
             poll_ms = round((time.time() - poll_start) * 1000)
             poll_latencies.append({'ts': time.time(), 'latency_ms': poll_ms})
@@ -466,6 +488,17 @@ async def poll_io_link_master():
             if isinstance(device_info, Exception):
                 logger.error(f"Error fetching device info: {device_info}")
                 device_info = {'device_name': 'IO-Link Master', 'software': {}, 'device_icon_url': None}
+
+            # Preserve static metadata between lightweight poll cycles.
+            prev_ports = {p.get('port'): p for p in (system_state.get('ports') or []) if isinstance(p, dict)}
+            if isinstance(ports, list):
+                for port_data in ports:
+                    prev = prev_ports.get(port_data.get('port'))
+                    if not prev:
+                        continue
+                    for key in ('vendor_id', 'device_id', 'name', 'serial'):
+                        if not port_data.get(key):
+                            port_data[key] = prev.get(key, '')
 
             # Extract supervision data from ports if available
             supervision = {}

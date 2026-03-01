@@ -15,6 +15,8 @@ import Chart from 'chart.js/auto';
 
 // WebSocket connection
 let socket = null;
+let reconnectTimer = null;
+let isHomePageActive = false;
 let terminalLog = null;
 let mimicComponents = {};
 let charts = {};
@@ -399,6 +401,7 @@ function updateChartColors() {
  */
 export function initHomePage() {
   console.log('Initializing HMI Homepage...');
+  isHomePageActive = true;
 
   // Initialize terminal log
   terminalLog = new TerminalLog('terminal-log-container');
@@ -596,6 +599,7 @@ function setupConfigModalHandlers() {
  * Connect to WebSocket for real-time data
  */
 function connectWebSocket() {
+  if (!isHomePageActive) return;
   const wsUrl = `${WS_BASE}/ws`;
   console.log(`Connecting to WebSocket: ${wsUrl}`);
 
@@ -621,9 +625,11 @@ function connectWebSocket() {
   };
 
   socket.onclose = () => {
+    if (!isHomePageActive) return;
     console.log('WebSocket closed. Attempting to reconnect in 5 seconds...');
     addEventLog('System', 'WebSocket connection closed. Reconnecting...', 'warning');
-    setTimeout(connectWebSocket, 5000);
+    if (reconnectTimer) clearTimeout(reconnectTimer);
+    reconnectTimer = setTimeout(connectWebSocket, 5000);
   };
 }
 
@@ -871,6 +877,12 @@ function addEventLog(component, message, level = 'info') {
  */
 export function destroyHomePage() {
   console.log('Destroying HMI Homepage...');
+  isHomePageActive = false;
+
+  if (reconnectTimer) {
+    clearTimeout(reconnectTimer);
+    reconnectTimer = null;
+  }
 
   // Close WebSocket
   if (socket) {
