@@ -334,12 +334,12 @@ export function createMasterStatusDisplay(containerId, state = {}, options = {})
         </div>
 
         <!-- Port Status Indicators -->
-        <div class="flex gap-2">
+        <div class="master-port-grid w-full max-w-[10rem] grid grid-cols-4 gap-1.5">
           ${[1, 2, 3, 4].map(portNum => {
             const port = ports.find(p => p.port === portNum);
             const isActive = port && port.mode && port.mode !== 'DEACTIVATED';
             return `
-              <div class="port-indicator w-8 h-8 rounded border-2 ${isActive ? 'border-success bg-success/20' : 'border-base-content/20 bg-base-content/5'} flex items-center justify-center" title="Port ${portNum}">
+              <div class="port-indicator w-full aspect-square rounded border-2 ${isActive ? 'border-success bg-success/20' : 'border-base-content/20 bg-base-content/5'} flex items-center justify-center" title="Port ${portNum}">
                 <span class="text-xs font-bold ${isActive ? 'text-success' : 'text-base-content/30'}">${portNum}</span>
               </div>
             `;

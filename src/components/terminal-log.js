@@ -28,14 +28,14 @@ export class TerminalLog {
     this.container.innerHTML = `
       <div class="terminal-log-wrapper h-full flex flex-col">
         <!-- Terminal header with controls -->
-        <div class="terminal-header bg-base-300 px-3 py-2 flex items-center justify-between border-b border-base-content/20">
-          <div class="flex items-center gap-2">
+        <div class="terminal-header touch-terminal-header bg-base-300 px-3 py-2 flex items-center justify-between border-b border-base-content/20 gap-2">
+          <div class="terminal-title-row flex items-center gap-2 min-w-0">
             <span class="text-xs font-bold text-success">●</span>
-            <span class="text-sm font-semibold">IO-Link Datastream</span>
+            <span class="text-sm font-semibold truncate">IO-Link Datastream</span>
           </div>
-          <div class="flex items-center gap-2">
+          <div class="touch-terminal-controls flex items-center gap-2">
             <!-- Filter dropdown -->
-            <select id="terminal-filter" class="select select-sm select-bordered">
+            <select id="terminal-filter" class="select select-sm select-bordered terminal-filter-select">
               <option value="all">All Ports</option>
               <option value="1">Port 1</option>
               <option value="2">Port 2</option>
@@ -43,19 +43,19 @@ export class TerminalLog {
               <option value="4">Port 4</option>
             </select>
             <!-- Auto-scroll toggle -->
-            <button id="terminal-autoscroll" class="btn btn-sm btn-ghost" title="Auto-scroll">
+            <button id="terminal-autoscroll" class="btn btn-sm btn-ghost terminal-icon-btn" title="Auto-scroll">
               <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3" />
               </svg>
             </button>
             <!-- Clear button -->
-            <button id="terminal-clear" class="btn btn-sm btn-ghost" title="Clear log">
+            <button id="terminal-clear" class="btn btn-sm btn-ghost terminal-icon-btn" title="Clear log">
               <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
               </svg>
             </button>
             <!-- Export button -->
-            <button id="terminal-export" class="btn btn-sm btn-ghost" title="Export to CSV">
+            <button id="terminal-export" class="btn btn-sm btn-ghost terminal-icon-btn" title="Export to CSV">
               <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
               </svg>
