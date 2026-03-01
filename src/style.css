@@ -532,6 +532,13 @@
     touch-action: manipulation;
   }
 
+  /* Kiosk touch mode: hide cursor even if a mouse device is present. */
+  *,
+  *::before,
+  *::after {
+    cursor: none !important;
+  }
+
   .touch-navbar {
     min-height: 58px;
   }
