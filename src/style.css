@@ -2,6 +2,14 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Prevent page-level horizontal drift on kiosk/touch layouts. */
+html,
+body,
+#app {
+  max-width: 100vw;
+  overflow-x: hidden;
+}
+
 /* ================================================================
    HEADER - IO-Link logo
    ================================================================ */
@@ -23,6 +31,8 @@
 /* Terminal Log Styles */
 .terminal-log-wrapper {
   font-family: 'Courier New', 'Consolas', 'Monaco', monospace;
+  width: 100%;
+  min-width: 0;
 }
 
 /* Dark mode terminal (default) */
@@ -32,6 +42,8 @@
   text-shadow: 0 0 2px rgba(34, 197, 94, 0.5);
   scrollbar-width: thin;
   scrollbar-color: #22c55e #1a1a1a;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 /* Light mode terminal */
@@ -41,6 +53,8 @@
   text-shadow: none;
   scrollbar-width: thin;
   scrollbar-color: #16a34a #d4d4d4;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 /* Terminal system messages */
@@ -115,6 +129,7 @@
 
 .terminal-entry {
   animation: fadeIn 0.3s ease-in;
+  min-width: 0;
 }
 
 @keyframes fadeIn {
@@ -684,6 +699,24 @@
     font-weight: 600;
     opacity: 0.8;
     margin-right: 0.35rem;
+  }
+
+  /* Keep long sensor hex/text values inside viewport width. */
+  .touch-stack-table code,
+  .touch-stack-table td,
+  #event-log,
+  .terminal-log-content {
+    white-space: normal;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+  }
+
+  .hmi-homepage,
+  .io-link-page,
+  #main-content {
+    width: 100%;
+    min-width: 0;
+    overflow-x: hidden;
   }
 }
 
