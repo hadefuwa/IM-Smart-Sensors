@@ -5975,9 +5975,9 @@ app.innerHTML = `
       </div>
       <!-- Right: IO-Link logo + Theme -->
       <div class="flex-none flex items-center gap-3 touch-header-actions">
-        <a href="https://io-link.com/" target="_blank" rel="noopener noreferrer" class="io-link-header-logo flex items-center shrink-0" id="header-io-link-logo" title="IO-Link - the first globally standardized IO technology">
+        <div class="io-link-header-logo flex items-center shrink-0" id="header-io-link-logo" title="IO-Link">
           <img src="${import.meta.env.BASE_URL}assets/img/Logo_IO-link.svg" alt="IO-Link" class="h-8 w-auto max-h-8 object-contain" />
-        </a>
+        </div>
         <div class="form-control touch-theme-control">
           <label class="label cursor-pointer gap-2">
             <span class="label-text">Theme</span>
