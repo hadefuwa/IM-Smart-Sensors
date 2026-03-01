@@ -5917,6 +5917,38 @@ function renderPlaceholder(title) {
   `;
 }
 
+function renderDatasheetPage() {
+  const pdfPath = `${import.meta.env.BASE_URL}assets/AL1350-00_EN-GB.pdf`;
+  return `
+    <div class="space-y-4">
+      <div class="card bg-base-200 shadow-xl">
+        <div class="card-body">
+          <div class="flex flex-wrap items-start justify-between gap-3">
+            <div>
+              <h1 class="text-2xl font-bold text-base-content">Datasheet</h1>
+              <p class="text-base-content/70">AL1350 IO-Link Master datasheet</p>
+            </div>
+            <div class="flex flex-wrap gap-2">
+              <a href="${pdfPath}" target="_blank" rel="noopener noreferrer" class="btn btn-outline btn-sm">Open Fullscreen</a>
+              <a href="${pdfPath}" download class="btn btn-primary btn-sm">Download PDF</a>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card bg-base-200 shadow-xl">
+        <div class="card-body p-2 md:p-3">
+          <iframe
+            title="AL1350 Datasheet"
+            src="${pdfPath}#view=FitH"
+            class="w-full h-[68vh] min-h-[460px] rounded-lg border border-base-300 bg-base-100"
+          ></iframe>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
 // ================================================================
 // PAGE REGISTRY
 // ================================================================
@@ -5943,6 +5975,7 @@ const PAGES = {
   'components': renderComponentGallery,
   'about': renderAboutPage,
   'io-link-master': renderIOLinkMaster,
+  'datasheet': renderDatasheetPage,
   'learn': renderLearnPage,
   'worksheets': renderWorksheetsPage,
   'settings': renderSettingsPage
@@ -6036,6 +6069,7 @@ app.innerHTML = `
           </li>
           <li><a href="#" data-page="home">HMI Dashboard</a></li>
           <li><a href="#" data-page="io-link-master">IO-Link Master</a></li>
+          <li><a href="#" data-page="datasheet">Datasheet</a></li>
           <li><a href="#" data-page="worksheets">Worksheets</a></li>
           <li><a href="#" data-page="learn">Further Study</a></li>
           <li><a href="#" data-page="settings">Settings</a></li>
