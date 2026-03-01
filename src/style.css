@@ -523,13 +523,14 @@
    7" TOUCHSCREEN PROFILE
    Targets common kiosk/tablet sizes (e.g. 1024x600) in landscape.
    ================================================================ */
-@media (max-width: 1100px), (max-height: 760px) {
+@media (pointer: coarse), (max-width: 1280px) and (max-height: 900px) {
   html {
-    font-size: 15px;
+    font-size: 17px;
   }
 
   body {
     touch-action: manipulation;
+    -webkit-text-size-adjust: 100%;
   }
 
   /* Kiosk touch mode: hide cursor even if a mouse device is present. */
@@ -540,12 +541,14 @@
   }
 
   .touch-navbar {
-    min-height: 58px;
+    min-height: 68px;
+    padding-top: 0.25rem;
+    padding-bottom: 0.25rem;
   }
 
   .touch-header-title {
-    font-size: 1rem;
-    line-height: 1.25rem;
+    font-size: 1.1rem;
+    line-height: 1.4rem;
   }
 
   .touch-theme-control {
@@ -559,16 +562,19 @@
   .btn,
   .btn-sm,
   .btn-xs {
-    min-height: 44px;
-    padding-left: 0.75rem;
-    padding-right: 0.75rem;
-    font-size: 0.92rem;
+    min-height: 56px;
+    min-width: 56px;
+    padding-left: 1rem;
+    padding-right: 1rem;
+    font-size: 1rem;
+    line-height: 1.2;
+    gap: 0.6rem;
   }
 
   .btn-square {
-    min-width: 44px;
-    width: 44px;
-    height: 44px;
+    min-width: 56px;
+    width: 56px;
+    height: 56px;
   }
 
   .select,
@@ -577,41 +583,60 @@
   .input,
   .input-sm,
   .input-xs {
-    min-height: 44px;
-    font-size: 0.95rem;
+    min-height: 56px;
+    font-size: 1rem;
+    padding-top: 0.25rem;
+    padding-bottom: 0.25rem;
   }
 
   .checkbox,
   .checkbox-sm {
-    width: 1.4rem;
-    height: 1.4rem;
+    width: 1.7rem;
+    height: 1.7rem;
   }
 
   .menu li > a {
-    min-height: 44px;
-    font-size: 0.96rem;
+    min-height: 58px;
+    font-size: 1.02rem;
+  }
+
+  .label-text,
+  .text-sm {
+    font-size: 0.98rem;
+    line-height: 1.35rem;
   }
 
   .text-xs {
-    font-size: 0.82rem;
-    line-height: 1.2rem;
+    font-size: 0.95rem;
+    line-height: 1.3rem;
   }
 
   .terminal-panel-body {
-    min-height: 280px;
+    min-height: 340px;
   }
 
   .hmi-homepage .h-48,
   .io-link-page .h-48 {
-    height: 10rem;
+    height: 11rem;
   }
 
   .hmi-homepage .h-32 {
-    height: 8rem;
+    height: 9.5rem;
+  }
+
+  .hmi-homepage .card-body,
+  .io-link-page .card-body,
+  .modal-box {
+    padding: 1.1rem;
+  }
+
+  .table :where(th, td) {
+    padding-top: 0.7rem;
+    padding-bottom: 0.7rem;
   }
 
   .touch-fault-port {
-    width: 6rem;
+    width: 7.5rem;
   }
 
   .touch-fault-event {
@@ -635,13 +660,13 @@
     margin-bottom: 0.65rem;
     border: 1px solid hsl(var(--b3));
     border-radius: 0.5rem;
-    padding: 0.4rem 0.5rem;
+    padding: 0.6rem 0.75rem;
     background: hsl(var(--b2));
   }
 
   .touch-stack-table td {
     border-bottom: 1px dashed hsl(var(--b3) / 0.6);
-    padding: 0.35rem 0.25rem;
+    padding: 0.5rem 0.25rem;
   }
 
   .touch-stack-table td:last-child {
