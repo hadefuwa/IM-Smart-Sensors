@@ -7481,5 +7481,41 @@ setTimeout(() => {
   });
 }, 0);
 
+// ================================================================
+// GLOBAL CONNECTION BAR POLLER
+// Updates the status bar on every page, not just IO-Link Master.
+// When the IO-Link Master page is active its WebSocket will also
+// update these elements (more frequently) — that's fine.
+// ================================================================
+(function startGlobalConnectionPoller() {
+  const _apiBase = window.IO_LINK_API_BASE || window.location.origin;
+
+  function updateBar(success, source, error) {
+    const glow = document.getElementById('connectionGlow');
+    const status = document.getElementById('connectionStatus');
+    const ds = document.getElementById('dataSource');
+    const last = document.getElementById('lastUpdate');
+    if (success) {
+      if (glow) glow.className = 'connection-glow-dot glow-green';
+      if (status) { status.textContent = 'Connected'; status.className = 'font-medium text-success'; }
+      if (ds) ds.textContent = source || 'iot_core';
+      if (last) last.textContent = new Date().toLocaleTimeString();
+    } else {
+      if (glow) glow.className = 'connection-glow-dot glow-red';
+      if (status) { status.textContent = error ? 'Error' : 'Disconnected'; status.className = 'font-medium text-error'; }
+    }
+  }
+
+  function poll() {
+    fetch(`${_apiBase}/api/io-link/status`, { signal: AbortSignal.timeout(4000) })
+      .then(r => r.json())
+      .then(d => updateBar(d.success, d.source, d.error))
+      .catch(() => updateBar(false, null, true));
+  }
+
+  poll();
+  setInterval(poll, 5000);
+})();
+
 // Initial page: HMI Dashboard (home page)
 renderPage('home');
