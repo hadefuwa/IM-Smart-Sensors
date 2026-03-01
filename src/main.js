@@ -5957,7 +5957,30 @@ function render3DModelsPage() {
       <div class="card bg-base-200 shadow-xl">
         <div class="card-body">
           <h1 class="text-2xl font-bold text-base-content">3D Models</h1>
-          <p class="text-base-content/70">CAD files for ALI_0183. Open or download the source model files below.</p>
+          <p class="text-base-content/70">Interactive CAD viewer for ALI_0183 with STEP and SAT source files.</p>
+        </div>
+      </div>
+
+      <div class="card bg-base-200 shadow-xl">
+        <div class="card-body gap-3">
+          <div class="flex flex-wrap items-center gap-2">
+            <label class="text-sm font-medium text-base-content/80" for="model-file-select">Model:</label>
+            <select id="model-file-select" class="select select-bordered select-sm">
+              <option value="${stpPath}" selected>CAD_STP_ASI_0183.stp</option>
+              <option value="${satPath}">CAD_SAT_ASI_0183.sat</option>
+            </select>
+            <a id="model-open-link" href="#" target="_blank" rel="noopener noreferrer" class="btn btn-outline btn-sm">Open in 3D Viewer</a>
+            <a id="model-download-link" href="${stpPath}" download class="btn btn-primary btn-sm">Download Source</a>
+          </div>
+          <div class="text-xs text-base-content/60">
+            Embedded viewer supports rotate, pan, and zoom. If the viewer is blocked offline, use Download Source.
+          </div>
+          <iframe
+            id="model-viewer-frame"
+            title="3D CAD Viewer"
+            class="w-full h-[70vh] min-h-[460px] rounded-lg border border-base-300 bg-base-100"
+            referrerpolicy="no-referrer"
+          ></iframe>
         </div>
       </div>
 
@@ -5965,13 +5988,9 @@ function render3DModelsPage() {
         <div class="card bg-base-200 shadow-xl">
           <div class="card-body">
             <h2 class="card-title text-base-content">CAD_STP_ASI_0183.stp</h2>
-            <p class="text-sm text-base-content/70">STEP format, suitable for CAD interchange and manufacturing workflows.</p>
-            <div class="mockup-code text-xs mt-2">
-              <pre><code>Format: STEP (.stp)</code></pre>
-              <pre><code>Asset: /assets/CAD_STP_ASI_0183.stp</code></pre>
-            </div>
+            <p class="text-sm text-base-content/70">STEP format for CAD interchange and manufacturing workflows.</p>
             <div class="card-actions justify-end mt-3">
-              <a href="${stpPath}" target="_blank" rel="noopener noreferrer" class="btn btn-outline btn-sm">Open File</a>
+              <a href="${stpPath}" target="_blank" rel="noopener noreferrer" class="btn btn-ghost btn-sm">Open Raw File</a>
               <a href="${stpPath}" download class="btn btn-primary btn-sm">Download</a>
             </div>
           </div>
@@ -5980,13 +5999,9 @@ function render3DModelsPage() {
         <div class="card bg-base-200 shadow-xl">
           <div class="card-body">
             <h2 class="card-title text-base-content">CAD_SAT_ASI_0183.sat</h2>
-            <p class="text-sm text-base-content/70">ACIS SAT format, commonly used for solid geometry exchange.</p>
-            <div class="mockup-code text-xs mt-2">
-              <pre><code>Format: ACIS SAT (.sat)</code></pre>
-              <pre><code>Asset: /assets/CAD_SAT_ASI_0183.sat</code></pre>
-            </div>
+            <p class="text-sm text-base-content/70">ACIS SAT format commonly used for solid geometry exchange.</p>
             <div class="card-actions justify-end mt-3">
-              <a href="${satPath}" target="_blank" rel="noopener noreferrer" class="btn btn-outline btn-sm">Open File</a>
+              <a href="${satPath}" target="_blank" rel="noopener noreferrer" class="btn btn-ghost btn-sm">Open Raw File</a>
               <a href="${satPath}" download class="btn btn-primary btn-sm">Download</a>
             </div>
           </div>
@@ -5994,6 +6009,30 @@ function render3DModelsPage() {
       </div>
     </div>
   `;
+}
+
+function build3DViewerUrl(modelPath) {
+  const absoluteModelUrl = new URL(modelPath, window.location.origin).href;
+  return `https://3dviewer.net/embed.html#model=${encodeURIComponent(absoluteModelUrl)}`;
+}
+
+function init3DModelsPage() {
+  const select = document.getElementById('model-file-select');
+  const frame = document.getElementById('model-viewer-frame');
+  const openLink = document.getElementById('model-open-link');
+  const downloadLink = document.getElementById('model-download-link');
+  if (!select || !frame || !openLink || !downloadLink) return;
+
+  const applyModel = () => {
+    const modelPath = select.value;
+    const viewerUrl = build3DViewerUrl(modelPath);
+    frame.src = viewerUrl;
+    openLink.href = viewerUrl;
+    downloadLink.href = modelPath;
+  };
+
+  select.addEventListener('change', applyModel);
+  applyModel();
 }
 
 function renderUserManualPage() {
@@ -6309,6 +6348,8 @@ function renderPage(pageKey) {
     initializeComponentLibraryTabs();
   } else if (pageKey === 'io-link-master') {
     initIOLinkPage();
+  } else if (pageKey === 'models-3d') {
+    init3DModelsPage();
   } else if (pageKey === 'worksheets') {
     initWorksheetsPage();
   } else if (pageKey === 'settings') {
