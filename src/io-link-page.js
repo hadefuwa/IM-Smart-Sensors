@@ -160,8 +160,16 @@ let lastGoodData = null;
 let websocket = null;
 let reconnectTimer = null;
 let reconnectAttempts = 0;
+let hasEverConnected = false;
 const MAX_RECONNECT = 10;
 const RECONNECT_DELAY = 5000;
+
+function showConnecting(msg) {
+  const el = document.getElementById('connectionStatus');
+  if (el) { el.textContent = msg || 'Connecting...'; el.className = 'font-medium text-base-content/60'; }
+  const glow = document.getElementById('connectionGlow');
+  if (glow) { glow.className = 'connection-glow-dot glow-checking'; }
+}
 
 function showError(msg, clearData) {
   const el = document.getElementById('connectionStatus');
@@ -185,6 +193,7 @@ function updateUI(data) {
     if (data && data.error) showError('Error: ' + data.error, false);
     return;
   }
+  hasEverConnected = true;
   lastGoodData = data;
   const conn = document.getElementById('connectionStatus');
   if (conn) {
@@ -403,12 +412,19 @@ function connectWebSocket() {
         updateUI(data);
       } catch (e) {}
     };
-    websocket.onerror = () => showError('WebSocket error', false);
+    websocket.onerror = () => {
+      if (hasEverConnected) showError('WebSocket error', false);
+      else showConnecting('Connecting...');
+    };
     websocket.onclose = () => {
       websocket = null;
       if (reconnectAttempts < MAX_RECONNECT) {
         reconnectAttempts++;
-        showError(`Reconnecting (${reconnectAttempts}/${MAX_RECONNECT})...`, false);
+        if (hasEverConnected) {
+          showError(`Reconnecting (${reconnectAttempts}/${MAX_RECONNECT})...`, false);
+        } else {
+          showConnecting('Connecting...');
+        }
         reconnectTimer = setTimeout(connectWebSocket, RECONNECT_DELAY);
       } else {
         showError('Connection lost. Refresh the page.', false);
@@ -606,6 +622,7 @@ function setupSimulateFault() {
 export function initIOLinkPage() {
   ioLinkCharts.forEach(c => c.destroy());
   ioLinkCharts = [];
+  hasEverConnected = false;
   if (reconnectTimer) clearTimeout(reconnectTimer);
   connectWebSocket();
   setupRawDecodedToggle();
