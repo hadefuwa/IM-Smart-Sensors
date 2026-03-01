@@ -125,6 +125,9 @@ MAX_HISTORY_SIZE = 100
 # Connected WebSocket clients
 connected_clients: Set[WebSocket] = set()
 
+# Background polling task handle
+polling_task: Optional[asyncio.Task] = None
+
 # Simulated fault overlay per port (for training: show fault without touching hardware)
 # Keys: port number (1-4), Values: list of {"code": "0x02", "label": "Short circuit"} or None to clear
 simulated_events_by_port: Dict[int, List[Dict]] = {}
@@ -482,6 +485,28 @@ async def poll_io_link_master():
         # Wait before next poll (re-reads config each loop so interval changes take effect)
         poll_interval = max(0.5, float(io_config.get('poll_interval_sec', POLL_INTERVAL)))
         await asyncio.sleep(poll_interval)
+
+
+@app.on_event("startup")
+async def start_background_polling():
+    """Start IO-Link polling loop when API starts."""
+    global polling_task
+    if polling_task is None or polling_task.done():
+        polling_task = asyncio.create_task(poll_io_link_master())
+        logger.info("IO-Link background polling task started")
+
+
+@app.on_event("shutdown")
+async def stop_background_polling():
+    """Stop IO-Link polling loop when API shuts down."""
+    global polling_task
+    if polling_task and not polling_task.done():
+        polling_task.cancel()
+        try:
+            await polling_task
+        except asyncio.CancelledError:
+            pass
+        logger.info("IO-Link background polling task stopped")
 
 
 async def broadcast_to_clients(data: Dict):
