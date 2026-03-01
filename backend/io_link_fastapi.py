@@ -132,6 +132,15 @@ polling_task: Optional[asyncio.Task] = None
 # Keys: port number (1-4), Values: list of {"code": "0x02", "label": "Short circuit"} or None to clear
 simulated_events_by_port: Dict[int, List[Dict]] = {}
 
+# Connection diagnostics
+connection_events: list = []
+MAX_CONN_EVENTS = 500
+poll_latencies: list = []
+MAX_LATENCIES = 200
+_prev_success: Optional[bool] = None
+_transition_ts: Optional[float] = None
+consecutive_failures: int = 0
+
 # Configuration
 IFM_MASTER_IP = "192.168.7.4"
 IFM_MASTER_PORT = 80
@@ -439,24 +448,30 @@ async def poll_io_link_master():
         base_url = f'{scheme}://{ip}' if port == default_port else f'{scheme}://{ip}:{port}'
         
         try:
-            # Fetch all data in parallel
+            # Fetch all data in parallel, timing the round-trip for diagnostics
+            poll_start = time.time()
             ports_task = poll_all_ports(base_url)
             device_info_task = get_device_info(base_url)
-            
+
             ports, device_info = await asyncio.gather(ports_task, device_info_task, return_exceptions=True)
-            
+
+            poll_ms = round((time.time() - poll_start) * 1000)
+            poll_latencies.append({'ts': time.time(), 'latency_ms': poll_ms})
+            while len(poll_latencies) > MAX_LATENCIES:
+                poll_latencies.pop(0)
+
             if isinstance(ports, Exception):
                 logger.error(f"Error polling ports: {ports}")
                 ports = []
             if isinstance(device_info, Exception):
                 logger.error(f"Error fetching device info: {device_info}")
                 device_info = {'device_name': 'IO-Link Master', 'software': {}, 'device_icon_url': None}
-            
+
             # Extract supervision data from ports if available
             supervision = {}
             # Note: Supervision data might come from device info endpoints
             # This is a placeholder - adjust based on your actual IO-Link Master API
-            
+
             # Update global state
             system_state = {
                 'device_name': device_info.get('device_name', 'IO-Link Master'),
@@ -469,18 +484,38 @@ async def poll_io_link_master():
                 'source': 'iot_core',
                 'success': True
             }
-            
+
             # Append supervision history if available
             if supervision:
                 append_supervision_history(supervision)
-            
+
             # Broadcast to all connected WebSocket clients
             await broadcast_to_clients(system_state)
-            
+
         except Exception as e:
             logger.error(f"Error in polling loop: {e}")
             system_state['success'] = False
             system_state['error'] = str(e)
+
+        # Track connected/disconnected transitions for diagnostics
+        global _prev_success, _transition_ts, consecutive_failures
+        _now = time.time()
+        _current = system_state.get('success', False)
+        if _prev_success is None:
+            _transition_ts = _now
+        elif _current != _prev_success:
+            _dur = round(_now - (_transition_ts or _now), 1)
+            connection_events.append({
+                'ts': _now,
+                'status': 'connected' if _current else 'disconnected',
+                'duration_sec': _dur,
+                'error': None if _current else system_state.get('error')
+            })
+            while len(connection_events) > MAX_CONN_EVENTS:
+                connection_events.pop(0)
+            _transition_ts = _now
+        consecutive_failures = 0 if _current else consecutive_failures + 1
+        _prev_success = _current
         
         # Wait before next poll (re-reads config each loop so interval changes take effect)
         poll_interval = max(0.5, float(io_config.get('poll_interval_sec', POLL_INTERVAL)))
@@ -662,6 +697,31 @@ async def io_link_supervision_history():
     return JSONResponse(content={
         'history': supervision_history,
         'count': len(supervision_history)
+    })
+
+
+@app.get("/api/io-link/diagnostics")
+async def io_link_diagnostics():
+    """Return connection diagnostics: events, latencies, uptime stats."""
+    _now = time.time()
+    one_h = _now - 3600
+    recent = [e for e in connection_events if e['ts'] >= one_h]
+    drops_1h = sum(1 for e in recent if e['status'] == 'disconnected')
+    disc_secs = sum(e['duration_sec'] for e in recent if e['status'] == 'disconnected')
+    uptime_pct = round(max(0.0, (3600 - disc_secs) / 3600 * 100), 1)
+    avg_lat = round(sum(p['latency_ms'] for p in poll_latencies) / len(poll_latencies)) if poll_latencies else None
+    return JSONResponse({
+        'success': True,
+        'events': connection_events[-200:],
+        'latencies': poll_latencies[-100:],
+        'stats': {
+            'uptime_pct_1h': uptime_pct,
+            'drops_1h': drops_1h,
+            'consecutive_failures': consecutive_failures,
+            'avg_latency_ms': avg_lat,
+            'current_connected': system_state.get('success', False),
+            'last_error': system_state.get('error'),
+        }
     })
 
 

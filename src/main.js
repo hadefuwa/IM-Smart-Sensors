@@ -6,6 +6,7 @@ import { renderIOLinkMaster, initIOLinkPage, destroyIOLinkPage } from './io-link
 import { renderLearnPage, initLearnPage } from './learn-page.js';
 import { renderWorksheetsPage, initWorksheetsPage } from './worksheets-page.js';
 import { renderSettingsPage, initSettingsPage, applySavedAppSettings } from './settings-page.js';
+import { renderAdminPage, initAdminPage, destroyAdminPage } from './admin-page.js';
 import {
   Chart,
   LineController,
@@ -6114,7 +6115,8 @@ const PAGES = {
   'user-manual': renderUserManualPage,
   'learn': renderLearnPage,
   'worksheets': renderWorksheetsPage,
-  'settings': renderSettingsPage
+  'settings': renderSettingsPage,
+  'admin': renderAdminPage,
 };
 
 // ================================================================
@@ -6211,6 +6213,8 @@ app.innerHTML = `
           <li><a href="#" data-page="worksheets">Worksheets</a></li>
           <li><a href="#" data-page="learn">Further Study</a></li>
           <li><a href="#" data-page="settings">Settings</a></li>
+          <li class="menu-title mt-4">Admin</li>
+          <li><a href="#" data-page="admin">Diagnostics</a></li>
           <!-- Commented out: other template pages (uncomment to restore)
           <li><a href="#" data-page="hmi-dashboard-1">Electrical Machines</a></li>
           <li><a href="#" data-page="hmi-dashboard-2">Wind Tunnel</a></li>
@@ -6326,6 +6330,7 @@ function renderPage(pageKey) {
   // Clean up existing charts, IO-Link page, and home page (WebSocket, charts)
   destroyHomePage();
   destroyIOLinkPage();
+  destroyAdminPage();
   activeCharts.forEach(chart => chart.destroy());
   activeCharts = [];
 
@@ -6372,6 +6377,8 @@ function renderPage(pageKey) {
     initSettingsPage();
   } else if (pageKey === 'learn') {
     initLearnPage();
+  } else if (pageKey === 'admin') {
+    initAdminPage();
   }
 }
 
