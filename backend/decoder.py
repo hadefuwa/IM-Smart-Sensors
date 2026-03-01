@@ -10,13 +10,14 @@ DEVICE_TYPE_STATUS_LED = 'status_led'
 DEVICE_TYPE_PHOTO_ELECTRIC = 'photo_electric'
 DEVICE_TYPE_TEMPERATURE = 'temperature'
 DEVICE_TYPE_PROXIMITY = 'proximity'
+DEVICE_TYPE_CAPACITIVE = 'capacitive'
 DEVICE_TYPE_UNKNOWN = 'unknown'
 
-# Fallback: (vendor_id, device_id) -> device_type (when product name is missing or generic)
-# vendor_id and device_id from Master are often hex strings or numbers
+# Fallback: (vendor_id, device_id, type) — used when product name is generic/numeric.
+# vendor_id and device_id are compared as strings (after stripping 0x, uppercasing).
 DEVICE_ID_FALLBACK = [
-    # Example: (vendor_id, device_id, type) - add known devices as you discover them
-    # ('0x02A5', '0x0012', DEVICE_TYPE_TEMPERATURE),
+    # IFM capacitive sensor on port 2 (vendorID 1586 / 0x0632, deviceID 1052673 / 0x101001, name '2377240')
+    (1586, 1052673, DEVICE_TYPE_CAPACITIVE),
 ]
 
 # Common IO-Link event codes (hex) -> human-readable label (for maintenance training)
@@ -45,20 +46,24 @@ def get_device_type(vendor_id, device_id, name):
     # Name substring rules (check name first)
     if any(x in name_upper for x in ('O5D', 'O5E', 'O2D', 'O3D')) or 'PHOTO' in name_upper or 'DISTANCE' in name_upper:
         return DEVICE_TYPE_PHOTO_ELECTRIC
-    if 'TN' in name_upper or 'TR' in name_upper or 'TEMP' in name_upper or 'TEMPERATURE' in name_lower:
+    if any(x in name_upper for x in ('TV7', 'TN', 'TR')) or 'TEMP' in name_upper or 'TEMPERATURE' in name_lower:
         return DEVICE_TYPE_TEMPERATURE
     if any(x in name_upper for x in ('LED', 'CL50', 'LIGHT', 'STACK', 'TOWER')):
         return DEVICE_TYPE_STATUS_LED
-    if any(x in name_lower for x in ('proximity', 'inductive', 'capacitive', 'prox')):
+    if any(x in name_lower for x in ('capacitive', 'ki', 'kq', 'kc')):
+        return DEVICE_TYPE_CAPACITIVE
+    if any(x in name_lower for x in ('proximity', 'inductive', 'prox')):
         return DEVICE_TYPE_PROXIMITY
 
-    # Fallback table
-    v = str(vendor_id or '').strip().upper().replace('0X', '')
-    d = str(device_id or '').strip().upper().replace('0X', '')
-    for vid, did, dtype in DEVICE_ID_FALLBACK:
-        if (str(vid).upper().replace('0X', '') == v and
-                str(did).upper().replace('0X', '') == d):
-            return dtype
+    # Fallback table — compare as integers if possible, else as strings
+    try:
+        v_int = int(str(vendor_id or '').strip(), 0)
+        d_int = int(str(device_id or '').strip(), 0)
+        for vid, did, dtype in DEVICE_ID_FALLBACK:
+            if int(str(vid), 0) == v_int and int(str(did), 0) == d_int:
+                return dtype
+    except (ValueError, TypeError):
+        pass
 
     return DEVICE_TYPE_UNKNOWN
 
@@ -132,6 +137,28 @@ def decode_proximity_pdin(bytes_data):
     if len(bytes_data) >= 2:
         decoded['distance_mm'] = bytes_data[0] | (bytes_data[1] << 8)
         decoded['description'] += f', {decoded["distance_mm"]} mm'
+    return decoded
+
+
+def decode_capacitive_pdin(bytes_data):
+    """
+    Decode Process Data In for IFM capacitive sensors.
+    Typical IFM 4-byte format: last byte bit 0 = switching output, bit 1 = secondary output.
+    """
+    decoded = {
+        'object_detected': False,
+        'raw_hex': '',
+        'description': 'No data'
+    }
+    if not bytes_data or len(bytes_data) < 1:
+        return decoded
+    if isinstance(bytes_data, bytearray):
+        bytes_data = list(bytes_data)
+    decoded['raw_hex'] = ''.join(f'{b:02X}' for b in bytes_data)
+    # Use last byte for switching state (IFM capacitive sensors encode output in LSB of last byte)
+    last = bytes_data[-1]
+    decoded['object_detected'] = bool(last & 0x01) or bool(last & 0x02)
+    decoded['description'] = 'Object detected' if decoded['object_detected'] else 'No object'
     return decoded
 
 

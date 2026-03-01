@@ -281,7 +281,8 @@ const LEARN_BLURBS = {
   status_led: { blurb: 'Status lights show machine or line state (e.g. green = running, red = fault). Check supervision and that the correct state is displayed.', anchor: 'status-led' },
   photo_electric: { blurb: 'Photoelectric sensors detect objects and often report signal quality. Keep the lens clean and watch signal quality; a drop means cleaning or alignment before failure.', anchor: 'photo-electric' },
   temperature: { blurb: 'Temperature sensors report °C for process and maintenance. Check supervision current and wiring; use trends to spot overheating.', anchor: 'temperature' },
-  proximity: { blurb: 'Proximity sensors report presence or distance. Check mounting distance and contamination; use event flags and cycle count for MTTF-based replacement.', anchor: 'proximity' }
+  proximity: { blurb: 'Proximity sensors report presence or distance. Check mounting distance and contamination; use event flags and cycle count for MTTF-based replacement.', anchor: 'proximity' },
+  capacitive: { blurb: 'Capacitive sensors detect objects through non-conductive materials and liquids. Keep sensing face clean and dry; set the sensitivity correctly to avoid false triggers.', anchor: 'proximity' }
 };
 let portCycleCounts = {};
 
@@ -305,7 +306,7 @@ function generatePortDetailsHTML(port) {
   }
   h += `<p class="text-sm opacity-80">Type: ${escapeHtml(dtype)} | Vendor: ${escapeHtml(port.vendor_id || '-')} | Device: ${escapeHtml(port.device_id || '-')} | Serial: ${escapeHtml(port.serial || '-')}</p>`;
 
-  if ((dtype === 'photo_electric' || dtype === 'proximity') && port.pdin && port.pdin.decoded) {
+  if ((dtype === 'photo_electric' || dtype === 'proximity' || dtype === 'capacitive') && port.pdin && port.pdin.decoded) {
     portCycleCounts[port.port] = (portCycleCounts[port.port] || 950000) + Math.floor(Math.random() * 50) + 1;
     const count = portCycleCounts[port.port];
     h += `<p class="text-xs my-1"><strong>Total activations (simulated):</strong> ${count.toLocaleString()}. <span class="opacity-70">Parts have a mechanical life cycle (MTTF). Smart sensors can support replacement planning.</span></p>`;

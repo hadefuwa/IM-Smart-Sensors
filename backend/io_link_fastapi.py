@@ -23,10 +23,12 @@ from decoder import (
     decode_photo_electric_pdin,
     decode_temperature_pdin,
     decode_proximity_pdin,
+    decode_capacitive_pdin,
     DEVICE_TYPE_STATUS_LED,
     DEVICE_TYPE_PHOTO_ELECTRIC,
     DEVICE_TYPE_TEMPERATURE,
     DEVICE_TYPE_PROXIMITY,
+    DEVICE_TYPE_CAPACITIVE,
 )
 
 # Configure logging
@@ -339,12 +341,14 @@ async def get_ifm_port_info(
 
 
 async def poll_all_ports(base_url: str, include_static: bool = True) -> List[Dict]:
-    """Fetch data from all ports in parallel"""
-    async with httpx.AsyncClient() as client:
-        # Create tasks for all ports
+    """Fetch data from all ports. AL1350 uses HTTP/1.0 (close per request) and only
+    accepts ~3 concurrent TCP connections, so we cap httpx connections accordingly."""
+    limits = httpx.Limits(max_connections=3, max_keepalive_connections=0)
+    async with httpx.AsyncClient(limits=limits) as client:
+        # Create tasks for all ports — httpx will queue them within the connection cap
         tasks = [get_ifm_port_info(client, base_url, i, include_static=include_static) for i in range(1, 5)]
-        
-        # Run all tasks in parallel
+
+        # Run all tasks; httpx serialises excess connections automatically
         ports = await asyncio.gather(*tasks, return_exceptions=True)
         
         # Convert exceptions to empty port data
@@ -788,7 +792,8 @@ async def io_link_port_detail(port_num: int):
         'events': []
     }
     
-    async with httpx.AsyncClient() as client:
+    limits = httpx.Limits(max_connections=3, max_keepalive_connections=0)
+    async with httpx.AsyncClient(limits=limits) as client:
         # Get port info
         port_info = await get_ifm_port_info(client, base_url, port_num)
         port_data.update({
@@ -826,6 +831,8 @@ async def io_link_port_detail(port_num: int):
                 port_data['pdin']['decoded'] = decode_temperature_pdin(pdin_bytes)
             elif dtype == DEVICE_TYPE_PROXIMITY and pdin_bytes:
                 port_data['pdin']['decoded'] = decode_proximity_pdin(pdin_bytes)
+            elif dtype == DEVICE_TYPE_CAPACITIVE and pdin_bytes:
+                port_data['pdin']['decoded'] = decode_capacitive_pdin(pdin_bytes)
         
         # Get PDout and decode
         pdout_raw = port_info.get('pdout', '')
