@@ -322,17 +322,22 @@ async def get_ifm_port_info(
     
     responses = await asyncio.gather(*tasks, return_exceptions=True)
     
+    # AL1350 mode integer -> human-readable string (frontend uses .toLowerCase().includes())
+    _MODE_MAP = {0: 'inactive', 1: 'digital_in', 2: 'digital_out', 3: 'io-link'}
+
     # Process responses
     for i, response in enumerate(responses):
         if isinstance(response, Exception):
             continue
-            
+
         try:
             if response.status_code == 200:
                 data = response.json()
                 if data.get('code') == 200:
                     value = data.get('data', {}).get('value', '')
                     key = endpoints[i][1]
+                    if key == 'mode' and isinstance(value, int):
+                        value = _MODE_MAP.get(value, str(value))
                     port_data[key] = value
         except Exception:
             pass
