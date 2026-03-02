@@ -933,7 +933,14 @@ async def serve_frontend():
         with open(index_path, 'r', encoding='utf-8') as f:
             html_content = f.read()
         logger.info(f"Serving frontend HTML ({len(html_content)} bytes)")
-        return HTMLResponse(content=html_content)
+        return HTMLResponse(
+            content=html_content,
+            headers={
+                "Cache-Control": "no-store, no-cache, must-revalidate, max-age=0",
+                "Pragma": "no-cache",
+                "Expires": "0",
+            },
+        )
     except Exception as e:
         logger.error(f"Error reading HTML: {e}", exc_info=True)
         return HTMLResponse(

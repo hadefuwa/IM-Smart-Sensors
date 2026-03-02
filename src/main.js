@@ -5982,7 +5982,7 @@ function render3DModelsPage() {
             <a id="model-download-link" href="${stpPath}" download class="btn btn-primary btn-sm">Download Source</a>
           </div>
           <div class="text-xs text-base-content/60">
-            STEP preview is rendered locally in-browser (works offline on Pi). SAT is provided for download/open.
+            STEP preview is rendered locally in-browser (works offline on Pi). SAT is provided as a downloadable source file.
           </div>
           <div class="w-full h-[70vh] min-h-[460px] rounded-lg border border-base-300 bg-base-100 overflow-hidden">
             <canvas id="cad-viewer-canvas" class="w-full h-full block"></canvas>
@@ -5997,7 +5997,7 @@ function render3DModelsPage() {
             <h2 class="card-title text-base-content">CAD_STP_ASI_0183.stp</h2>
             <p class="text-sm text-base-content/70">STEP format (fully supported by embedded viewer).</p>
             <div class="card-actions justify-end mt-3">
-              <a href="${stpPath}" target="_blank" rel="noopener noreferrer" class="btn btn-ghost btn-sm">Open Raw File</a>
+              <button type="button" id="model-load-stp-btn" class="btn btn-ghost btn-sm">Load in Viewer</button>
               <a href="${stpPath}" download class="btn btn-primary btn-sm">Download</a>
             </div>
           </div>
@@ -6008,9 +6008,17 @@ function render3DModelsPage() {
             <h2 class="card-title text-base-content">CAD_SAT_ASI_0183.sat</h2>
             <p class="text-sm text-base-content/70">ACIS SAT source file (download/open raw; browser preview support is limited).</p>
             <div class="card-actions justify-end mt-3">
-              <a href="${satPath}" target="_blank" rel="noopener noreferrer" class="btn btn-ghost btn-sm">Open Raw File</a>
+              <button type="button" id="model-load-sat-btn" class="btn btn-ghost btn-sm">Select SAT</button>
               <a href="${satPath}" download class="btn btn-primary btn-sm">Download</a>
             </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card bg-base-200 shadow-xl">
+        <div class="card-body">
+          <div class="flex justify-end">
+            <a href="#" data-page="home" class="btn btn-outline btn-sm">Back to Dashboard</a>
           </div>
         </div>
       </div>
@@ -6021,9 +6029,21 @@ function render3DModelsPage() {
 async function init3DModelsPage() {
   const select = document.getElementById('model-file-select');
   const reloadBtn = document.getElementById('model-reload-btn');
+  const stpBtn = document.getElementById('model-load-stp-btn');
+  const satBtn = document.getElementById('model-load-sat-btn');
   const downloadLink = document.getElementById('model-download-link');
+  const statusEl = document.getElementById('cad-viewer-status');
   if (!select || !downloadLink) return;
-  const cad = await import('./components/cad-viewer.js');
+  let cad = null;
+  try {
+    cad = await import('./components/cad-viewer.js');
+  } catch (err) {
+    if (statusEl) {
+      statusEl.className = 'text-sm text-error';
+      statusEl.textContent = `3D viewer runtime failed to initialize: ${err?.message || 'unknown error'}`;
+    }
+    return;
+  }
 
   const applyModel = async () => {
     const modelPath = select.value;
@@ -6031,7 +6051,6 @@ async function init3DModelsPage() {
     try {
       await cad.loadCadModel('cad-viewer-canvas', 'cad-viewer-status', modelPath);
     } catch (err) {
-      const statusEl = document.getElementById('cad-viewer-status');
       if (statusEl) {
         statusEl.className = 'text-sm text-error';
         statusEl.textContent = `Failed to load model: ${err?.message || 'unknown error'}`;
@@ -6041,6 +6060,18 @@ async function init3DModelsPage() {
 
   select.addEventListener('change', () => void applyModel());
   if (reloadBtn) reloadBtn.addEventListener('click', () => void applyModel());
+  if (stpBtn) {
+    stpBtn.addEventListener('click', () => {
+      select.value = `${import.meta.env.BASE_URL}assets/CAD_STP_ASI_0183.stp`;
+      void applyModel();
+    });
+  }
+  if (satBtn) {
+    satBtn.addEventListener('click', () => {
+      select.value = `${import.meta.env.BASE_URL}assets/CAD_SAT_ASI_0183.sat`;
+      void applyModel();
+    });
+  }
   await applyModel();
 }
 
