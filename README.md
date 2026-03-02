@@ -55,7 +55,7 @@ pip install -r requirements.txt
 python run_io_link_fastapi.py
 ```
 
-Server runs at **http://localhost:8000** (API docs at http://localhost:8000/docs).
+Server runs at **http://0.0.0.0:8000** (LAN: http://<host-ip>:8000, docs at http://<host-ip>:8000/docs).
 
 ### 3. Install and run the frontend
 
@@ -64,7 +64,7 @@ npm install
 npm run dev
 ```
 
-Then open the URL shown (e.g. **http://localhost:5173**). The **HMI Dashboard** loads as the default page. The frontend connects to the backend at `http://localhost:8000` by default; to use a different host set `window.IO_LINK_API_BASE` before loading (e.g. in browser console or in your build).
+Then open the URL shown (e.g. **http://localhost:5173**). The **HMI Dashboard** loads as the default page. The frontend resolves the API base to http://<host-ip>:8000 by default (same host as the UI). To use a different backend, set window.IO_LINK_API_BASE before loading (e.g. in browser console or in your build).
 
 ---
 

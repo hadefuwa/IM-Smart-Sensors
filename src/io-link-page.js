@@ -6,7 +6,12 @@
 import Chart from 'chart.js/auto';
 
 // API/WebSocket base – when using Vite dev server (e.g. 5173), point to FastAPI (8000)
-const API_BASE = window.IO_LINK_API_BASE || window.location.origin;
+const resolveApiBase = () => {
+  if (window.IO_LINK_API_BASE) return window.IO_LINK_API_BASE;
+  const { protocol, hostname } = window.location;
+  return protocol + '//' + hostname + ':8000';
+};
+const API_BASE = resolveApiBase();
 const WS_BASE = API_BASE.replace(/^http/, 'ws');
 
 export function renderIOLinkMaster() {

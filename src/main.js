@@ -7519,7 +7519,7 @@ setTimeout(() => {
 // update these elements (more frequently) — that's fine.
 // ================================================================
 (function startGlobalConnectionPoller() {
-  const _apiBase = window.IO_LINK_API_BASE || window.location.origin;
+  const _apiBase = window.IO_LINK_API_BASE || (window.location.protocol + '//' + window.location.hostname + ':8000');
 
   function fetchWithTimeout(url, timeoutMs) {
     if (typeof AbortSignal !== 'undefined' && typeof AbortSignal.timeout === 'function') {
