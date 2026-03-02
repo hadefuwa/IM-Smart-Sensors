@@ -5978,18 +5978,16 @@ function render3DModelsPage() {
               <option value="${stpPath}" selected>CAD_STP_ASI_0183.stp</option>
               <option value="${satPath}">CAD_SAT_ASI_0183.sat</option>
             </select>
-            <a id="model-open-link" href="#" target="_blank" rel="noopener noreferrer" class="btn btn-outline btn-sm">Open in 3D Viewer</a>
+            <button id="model-reload-btn" type="button" class="btn btn-outline btn-sm">Reload</button>
             <a id="model-download-link" href="${stpPath}" download class="btn btn-primary btn-sm">Download Source</a>
           </div>
           <div class="text-xs text-base-content/60">
-            Embedded viewer supports rotate, pan, and zoom. If the viewer is blocked offline, use Download Source.
+            STEP preview is rendered locally in-browser (works offline on Pi). SAT is provided for download/open.
           </div>
-          <iframe
-            id="model-viewer-frame"
-            title="3D CAD Viewer"
-            class="w-full h-[70vh] min-h-[460px] rounded-lg border border-base-300 bg-base-100"
-            referrerpolicy="no-referrer"
-          ></iframe>
+          <div class="w-full h-[70vh] min-h-[460px] rounded-lg border border-base-300 bg-base-100 overflow-hidden">
+            <canvas id="cad-viewer-canvas" class="w-full h-full block"></canvas>
+          </div>
+          <div id="cad-viewer-status" class="text-sm text-base-content/70">Preparing viewer...</div>
         </div>
       </div>
 
@@ -5997,7 +5995,7 @@ function render3DModelsPage() {
         <div class="card bg-base-200 shadow-xl">
           <div class="card-body">
             <h2 class="card-title text-base-content">CAD_STP_ASI_0183.stp</h2>
-            <p class="text-sm text-base-content/70">STEP format for CAD interchange and manufacturing workflows.</p>
+            <p class="text-sm text-base-content/70">STEP format (fully supported by embedded viewer).</p>
             <div class="card-actions justify-end mt-3">
               <a href="${stpPath}" target="_blank" rel="noopener noreferrer" class="btn btn-ghost btn-sm">Open Raw File</a>
               <a href="${stpPath}" download class="btn btn-primary btn-sm">Download</a>
@@ -6008,7 +6006,7 @@ function render3DModelsPage() {
         <div class="card bg-base-200 shadow-xl">
           <div class="card-body">
             <h2 class="card-title text-base-content">CAD_SAT_ASI_0183.sat</h2>
-            <p class="text-sm text-base-content/70">ACIS SAT format commonly used for solid geometry exchange.</p>
+            <p class="text-sm text-base-content/70">ACIS SAT source file (download/open raw; browser preview support is limited).</p>
             <div class="card-actions justify-end mt-3">
               <a href="${satPath}" target="_blank" rel="noopener noreferrer" class="btn btn-ghost btn-sm">Open Raw File</a>
               <a href="${satPath}" download class="btn btn-primary btn-sm">Download</a>
@@ -6020,28 +6018,30 @@ function render3DModelsPage() {
   `;
 }
 
-function build3DViewerUrl(modelPath) {
-  const absoluteModelUrl = new URL(modelPath, window.location.origin).href;
-  return `https://3dviewer.net/embed.html#model=${encodeURIComponent(absoluteModelUrl)}`;
-}
-
-function init3DModelsPage() {
+async function init3DModelsPage() {
   const select = document.getElementById('model-file-select');
-  const frame = document.getElementById('model-viewer-frame');
-  const openLink = document.getElementById('model-open-link');
+  const reloadBtn = document.getElementById('model-reload-btn');
   const downloadLink = document.getElementById('model-download-link');
-  if (!select || !frame || !openLink || !downloadLink) return;
+  if (!select || !downloadLink) return;
+  const cad = await import('./components/cad-viewer.js');
 
-  const applyModel = () => {
+  const applyModel = async () => {
     const modelPath = select.value;
-    const viewerUrl = build3DViewerUrl(modelPath);
-    frame.src = viewerUrl;
-    openLink.href = viewerUrl;
     downloadLink.href = modelPath;
+    try {
+      await cad.loadCadModel('cad-viewer-canvas', 'cad-viewer-status', modelPath);
+    } catch (err) {
+      const statusEl = document.getElementById('cad-viewer-status');
+      if (statusEl) {
+        statusEl.className = 'text-sm text-error';
+        statusEl.textContent = `Failed to load model: ${err?.message || 'unknown error'}`;
+      }
+    }
   };
 
-  select.addEventListener('change', applyModel);
-  applyModel();
+  select.addEventListener('change', () => void applyModel());
+  if (reloadBtn) reloadBtn.addEventListener('click', () => void applyModel());
+  await applyModel();
 }
 
 function renderUserManualPage() {
