@@ -400,7 +400,9 @@ class AL1350ClientManager:
         await self.ensure_subscription()
         ports = await self.poll_ports(include_static=include_static)
         device_info = await self.get_device_info() if include_static else {"device_name": "", "software": {}, "device_icon_url": None}
-        self.last_good_data_ts = time.time()
+        # Only mark data as fresh when the circuit is actually able to reach the device
+        if self._breaker.state != "open":
+            self.last_good_data_ts = time.time()
         self.degraded_mode = self.degraded_mode or (not self.subscription_enabled)
         return ports, device_info
 

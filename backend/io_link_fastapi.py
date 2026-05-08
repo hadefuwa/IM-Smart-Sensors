@@ -497,6 +497,7 @@ async def poll_io_link_master():
             # This is a placeholder - adjust based on your actual IO-Link Master API
 
             # Update global state
+            is_connected = al1350._breaker.state != "open"
             system_state = {
                 'device_name': (device_info.get('device_name') or system_state.get('device_name') or 'IO-Link Master'),
                 'ports': ports if isinstance(ports, list) else [],
@@ -510,7 +511,7 @@ async def poll_io_link_master():
                 'degraded_reason': al1350.degraded_reason,
                 'last_good_data_ts': al1350.last_good_data_ts or None,
                 'error': None,
-                'success': True
+                'success': is_connected
             }
 
             # Append supervision history if available
@@ -980,6 +981,33 @@ async def system_health():
             "master_target": diag.get("master_target", {}),
         }
     )
+
+
+# ================================================================
+# Debug telemetry — collects frontend events so we can diagnose
+# touch/scroll behaviour without needing physical screen access.
+# ================================================================
+from collections import deque
+
+_debug_log: deque = deque(maxlen=200)
+
+@app.post("/api/debug/event")
+async def debug_event(request: Request):
+    try:
+        body = await request.json()
+        _debug_log.append({"t": round(time.time() * 1000), **body})
+    except Exception:
+        pass
+    return Response(status_code=204)
+
+@app.get("/api/debug/events")
+async def debug_events():
+    return JSONResponse({"events": list(_debug_log)})
+
+@app.delete("/api/debug/events")
+async def debug_clear():
+    _debug_log.clear()
+    return Response(status_code=204)
 
 
 # ================================================================
