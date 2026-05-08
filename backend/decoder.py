@@ -18,6 +18,8 @@ DEVICE_TYPE_UNKNOWN = 'unknown'
 DEVICE_ID_FALLBACK = [
     # IFM capacitive sensor on port 2 (vendorID 1586 / 0x0632, deviceID 1052673 / 0x101001, name '2377240')
     (1586, 1052673, DEVICE_TYPE_CAPACITIVE),
+    # IFM photoelectric sensor (vendorID 342 / 0x156, deviceID 131842 / 0x20302, productname 'unknown')
+    (342, 131842, DEVICE_TYPE_PHOTO_ELECTRIC),
 ]
 
 # Common IO-Link event codes (hex) -> human-readable label (for maintenance training)

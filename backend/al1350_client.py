@@ -176,15 +176,33 @@ class AL1350ClientManager:
                 latency_ms = (time.perf_counter() - started) * 1000.0
                 self.request_latencies_ms.append(latency_ms)
                 self.request_successes += 1
+                _state_before = self._breaker.state
                 self._breaker.record_success()
+                if _state_before in ("open", "half-open"):
+                    self._logger.info(
+                        f"CIRCUIT BREAKER CLOSED (recovered from {_state_before}) — "
+                        f"url={url} latency={latency_ms:.0f}ms"
+                    )
                 return payload if isinstance(payload, dict) else {"value": payload}
             except Exception as exc:  # noqa: BLE001
                 latency_ms = (time.perf_counter() - started) * 1000.0
                 self.request_latencies_ms.append(latency_ms)
                 self.request_failures += 1
+                _state_before = self._breaker.state
                 self._breaker.record_failure()
+                _state_after = self._breaker.state
                 self.last_error = str(exc)
                 last_exc = exc
+                self._logger.debug(
+                    f"Request failed attempt={attempt}/{retries} url={url} "
+                    f"latency={latency_ms:.0f}ms error={exc!r} "
+                    f"circuit={_state_after} breaker_failures={self._breaker.failures}"
+                )
+                if _state_after == "open" and _state_before != "open":
+                    self._logger.error(
+                        f"CIRCUIT BREAKER OPENED — {self._breaker.failures} consecutive failures — "
+                        f"url={url} last_error={exc!r}"
+                    )
                 if attempt < retries:
                     # jittered exponential backoff, capped
                     await asyncio.sleep(min(1.5, (2 ** (attempt - 1)) * 0.2 + random.uniform(0.0, 0.15)))
@@ -222,57 +240,63 @@ class AL1350ClientManager:
         now = time.time()
         if self._multi_supported is False and now < self._next_multi_probe_ts:
             return None
-        # Different AL1350 firmware variants expose slightly different payload shapes.
-        payload_candidates = [
-            {"datatosend": paths},
-            {"items": [{"adr": p} for p in paths]},
-            {"adr": paths},
-        ]
-        for data in payload_candidates:
-            res = await self._service_request("getdatamulti", data=data)
-            if not isinstance(res, dict):
-                continue
-            out: Dict[str, Any] = {}
-            if isinstance(res.get("data"), dict):
-                maybe = res["data"]
-                if isinstance(maybe.get("items"), list):
-                    for item in maybe["items"]:
-                        if isinstance(item, dict) and item.get("adr") is not None:
-                            out[str(item["adr"])] = item.get("value")
-                elif isinstance(maybe.get("values"), dict):
-                    out = {str(k): v for k, v in maybe["values"].items()}
-            if out:
-                self._multi_supported = True
-                self.degraded_mode = False
-                self.degraded_reason = ""
-                return out
-        self._multi_supported = False
-        self._next_multi_probe_ts = now + 120.0
-        self.degraded_mode = True
-        self.degraded_reason = "getdatamulti unavailable"
-        return None
+
+        # getdatamulti expects data-point paths without the /getdata service suffix.
+        # Manual §9.2.9: datatosend contains data-point paths, not service paths.
+        def _strip_service(p: str) -> str:
+            return p[: -len("/getdata")] if p.endswith("/getdata") else p
+
+        datapoints = [_strip_service(p) for p in paths]
+
+        res = await self._service_request("getdatamulti", data={"datatosend": datapoints})
+        if not isinstance(res, dict) or res.get("code") != 200:
+            self._multi_supported = False
+            self._next_multi_probe_ts = now + 120.0
+            self.degraded_mode = True
+            self.degraded_reason = "getdatamulti unavailable"
+            return None
+
+        raw = res.get("data", {})
+        if not isinstance(raw, dict):
+            self._multi_supported = False
+            self._next_multi_probe_ts = now + 120.0
+            self.degraded_mode = True
+            self.degraded_reason = "getdatamulti bad response shape"
+            return None
+
+        # Manual response: {"data": {"path/without/leading/slash": {"code": 200, "data": value}}}
+        # Build result keyed by the ORIGINAL path (including /getdata) so callers can look up by
+        # the same path they passed in.
+        out: Dict[str, Any] = {}
+        for orig_path, datapoint in zip(paths, datapoints):
+            key_no_slash = datapoint.lstrip("/")
+            entry = raw.get(key_no_slash) or raw.get(datapoint)
+            if isinstance(entry, dict) and entry.get("code") == 200:
+                out[orig_path] = entry.get("data")
+
+        if not out:
+            self._multi_supported = False
+            self._next_multi_probe_ts = now + 120.0
+            self.degraded_mode = True
+            self.degraded_reason = "getdatamulti returned no valid data"
+            return None
+
+        self._multi_supported = True
+        self.degraded_mode = False
+        self.degraded_reason = ""
+        return out
 
     async def ensure_subscription(self) -> None:
-        # Best-effort subscription heartbeat. If unsupported, remain in fallback mode.
-        now = time.time()
-        if self.subscription_enabled and (now - self.subscription_last_ok_ts) < 15:
-            return
-        if now - self.subscription_last_ok_ts < 1:
-            return
-        res = await self._service_request("subscribe", data={"interval": 1000})
-        if res:
-            if not self.subscription_enabled:
-                self.subscription_reconnect_count += 1
-            self.subscription_enabled = True
-            self.subscription_last_ok_ts = now
-            self.subscription_failures = 0
-            if self.degraded_reason in ("subscription unavailable", "boot"):
-                self.degraded_reason = ""
-        else:
-            self.subscription_enabled = False
-            self.subscription_failures += 1
-            self.degraded_mode = True
-            self.degraded_reason = "subscription unavailable"
+        # The AL1350 subscribe service (manual §9.2.12) is a push mechanism: the device
+        # POSTs data to a callback URL on the client at a timer interval.  It cannot be
+        # used as a polling replacement with a simple POST request.  We use getdatamulti
+        # polling instead, so this method is intentionally a no-op.
+        # To implement real push subscription: add a POST /iot-callback endpoint to the
+        # FastAPI app, then call:
+        #   adr = /timer[1]/counter/datachanged/subscribe
+        #   data = {"callback": "http://192.168.7.2:8000/iot-callback", "datatosend": [...]}
+        # followed by setting /timer[1]/interval/setdata to the desired ms interval.
+        self.subscription_enabled = False
 
     async def get_port_info(self, port_number: int, include_static: bool = True) -> Dict[str, Any]:
         port_data: Dict[str, Any] = {
@@ -333,6 +357,38 @@ class AL1350ClientManager:
                 port_data[key] = value
         self.port_freshness_ts[port_number] = time.time()
         return port_data
+
+    async def get_supervision(self) -> Dict[str, Any]:
+        """Read AL1350 diagnostic data from processdatamaster (manual §9.2.9).
+
+        Returns a dict with keys: temperature (°C), voltage (V), current (A),
+        supervisionstatus.  Any key absent means the device did not return a value.
+        """
+        supervision_paths = [
+            ("/processdatamaster/temperature/getdata", "temperature"),
+            ("/processdatamaster/voltage/getdata", "voltage"),
+            ("/processdatamaster/current/getdata", "current"),
+            ("/processdatamaster/supervisionstatus/getdata", "supervisionstatus"),
+        ]
+        result: Dict[str, Any] = {}
+
+        multi = await self._try_getdatamulti([p for p, _ in supervision_paths])
+        if multi:
+            for path, key in supervision_paths:
+                val = multi.get(path)
+                if val is not None:
+                    result[key] = val
+            return result
+
+        # Fallback: individual GETs
+        tasks = [self._request_json("GET", path, retries=2) for path, _ in supervision_paths]
+        responses = await asyncio.gather(*tasks, return_exceptions=True)
+        for idx, response in enumerate(responses):
+            if isinstance(response, Exception):
+                continue
+            if response.get("code") == 200:
+                result[supervision_paths[idx][1]] = response.get("data", {}).get("value")
+        return result
 
     async def poll_ports(self, include_static: bool = True) -> List[Dict[str, Any]]:
         tasks = [self.get_port_info(i, include_static=include_static) for i in range(1, 5)]
@@ -395,16 +451,23 @@ class AL1350ClientManager:
             pass
         return info
 
-    async def poll_snapshot(self, include_static: bool = True) -> Tuple[List[Dict[str, Any]], Dict[str, Any]]:
+    async def poll_snapshot(self, include_static: bool = True) -> Tuple[List[Dict[str, Any]], Dict[str, Any], Dict[str, Any]]:
         await self.refresh_gettree(force=False)
-        await self.ensure_subscription()
-        ports = await self.poll_ports(include_static=include_static)
-        device_info = await self.get_device_info() if include_static else {"device_name": "", "software": {}, "device_icon_url": None}
-        # Only mark data as fresh when the circuit is actually able to reach the device
+        ports, supervision = await asyncio.gather(
+            self.poll_ports(include_static=include_static),
+            self.get_supervision(),
+        )
+        device_info = (
+            await self.get_device_info()
+            if include_static
+            else {"device_name": "", "software": {}, "device_icon_url": None}
+        )
         if self._breaker.state != "open":
             self.last_good_data_ts = time.time()
-        self.degraded_mode = self.degraded_mode or (not self.subscription_enabled)
-        return ports, device_info
+        # degraded = falling back to per-request GETs because getdatamulti is not working
+        self.degraded_mode = self._multi_supported is False
+        self.degraded_reason = "getdatamulti unavailable" if self.degraded_mode else ""
+        return ports, device_info, supervision
 
     async def write_iot_network_setblock(
         self,

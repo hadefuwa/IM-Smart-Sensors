@@ -8,11 +8,12 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, FileResponse, HTMLResponse, RedirectResponse, Response
 from fastapi.staticfiles import StaticFiles
 import asyncio
-import httpx
 import json
 import os
 import time
 import logging
+import logging.handlers
+from collections import deque
 from typing import Dict, List, Optional, Set
 from datetime import datetime
 import socket
@@ -33,12 +34,73 @@ from decoder import (
 )
 from al1350_client import AL1350ClientManager
 
-# Configure logging
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-)
+
+def _enrich_port(port_data: dict) -> dict:
+    """Add device_type, pdin_hex, pdout_hex, pdin_decoded, pdout_decoded to a port dict."""
+    vendor_id = port_data.get('vendor_id', '')
+    device_id = port_data.get('device_id', '')
+    name = port_data.get('name', '')
+
+    dtype = get_device_type(vendor_id, device_id, name)
+    port_data['device_type'] = dtype
+
+    pdin_raw = port_data.get('pdin', '')
+    pdin_bytes = parse_hex_to_bytes(pdin_raw) if pdin_raw else []
+    port_data['pdin_hex'] = pdin_raw
+    port_data['pdin_decoded'] = {}
+    if pdin_bytes:
+        if dtype == DEVICE_TYPE_PHOTO_ELECTRIC:
+            port_data['pdin_decoded'] = decode_photo_electric_pdin(pdin_bytes)
+        elif dtype == DEVICE_TYPE_TEMPERATURE:
+            port_data['pdin_decoded'] = decode_temperature_pdin(pdin_bytes)
+        elif dtype == DEVICE_TYPE_PROXIMITY:
+            port_data['pdin_decoded'] = decode_proximity_pdin(pdin_bytes)
+        elif dtype == DEVICE_TYPE_CAPACITIVE:
+            port_data['pdin_decoded'] = decode_capacitive_pdin(pdin_bytes)
+
+    pdout_raw = port_data.get('pdout', '')
+    pdout_bytes = parse_hex_to_bytes(pdout_raw) if pdout_raw else []
+    port_data['pdout_hex'] = pdout_raw
+    port_data['pdout_decoded'] = {}
+    if dtype == DEVICE_TYPE_STATUS_LED and len(pdout_bytes) >= 3:
+        port_data['pdout_decoded'] = decode_cl50_led(pdout_bytes)
+
+    return port_data
+
+
+# ── Logging setup ────────────────────────────────────────────────────────────
+_LOG_FORMAT = '%(asctime)s %(levelname)s [%(name)s] %(message)s'
+_LOG_DATE_FMT = '%Y-%m-%d %H:%M:%S'
+
+logging.basicConfig(level=logging.INFO, format=_LOG_FORMAT, datefmt=_LOG_DATE_FMT)
 logger = logging.getLogger(__name__)
+
+# File handler: rotate at 10 MB, keep 5 files
+_LOGS_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'logs')
+os.makedirs(_LOGS_DIR, exist_ok=True)
+_file_handler = logging.handlers.RotatingFileHandler(
+    os.path.join(_LOGS_DIR, 'app.log'),
+    maxBytes=10 * 1024 * 1024,
+    backupCount=5,
+    encoding='utf-8',
+)
+_file_handler.setFormatter(logging.Formatter(_LOG_FORMAT, datefmt=_LOG_DATE_FMT))
+logging.getLogger().addHandler(_file_handler)
+
+# In-memory ring buffer for the Diagnostics log viewer (last 500 records)
+_app_log_buffer: deque = deque(maxlen=500)
+
+class _MemHandler(logging.Handler):
+    def emit(self, record: logging.LogRecord) -> None:
+        _app_log_buffer.append({
+            'ts': record.created,
+            'level': record.levelname,
+            'msg': record.getMessage(),
+            'name': record.name,
+        })
+
+_mem_handler = _MemHandler(level=logging.DEBUG)
+logging.getLogger().addHandler(_mem_handler)
 
 # Get directory paths
 _BACKEND_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -144,12 +206,11 @@ MAX_LATENCIES = 200
 _prev_success: Optional[bool] = None
 _transition_ts: Optional[float] = None
 consecutive_failures: int = 0
+_prev_circuit_state: Optional[str] = None
+_prev_degraded_mode: Optional[bool] = None
 
 # Configuration
-IFM_MASTER_IP = "192.168.7.4"
-IFM_MASTER_PORT = 80
-IFM_TIMEOUT = 4.0  # 4 seconds timeout for better link resilience
-POLL_INTERVAL = 1.0  # Poll every 1 second
+POLL_INTERVAL = 1.0
 STATIC_REFRESH_EVERY_CYCLES = 6  # refresh static metadata every N polls
 
 
@@ -191,278 +252,35 @@ def save_config(io_link_updates: dict):
 al1350 = AL1350ClientManager(config_loader=load_config, logger=logger)
 
 
-def parse_supervision_number(val, default=0):
-    """Parse supervision value to number. E.g. '251mA'->251, '23758mV'->23.758, '39°C'->39"""
-    if val is None or val == '':
-        return default
-    import re
-    s = str(val).strip()
-    m = re.match(r'^([-\d.]+)', s)
-    if m:
-        num = float(m.group(1))
-        if 'mV' in s.lower():
-            return round(num / 1000, 2)
-        if 'mA' in s.lower() or '°c' in s.lower() or 'c' in s.lower():
-            return num
-        return num
-    try:
-        return float(s)
-    except ValueError:
-        return default
-
-
 def append_supervision_history(supervision_dict):
-    """Append parsed supervision to history buffer"""
+    """Append processdatamaster supervision snapshot to the history buffer.
+
+    Keys expected (from AL1350 processdatamaster, manual §9.2.9):
+      temperature (°C), voltage (V), current (A), supervisionstatus
+    """
     if not supervision_dict:
         return
     entry = {
         'ts': time.time(),
-        'current': None,
-        'voltage': None,
-        'temperature': None,
-        'status': None,
-        'sw_version': None
+        'current': supervision_dict.get('current'),
+        'voltage': supervision_dict.get('voltage'),
+        'temperature': supervision_dict.get('temperature'),
+        'status': supervision_dict.get('supervisionstatus'),
+        'sw_version': None,
     }
-    for k, v in supervision_dict.items():
-        low = k.lower().replace('-', '').replace(' ', '')
-        if 'current' in low:
-            entry['current'] = parse_supervision_number(v, None)
-        elif 'voltage' in low:
-            entry['voltage'] = parse_supervision_number(v, None)
-        elif 'temp' in low:
-            entry['temperature'] = parse_supervision_number(v, None)
-        elif 'status' in low and 'version' not in low:
-            entry['status'] = parse_supervision_number(v, None)
-        elif 'swversion' in low or ('sw' in low and 'version' in low):
-            entry['sw_version'] = parse_supervision_number(v, None)
-    
     supervision_history.append(entry)
     while len(supervision_history) > MAX_HISTORY_SIZE:
         supervision_history.pop(0)
 
 
-async def get_ifm_port_data(client: httpx.AsyncClient, base_url: str, port_number: int) -> Optional[str]:
-    """
-    Fetches Process Data from an ifm IO-Link Master via IoT Core API.
-    
-    Args:
-        client: httpx async client
-        base_url: Base URL of the IO-Link Master
-        port_number: Port number (1-4)
-        
-    Returns:
-        Hex string value or None if error
-    """
-    url = f"{base_url}/iolinkmaster/port[{port_number}]/iolinkdevice/pdin/getdata"
-    
-    try:
-        response = await client.get(url, timeout=IFM_TIMEOUT)
-        response.raise_for_status()
-        
-        data = response.json()
-        if data.get('code') == 200:
-            return data.get('data', {}).get('value')
-        return None
-    except Exception as e:
-        logger.debug(f"Error fetching port {port_number} data: {e}")
-        return None
-
-
-async def get_ifm_port_pdout(client: httpx.AsyncClient, base_url: str, port_number: int) -> Optional[str]:
-    """Get Process Data Out for a port"""
-    url = f"{base_url}/iolinkmaster/port[{port_number}]/iolinkdevice/pdout/getdata"
-    
-    try:
-        response = await client.get(url, timeout=IFM_TIMEOUT)
-        response.raise_for_status()
-        
-        data = response.json()
-        if data.get('code') == 200:
-            return data.get('data', {}).get('value')
-        return None
-    except Exception as e:
-        logger.debug(f"Error fetching port {port_number} PDout: {e}")
-        return None
-
-
-async def get_ifm_port_info(
-    client: httpx.AsyncClient,
-    base_url: str,
-    port_number: int,
-    include_static: bool = True
-) -> Dict:
-    """Get all information for a single port"""
-    port_data = {
-        'port': port_number,
-        'mode': 'inactive',
-        'comm_mode': '',
-        'master_cycle_time': '',
-        'vendor_id': '',
-        'device_id': '',
-        'name': '',
-        'serial': '',
-        'pdin': '',
-        'pdout': ''
-    }
-    
-    # List of endpoints to fetch
-    endpoints = [
-        (f'/iolinkmaster/port[{port_number}]/mode/getdata', 'mode'),
-        (f'/iolinkmaster/port[{port_number}]/comcode/getdata', 'comm_mode'),
-        (f'/iolinkmaster/port[{port_number}]/mastercycle/getdata', 'master_cycle_time'),
-        (f'/iolinkmaster/port[{port_number}]/iolinkdevice/pdin/getdata', 'pdin'),
-        (f'/iolinkmaster/port[{port_number}]/iolinkdevice/pdout/getdata', 'pdout'),
-    ]
-
-    if include_static:
-        endpoints.extend([
-            (f'/iolinkmaster/port[{port_number}]/iolinkdevice/vendorid/getdata', 'vendor_id'),
-            (f'/iolinkmaster/port[{port_number}]/iolinkdevice/deviceid/getdata', 'device_id'),
-            (f'/iolinkmaster/port[{port_number}]/iolinkdevice/productname/getdata', 'name'),
-            (f'/iolinkmaster/port[{port_number}]/iolinkdevice/serialnumber/getdata', 'serial'),
-        ])
-    
-    # Fetch all endpoints in parallel
-    tasks = []
-    for endpoint, key in endpoints:
-        url = f"{base_url}{endpoint}"
-        tasks.append(client.get(url, timeout=IFM_TIMEOUT))
-    
-    responses = await asyncio.gather(*tasks, return_exceptions=True)
-    
-    # AL1350 mode integer -> human-readable string (frontend uses .toLowerCase().includes())
-    _MODE_MAP = {0: 'inactive', 1: 'digital_in', 2: 'digital_out', 3: 'io-link'}
-
-    # Process responses
-    for i, response in enumerate(responses):
-        if isinstance(response, Exception):
-            continue
-
-        try:
-            if response.status_code == 200:
-                data = response.json()
-                if data.get('code') == 200:
-                    value = data.get('data', {}).get('value', '')
-                    key = endpoints[i][1]
-                    if key == 'mode' and isinstance(value, int):
-                        value = _MODE_MAP.get(value, str(value))
-                    port_data[key] = value
-        except Exception:
-            pass
-    
-    return port_data
-
-
-async def poll_all_ports(base_url: str, include_static: bool = True) -> List[Dict]:
-    """Fetch data from all ports. AL1350 uses HTTP/1.0 (close per request) and only
-    accepts ~3 concurrent TCP connections, so we cap httpx connections accordingly."""
-    limits = httpx.Limits(max_connections=3, max_keepalive_connections=0)
-    async with httpx.AsyncClient(limits=limits) as client:
-        # Create tasks for all ports — httpx will queue them within the connection cap
-        tasks = [get_ifm_port_info(client, base_url, i, include_static=include_static) for i in range(1, 5)]
-
-        # Run all tasks; httpx serialises excess connections automatically
-        ports = await asyncio.gather(*tasks, return_exceptions=True)
-        
-        # Convert exceptions to empty port data
-        result = []
-        for i, port in enumerate(ports):
-            if isinstance(port, Exception):
-                logger.error(f"Error fetching port {i+1}: {port}")
-                result.append({
-                    'port': i + 1,
-                    'mode': 'error',
-                    'comm_mode': '',
-                    'master_cycle_time': '',
-                    'vendor_id': '',
-                    'device_id': '',
-                    'name': '',
-                    'serial': '',
-                    'pdin': '',
-                    'pdout': ''
-                })
-            else:
-                result.append(port)
-        
-        return result
-
-
-async def get_device_info(base_url: str) -> Dict:
-    """Get device name and software info"""
-    device_info = {
-        'device_name': 'IO-Link Master',
-        'software': {},
-        'device_icon_url': None
-    }
-    
-    async with httpx.AsyncClient() as client:
-        # Get device name
-        try:
-            response = await client.get(
-                f"{base_url}/devicetag/applicationtag/getdata",
-                timeout=IFM_TIMEOUT
-            )
-            if response.status_code == 200:
-                data = response.json()
-                if data.get('code') == 200:
-                    device_info['device_name'] = data.get('data', {}).get('value', 'IO-Link Master')
-        except Exception:
-            pass
-        
-        # Get software versions
-        software_paths = [
-            ('deviceinfo/software/getdata', 'Firmware'),
-            ('deviceinfo/bootloaderrevision/getdata', 'Bootloader'),
-            ('software/firmware/getdata', 'Firmware'),
-            ('software/container/getdata', 'Container'),
-            ('software/bootloader/getdata', 'Bootloader'),
-            ('software/fieldbusfirmware/getdata', 'Fieldbus Firmware'),
-        ]
-        
-        tasks = []
-        for path, key in software_paths:
-            url = f"{base_url}/{path}"
-            tasks.append(client.get(url, timeout=IFM_TIMEOUT))
-        
-        responses = await asyncio.gather(*tasks, return_exceptions=True)
-        
-        for i, response in enumerate(responses):
-            if isinstance(response, Exception):
-                continue
-            try:
-                if response.status_code == 200:
-                    data = response.json()
-                    if data.get('code') == 200:
-                        val = data.get('data', {}).get('value', '')
-                        if val:
-                            key = software_paths[i][1]
-                            if key not in device_info['software']:
-                                device_info['software'][key] = val
-            except Exception:
-                pass
-        
-        # Get device icon
-        try:
-            response = await client.get(
-                f"{base_url}/deviceinfo/deviceicon/getdata",
-                timeout=IFM_TIMEOUT
-            )
-            if response.status_code == 200:
-                data = response.json()
-                if data.get('code') == 200:
-                    device_info['device_icon_url'] = data.get('data', {}).get('value')
-        except Exception:
-            pass
-    
-    return device_info
 
 
 async def poll_io_link_master():
     """Background task that continuously polls the IO-Link Master. Reloads config each loop so IP changes take effect."""
-    global system_state
-    
+    global system_state, _prev_circuit_state, _prev_degraded_mode
+
     logger.info("Starting IO-Link Master polling loop")
-    
+
     cycle_count = 0
     while True:
         config = load_config()
@@ -473,12 +291,48 @@ async def poll_io_link_master():
         try:
             await al1350.on_config_changed()
             poll_start = time.time()
-            ports, device_info = await al1350.poll_snapshot(include_static=include_static)
+            circuit_before = al1350._breaker.state
+            ports, device_info, supervision = await al1350.poll_snapshot(include_static=include_static)
 
             poll_ms = round((time.time() - poll_start) * 1000)
             poll_latencies.append({'ts': time.time(), 'latency_ms': poll_ms})
             while len(poll_latencies) > MAX_LATENCIES:
                 poll_latencies.pop(0)
+
+            circuit_after = al1350._breaker.state
+
+            # Log circuit breaker transitions
+            if _prev_circuit_state is not None and circuit_after != _prev_circuit_state:
+                if circuit_after == 'open':
+                    logger.error(
+                        f"CIRCUIT BREAKER OPENED — failures={al1350._breaker.failures} "
+                        f"threshold={al1350._breaker.failure_threshold} "
+                        f"last_error={al1350.last_error!r} "
+                        f"master={al1350._master_ip}:{al1350._master_port} "
+                        f"poll_ms={poll_ms}"
+                    )
+                elif circuit_after == 'closed' and _prev_circuit_state in ('open', 'half-open'):
+                    logger.info(
+                        f"CIRCUIT BREAKER CLOSED (recovered) — "
+                        f"was={_prev_circuit_state} poll_ms={poll_ms}"
+                    )
+                elif circuit_after == 'half-open':
+                    logger.info(
+                        f"CIRCUIT BREAKER HALF-OPEN — probing recovery after 15 s "
+                        f"master={al1350._master_ip}:{al1350._master_port}"
+                    )
+            _prev_circuit_state = circuit_after
+
+            # Log degraded mode transitions
+            if _prev_degraded_mode is not None and al1350.degraded_mode != _prev_degraded_mode:
+                if al1350.degraded_mode:
+                    logger.warning(
+                        f"DEGRADED MODE: falling back to per-request GETs "
+                        f"reason={al1350.degraded_reason!r}"
+                    )
+                else:
+                    logger.info("DEGRADED MODE cleared — getdatamulti working again")
+            _prev_degraded_mode = al1350.degraded_mode
 
             # Preserve static metadata between lightweight poll cycles.
             prev_ports = {p.get('port'): p for p in (system_state.get('ports') or []) if isinstance(p, dict)}
@@ -491,10 +345,10 @@ async def poll_io_link_master():
                         if not port_data.get(key):
                             port_data[key] = prev.get(key, '')
 
-            # Extract supervision data from ports if available
-            supervision = {}
-            # Note: Supervision data might come from device info endpoints
-            # This is a placeholder - adjust based on your actual IO-Link Master API
+            # Enrich each port with decoded pdin/pdout and device_type
+            if isinstance(ports, list):
+                for port_data in ports:
+                    _enrich_port(port_data)
 
             # Update global state
             is_connected = al1350._breaker.state != "open"
@@ -506,7 +360,7 @@ async def poll_io_link_master():
                 'device_icon_url': device_info.get('device_icon_url') or system_state.get('device_icon_url'),
                 'product_image_url': '/api/io-link/product-image',
                 'timestamp': time.time(),
-                'source': 'subscription' if al1350.subscription_enabled and not al1350.degraded_mode else 'fallback',
+                'source': 'getdatamulti' if not al1350.degraded_mode else 'fallback',
                 'degraded_mode': al1350.degraded_mode,
                 'degraded_reason': al1350.degraded_reason,
                 'last_good_data_ts': al1350.last_good_data_ts or None,
@@ -514,7 +368,6 @@ async def poll_io_link_master():
                 'success': is_connected
             }
 
-            # Append supervision history if available
             if supervision:
                 append_supervision_history(supervision)
 
@@ -522,7 +375,12 @@ async def poll_io_link_master():
             await broadcast_to_clients(system_state)
 
         except Exception as e:
-            logger.error(f"Error in polling loop: {e}")
+            logger.error(
+                f"Poll loop exception: {e!r} "
+                f"circuit={al1350._breaker.state} "
+                f"failures={al1350._breaker.failures} "
+                f"master={al1350._master_ip}:{al1350._master_port}"
+            )
             system_state['success'] = False
             system_state['error'] = str(e)
             al1350.last_error = str(e)
@@ -536,18 +394,27 @@ async def poll_io_link_master():
             _transition_ts = _now
         elif _current != _prev_success:
             _dur = round(_now - (_transition_ts or _now), 1)
+            _err = None if _current else (system_state.get('error') or al1350.last_error)
             connection_events.append({
                 'ts': _now,
                 'status': 'connected' if _current else 'disconnected',
                 'duration_sec': _dur,
-                'error': None if _current else system_state.get('error')
+                'error': _err,
+                'circuit': al1350._breaker.state,
             })
             while len(connection_events) > MAX_CONN_EVENTS:
                 connection_events.pop(0)
             _transition_ts = _now
+            if _current:
+                logger.info(f"AL1350 STATUS → CONNECTED (was down {_dur}s)")
+            else:
+                logger.warning(
+                    f"AL1350 STATUS → DISCONNECTED (was up {_dur}s) "
+                    f"error={_err!r} circuit={al1350._breaker.state}"
+                )
         consecutive_failures = 0 if _current else consecutive_failures + 1
         _prev_success = _current
-        
+
         # Wait before next poll (re-reads config each loop so interval changes take effect)
         poll_interval = max(0.5, float(io_config.get('poll_interval_sec', POLL_INTERVAL)))
         await asyncio.sleep(poll_interval)
@@ -605,7 +472,8 @@ async def websocket_endpoint(websocket: WebSocket):
     """WebSocket endpoint for real-time data push"""
     await websocket.accept()
     connected_clients.add(websocket)
-    logger.info(f"WebSocket client connected. Total clients: {len(connected_clients)}")
+    client_host = websocket.client.host if websocket.client else 'unknown'
+    logger.info(f"WS CONNECT from {client_host} — total clients: {len(connected_clients)}")
     
     try:
         # Send current state immediately
@@ -629,7 +497,7 @@ async def websocket_endpoint(websocket: WebSocket):
         logger.error(f"WebSocket error: {e}")
     finally:
         connected_clients.discard(websocket)
-        logger.info(f"WebSocket client disconnected. Total clients: {len(connected_clients)}")
+        logger.info(f"WS DISCONNECT from {client_host} — total clients: {len(connected_clients)}")
 
 
 @app.get("/api/io-link/config")
@@ -639,9 +507,9 @@ async def get_io_link_config():
     return JSONResponse(content={
         "success": True,
         "io_link": config.get("io_link", {
-            "master_ip": IFM_MASTER_IP,
-            "port": IFM_MASTER_PORT,
-            "timeout_sec": IFM_TIMEOUT,
+            "master_ip": "192.168.7.4",
+            "port": 80,
+            "timeout_sec": 4.0,
             "use_https": False
         })
     })
@@ -763,7 +631,8 @@ async def io_link_diagnostics():
     one_h = _now - 3600
     recent = [e for e in connection_events if e['ts'] >= one_h]
     drops_1h = sum(1 for e in recent if e['status'] == 'disconnected')
-    disc_secs = sum(e['duration_sec'] for e in recent if e['status'] == 'disconnected')
+    # 'connected' events carry the duration of the preceding disconnected period
+    disc_secs = sum(e['duration_sec'] for e in recent if e['status'] == 'connected')
     uptime_pct = round(max(0.0, (3600 - disc_secs) / 3600 * 100), 1)
     avg_lat = round(sum(p['latency_ms'] for p in poll_latencies) / len(poll_latencies)) if poll_latencies else None
     extra = al1350.diagnostics_snapshot()
@@ -792,6 +661,13 @@ async def io_link_diagnostics():
             'master_target': extra.get('master_target'),
         }
     })
+
+
+@app.get("/api/logs")
+async def get_app_logs(n: int = 200):
+    """Return last N in-memory log entries for the Diagnostics log viewer."""
+    entries = list(_app_log_buffer)[-n:]
+    return JSONResponse({'success': True, 'count': len(entries), 'logs': entries})
 
 
 @app.get("/api/io-link/port/{port_num}")
@@ -987,7 +863,6 @@ async def system_health():
 # Debug telemetry — collects frontend events so we can diagnose
 # touch/scroll behaviour without needing physical screen access.
 # ================================================================
-from collections import deque
 
 _debug_log: deque = deque(maxlen=200)
 

@@ -1005,6 +1005,23 @@ html.kiosk-touch .mimic-component:hover {
 #sidebar .overflow-y-auto {
   scrollbar-width: none;
   -ms-overflow-style: none;
+  touch-action: pan-y;
+  -webkit-overflow-scrolling: touch;
+  /* Cap height to the sidebar so overflow-y actually activates */
+  max-height: 100%;
+  min-height: 0;
+}
+
+/* Allow vertical swipes on menu items to scroll the sidebar instead of triggering hover/click */
+#sidebar .menu li > a,
+#sidebar .btn {
+  touch-action: pan-y;
+}
+
+/* While scrolling, disable pointer events on items so hover state doesn't get stuck */
+#sidebar.sidebar-scrolling .menu li > a,
+#sidebar.sidebar-scrolling .btn {
+  pointer-events: none;
 }
 
 #sidebar .overflow-y-auto::-webkit-scrollbar {

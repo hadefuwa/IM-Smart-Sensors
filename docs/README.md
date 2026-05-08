@@ -2,8 +2,7 @@
 
 | Document | Description |
 |----------|-------------|
-| [QUICK_START.md](QUICK_START.md) | Get started in 3 steps |
-| [TESTING.md](TESTING.md) | Test scenarios for the HMI dashboard |
-| [IMPLEMENTATION_SUMMARY.md](IMPLEMENTATION_SUMMARY.md) | Feature list and implementation details |
-| [THEME_UPDATES.md](THEME_UPDATES.md) | Light/dark theme behaviour |
-| [Plan.md](Plan.md) | Architecture and migration notes |
+| [PI_SSH.md](PI_SSH.md) | Pi SSH/SCP reference, deploy commands, network layout |
+| [PI_OPERATIONS.md](PI_OPERATIONS.md) | Git → Pi workflow, rollback, health checks |
+| [port-config.md](port-config.md) | IO-Link port mode troubleshooting and AL1350 API examples |
+| [SIDEBAR_SCROLL_FIX.md](SIDEBAR_SCROLL_FIX.md) | Sidebar flex constraint diagnosis (kiosk touchscreen) |

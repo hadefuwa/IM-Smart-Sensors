@@ -6233,7 +6233,7 @@ app.innerHTML = `
       <div id="sidebar-backdrop" class="fixed inset-0 bg-black/50 z-40 hidden transition-opacity duration-300 md:hidden"></div>
       
       <!-- Sidebar -->
-      <aside id="sidebar" class="fixed md:static inset-y-0 left-0 z-50 w-72 border-r border-base-300 bg-base-200 transition-all duration-300 ease-in-out transform -translate-x-full md:translate-x-0 md:block flex flex-col overflow-hidden min-h-0">
+      <aside id="sidebar" class="fixed md:static inset-y-0 left-0 z-50 w-72 border-r border-base-300 bg-base-200 transition-all duration-300 ease-in-out transform -translate-x-full md:translate-x-0 flex flex-col overflow-hidden min-h-0">
         <!-- Close button for mobile -->
         <div class="flex justify-end p-4 md:hidden border-b border-base-300 flex-shrink-0">
           <button id="sidebar-close" class="btn btn-ghost btn-sm btn-square">
@@ -6243,7 +6243,7 @@ app.innerHTML = `
           </button>
         </div>
         <!-- Scrollable menu container -->
-        <div class="flex-1 overflow-y-auto overscroll-contain">
+        <div class="flex-1 min-h-0 overflow-y-auto overscroll-contain">
           <ul class="menu p-4 gap-1" id="sidebar-menu">
           <li class="menu-title">
             <span class="flex items-center gap-2">
@@ -7492,10 +7492,62 @@ setTimeout(() => {
         }
       }, { passive: false });
       
-      // Prevent touchmove events from propagating on mobile
-      sidebarScrollContainer.addEventListener('touchmove', (e) => {
-        e.stopPropagation();
-      }, { passive: false });
+      // ── Telemetry: report sidebar events to backend for remote diagnosis ──
+      const dbg = (data) => fetch('/api/debug/event', {
+        method: 'POST', headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({
+          ...data,
+          scrollTop: sidebarScrollContainer.scrollTop,
+          scrollHeight: sidebarScrollContainer.scrollHeight,
+          clientHeight: sidebarScrollContainer.clientHeight
+        })
+      }).catch(() => {});
+
+      ['mousedown','mousemove','mouseup','touchstart','touchmove','touchend','scroll','click','pointerdown','pointermove','pointerup'].forEach(evt => {
+        const passive = !['mousedown','touchmove'].includes(evt);
+        sidebarScrollContainer.addEventListener(evt, (e) => {
+          if (evt === 'mousemove' && !window._sdbg) return;
+          if (evt === 'mousedown') window._sdbg = true;
+          if (evt === 'mouseup') window._sdbg = false;
+          const touch = e.touches?.[0] || e.changedTouches?.[0];
+          dbg({ evt, tag: e.target?.tagName, clientY: e.clientY ?? touch?.clientY, pointerType: e.pointerType });
+        }, { passive });
+      });
+
+      // ── Drag-to-scroll for the sidebar.
+      // X11 touch emulation produces mouse events, not touch events, so CSS
+      // touch-action and overflow scroll do not respond to finger swipes.
+      // We implement scroll manually using mousedown/mousemove/mouseup.
+      let dragActive = false;
+      let dragStartY = 0;
+      let dragStartScrollTop = 0;
+      let dragMoved = false;
+
+      sidebarScrollContainer.addEventListener('mousedown', (e) => {
+        dragActive = true;
+        dragMoved = false;
+        dragStartY = e.clientY;
+        dragStartScrollTop = sidebarScrollContainer.scrollTop;
+        e.preventDefault(); // stop text selection while dragging
+      });
+
+      window.addEventListener('mousemove', (e) => {
+        if (!dragActive) return;
+        const dy = dragStartY - e.clientY;
+        if (!dragMoved && Math.abs(dy) > 5) {
+          dragMoved = true;
+          sidebar.classList.add('sidebar-scrolling');
+        }
+        if (dragMoved) {
+          sidebarScrollContainer.scrollTop = dragStartScrollTop + dy;
+        }
+      });
+
+      window.addEventListener('mouseup', () => {
+        if (!dragActive) return;
+        dragActive = false;
+        sidebar.classList.remove('sidebar-scrolling');
+      });
     }
   }
   

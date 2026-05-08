@@ -709,18 +709,21 @@ function processPortData(port) {
  * Determine device type from port data
  */
 function getDeviceType(port) {
+  // Use backend-resolved device_type when present
+  const backendType = port.device_type || '';
+  if (backendType === 'photo_electric') return 'photoelectric';
+  if (backendType === 'temperature') return 'temperature';
+  if (backendType === 'proximity') return 'proximity';
+  if (backendType === 'status_led') return 'led';
+  if (backendType === 'capacitive') return 'proximity';
+
+  // Name-based fallback
   const name = (port.name || '').toUpperCase();
-  
-  if (name.includes('TEMP') || name.includes('TN') || name.includes('TR')) {
-    return 'temperature';
-  } else if (name.includes('PHOTO') || name.includes('O5D') || name.includes('O2D')) {
-    return 'photoelectric';
-  } else if (name.includes('PROX') || name.includes('INDUCTIVE')) {
-    return 'proximity';
-  } else if (name.includes('LED') || name.includes('CL50') || name.includes('LIGHT')) {
-    return 'led';
-  }
-  
+  if (name.includes('TEMP') || name.includes('TN') || name.includes('TR')) return 'temperature';
+  if (name.includes('PHOTO') || name.includes('O5D') || name.includes('O2D')) return 'photoelectric';
+  if (name.includes('PROX') || name.includes('INDUCTIVE')) return 'proximity';
+  if (name.includes('LED') || name.includes('CL50') || name.includes('LIGHT')) return 'led';
+
   return 'unknown';
 }
 

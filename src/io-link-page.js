@@ -16,51 +16,42 @@ const WS_BASE = API_BASE.replace(/^http/, 'ws');
 
 export function renderIOLinkMaster() {
   const learnUrl = `${API_BASE}/learn`;
+  const imgSrc = typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.BASE_URL
+    ? import.meta.env.BASE_URL + 'assets/img/AL1350.png'
+    : '/assets/img/AL1350.png';
   return `
-    <div class="space-y-4 io-link-page">
-      <div class="flex flex-wrap items-center justify-between gap-2">
-        <div>
-          <h1 class="text-2xl font-bold text-base-content">IO-Link Master</h1>
-          <p class="text-base-content/70">IFM IO-Link Master – Port status, supervision, and software versions</p>
-        </div>
-        <a href="${learnUrl}" target="_blank" rel="noopener" class="btn btn-outline btn-sm">Learn: Smart Sensors, Industry 4.0 &amp; IoT</a>
-      </div>
-
-      <!-- Status card + device image -->
-      <div class="grid grid-cols-1 xl:grid-cols-4 gap-4">
-        <div class="card bg-base-200 shadow-xl min-h-0 flex flex-col">
-          <div class="card-body items-center justify-center text-center flex-1 min-h-[16rem] lg:min-h-[20rem]">
-            <img id="productImage" src="${typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.BASE_URL ? import.meta.env.BASE_URL + 'assets/img/AL1350.png' : '/assets/img/AL1350.png'}" alt="AL1350 IO-Link Master" class="w-full max-w-full h-auto max-h-72 object-contain" onerror="this.style.display='none'; document.getElementById('productImagePlaceholder')?.classList.remove('hidden');" />
-            <div id="productImagePlaceholder" class="hidden text-base-content/60">AL1350 IO-Link Master</div>
-          </div>
-        </div>
-        <div class="lg:col-span-3 card bg-base-200 shadow-xl">
-          <div class="card-body">
-            <h2 class="card-title text-base-content" id="deviceName">IO-Link Master</h2>
-            <p class="text-sm text-base-content/70">Port status, supervision, and software versions. Connection (IP and port) is set in <a href="#" data-page="settings" class="link link-primary">Settings</a>.</p>
+    <div class="space-y-3 io-link-page">
+      <!-- Header row with inline faded device image -->
+      <div class="card bg-base-200 shadow-xl">
+        <div class="card-body py-3 px-4 relative overflow-hidden">
+          <img id="productImage" src="${imgSrc}" alt="" aria-hidden="true"
+            class="absolute right-2 top-1/2 -translate-y-1/2 h-16 w-auto object-contain opacity-10 pointer-events-none select-none"
+            onerror="this.style.display='none';" />
+          <div class="relative">
+            <h2 class="card-title text-base-content text-lg" id="deviceName">IO-Link Master</h2>
+            <p class="text-xs text-base-content/60">Port status, supervision &amp; versions. Connection set in <a href="#" data-page="settings" class="link link-primary">Settings</a>. <a href="${learnUrl}" target="_blank" rel="noopener" class="link link-secondary">Learn more</a></p>
           </div>
         </div>
       </div>
 
       <!-- Port Status Table -->
       <div class="card bg-base-200 shadow-xl">
-        <div class="card-body">
-          <h2 class="card-title text-base-content">Port Status</h2>
-          <p class="text-sm text-base-content/70">IO-Link ports and connected devices</p>
+        <div class="card-body py-3 px-4">
+          <h2 class="card-title text-base-content text-base">Port Status</h2>
           <div class="overflow-x-auto">
-            <table class="table table-zebra table-pin-rows touch-stack-table">
+            <table class="table table-zebra table-xs table-pin-rows touch-stack-table" id="portTable">
               <thead>
                 <tr>
-                  <th>Port</th>
-                  <th>Mode</th>
-                  <th>Comm. Mode</th>
-                  <th>MasterCycle</th>
-                  <th>Vendor ID</th>
-                  <th>Device ID</th>
-                  <th>Name</th>
-                  <th>Serial</th>
-                  <th>PD In</th>
-                  <th>PD Out</th>
+                  <th data-col="port">Port</th>
+                  <th data-col="mode">Mode</th>
+                  <th data-col="comm_mode">Comm. Mode</th>
+                  <th data-col="master_cycle">MasterCycle</th>
+                  <th data-col="vendor_id">Vendor ID</th>
+                  <th data-col="device_id">Device ID</th>
+                  <th data-col="name">Name</th>
+                  <th data-col="serial">Serial</th>
+                  <th data-col="pdin">PD In</th>
+                  <th data-col="pdout">PD Out</th>
                 </tr>
               </thead>
               <tbody id="portTableBody">
@@ -73,39 +64,34 @@ export function renderIOLinkMaster() {
 
       <!-- Supervision Trends (charts) -->
       <div class="card bg-base-200 shadow-xl">
-        <div class="card-body">
-          <h2 class="card-title text-base-content">Supervision Trends</h2>
-          <p class="text-sm text-base-content/70">Current, Voltage, Temperature over time</p>
-          <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-2">
-            <div><p class="text-sm font-semibold text-center">Current (mA)</p><div class="h-48"><canvas id="chartCurrent"></canvas></div></div>
-            <div><p class="text-sm font-semibold text-center">Voltage (mV)</p><div class="h-48"><canvas id="chartVoltage"></canvas></div></div>
-            <div><p class="text-sm font-semibold text-center">Temperature (°C)</p><div class="h-48"><canvas id="chartTemp"></canvas></div></div>
+        <div class="card-body py-3 px-4">
+          <h2 class="card-title text-base-content text-base">Supervision Trends</h2>
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-3 mt-1">
+            <div><p class="text-xs font-semibold text-center mb-1">Current (mA)</p><div class="h-36"><canvas id="chartCurrent"></canvas></div></div>
+            <div><p class="text-xs font-semibold text-center mb-1">Voltage (mV)</p><div class="h-36"><canvas id="chartVoltage"></canvas></div></div>
+            <div><p class="text-xs font-semibold text-center mb-1">Temperature (°C)</p><div class="h-36"><canvas id="chartTemp"></canvas></div></div>
           </div>
         </div>
       </div>
 
-      <!-- Supervision + Software -->
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div class="card bg-base-200 shadow-xl">
-          <div class="card-body">
-            <h2 class="card-title text-base-content">Supervision</h2>
+      <!-- Supervision + Software (hidden until data arrives) -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+        <div id="supervisionCard" class="card bg-base-200 shadow-xl hidden">
+          <div class="card-body py-3 px-4">
+            <h2 class="card-title text-base-content text-base">Supervision</h2>
             <div class="overflow-x-auto">
-              <table class="table table-sm">
-                <tbody id="supervisionTableBody">
-                  <tr><td colspan="2" class="text-center">-</td></tr>
-                </tbody>
+              <table class="table table-xs">
+                <tbody id="supervisionTableBody"></tbody>
               </table>
             </div>
           </div>
         </div>
-        <div class="card bg-base-200 shadow-xl">
-          <div class="card-body">
-            <h2 class="card-title text-base-content">Software Versions</h2>
+        <div id="softwareCard" class="card bg-base-200 shadow-xl hidden">
+          <div class="card-body py-3 px-4">
+            <h2 class="card-title text-base-content text-base">Software Versions</h2>
             <div class="overflow-x-auto">
-              <table class="table table-sm">
-                <tbody id="softwareTableBody">
-                  <tr><td colspan="2" class="text-center">-</td></tr>
-                </tbody>
+              <table class="table table-xs">
+                <tbody id="softwareTableBody"></tbody>
               </table>
             </div>
           </div>
@@ -114,10 +100,9 @@ export function renderIOLinkMaster() {
 
       <!-- Simulate Fault (Training) -->
       <div id="simulate-fault" class="card bg-base-200 shadow-xl">
-        <div class="card-body">
-          <h2 class="card-title text-base-content">Simulate Fault (Training)</h2>
-          <p class="text-sm text-base-content/70">See how the dashboard reacts to a fault without touching hardware</p>
-          <div class="flex flex-wrap items-center gap-3 mt-2">
+        <div class="card-body py-3 px-4">
+          <h2 class="card-title text-base-content text-base">Simulate Fault (Training)</h2>
+          <div class="flex flex-wrap items-center gap-2 mt-1">
             <span class="text-sm">Port:</span>
             <select id="simulateFaultPort" class="select select-bordered select-sm touch-fault-port">
               <option value="1">1</option>
@@ -141,12 +126,12 @@ export function renderIOLinkMaster() {
         </div>
       </div>
 
-      <!-- Active Port Details -->
-      <div id="portDetailsSection" class="card bg-base-200 shadow-xl">
-        <div class="card-body">
-          <h2 class="card-title text-base-content">Active Port Details</h2>
-          <p class="text-sm text-base-content/70">Process data and decoded device status</p>
-          <div id="portDetailsContainer"><p class="text-center">Loading...</p></div>
+      <!-- Active Port Details (hidden until active ports exist) -->
+      <div id="portDetailsSection" class="card bg-base-200 shadow-xl hidden">
+        <div class="card-body py-3 px-4">
+          <h2 class="card-title text-base-content text-base">Active Port Details</h2>
+          <p class="text-xs text-base-content/60">Process data and decoded device status</p>
+          <div id="portDetailsContainer"></div>
         </div>
       </div>
     </div>
@@ -220,13 +205,6 @@ function updateUI(data) {
   updateSupervisionTable(data.supervision || {});
   updateSoftwareTable(data.software || {});
   updateSupervisionCharts();
-  const img = document.getElementById('productImage');
-  const placeholder = document.getElementById('productImagePlaceholder');
-  if (img) {
-    img.src = data.device_icon_url || (typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.BASE_URL ? import.meta.env.BASE_URL + 'assets/img/AL1350.png' : '/assets/img/AL1350.png');
-    img.classList.remove('hidden');
-    if (placeholder) placeholder.classList.add('hidden');
-  }
 }
 
 function updatePortTable(ports) {
@@ -235,6 +213,7 @@ function updatePortTable(ports) {
   tbody.innerHTML = '';
   if (!ports || ports.length === 0) {
     tbody.innerHTML = '<tr><td colspan="10" class="text-center">No port data</td></tr>';
+    hideEmptyPortColumns([]);
     return;
   }
   for (const p of ports) {
@@ -257,17 +236,46 @@ function updatePortTable(ports) {
     `;
     tbody.appendChild(row);
   }
+  hideEmptyPortColumns(ports);
   loadActivePortDetails(ports);
+}
+
+function hideEmptyPortColumns(ports) {
+  const table = document.getElementById('portTable');
+  if (!table) return;
+  const colKeys = ['port', 'mode', 'comm_mode', 'master_cycle', 'vendor_id', 'device_id', 'name', 'serial', 'pdin', 'pdout'];
+  const dataKeys = ['port', 'mode', 'comm_mode', 'master_cycle_time', 'vendor_id', 'device_id', 'name', 'serial', 'pdin', 'pdout'];
+  const headers = table.querySelectorAll('thead th');
+  headers.forEach((th, i) => {
+    const key = dataKeys[i];
+    if (key === 'port' || key === 'mode') { th.classList.remove('hidden'); return; }
+    const hasValue = ports.some(p => {
+      const v = p[key];
+      return v != null && String(v).trim() !== '' && String(v).trim() !== '-';
+    });
+    th.classList.toggle('hidden', !hasValue);
+  });
+  const rows = table.querySelectorAll('tbody tr');
+  rows.forEach(row => {
+    const cells = row.querySelectorAll('td');
+    cells.forEach((td, i) => {
+      const th = headers[i];
+      if (th) td.classList.toggle('hidden', th.classList.contains('hidden'));
+    });
+  });
 }
 
 async function loadActivePortDetails(ports) {
   const container = document.getElementById('portDetailsContainer');
+  const section = document.getElementById('portDetailsSection');
   if (!container) return;
   const active = (ports || []).filter(p => (p.mode || '').toLowerCase().includes('io-link'));
   if (active.length === 0) {
-    container.innerHTML = '<p class="text-center">No active IO-Link ports</p>';
+    if (section) section.classList.add('hidden');
+    container.innerHTML = '';
     return;
   }
+  if (section) section.classList.remove('hidden');
   let html = '';
   for (const port of active) {
     try {
@@ -341,32 +349,28 @@ function generatePortDetailsHTML(port) {
 
 function updateSupervisionTable(supervision) {
   const tbody = document.getElementById('supervisionTableBody');
+  const card = document.getElementById('supervisionCard');
   if (!tbody) return;
   tbody.innerHTML = '';
-  const entries = Object.entries(supervision || {});
-  if (entries.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="2" class="text-center">No supervision data</td></tr>';
-    return;
-  }
+  const entries = Object.entries(supervision || {}).filter(([, v]) => v != null && String(v).trim() !== '' && String(v).trim() !== '-');
+  if (card) card.classList.toggle('hidden', entries.length === 0);
   for (const [k, v] of entries) {
     const tr = document.createElement('tr');
-    tr.innerHTML = `<td>${escapeHtml(k)}</td><td>${escapeHtml(v)}</td>`;
+    tr.innerHTML = `<td class="font-medium">${escapeHtml(k)}</td><td>${escapeHtml(v)}</td>`;
     tbody.appendChild(tr);
   }
 }
 
 function updateSoftwareTable(software) {
   const tbody = document.getElementById('softwareTableBody');
+  const card = document.getElementById('softwareCard');
   if (!tbody) return;
   tbody.innerHTML = '';
-  const entries = Object.entries(software || {});
-  if (entries.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="2" class="text-center">No software data</td></tr>';
-    return;
-  }
+  const entries = Object.entries(software || {}).filter(([, v]) => v != null && String(v).trim() !== '' && String(v).trim() !== '-');
+  if (card) card.classList.toggle('hidden', entries.length === 0);
   for (const [k, v] of entries) {
     const tr = document.createElement('tr');
-    tr.innerHTML = `<td>${escapeHtml(k)}</td><td>${escapeHtml(v)}</td>`;
+    tr.innerHTML = `<td class="font-medium">${escapeHtml(k)}</td><td>${escapeHtml(v)}</td>`;
     tbody.appendChild(tr);
   }
 }

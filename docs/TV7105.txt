@@ -1,0 +1,255 @@
+                        Operating instructions
+                Electronic temperature sensor
+                                      TV7xxx     UK
+10 / 2016
+80257199 / 00
+Contents
+1 Preliminary note���������������������������������������������������������������������������������������������������2
+2 Safety instructions�����������������������������������������������������������������������������������������������3
+3 Functions and features����������������������������������������������������������������������������������������3
+4 Function���������������������������������������������������������������������������������������������������������������3
+  4.1 Switching function������������������������������������������������������������������������������������������4
+  4.2 IO-Link�����������������������������������������������������������������������������������������������������������5
+5 Installation�����������������������������������������������������������������������������������������������������������5
+6 Electrical connection��������������������������������������������������������������������������������������������6
+7 Parameter setting������������������������������������������������������������������������������������������������7
+  7.1 Adjustable parameters�����������������������������������������������������������������������������������8
+8 Technical data������������������������������������������������������������������������������������������������������8
+9 Factory setting�����������������������������������������������������������������������������������������������������9
+
+
+
+
+1 Preliminary note
+►         Instructions
+>         Reaction, result
+→         Cross-reference
+          Important note
+          Non-compliance may result in malfunction or interference.
+          Information
+          Supplementary note.
+
+
+
+
+2
+2 Safety instructions
+• Please read this document prior to set-up of the unit. Ensure that the product is
+  suitable for your application without any restrictions.
+• If the operating instructions or the technical data are not adhered to, personal
+  injury and/or damage to property can occur.
+• Improper or non-intended use may lead to malfunctions of the unit or to un-
+  wanted effects in your application. That is why installation, electrical connec-
+  tion, set-up, operation and maintenance of the unit must only be carried out by
+  qualified personnel authorised by the machine operator.                             UK
+• In order to guarantee the correct condition of the device for the operating time it
+  is necessary to use the device only for media to which the wetted materials are
+  sufficiently resistant (→ Technical data).
+• The responsibility whether the measurement devices are suitable for the
+  respective application lies with the operator. The manufacturer assumes no
+  liability for consequences of misuse by the operator. Improper installation and
+  use of the devices result in a loss of the warranty claims.
+
+3 Functions and features
+The unit monitors the system temperature in machinery and plants.
+
+4 Function
+The unit generates 2 output signals according to the parameter setting:
+OUT1 / IO-Link:
+  -- Switching signal for temperature limit
+  -- Communication via IO-Link
+OUT2:
+  -- Switching signal for temperature limit
+
+
+
+
+                                                                                   3
+4.1 Switching function
+OUTx changes its switching status if it is above or below the set switching limits.
+Hysteresis or window function can be selected.
+
+    Hysteresis function                      Window function
+
+
+
+       SPx                                       FHx
+       rPx
+                                                 FLx
+
+
+
+
+T = Temperature                             T = Temperature
+SPx = set point (SP1 / SP2)                 FHx = upper limit value (FH1 / FH2)
+rPx = reset point (rP1 / rP2)               FLx = lower limit value (FL1 / FL2)
+HY = hysteresis                             FE = window
+Hno = Hysteresis NO (normally open)         Fno = Window NO (normally open)
+Hnc = Hysteresis NC (normally closed)       Fnc = Window NC (normally closed)
+
+        When the hysteresis function is set, the set point (SPx) is defined first and
+        then the reset point (rPx) which must be of a lower value. If only the set
+        point is changed, the reset point remains constant.
+        When set to the window function the upper limit value (FHx) and the lower
+        limit value (FLx) have a fixed hysteresis of 0.25 % of the final value of the
+        measuring range. This keeps the switching state of the output stable if the
+        temperature varies slightly.
+
+
+
+
+4
+4.2 IO-Link
+This unit has an IO-Link communication interface which enables direct access to
+process and diagnostic data. In addition it is possible to set the parameters of the
+unit during operation. Operation of the unit via IO-Link interface requires an IO-
+Link capable module (IO-Link master).
+With a PC, suitable IO-Link software and an IO-Link adapter cable communication
+is possible when the system is not in operation.
+For the IODDs necessary for the configuration of the unit, detailed information
+about process data structure, diagnostic information, parameter addresses and UK
+the necessary information about the required IO-Link hardware and software visit
+www.ifm.com.
+
+5 Installation
+      ►► Ensure that no media can leak at the mounting location during
+         installation.
+
+       Horizontal mounting recommended for high medium temperatures.
+
+►► Insert the unit in a process connection and tighten firmly.
+Recommended Tightening torque:
+ Process connection          Tightening torque
+ G¼                          35 Nm
+ G½                          45 Nm
+ ½" NPT
+                             1.5 turns past hand tight
+ ¼" NPT
+
+
+
+
+                                                                               5
+6 Electrical connection
+           The unit must be connected by a qualified electrician.
+           The national and international regulations for the installation of electrical
+           equipment must be adhered to.
+           Voltage supply to EN 50178, SELV, PELV.
+►► Disconnect power.
+►► Connect the unit as follows:
+
+                                                              1    BN
+                                                                             L+
+      2        1         BK: black
+                                                              2    WH
+                         BN: brown                                           OUT2
+                         BU: blue                             4    BK
+                                                                             OUT1
+       3       4
+                         WH: white
+                                                              3    BU
+                                                                             L
+
+    Colours to DIN EN 60947-5-2
+
+Sample circuits:
+                2 x positive switching                     2 x negative switching
+                        1 BN                                       1 BN
+                                         L+                                          L+
+                        2 WH                                       2 WH
+
+                        4 BK                                       4 BK
+
+                        3 BU                                       3 BU
+                                         L                                           L
+
+          1 x positive switching / 1 x IO-Link       1 x negative switching / 1 x IO-Link
+                        1 BN                                      1 BN
+                                         L+                                      L+
+                        2 WH                                      2 WH
+
+                        4 BK                                      4 BK
+                               IO-Link                                           IO-Link
+                        3 BU                                      3 BU
+                                         L                                       L
+
+
+
+
+6
+7 Parameter setting
+The parameters are set via the IO-Link interface (→ 4.2).
+Parameters can be set before installation and set-up of the unit or during operation.
+       If you change parameters during operation, this will influence the function
+       of the plant.
+       ►► Ensure that there will be no malfunctions in your plant.
+During parameter setting the unit remains in the operating mode. It continues to
+monitor with the existing parameter until the parameter setting has been completed.
+                                                                                        UK
+
+
+
+
+                                                                                   7
+7.1 Adjustable parameters
+
+Parameter      Function
+SPx            Set point (upper limit value) with hysteresis function
+rPx            Reset point (lower limit value) with hysteresis function
+FHx            Set point (upper limit value) with window function
+FLx            Set point (lower limit value) with window function
+oux            Output function OUTx:
+               Hno = Hysteresis function normally open
+               Hnc = Hysteresis function normally closed
+               Fno = Window function normally open
+               Fnc = Window function normally closed
+
+dSx            Switching delay on OUTx in seconds
+drx            Switch-off delay on OUTx in seconds
+uni            Standard unit of measurement for temperature (°C or °F)
+P-n            Output logic: pnp / npn
+Lo             Minimum value of the temperature measured in the process.
+Hi             Maximum value of the temperature measured in the process.
+dAP            Measured value damping: damping constant in seconds.
+coF            Zero-point calibration.
+               The internal measured value "0" is shifted by the set value.
+HITS           Setting of the threshold for the overload counter
+HITC           Number of overload processes
+
+
+8 Technical data
+Technical data and scale drawing at www.ifm.com.
+
+
+
+
+8
+9 Factory setting
+
+Parameter                 Factory setting             User setting
+                            TV7xx5          TV7xx3
+SP1                          60 °C          140 °F
+rP1                          50 °C          122 °F
+SP2                          120 °C         248 °F
+rP2                          100 °C         212 °F                             UK
+
+uni                            °C             °F
+ou1                                   Hno
+ou2                                   Hno
+dS1                                    0
+dr1                                    0
+dS2                                    0
+dr2                                    0
+FOU1                                  OFF
+FOU2                                  OFF
+P-n                                   PnP
+coF                                    0
+
+
+
+
+       Technical data, approvals, accessories and further information at
+                                www.ifm.com.
+
+                                                                           9
+

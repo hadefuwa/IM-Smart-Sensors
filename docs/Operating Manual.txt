@@ -1,0 +1,3791 @@
+>
+>
+
+
+
+
+                               Operating Instructions
+
+                     IO-Link Master with IoT Interface
+                                             DataLine
+                                               4 Ports
+                                 IP 65 / IP 66 / IP 67
+
+                                             AL1350
+
+                            Firmware: 2.2.x or higher
+                        LR DEVICE: 1.4.0.x or higher
+
+                                              English
+    09 / 2019
+      7391227 / 01
+IO-Link Master with IoT Interface DataLine 4 Ports IP 65 / IP 66 / IP 67
+
+
+
+
+Contents
+
+1                  Preliminary note                                                                                                                                     5
+    1.1            Legal and copyright information ...........................................................................................5
+    1.2            Purpose of the document .....................................................................................................5
+    1.3            Explanation of Symbols .......................................................................................................6
+    1.4            Modification history ..............................................................................................................6
+
+
+2                  Safety instructions                                                                                                                                  7
+    2.1            General ................................................................................................................................7
+    2.2            Required background knowledge ........................................................................................7
+    2.3            Safety symbols on the device ..............................................................................................7
+    2.4            Tampering with the unit ........................................................................................................7
+
+
+3                  Intended use                                                                                                                                         8
+    3.1            Permitted use .......................................................................................................................8
+    3.2            Prohibited use ......................................................................................................................8
+
+
+4                  Function                                                                                                                                             9
+    4.1            Communication, parameter setting, evaluation .................................................................10
+          4.1.1         IO-Link ........................................................................................................................................ 10
+          4.1.2         Internet of Things (IoT) ............................................................................................................... 10
+          4.1.3         Parameter setting ....................................................................................................................... 10
+          4.1.4         Visual indication ......................................................................................................................... 10
+    4.2            Digital inputs .......................................................................................................................11
+    4.3            IO-Link supply ....................................................................................................................11
+
+
+5                  Mounting                                                                                                                                           12
+    5.1            Mount the device ................................................................................................................12
+
+
+6                  Electrical connection                                                                                                                              13
+    6.1            Notes ..................................................................................................................................13
+    6.2            IoT ports .............................................................................................................................14
+    6.3            IO-Link ports.......................................................................................................................15
+          6.3.1         Operation as IO-Link port class A ............................................................................................... 15
+          6.3.2         Operation as IO-Link port class B ............................................................................................... 16
+    6.4            Connect the device ............................................................................................................17
+
+
+7                  Operating and display elements                                                                                                                     18
+    7.1            Overview ............................................................................................................................18
+    7.2            LED indicators ....................................................................................................................19
+          7.2.1         Status LEDs ............................................................................................................................... 19
+          7.2.2         IoT interface ............................................................................................................................... 19
+          7.2.3         IO-Link ports (Class A) ............................................................................................................... 20
+          7.2.4         Voltage supply ............................................................................................................................ 20
+
+
+
+
+2
+IO-Link Master with IoT Interface DataLine 4 Ports IP 65 / IP 66 / IP 67
+
+
+
+
+8                   Set-up                                                                                                                                            21
+     8.1            Read device and diagnostic information ............................................................................22
+
+
+9                   Configuration                                                                                                                                     23
+     9.1            LR DEVICE ........................................................................................................................24
+           9.1.1        Remarks ..................................................................................................................................... 25
+           9.1.2        IoT: Configure IP settings ........................................................................................................... 26
+           9.1.3        IoT: Configure the interface to the LR SMARTOBSERVER ....................................................... 27
+           9.1.4        IO-Link ports: Activate data transfer to the LR SMARTOBSERVER .......................................... 28
+           9.1.5        IO-Link ports: Configure operating mode.................................................................................... 29
+           9.1.6        IO-Link ports: Set the device validation and data storage .......................................................... 30
+           9.1.7        IO-Link ports: Configuration of fail-safe values ........................................................................... 31
+           9.1.8        Info: Show device information .................................................................................................... 31
+           9.1.9        Firmware: Reset device to factory settings ................................................................................. 32
+           9.1.10       Firmware: Reboot the device...................................................................................................... 32
+           9.1.11       Configure IO-Link devices .......................................................................................................... 33
+     9.2            ifm IoT Core .......................................................................................................................34
+           9.2.1        First steps ................................................................................................................................... 34
+           9.2.2        General functions ....................................................................................................................... 35
+           9.2.3        Configure the IoT interface ......................................................................................................... 35
+           9.2.4        Configure IO-Link ports .............................................................................................................. 36
+           9.2.5        Configure IO-Link devices .......................................................................................................... 38
+           9.2.6        Set application identification ....................................................................................................... 40
+           9.2.7        Read / write cyclic process data ................................................................................................. 41
+           9.2.8        Control IO-Link master ............................................................................................................... 42
+           9.2.9        Read diagnostic data of the AL1350 .......................................................................................... 44
+           9.2.10       Read device information of the IO-Link master .......................................................................... 45
+           9.2.11       Read information about IO-Link devices .................................................................................... 45
+           9.2.12       Subscribe to events .................................................................................................................... 46
+           9.2.13       Programmers' notes ................................................................................................................... 48
+
+
+10                  Maintenance, repair and disposal                                                                                                                  52
+     10.1           Cleaning process ...............................................................................................................52
+     10.2           Update firmware .................................................................................................................53
+     10.3           Replace IO-Link device ......................................................................................................54
+
+
+11                  Factory settings                                                                                                                                  55
+
+12                  Accessories                                                                                                                                       56
+
+13                  Appendix                                                                                                                                          57
+     13.1           Technical data ....................................................................................................................58
+           13.1.1       Application .................................................................................................................................. 58
+           13.1.2       Electrical data ............................................................................................................................. 58
+           13.1.3       Inputs / outputs ........................................................................................................................... 58
+           13.1.4       Inputs.......................................................................................................................................... 59
+           13.1.5       Outputs ....................................................................................................................................... 59
+           13.1.6       Interfaces.................................................................................................................................... 59
+           13.1.7       Operating conditions .................................................................................................................. 60
+           13.1.8       Approvals / tests ......................................................................................................................... 60
+           13.1.9       Mechanical data ......................................................................................................................... 60
+           13.1.10      Electrical connection .................................................................................................................. 61
+     13.2           ifm IoT Core .......................................................................................................................62
+           13.2.1       Overview: IoT profile .................................................................................................................. 63
+           13.2.2       Overview: IoT types .................................................................................................................... 69
+
+
+
+                                                                                                                                                                        3
+IO-Link Master with IoT Interface DataLine 4 Ports IP 65 / IP 66 / IP 67
+
+
+
+         13.2.3         Overview: IoT services ............................................................................................................... 70
+
+
+14                 Index                                                                                                                                     81
+
+
+
+
+4
+IO-Link Master with IoT Interface DataLine 4 Ports IP 65 / IP 66 / IP 67
+
+
+
+
+1                Preliminary note
+Content
+Legal and copyright information ...............................................................................................................5
+Purpose of the document .........................................................................................................................5
+Explanation of Symbols ............................................................................................................................6
+Modification history ...................................................................................................................................6
+                                                                                                                                                   33203
+>
+
+
+
+
+1.1              Legal and copyright information
+                                                                                                                                                   33117
+
+© All rights reserved by ifm electronic gmbh. No part of this manual may be reproduced and used
+without the consent of ifm electronic gmbh.
+All product names, pictures, companies or other brands used on our pages are the property of the
+respective rights owners:
+     AS-i is the property of the AS-International Association, (→ www.as-interface.net)
+     CAN is the property of the CiA (CAN in Automation e.V.), Germany (→ www.can-cia.org)
+     CODESYS™ is the property of the 3S – Smart Software Solutions GmbH, Germany
+      (→ www.codesys.com)
+     DeviceNet™ is the property of the ODVA™ (Open DeviceNet Vendor Association), USA
+      (→ www.odva.org)
+     EtherNet/IP® is the property of the → ODVA™
+     EtherCAT® is a registered trade mark and patented technology, licensed by Beckhoff Automation
+      GmbH, Germany
+     IO-Link® (→ www.io-link.com)) is the property of the → PROFIBUS Nutzerorganisation e.V.,
+      Germany
+     ISOBUS is the property of the AEF – Agricultural Industry Electronics Foundation e.V.,
+      Deutschland (→ www.aef-online.org)
+     Microsoft® is the property of the Microsoft Corporation, USA (→ www.microsoft.com)
+     PROFIBUS® is the property of the PROFIBUS Nutzerorganisation e.V., Germany
+      (→ www.profibus.com)
+     PROFINET® is the property of the → PROFIBUS Nutzerorganisation e.V., Germany
+     Windows® is the property of the → Microsoft Corporation, USA
+>
+
+
+
+
+1.2              Purpose of the document
+                                                                                                                                                   34227
+
+This document is only for device types "IO-Link master - IoT core gateway (DataLine) 4 port IP 65 / IP
+66 / IP 67" (art. no.: AL1350).
+It is part of the device and contains information about the correct handling of the product.
+► Read this document before using the device.
+► Keep this document during the service life of the device.
+
+
+
+
+                                                                                                                                                       5
+IO-Link Master with IoT Interface DataLine 4 Ports IP 65 / IP 66 / IP 67
+
+
+>
+
+
+
+
+1.3              Explanation of Symbols
+                                                                                             34171
+
+
+              WARNING!
+              Death or serious irreversible injuries may result.
+
+
+              CAUTION!
+              Slight reversible injuries may result.
+
+
+              NOTICE!
+              Property damage is to be expected or may result.
+
+
+               Important note
+               Non-compliance can result in malfunction or interference
+               Information
+               Supplementary note
+► ...          Request for action
+>       ...    Reaction, result
+→ ...          "see"
+abc            Cross-reference
+123            Decimal number
+0x123          Hexadecimal number
+0b010          Binary number
+[...]          Designation of pushbuttons, buttons or indications
+
+>
+
+
+
+
+1.4              Modification history
+                                                                                             34492
+
+
+Version               Topic                                                      Date
+00                    New creation of document                                   11 / 2018
+01                    Corrected: Technical data - Max. current load per output   09 / 2019
+
+
+
+
+6
+IO-Link Master with IoT Interface DataLine 4 Ports IP 65 / IP 66 / IP 67
+
+
+
+
+2                Safety instructions
+Content
+General .....................................................................................................................................................7
+Required background knowledge .............................................................................................................7
+Safety symbols on the device ...................................................................................................................7
+Tampering with the unit ............................................................................................................................7
+                                                                                                                                                        28333
+>
+
+
+
+
+2.1              General
+                                                                                                                                                        33834
+
+            The plant manufacturer is responsible for the safety of the plant in which the device is
+            installed.
+            If the device is used in a way that is not intended by the manufacturer, the protection
+            supported by the device may be impaired.
+            Non-observance of the instructions, operation which is not in accordance with use as
+            prescribed below, wrong installation or incorrect handling can affect the safety of operators
+            and machinery.
+            ► Observe these operating instructions.
+            ► Adhere to the warning notes on the product.
+
+>
+
+
+
+
+2.2              Required background knowledge
+                                                                                                                                                        34185
+
+This document is intended for specialists. Specialists are people who, based on their relevant training
+and experience, are capable of identifying risks and avoiding potential hazards that may be caused
+during operation or maintenance of the product.
+The document contains information about the correct handling of the product.
+>
+
+
+
+
+2.3              Safety symbols on the device
+                                                                                                                                                        34199
+
+              General warning
+              Observe instructions in chapter "Electrical connection" (→Electrical connection (→ S. 13))!
+
+>
+
+
+
+
+2.4              Tampering with the unit
+                                                                                                                                                        33190
+
+
+             WARNING!
+             Tampering with the unit.
+             > In case of non-compliance:
+                 Possible affects on safety of operators and machinery
+                 Expiration of liability and warranty
+             ► Do not open the devices!
+             ► Do not insert any objects into the devices!
+             ► Prevent metal foreign bodies from penetrating!
+
+
+
+
+                                                                                                                                                            7
+IO-Link Master with IoT Interface DataLine 4 Ports IP 65 / IP 66 / IP 67
+
+
+
+
+3                Intended use
+Content
+Permitted use ...........................................................................................................................................8
+Prohibited use ...........................................................................................................................................8
+                                                                                                                                                     34079
+>
+
+
+
+
+3.1              Permitted use
+                                                                                                                                                     34209
+
+The IO-Link master serves as a gateway between intelligent IO-Link devices and the IoT core network.
+The device is designed for use without a control cabinet in the plant construction.
+>
+
+
+
+
+3.2              Prohibited use
+                                                                                                                                                     34228
+
+The device may not be used beyond the limits of the technical data (→ Technical data (→ S. 58))!
+
+
+
+
+8
+IO-Link Master with IoT Interface DataLine 4 Ports IP 65 / IP 66 / IP 67
+
+
+
+
+4                Function
+Content
+Communication, parameter setting, evaluation ......................................................................................10
+Digital inputs ...........................................................................................................................................11
+IO-Link supply .........................................................................................................................................11
+                                                                                                                                                      33836
+
+
+
+
+                                                                                                                                                          9
+IO-Link Master with IoT Interface DataLine 4 Ports IP 65 / IP 66 / IP 67
+
+
+>
+
+
+
+
+4.1              Communication, parameter setting, evaluation
+Content
+IO-Link ....................................................................................................................................................10
+Internet of Things (IoT) ...........................................................................................................................10
+Parameter setting ...................................................................................................................................10
+Visual indication ......................................................................................................................................10
+                                                                                                                                                        33860
+>
+
+
+
+
+4.1.1            IO-Link
+                                                                                                                                                        34084
+
+The device offers the following IO-Link functions:
+     IO-Link master (IO-Link revision 1.0 and 1.1)
+     4 IO-Link ports for connection of IO-Link devices
+     Provision of process data of the connected IO-Link devices for LR SMARTOBSERVER monitoring
+      software (→ www.ifm.com)
+>
+
+
+
+
+4.1.2            Internet of Things (IoT)
+                                                                                                                                                        52230
+
+The device offers the following IoT functions:
+     2-port switch for access to the IoT interface (X21/X22)
+     Gateway for the transmission of parameters, process and monitoring data between IO-Link master
+      / IO-Link devices and the IT network level
+     Support of different protocols (e.g. TCP/IP JSON)
+>
+
+
+
+
+4.1.3            Parameter setting
+                                                                                                                                                        52338
+
+The device offers the following configuration options:
+     Parameter setting of the IO-Link master of the AL1350 with parameter setting software LR
+      DEVICE or ifm IoT core services
+     Parameter setting of the connected IO-Link devices (sensors, actuators) with parameter setting
+      software LR DEVICE or ifm IoT core services
+     Storage of parameter sets of the connected IO-Link devices for automatic recovery (Data Storage)
+>
+
+
+
+
+4.1.4            Visual indication
+                                                                                                                                                        34192
+
+The device has the following visual indicators:
+     Status and error indication of the gateway, of the IoT core connection and of the system
+     Status display of the voltage supply
+     Status and activity display of the Ethernet connection
+     Status, error and short circuit/overload indication of the IO-Link ports
+
+
+
+
+10
+IO-Link Master with IoT Interface DataLine 4 Ports IP 65 / IP 66 / IP 67
+
+
+>
+
+
+
+
+4.2              Digital inputs
+                                                                                                  33817
+
+The device has 4 additional digital inputs (type 2 according to EN 61131-2).
+The digital inputs are on pin 2 of the IO-Link ports X01...X04.
+All inputs refer to the potential of the device supply (pin 3).
+>
+
+
+
+
+4.3              IO-Link supply
+                                                                                                  34077
+
+The device has 4 supplies for IO-Link devices.
+The IO-Link ports X01...X04 are ports class A.
+Every supply provides short circuit monitoring.
+The device ensures fire protection for the connected IO-Link devices by providing a power-restricted
+circuit at the IO-Link ports (according to IEC61010-1 and Class 2 according to UL1310).
+
+
+
+
+                                                                                                       11
+IO-Link Master with IoT Interface DataLine 4 Ports IP 65 / IP 66 / IP 67
+
+
+
+
+5                Mounting
+Content
+Mount the device ....................................................................................................................................12
+                                                                                                                                                 34058
+>
+
+
+
+
+5.1              Mount the device
+                                                                                                                                                 34059
+
+            ► Disconnect the system from power before installation.
+            ► For installation choose a flat mounting surface.
+            ► Please observe the maximum tightening torque.
+
+► Fix the unit to the mounting surface using 2 M5 mounting screws and washers.
+   Tightening torque: 1.8 Nm
+► Ground the unit via the two mounting screws of the upper mounting lugs.
+
+
+
+
+12
+IO-Link Master with IoT Interface DataLine 4 Ports IP 65 / IP 66 / IP 67
+
+
+
+
+6                Electrical connection
+Content
+Notes ......................................................................................................................................................13
+IoT ports..................................................................................................................................................14
+IO-Link ports ...........................................................................................................................................15
+Connect the device .................................................................................................................................17
+                                                                                                                                                        33805
+>
+
+
+
+
+6.1              Notes
+                                                                                                                                                        51957
+
+            A qualified electrician must connect the unit.
+            ► The national and international for regulations setting up electrical equipment must be
+                complied with.
+            The unit is only suitable for operation using SELV/PELV voltages.
+            ► Please note the information concerning IO-Link wiring!
+            This unit contains components that may be damaged or destroyed by electrostatic discharge
+            (ESD).
+            ► Please observe the required precautions against electrostatic discharge!
+            The IP rating of the overall system depends on the protection ratings of the individual devices,
+            the applied connection elements and the corresponding protective caps.
+            ► Provide cables with a strain relief depending on the mounting conditions to avoid
+                excessive strain on the installation points and the M12 connections.
+            ► Ensure correct fit and proper assembly of the M12 connecting parts. If these instructions
+                are not complied with, the specified protection rating cannot be guaranteed.
+            For UL applications:
+            ► To connect the IO-Link master and the IO-Link devices, only use UL-certified cables of the
+                CYJV or PVVA category with a minimum temperature of 80 °C (75 °C in case of maximum
+                ambient temperature of 40 °C).
+            Wiring: → Technical data (→ S. 58)
+
+By means of basic insulation according to EN61010-1, the circuits are separated from each other and
+from device surfaces that could be touched (secondary circuit with 30 V DC maximum, supplied from
+mains circuit up to 300 V overvoltage category II).
+By means of basic insulation according to EN61010-1, the communication interfaces are separated
+from each other and from device surfaces that could be touched (secondary circuit with 30 V DC
+maximum, supplied from mains circuit up to 300 V overvoltage category II). They are designed for
+network environment 0 according to IEC TR62102.
+
+
+
+
+                                                                                                                                                          13
+IO-Link Master with IoT Interface DataLine 4 Ports IP 65 / IP 66 / IP 67
+
+
+>
+
+
+
+
+6.2              IoT ports
+                                                                                                               52272
+
+                                               ► Connect the unit via the M12 socket X21 and/or X22 with the IoT
+                                                 core network (e.g. laptop/PC with LR DEVICE parameter setting
+                                                 software, laptop/PC with LR SMARTOBSERVER monitoring
+                                                 software, PC/laptop with http request compatible software)
+                                                  Tightening torque: 0.6...0.8 Nm
+                                               ► To connect the devices, use M12 connectors with protection rating
+                                                 IP 65 / IP 66 / IP 67 or higher (→ Accessories (→ S. 56)).
+                                               ► Cover unused sockets with M12 protective caps (art. no.: E73004).
+                                                  Tightening torque 0.6...0.8 Nm
+
+
+
+
+14
+IO-Link Master with IoT Interface DataLine 4 Ports IP 65 / IP 66 / IP 67
+
+
+>
+
+
+
+
+6.3              IO-Link ports
+                                                                                                                  51958
+
+The IO-Link ports of the AL1350 meet the requirements of the IO-Link specifications 1.0 to 1.1.2.
+► Please note the information concerning IO-Link wiring!
+► Cover unused sockets with M12 protective caps (art. no.: E73004).
+    Tightening torque 0.6...0.8 Nm
+>
+
+
+
+
+6.3.1            Operation as IO-Link port class A
+                                                                                                                  51959
+
+Wiring information:
+     The connected IO-Link devices must be supplied exclusively via the IO-Link master.
+     The additional digital inputs IO-Link ports X01...X04 (pin 2) have a type 2 behaviour according to
+      the standard EN61131-2. The connected electronics must be electrically suited for this.
+
+                                                   ► Connect the connectors of the IO-Link devices with the M12
+                                                     sockets of the IO-Link ports X01...X04.
+                                                      Tightening torque: 0.6...0.8 Nm
+                                                      Maximum cable length per IO-Link port: 20 m
+                                                   ► To connect the devices, use M12 connectors with protection
+                                                     rating IP 65 / IP 66 / IP 67 or higher (→ Accessories (→ S. 56)).
+
+
+
+
+                                                                                                                    15
+IO-Link Master with IoT Interface DataLine 4 Ports IP 65 / IP 66 / IP 67
+
+
+>
+
+
+
+
+6.3.2            Operation as IO-Link port class B
+                                                                                                                  51960
+
+Wiring information:
+     For the operation as IO-Link port class B, the IO-Link device must be supplied with an additional
+      auxiliary voltage UA using a Y connection cable.
+
+
+             WARNING!
+             Non-compliance with the electrical separation of the circuits
+             > Risk of fire!
+             ► Ensure that the circuits of US and UA are electrically isolated while assuring basic
+                isolation (according to IEC 61010-1, secondary circuit with 30 V DC maximum, supplied
+                from mains circuit up to 300 V of overvoltage category II).
+             ► Ensure that the IO-Link devices and the connection technology support the electrical
+                separation.
+
+
+            In case of operation as port class B, the additional digital input of the IO-Link port (pin 2) is not
+            available!
+
+
+                                                   ► Connect the connectors of the IO-Link devices via a Y
+                                                     connection cable with the M12 sockets of the IO-Link ports
+                                                     X01...X04.
+                                                   ► Connect the Y cable to 24 V DC (20...30 V SELV/PELV)
+                                                      Tightening torque: 0.6...0.8 Nm
+                                                   ► To connect the devices, use M12 connectors with protection
+                                                     rating IP 65 / IP 66 / IP 67 or higher (→ Accessories (→ S. 56))!
+
+
+
+
+16
+IO-Link Master with IoT Interface DataLine 4 Ports IP 65 / IP 66 / IP 67
+
+
+>
+
+
+
+
+6.4              Connect the device
+                                                                                                                33882
+
+
+
+                                               ► Disconnect power.
+                                               ► Connect the IO-Link Master via M12 socket X31 to 24 V DC
+                                                 (20...30 V SELV/PELV; according to EN61010-1, secondary circuit
+                                                 with maximum 30 V DC supplied by mains circuit up to 300 V of
+                                                 overvoltage category II).
+                                                  Tightening torque: 0.6...0.8 Nm
+                                                  Maximum cable length: 25 m
+                                               ► To connect the device, use M12 connectors with protection rating IP
+                                                 65 / IP 66 / IP 67 or higher (→ Accessories (→ S. 56)).
+
+
+
+
+            When using cable length greater than 25 m keep in mind the voltage drop as well as the
+            required minimum voltage supply of 20 V!
+
+
+
+
+                                                                                                                 17
+IO-Link Master with IoT Interface DataLine 4 Ports IP 65 / IP 66 / IP 67
+
+
+
+
+7                Operating and display elements
+Content
+Overview .................................................................................................................................................18
+LED indicators ........................................................................................................................................19
+                                                                                                                                                      34063
+>
+
+
+
+
+7.1              Overview
+                                                                                                                                                      52274
+
+                                                                           Status LEDs RDY and IoT
+                                                                           → Status LEDs (→ S. 19)
+                                                                           L/A and 10/100 MBits/s status LEDs of the IoT
+                                                                           interface (X21/X22)
+                                                                           → IoT interface (→ S. 19)
+                                                                           IOL and DI status LEDs of the IO-Link port (X01...X04)
+                                                                           → IO-Link ports (Class A) (→ S. 20)
+                                                                           PWR status LED of the voltage supply (X31)
+                                                                           → Voltage supply (→ S. 20)
+
+
+
+
+18
+IO-Link Master with IoT Interface DataLine 4 Ports IP 65 / IP 66 / IP 67
+
+
+>
+
+
+
+
+7.2              LED indicators
+                                                                                                                  34047
+
+The device only has the following LED indicators:
+>
+
+
+
+
+7.2.1            Status LEDs
+                                                                                                                  52237
+
+The RDY LED indicates the status of the gateway.
+The IoT LED indicates the status of the connection to the LR SMARTOBSERVER.
+
+
+Status LED                                                      Description
+
+RDY              green                    off                   Gateway does not function; device reboots
+                                          flashes 1 Hz          Error
+                                          flashes 5 Hz          Firmware update
+                                          on                    Gateway functions properly
+IoT              green                    off                   No connection to the LR SMARTOBSERVER
+                                          on                    Connection to the LR SMARTOBSERVER activated
+
+
+
+
+7.2.2            IoT interface
+                                                                                                                  52238
+
+Each IoT port (X21, X22) has the 2 L/A and 10/100 MBits/s LEDs. The LEDs indicate the status of the
+Ethernet connection.
+
+
+Status LED                                                      Description
+
+L/A              green                    on                    Ethernet connection established
+                                          flashes               Data is transmitted via the Ethernet interface.
+                                          off                   No Ethernet connection
+10/100           yellow                   on                    100 MBit/s
+Mbits/s
+                                          off                   10 MBit/s
+
+
+
+
+                                                                                                                   19
+IO-Link Master with IoT Interface DataLine 4 Ports IP 65 / IP 66 / IP 67
+
+
+>
+
+
+
+
+7.2.3            IO-Link ports (Class A)
+                                                                                                                                         34074
+
+Each IO-Link port Class A has 2 LEDs marked as IOL and DI. The LEDs indicate the status of the
+IO-Link port.
+
+
+Status LED                                                      Description
+IOL              yellow                   off                   Port configured as DI / DO: pin 4 (C/Q) = OFF
+                                          on                    Port configured as DI / DO: pin 4 (C/Q) =ON
+                 green                    flashes 1 Hz          Port configured as IO-Link: no IO-Link device detected
+                                          flashes 2 Hz          Port configured as IO-Link: PROOPERATE state
+                                          on                    Port configured as IO-Link: OPERATE state
+                 red                      flashes 2 Hz          Port configuration error or short circuit or overload
+                                          on                    Transmission error
+DI               yellow                   off                   Digital input : pin 2 (DI) = OFF
+                                          on                    Digital input: pin 2 (DI) = ON
+
+>
+
+
+
+
+7.2.4            Voltage supply
+                                                                                                                                         34191
+
+The interface for voltage supply (X31) has the LED that is marked as US. The LED indicates the status
+of the voltage supply.
+
+
+Status LED                                                      Description
+US               green                    on                    The supply voltage Us is applied.
+                                          off                   No supply voltage is applied or the applied supply voltage is too low.
+
+
+
+
+20
+IO-Link Master with IoT Interface DataLine 4 Ports IP 65 / IP 66 / IP 67
+
+
+
+
+8                Set-up
+Content
+Read device and diagnostic information ................................................................................................22
+                                                                                                                                   52239
+
+When the supply voltage is switched on, the AL1350 starts with the factory settings. The display
+elements signal the current operating mode (→ Operating and display elements (→ S. 18)).
+To enable parameter setting of the AL1350 via the IoT core network, the IoT interface of the network
+environment must be configured accordingly.
+► Connect AL1350 via the ports X21/X22 to the IoT core network.
+► Configure the IoT interface (→ IoT: Configure IP settings (→ S. 26)).
+> IoT interface has valid IP settings.
+> User can set the parameters of the AL1350.
+
+Further steps:
+     Set the parameters of the AL1350 (→ Configuration (→ S. 23)).
+
+
+
+
+                                                                                                                                     21
+IO-Link Master with IoT Interface DataLine 4 Ports IP 65 / IP 66 / IP 67
+
+
+>
+
+
+
+
+8.1               Read device and diagnostic information
+                                                                                                                                        52240
+
+The AL1350 has an integrated web server. The component provides device and diagnostic information
+of the IO-Link master and the connected IO-Link devices.
+► Connect laptop/PC and AL1350 via the Ethernet interface.
+► Start web browser.
+► Enter the IP address of the AL1350 into the address field of the browser and confirm with [ENTER].
+> Web browser shows the web interface of the device.
+> The page shows the following data:
+      Table with connected IO-Link devices
+Name                                          Description
+
+[Port]                                        Number of the IO-Link port
+[Mode]                                        Operating mode of the IO-Link port
+[Comm. Mode]                                  Baud rate of the IO-Link port
+[MasterCycleTime]                             Cycle time
+[Vendor ID]                                   IO-Link ID of the manufacturer of the IO-Link device
+[Device ID]                                    IO-Link ID of the IO-Link device
+[Name]                                        Article number of the IO-Link device
+                                                 For ifm articles: This article number is stored along with a link to the product page on
+                                                  the ifm website.
+[Serial]                                      Serial number of the IO-Link device
+
+
+           Diagnostic information of the device
+Name                                          Description
+[SW-Version]
+[Current]                                     Current (in mA)
+[Voltage]                                     Voltage (in mV)
+[Short Circuit]                               Number of detected short circuits
+[Overload]                                    Number of overvoltages
+[Undervoltage]                                Number of undervoltages
+[Temperature]                                 Device temperature (in °C)
+
+
+           Version information of the installed firmware components
+Name                                          Description
+[Firmware]                                    Firmware version
+
+[Container]                                   Version of the firmware container
+[Bootloader Version]                          Version of the bootloader
+[Fieldbus Firmware]                           Version of the IoT core firmware
+
+
+
+
+22
+IO-Link Master with IoT Interface DataLine 4 Ports IP 65 / IP 66 / IP 67
+
+
+
+
+9                Configuration
+Content
+LR DEVICE .............................................................................................................................................24
+ifm IoT Core ............................................................................................................................................34
+                                                                                                                                                     33858
+
+
+
+
+                                                                                                                                                       23
+IO-Link Master with IoT Interface DataLine 4 Ports IP 65 / IP 66 / IP 67
+
+
+>
+
+
+
+
+9.1              LR DEVICE
+Content
+Remarks .................................................................................................................................................25
+IoT: Configure IP settings .......................................................................................................................26
+IoT: Configure the interface to the LR SMARTOBSERVER ..................................................................27
+IO-Link ports: Activate data transfer to the LR SMARTOBSERVER ....................................................28
+IO-Link ports: Configure operating mode ...............................................................................................29
+IO-Link ports: Set the device validation and data storage ......................................................................30
+IO-Link ports: Configuration of fail-safe values ......................................................................................31
+Info: Show device information ................................................................................................................31
+Firmware: Reset device to factory settings ............................................................................................32
+Firmware: Reboot the device..................................................................................................................32
+Configure IO-Link devices ......................................................................................................................33
+                                                                                                                                                     33692
+
+On delivery, the AL1350 is configured with the factory settings (→ Factory settings (→ S. 55)).
+Required software: LR DEVICE (1.4.0.x or higher) (art.-no.: QA0011/QA0012)
+
+
+
+
+24
+IO-Link Master with IoT Interface DataLine 4 Ports IP 65 / IP 66 / IP 67
+
+
+>
+
+
+
+
+9.1.1            Remarks
+Content
+Offline parameter setting ........................................................................................................................25
+VPN connection ......................................................................................................................................25
+                                                                                                                                                 34180
+>
+
+
+
+
+Offline parameter setting
+                                                                                                                                                 34060
+
+The AL1350 supports the offline parameter setting. In this context, the user creates and stores a
+configuration for the IO-Link master and the connected IO-Link devices without being connected to the
+AL1350 (OFFLINE mode). The configuration created in this way can be stored as a file (*.lrp) and
+loaded to the AL1350 and activated at a later date.
+
+            Further information about offline parameter setting: → Operating instructions LR DEVICE
+
+
+>
+
+
+
+
+VPN connection
+                                                                                                                                                 34382
+
+            An active VPN connection blocks the access of the parameter setting software LR DEVICE to
+            the IoT core interface of the AL1350.
+            ► Deactivate the VPN connection in order to be able to access the AL1350 with the LR
+                DEVICE.
+
+
+
+
+                                                                                                                                                   25
+IO-Link Master with IoT Interface DataLine 4 Ports IP 65 / IP 66 / IP 67
+
+
+>
+
+
+
+
+9.1.2            IoT: Configure IP settings
+                                                                                                                                34049
+
+For access to the IO-Link master via the IT infrastructure the user has to set the IP settings of the IoT
+port.
+
+            To configure the IP settings with DHCP, a DHCP server has to be active in the IT network. If
+            no DHCP server can be reached in the IT network, an IP address is automatically assigned to
+            the IoT port with the Zeroconfig protocol (address range: → Factory settings (→ S. 55)).
+
+To configure the IP settings of the IoT port:
+► Select [IoT] menu.
+> The menu page shows the current settings.
+► Set the following parameters as required:
+Name                                      Description                                  Possible values
+[DHCP]                                    Activate/deactivate the DHCP client of the   [Static IP]   IP settings were set by the user
+                                          device
+                                                                                       [DHCP]        IP settings are set by a DHCP
+                                                                                                     server in the network.
+[IP address]*                             IP address of the IoT port                   Factory setting: 169.254.X.X
+[Subnet mask]*                            Subnet mask of the Ethernet network          Factory setting: 255.255.0.0
+[Default gateway IP address]*             IP address of the network gateway            Factory setting: 0.0.0.0
+[MAC address]                             MAC address of the IoT port                  The value is firmly set.
+* ... can only be edited if parameter [DHCP] = [Static IP]
+
+
+► Save changed values on the device.
+
+
+
+
+26
+IO-Link Master with IoT Interface DataLine 4 Ports IP 65 / IP 66 / IP 67
+
+
+>
+
+
+
+
+9.1.3            IoT: Configure the interface to the LR SMARTOBSERVER
+                                                                                                                                    34048
+
+To enable data transfer between the device and the LR SMARTOBSERVER monitoring software, the
+LR SMARTOBSERVER monitoring software interface has to be configured.
+► Select [IoT] menu.
+> The menu page shows the current settings.
+► Set the following parameters as required:
+Name                                   Description                                      Possible values
+
+[IP address                            IP address of the PC on which the                Factory setting: 255.255.255.255
+LR SMARTOBSERVER]                      LR SMARTOBSERVER is installed.
+[Port                                  Port number that is used to send process data    0                 Factory setting:: 35100
+LR SMARTOBSERVER]                      to the LR SMARTOBSERVER                          ...
+                                                                                        65535
+[Interval                              Cycle time for the transfer of the process data to [Off]           no transfer
+LR SMARTOBSERVER]                      the LR SMARTOBSERVER (value in
+                                       milliseconds)                                      500             500 ms
+                                                                                          ...             ...
+                                                                                          2147483647      2147483647 ms
+[Application Tag]                      Source identifier of the IO-Link master in the   Factory setting: AL1350
+                                       structure of the LR SMARTOBSERVER
+                                       (String32)
+
+
+
+            After changing the parameter [Port LR SMARTOBSERVER] or [Application Tag], it may take
+            120 seconds before the device establishes a new TCP connection.
+            To prevent the delay:
+            ► Reboot the device after the parameter change.
+
+► Save changed values on the device.
+
+
+
+
+                                                                                                                                     27
+IO-Link Master with IoT Interface DataLine 4 Ports IP 65 / IP 66 / IP 67
+
+
+>
+
+
+
+
+9.1.4            IO-Link ports: Activate data transfer to the LR SMARTOBSERVER
+                                                                                                                          33690
+
+The user can decide separately for each IO-Link port if the process data of the connected IO-Link
+devices should be transferred to the LR SMARTOBSERVER.
+
+            To transfer process data the interfaces to the LR SMARTOBSERVER have to be correctly
+            configured (→ IoT: Configure the interface to the LR SMARTOBSERVER (→ S. 27)).
+
+
+To activate / deactivate data transfer:
+► Select [Port x] menu (x = 1...4).
+> The menu page shows the current settings.
+► Set the following parameters as required:
+Name                            Description                                Possible values
+[Transmission to  Transfer of process data of the                          [Disabled]   Process data is not transferred
+LR SMARTOBSERVER] connected IO-Link device to
+                  LR SMARTOBSERVER                                         [Enabled]    Process data is transferred
+
+
+
+► Save changed values on the device.
+
+
+
+
+28
+IO-Link Master with IoT Interface DataLine 4 Ports IP 65 / IP 66 / IP 67
+
+
+>
+
+
+
+
+9.1.5            IO-Link ports: Configure operating mode
+                                                                                                                                    33694
+
+The IO-Link ports X01...X04 of the device support the following operating modes:
+     Digital input (DI): binary input signal at pin 4 (C/Q) of the IO-Link port
+     Digital output (DO): binary output signal at pin 4 (C/Q) of the IO-Link port
+     IO-Link: IO-Link data transfer via pin 4 (C/Q) of the IO-Link port
+
+The user can set the operating mode separately for each IO-Link port.
+To set the operating mode of an IO-Link port:
+► Select [Port x] menu (x = 1...4).
+> The menu page shows the current settings.
+► Set the following parameters as required:
+Name                            Description                                             Possible values
+
+[Mode]                          Operating mode of the IO-Link port                      [Disabled]    Port deactivated
+
+                                                                                        [DI]          Operation as digital input
+
+                                                                                        [DO]          Operation as digital output
+
+                                                                                        [IO-Link]     Operation as IO-Link interface
+
+[Cycle time actual]**           Current cycle time of the data transfer between         Parameter can only be read
+                                IO-Link master and IO-Link device on the port
+                                (value in microseconds)
+[Cycle time preset]*            Cycle time of the data transfer between the IO-Link     0             The device automatically sets
+                                master and the IO-Link device at the port (value in                   the fastest possible cycle time.
+                                microseconds)
+                                                                                        1             1 microsecond
+                                                                                        ...           ...
+                                                                                        132800        132800 microseconds
+[Bitrate]**                     Current transmission rate of the data transfer          Parameter can only be read
+                                between the IO-Link master and the IO-Link device
+                                on the port
+* ... Parameter only available if [Mode] = [IO-Link]
+** ... Parameter only visible if the IO-Link device is connected to the IO-Link port.
+
+
+► Save changed values on the device.
+
+
+
+
+                                                                                                                                     29
+IO-Link Master with IoT Interface DataLine 4 Ports IP 65 / IP 66 / IP 67
+
+
+>
+
+
+
+
+9.1.6            IO-Link ports: Set the device validation and data storage
+                                                                                                                                           33697
+
+In the operating mode "IO-Link" the user can set the behaviour of the IO-Link port with regard to
+device validation and the storage / restoration of the parameter data of the connected IO-Link device.
+To configure the device validation and the data storage:
+► Select [Port x] menu (x = 1...4).
+> The menu page shows the current settings.
+► Set the following parameters as required:
+Name                            Description                                Possible values
+
+[Validation / Data              Supported IO-Link standard and             [No check and        No verification of the vendor ID and device
+Storage]                        behaviour of the device during             clear]                ID
+                                connection of a new IO-Link                                     No data storage
+                                device on port x (x = 1...4)
+                                                                           [Type                IO-Link device is compatible with the V1.0
+                                                                           compatible            IO-Link standard
+                                                                           V1.0 device]         Verification whether it is an IO-Link device of
+                                                                                                 the same type (validation via vendor ID and
+                                                                                                 device ID)
+                                                                                                No data storage
+                                                                           [Type                IO-Link device is compatible with the V1.1
+                                                                           compatible            IO-Link standard
+                                                                           V1.1 device]         Verification whether it is an IO-Link device of
+                                                                                                 the same type (validation via vendor ID and
+                                                                                                 device ID)
+                                                                                                No data storage
+                                                                           [Type                IO-Link device is compatible with the V1.1
+                                                                           compatible            IO-Link standard
+                                                                           V1.1 device          Verification whether it is an IO-Link device of
+                                                                           with Backup +         the same type (validation via vendor ID and
+                                                                           Restore]              device ID)
+                                                                                                The IO-Link master saves the parameter
+                                                                                                 values of the connected IO-Link device;
+                                                                                                 modifications of the parameter values are
+                                                                                                 also saved (observe the note!)
+                                                                                                When connecting an IO-Link device with
+                                                                                                 factory settings, the parameter values stored
+                                                                                                 in the IO-Link master are restored
+                                                                                                 automatically on the IO-Link device.
+                                                                           [Type                IO-Link device is compatible with the V1.1
+                                                                           compatible            IO-Link standard
+                                                                           V1.1 device          Verification whether it is an IO-Link device of
+                                                                           with Restore]         the same type (validation via vendor ID and
+                                                                                                 device ID)
+                                                                                                The IO-Link master saves the parameter
+                                                                                                 values of the connected IO-Link device
+                                                                                                 once.
+                                                                                                When connecting an IO-Link device with
+                                                                                                 factory settings, the parameter values stored
+                                                                                                 in the IO-Link master are restored
+                                                                                                 automatically on the IO-Link device.
+[Vendor ID]                     ID of the manufacturer that is to          0                 Factory setting: 0
+                                be validated                               ...               ifm electronic: 310
+                                                                           65535
+[Device ID]                     ID of the IO-Link device that is to        0                 Factory setting: 0
+                                be validated                               ...
+                                                                           16777215
+
+
+► Save changed values on the device.
+>
+
+
+
+
+30
+IO-Link Master with IoT Interface DataLine 4 Ports IP 65 / IP 66 / IP 67
+
+
+
+
+9.1.7            IO-Link ports: Configuration of fail-safe values
+                                                                                                                                     52242
+
+The user can set the fail-safe values of the outputs of the IO-Link ports X01...X04. The fail-safe values
+will be activated in case of an interruption of the IoT core connection.
+To configure the fail-safe values:
+► Select [Port x] menu (x = 1...4).
+> The menu page shows the current settings.
+► Set the following parameters as required:
+Name                            Description                                             Possible values
+
+[Fail-safe digital out]*        Fail-safe value of the output for operating mode        [Reset]           OFF
+                                "digital output (DO)"
+                                                                                        [Old]             Old value
+                                                                                        [Set]             ON
+[Fail-safe IO-Link]*            Fail-safe value of the output for operating mode        [Off]             No fail-safe
+                                "IO-Link"
+                                                                                        [Reset]           Fail-safe: OFF
+
+                                                                                        [Old]             Fail-safe: old value
+
+                                                                                        [Pattern]         Fail-safe: byte sequence
+
+* ... parameter can only be changed if the IoT core controller is disconnected
+
+
+► Save changed values on the device.
+>
+
+
+
+
+9.1.8            Info: Show device information
+                                                                                                                                     34065
+
+To read the general information of the ifm IO-Link master:
+► Select [Info] menu.
+> The menu page shows the current settings.
+Name                                         Description                                            Possible values
+[Product code]                               Article number of the IO-Link master                   AL1350
+[Device family]                              Device family of the IO-Link master                    IO-Link master
+[Vendor]                                     Vendor                                                 ifm electronic gmbh
+[SW-Revision]                                Firmware of the IO-Link master
+[HW revision]                                Hardware version of the IO-Link master
+[Bootloader revision]                        Bootloader version of the IO-Link master
+[Serial number]                              Serial number
+
+
+
+
+                                                                                                                                      31
+IO-Link Master with IoT Interface DataLine 4 Ports IP 65 / IP 66 / IP 67
+
+
+>
+
+
+
+
+9.1.9            Firmware: Reset device to factory settings
+                                                                                    33838
+
+When the IO-Link master is reset, all parameters are set to the factory settings:
+To reset the device to factory settings:
+► Select [Firmware] menu.
+> The menu page shows the current settings.
+► Click on [Factory Reset] to reset the device.
+> LR DEVICE sets the device to the factory settings.
+>
+
+
+
+
+9.1.10           Firmware: Reboot the device
+                                                                                    33832
+
+When rebooting the device, all settings are kept.
+To restart the AL1350:
+► Select [Firmware] menu.
+> The menu page shows the current settings.
+► Click on [Reboot] to reboot the device.
+> LR DEVICE reboots the ifm IO-Link master.
+
+
+
+
+32
+IO-Link Master with IoT Interface DataLine 4 Ports IP 65 / IP 66 / IP 67
+
+
+>
+
+
+
+
+9.1.11           Configure IO-Link devices
+                                                                                                                 33856
+
+To configure the IO-Link devices connected to the device with the LR DEVICE parameter setting
+software:
+Requirements:
+    > IO-Link master is correctly installed and connected to the LR DEVICE parameter setting software.
+    > The IO-Link device is correctly connected to the AL1350.
+    > Operating mode of the IO-Link port is "IO-Link" (→IO-Link ports: Configure operating mode
+       (→ S. 29)).
+1 Select IO-Link master
+    ► Start LR DEVICE.
+    ► Update IODD file library
+       OR:
+       Import IODD file of the IO-Link device manually.
+    ► Scan network for devices.
+    > LR DEVICE detects IO-Link master.
+2 Add IO-Link device
+    ► Under [ONLINE]: Click on the required IO-Link master.
+    > LR DEVICE automatically detects the IO-Link devices connected to the IO-Link master (e.g. ifm sensor KG5065).
+
+
+
+
+3    Configure IO-Link device
+     ► Mouse click on the port to which the IO-Link device is connected.
+     > LR DEVICE reads and shows the current parameter values of the IO-Link device.
+     ► Configure IO-Link device.
+
+            Information about the available parameters of the IO-Link device: → IO Device Description
+            (IODD) of the IO-Link device
+
+     ► Save the changed configuration on the IO-Link device.
+
+
+
+
+                                                                                                                  33
+IO-Link Master with IoT Interface DataLine 4 Ports IP 65 / IP 66 / IP 67
+
+
+>
+
+
+
+
+9.2              ifm IoT Core
+Content
+First steps ..............................................................................................................................................34
+General functions ...................................................................................................................................35
+Configure the IoT interface .....................................................................................................................35
+Configure IO-Link ports ..........................................................................................................................36
+Configure IO-Link devices ......................................................................................................................38
+Set application identification ...................................................................................................................40
+Read / write cyclic process data ...........................................................................................................41
+Control IO-Link master ...........................................................................................................................42
+Read diagnostic data of the AL1350 ......................................................................................................44
+Read device information of the IO-Link master ......................................................................................45
+Read information about IO-Link devices ................................................................................................45
+Subscribe to events ................................................................................................................................46
+Programmers' notes ...............................................................................................................................48
+                                                                                                                                                      52244
+
+            General notes on the ifm IoT Core: → Programmers' notes (→ S. 48)
+
+
+>
+
+
+
+
+9.2.1            First steps
+                                                                                                                                                      52245
+
+To register the device description of the AL1350:
+► Send the following POST request to the AL1350:
+    {"code":"request","cid":-1,"adr":"gettree"}
+>    AL1350 returns the device description as structured JSON object.
+► Identify all substructures and the data points contained therein in the tree structure of the JSON
+    object.
+► Identify the applicable services for the access to substructures and the data points contained
+    therein.
+
+
+
+
+34
+IO-Link Master with IoT Interface DataLine 4 Ports IP 65 / IP 66 / IP 67
+
+
+>
+
+
+
+
+9.2.2            General functions
+                                                                                                                       52246
+
+The AL1350 is of type device (→ Overview: IoT types (→ S. 69)).
+Besides gettree, the following services can be applied to the root element of type device.
+Service                                        Description
+
+../getidentity                                 Read device information
+../getdatamulti                                Read several parameter values sequentially
+../getelementinfo                              Read the uid of the AL1350
+../setelementinfo                              Write the uid of the AL1350
+
+
+Depending on the read and write access rights, the following services can be applied to elements of
+type data:
+Service                                        Description
+
+../getdata                                     Read the value of the element
+../setdata                                     Write the value of the element
+
+>
+
+
+
+
+9.2.3            Configure the IoT interface
+                                                                                                                       52247
+
+The AL1350 is integrated into the IT network via the IoT interface. To configure the IoT interface:
+Substructure: iotsetup
+The following data points are available:
+Name                                         Description                                                          Access
+../smobip                                    IP address of the LR SMARTOBSERVER                                   rw
+../smobport                                  Port number of the LR SMARTOBSERVER                                  rw
+../smobinterval                              Cycle time for the data transfer to the LR SMARTOBSERVER (value in   rw
+                                             milliseconds)
+../network/dhcp                              Configuration of the IP settings of the IoT port                     rw
+../network/ipaddress                         IP address of the IoT port                                           rw
+../network/subnetmask                        Subnet mask of the network segment                                   rw
+../network/ipdefaultgateway                  IP address of the network gateway                                    rw
+rw ... read and write
+
+
+Applicable services:
+Name                                         Description
+../network/setblock                          Write all values of the substructure blockwise
+
+
+
+
+                                                                                                                        35
+IO-Link Master with IoT Interface DataLine 4 Ports IP 65 / IP 66 / IP 67
+
+
+>
+
+
+
+
+9.2.4            Configure IO-Link ports
+                                                                                                                                       52248
+
+The user can configure the IO-Link ports X01...X04 separately.
+Substructure: iolinkmaster/port[n] (n = 1...4).
+Available data points:
+Name                                               Description                                                                   Access
+../senddatatosmob                                  Send process data to LR SMARTOBSERVER                                         rw*
+../mastercycletime_preset                          Cycle time of the data transfer at the IO-Link port (value in microseconds)   rw
+../mastercycletime_actual                          Current cycle time of the data transfer at the IO-Link port (value in         r
+                                                   microseconds)
+../portevent                                       Activity display                                                              rw
+../mode                                            Operating mode of the IO-Link port                                            rw*
+../comspeed                                        Data transfer rate of the IO-Link port                                        rw
+../validation_datastorage_mode                     Response of the IO-Link port when a new IO-Link device is connected           rw*
+../validation_vendorid                             IO-Link ID of the manufacturer that is to be validated                        rw*
+../validation_deviceid                             IO-Link ID of the device that is to be validated                              rw*
+../datastorage                                     Data storage area of the port                                                 rw
+../datastorage/maxsize                             Maximum size of the data storage area (in bytes)                              r
+../datastorage/chunksize                           Size of a data segment (in bytes)                                             r
+../datastorage/size                                Size of the data storage area (in bytes)                                      r
+r ... read only
+rw ... read and write
+* ... only available if IoT core PLC is separated from the device
+
+
+Applicable services:
+Service                                            Description
+
+../validation_useconnecteddevice                   Validate the IO-Link device connected to the IO-Link port
+../getblobdata                                     Read the content of the data storage area
+../datastorage/stream_set                          Transfer an individual data segment
+../datastorage/start_stream_set                    Start sequential transmission of several data segments
+
+
+
+
+36
+IO-Link Master with IoT Interface DataLine 4 Ports IP 65 / IP 66 / IP 67
+
+
+>
+
+
+
+
+Example: Clone the Data Storage of an IO-Link port
+                                                                                                                             52344
+
+Task: Save the Data Storage of IO-Link port X02 of IO-Link master 1 and restore the data at IO-Link
+master 2.
+Solution: The cloning process consists of 2 steps. In the first step, the Data Storage of the IO-Link
+port of IO-Link master 1 is saved. In the second step, the saved data is restored at the Data Storage of
+port IO-Link port of IO-Link master 2.
+Save Data Storage:
+1 Preparations
+    ► Read size of segments of Data Storage (h = number of bytes):
+         {"code":"request", "cid": -1,"adr":"/iolinkmaster/port[2]/datastorage/chunksize/getdata"}
+         Example: h = 256
+    ► Read total size of Data Storage area (g = number of bytes):
+         {"code": "request", "cid": -1, "adr": "/iolinkmaster/port[2]/datastorage/size/getdata"}
+         Example: g = 550
+    ► Calcuate the number of reading steps n: n = first integer value to which the following applies: g < n*h
+         Example: n= 3, because 550 < 3*256
+2 Read Data Storage of IO-Link port
+    ► Read Data Storage segment by segment ("pos" is the byte offset, at which the reading process with length "length"
+         starts).
+         {"code": "request", "cid": -1, "adr": "/iolinkmaster/port[2]/datastorage/getblobdata", "data": {"pos": 0, "length": h}}
+         {"code": "request", "cid": -1, "adr": "/iolinkmaster/port[2]/datastorage/getblobdata", "data": {"pos": h, "length": h}}
+         {"code": "request", "cid": -1, "adr": "/iolinkmaster/port[2]/datastorage/getblobdata", "data": {"pos": 2*h, "length": h}}
+         ...
+         {"code": "request", "cid": -1, "adr": "/iolinkmaster/port[2]/datastorage/getblobdata", "data": {"pos": n*h, "length": h}}
+         Example:
+         1st read request: pos = 0, length = 256
+         2nd read resquest: pos = 256, length =256
+         3rd read request: pos = 512, length = 256
+    > Each segment value will be returned as BASE64 coded string.
+    ► Join segments.
+
+Restore Data Storage:
+1 Preparations
+   ► Determine the size of the saved Data Storage value (n = number of bytes).
+       Example: n = 550
+   ► Read size of segments (s = number of bytes):
+       {"code":"request", "cid": -1,"adr":"/iolinkmaster/port[1]/datastorage/chunksize/getdata"}
+       Example: s = 256
+2 Transfer Data Storage strings
+   ► Start transfer of Data Storage string ("size" = size of Data Storage string):
+       {"code":"request", "cid": -1, "adr":"/iolinkmaster/port[1]/datastorage/start_stream_set", "data": {"size": n}}
+       Example: size = 550
+   ► Transfer Data Storage string segment by segment ("value" = string value of length s):
+       {"code": "request", "cid": -1, "adr": "/iolinkmaster/port[1]/datastorage/stream_set", "data": {"value":
+       "aWZtfgIAAABBTDF4NXhfY25faXRfdDIuMi43Nw..."}
+
+
+
+
+                                                                                                                               37
+IO-Link Master with IoT Interface DataLine 4 Ports IP 65 / IP 66 / IP 67
+
+
+>
+
+
+
+
+9.2.5            Configure IO-Link devices
+                                                                                                  52249
+
+The ifm IoT Core supports the configuration of the connected IO-Link devices. A parameter is
+accessed via IO-Link index and subindex (→ IO Device Description (IODD) of the device).
+Substructure: iolinkmaster/port[n]/iolinkdevice (n = 1...4)
+Applicable services:
+Service                                        Description
+
+../iolreadacyclic                              Read a parameter of an IO-Link device (acyclic)
+../iolwriteacyclic                             Write a parameter of an IO-Link device (acyclic)
+
+>
+
+
+
+
+Example: Read the parameter value of an IO-Link device
+                                                                                                  33847
+
+Task: Read the serial number of the ifm temperature sensor TN2531 at IO-Link port X02
+Solution: Read the serial number with the iolreadacyclic service from the IO-Link device (index:
+21, subindex: 0)
+ Request object:
+{
+"code":"request",
+"cid":4711,
+"adr":"/iolinkmaster/port[2]/iolinkdevice/iolreadacyclic",
+"data":{"index":21,"subindex":0}
+}
+ Return object:
+{
+"cid":4711,
+"data":{"value":"4730323134323830373130"},
+"code":200
+}
+
+The returned value is given in hexadecimal format. The conversion of the HEX value in a STRING
+value is: G0214280710
+
+
+
+
+38
+IO-Link Master with IoT Interface DataLine 4 Ports IP 65 / IP 66 / IP 67
+
+
+>
+
+
+
+
+Example: Change the parameter value of an IO-Link device
+                                                                                                33844
+
+Task: Set the output configuration OUT1 of the ifm temperature sensor TN2531 at IO-Link port X02 to
+the value "Hnc / hysteresis function, normally closed".
+Solution: Change the parameter [ou1] of the sensor to the value 4 using the iolwriteacyclicdata
+service. The parameter can be accessed via IO-Link index 580, subindex 0 (→ IO-Link description of
+the sensor).
+ Request object:
+{
+"code":"request",
+"cid":4711,
+"adr":"/iolinkmaster/port[2]/iolinkdevice/iolwriteacyclic",
+"data":{"index":580,"subindex":0,"value":"34"}
+}
+The value has to be given in hexadecimal format. The conversion of the STRING value in a HEX value
+is: 34.
+ Return object:
+{
+"cid":4711,
+"code":200
+}
+
+
+
+
+                                                                                                 39
+IO-Link Master with IoT Interface DataLine 4 Ports IP 65 / IP 66 / IP 67
+
+
+>
+
+
+
+
+9.2.6            Set application identification
+                                                                                                       52337
+
+The user can set the application name of the IO-Link master:
+Substructure: devicetag
+Available data points:
+Name                                              Description                                    Access
+../applicationtag                                 Name of the IO-Link master (application tag)   rw
+rw ... read and write
+>
+
+
+
+
+Example: Change name of the IO-Link master
+                                                                                                      a33823
+
+Task: Set the name of the IO-Link master to AL1350 for the representation in the
+LR SMARTOBSERVER.
+Solution: Change the parameter [Application Tag] with the setdata service to the value [AL1350].
+The data point of the parameter [Application Tag] in the device description object is
+/devicetag/applicationtag.
+ Request object:
+{
+"code":"request",
+"cid":4711,
+"adr":"/devicetag/applicationtag/setdata",
+"data":{"newvalue":"AL1350"}
+}
+ Return object:
+{"cid":4711,"code":200}
+
+
+
+
+40
+IO-Link Master with IoT Interface DataLine 4 Ports IP 65 / IP 66 / IP 67
+
+
+>
+
+
+
+
+9.2.7            Read / write cyclic process data
+                                                                                                                52250
+
+To access the cyclic process data of the IO-Link ports X01...X04:
+Substructure: iolinkmaster/port[n] (n = 1...4)
+Available data points:
+Name                                            Description                                                Access
+../pin2in                                       Value of the digital input on pin 2 of the IO-Link port    r
+../iolinkdevice/pdin                            Value of the IO-Link input on pin 4 of the IO-Link port    r
+../iolinkdevice/pdout                           Value of the IO-Link output on pin 4 of the IO-Link port   rw
+r = only read
+rw = read and write
+>
+
+
+
+
+Example: Read process data of an IO-Link device
+                                                                                                                33842
+
+Task: Read the current measured value of the ifm temperature sensor TN2531 at IO-Link port X06
+Solution: Read the data point for the process input data with the getdata service.
+ Request object:
+{
+"code":"request",
+"cid":4711,
+"adr":"/iolinkmaster/port[6]/iolinkdevice/pdin/getdata"
+}
+ Return object:
+{
+"cid":4711,
+"data":{"value": "03C9"},
+"code":200
+}
+
+The return value is given in hexadecimal format. Besides the temperature value the return value
+comprises additional information (→ IO Device Description (IODD) of the sensor). The temperature
+value is shown in bits 2 to 15.
+0x03C9 = 0b1111001001
+Temperature value: 0b11110010 = 242
+Therefore: The current temperature value is 24.2 °C.
+
+
+
+
+                                                                                                                 41
+IO-Link Master with IoT Interface DataLine 4 Ports IP 65 / IP 66 / IP 67
+
+
+>
+
+
+
+
+9.2.8             Control IO-Link master
+                                                                                                             52251
+
+Different services and management functions can be carried out on the IO-Link master.
+Substructure: firmware
+Available data points:
+Name                                            Description                                              Access
+../version                                      Software version                                         r
+../type                                         Software type                                            r
+../container                                    Area for updating the firmware                           w
+../container/maxsize                            Maximum size of the container area (in bytes)            r
+../container/chunksize                          Size of a data segment (in bytes)                        r
+../container/size                               Size of the container area (in bytes)                    r
+r = only read
+w = write only
+Applicable services:
+Name                                            Description
+../factoryreset                                 Reset IO-Link master to factory settings
+../reboot                                       Reboot IO-Link master
+../signal                                       Trigger the flashing of the status LED
+../install                                      Install firmware transferred to the IO-Link master
+../container/stream_set                         Transfer an individual data segment
+../container/start_stream_set                   Start sequential transmission of several data segments
+
+
+
+
+42
+IO-Link Master with IoT Interface DataLine 4 Ports IP 65 / IP 66 / IP 67
+
+
+>
+
+
+
+
+Example: Update firmware
+                                                                                                                    52252
+
+Task:
+Update the firmware of the device; size of the firmware file: 356676 bytes
+Solution:
+The firmware is transferred to the device in fragments (chunks). The size of the fragments depends on
+the size of the flash memory of the IO-Link master. To transfer the firmware, the firmware file must be
+converted into a character string using BASE64.
+1 Preparations
+    ► Determine the size of the fragments (g = number of bytes):
+        {"code":"request", "cid": -1, "adr":"/firmware/container/chunksize/getdata"}
+    ► Convert the firmware file into a BASE64 string.
+2 Start the transfer of the firmware
+    ► Start the transfer of the firmware via the service start_stream_set (parameter "size": size of the firmware file):
+        {"code":"request", "cid": -1, "adr":"/firmware/container/start_stream_set", "data":{"size":356676}}
+3 Load the firmware into the flash memory of the IO-Link master
+    ► Send the BASE64 string of the firmware file to the IO-Link master fragment by fragment (value = string value with
+        length g).
+        {"code": "request", "cid": -1, "adr": "/firmware/container/stream_set", "cid": -1, "data": {"value":
+        "aWZtfgIAAABBTDF4NXhfY25faXRfdDIuMi43Nw..."}
+    ► Repeat step 3 until all fragments of the firmware file have been sent to the IO-Link master.
+    > IO-Link master stores the segments received in the container area.
+4 Install firmware
+    ► Start the installation of the transmitted firmware.
+        {"code": "request", "cid": -1, "adr": "/firmware/install", "data": {}}
+
+
+
+
+                                                                                                                     43
+IO-Link Master with IoT Interface DataLine 4 Ports IP 65 / IP 66 / IP 67
+
+
+>
+
+
+
+
+9.2.9             Read diagnostic data of the AL1350
+                                                                                                         52253
+
+The AL1350 provides diagnostic data.
+Substructure: processdatamaster
+Available data points:
+Name                                               Description                                       Access
+../temperature                                     Temperature of the IO-Link master (value in °C)   r
+../voltage                                         Voltage applied (value in V)                      r
+../current                                         Current (value in A)                              r
+../supervisionstatus                               Diagnostic information of the device supply       r
+r ... read only
+>
+
+
+
+
+Example: Read several parameter values of the IO-Link master simultaneously
+                                                                                                         33840
+
+Task: The following current values are to be read by the IO-Link master: temperature, serial number
+Solution: Read the current parameter values using the getdatamulti service (data point temperature:
+/processdatamaster/temperature; data point serial number: /deviceinfo/serialnumber)
+ Request object:
+{
+"code":"request",
+"cid":4711,
+"adr":"/getdatamulti",
+"data":{"datatosend":["/processdatamaster/temperature","/deviceinfo/serialnumber"]
+}
+}
+ Return object:
+{
+"cid":4711,
+"data":{"processdatamaster/temperature":{"code":200,"data":44},
+"deviceinfo/serialnumber":{"code":200,"data":"000174210147"}},
+"code":200
+}
+
+
+
+
+44
+IO-Link Master with IoT Interface DataLine 4 Ports IP 65 / IP 66 / IP 67
+
+
+>
+
+
+
+
+9.2.10            Read device information of the IO-Link master
+                                                                                                                                  52254
+
+To read the device information of the AL1350:
+Substructure: deviceinfo
+Available data points:
+Name                                               Description                                                           Access
+../productcode                                     Article number                                                        r
+../vendor                                          Producer                                                              r
+../devicefamily                                    Device family                                                         r
+../hwrevision                                      Hardware revision                                                     r
+../serialnumber                                    Serial number                                                         r
+../swrevision                                      Firmware version                                                      r
+../bootloaderrevision                              Bootloader version                                                    r
+../extensionrevisions                              Firmware and bootloader version                                       r
+../fieldbustype                                    Fieldbus                                                              r
+r ... read only
+Additional information about the AL1350 can be read with the getidentity service (→ Service:
+getidentity (→ S. 74)).
+>
+
+
+
+
+9.2.11            Read information about IO-Link devices
+                                                                                                                                  52339
+
+The user can obtain information about the IO-Link devices connected to the IO-Link ports.
+Substructure: iolinkmaster/port[n]/iolinkdevice (n = 1...4)
+Available data points:
+Name                                                                  Description                                            Access
+
+../status                                                             Status of the connected IO-Link device                 r
+../vendorid                                                           IO-Link ID of the vendor                               r
+../deviceid                                                           IO-Link ID of the IO-Link device                       r
+../productname                                                        Product name of the IO-Link device                     r
+../serial                                                             Serial number of the IO-Link device                    r
+../applicationspecifictag                                             Device-specific identification (application tag)       rw
+r ... nur lesen
+rw ... lesen und schreiben
+
+
+
+
+                                                                                                                                   45
+IO-Link Master with IoT Interface DataLine 4 Ports IP 65 / IP 66 / IP 67
+
+
+>
+
+
+
+
+9.2.12           Subscribe to events
+                                                                                                                        52255
+
+If a data point has the subelement datachanged, the user can subscribe to events.
+Available data points:
+Name                                                          Description                                          Access
+
+timer[n]/counter                                              Current value that can be subscribed to              r
+timer[n]/interval                                             Cycle time of the update of the subscribed values    rw
+iolinkmaster/port[n]/portevent                                Display of the following events on IO-Link port n:   r
+                                                                  IO-Link device connected
+                                                                  IO-Link device disconnected
+                                                                  Operating mode of the IO-Link port changed
+iolinkmaster/port[n]/iolinkdevice/iolinkevent                 Display of IO-Link events                            r
+
+
+Applicable services:
+Name                                                          Description
+
+../datachanged/subscribe                                      Subscribe to an event message
+../datachanged/unsubsribe                                     Unsubscribe from an event message
+../datachanged/getsubscriptioninfo                            Show information about event messages
+
+
+
+
+46
+IO-Link Master with IoT Interface DataLine 4 Ports IP 65 / IP 66 / IP 67
+
+
+>
+
+
+
+
+Example: Subscribe to event
+                                                                                                  33853
+
+Task: The current values of the following parameters should be sent regularly to a network server with
+IP address 192.168.0.4: product name of the IO-Link device at IO-Link port X02, cyclic input data of
+the IO-Link device at IO-Link port X02 and the operating temperature of the IO-Link master.
+Solution: Subscribe to the required data using the subscribe service.
+ Request object:
+{
+"code":"request",
+"cid":4711,
+"adr":"/timer[1]/counter/datachanged/subscribe",
+"data":{"callback":"http://192.168.0.44:80/temp",
+"datatosend":[
+"/iolinkmaster/port[2]/iolinkdevice/productname",
+"/iolinkmaster/port[2]/iolinkdevice/pdin",
+"/processdatamaster/temperature"]
+}
+}
+
+Additionally the interval of the timer[1] has to be set to a value between 500 ms and 2147483647 ms.
+ Request object:
+{
+"code":"request",
+"cid":4712,
+"adr":"/timer[1]/interval/setdata",
+"data":{"newvalue":500}
+}
+ Return object
+{
+"cid":4712,
+"code":200
+}
+
+
+
+
+                                                                                                    47
+IO-Link Master with IoT Interface DataLine 4 Ports IP 65 / IP 66 / IP 67
+
+
+>
+
+
+
+
+9.2.13           Programmers' notes
+Content
+IoT Core: General information ................................................................................................................48
+Access the ifm IoT Core .........................................................................................................................49
+IoT Core: Diagnostic codes ....................................................................................................................51
+                                                                                                                                             34229
+>
+
+
+
+
+IoT Core: General information
+                                                                                                                                             52256
+
+The DataLine device family has an IoT Core. The IoT Core allows the user to address the AL1350
+from IT networks via a REST API and to integrate it into Internet-of-Things applications.
+A device description is stored on the AL1350. This device description is a structured,
+machine-readable data object in JSON format. All current values of parameters, process data,
+diagnostic data and device information are mapped in this data object. These data values can be read
+and changed by means of services.
+
+
+
+
+48
+IO-Link Master with IoT Interface DataLine 4 Ports IP 65 / IP 66 / IP 67
+
+
+>
+
+
+
+
+Access the ifm IoT Core
+                                                                                                        52257
+
+The user can access the ifm IoT Core via HTTP requests. The following request methods are
+available.
+>
+
+
+
+
+GET method
+                                                                                                        33804
+
+Using the GET method the user has read access to a data point.
+The syntax of the request to the IoT Core is:
+http://ip/datapoint/service
+
+
+Description                     Description
+
+ip                              IP address of the IoT port X23 of the IO-Link master
+data_point                      Data point which is to be accessed
+service                         Service
+
+
+The syntax of the return of the IoT Core is:
+{
+"cid":id,
+"data":{"value":resp_data},
+"code":err_code
+}
+
+
+parameter                       Description
+
+id                              Correlation ID for the assignment of request and return
+resp_data                       Value of the data point; depending on the data type of the data point
+err_code                        Error code (→ IoT Core: Diagnostic codes (→ S. 51))
+
+
+Example:
+Request (via browser): https://192.168.0.250/devicetag/applicationtag/getdata
+Return: {"cid":-1,"data":{"value":"AL1350"}, "code":200}
+
+
+
+
+                                                                                                         49
+IO-Link Master with IoT Interface DataLine 4 Ports IP 65 / IP 66 / IP 67
+
+
+>
+
+
+
+
+POST method
+                                                                                                                                   34212
+
+Using the POST method the user has read and write access to a data point. A form with the required
+information is transferred to the IP address of the IO-Link master (IoT port X23).
+The syntax of the request to the IoT Core is:
+{
+"code":"code_id",
+"cid":id,
+"adr":"data_point/service",
+"data":{req_data}
+}
+
+
+Parameter                       Description
+code_id                         service class
+                                   Request                   Request
+                                   Transaction               Transaction
+                                   Event                     Event
+id                              Correlation ID for the assignment of request and return
+data_point                      Data point which is to be accessed
+service                         Service to be performed (→ Overview: IoT services (→ S. 70))
+req_data                        Data to be transferred to the IoT Core (e.g. new values); indication optional (depending on the service)
+
+
+The syntax of the return of the IoT Core is:
+{
+"cid":id,
+"data":{"value":resp_data},
+"code":err_code
+}
+
+
+Parameter                       Description
+
+id                              Correlation ID for the assignment of request and return
+resp_data                       Value of the data point; depending on the data type of the data point
+err_code                        Error code (→ IoT Core: Diagnostic codes (→ S. 51))
+
+
+Example:
+Request: {"code":"request","cid":4711, "adr":"devicetag/applicationtag/getdata"}
+Return: {"cid":4711,"data":{"value":"AL1350"}, "code":200}
+
+
+
+
+50
+IO-Link Master with IoT Interface DataLine 4 Ports IP 65 / IP 66 / IP 67
+
+
+>
+
+
+
+
+IoT Core: Diagnostic codes
+                                                                                                                               34075
+
+The ifm IoT Core uses the following diagnostic codes:
+Code        Description
+
+200         OK
+230         OK; but reboot required
+231         OK, but block request not yet terminated
+232         Data accepted but changed internally
+233         IP settings of the IoT core changed; application has to reboot the device; Wait for min. 1 second before the device is
+            rebooted
+400         Invalid request
+403         Unauthorised access
+500         Internal server fault
+503         Service not available
+530         Requested data is invalid
+531         IO-Link error
+532         Error in PLC connection
+
+
+
+
+                                                                                                                                 51
+IO-Link Master with IoT Interface DataLine 4 Ports IP 65 / IP 66 / IP 67
+
+
+
+
+10               Maintenance, repair and disposal
+Content
+Cleaning process ....................................................................................................................................52
+Update firmware .....................................................................................................................................53
+Replace IO-Link device ..........................................................................................................................54
+                                                                                                                                                 51990
+
+The operation of the unit is maintenance-free.
+► Dispose of the unit in an environmentally friendly way in accordance with the applicable national
+   regulations when it is no longer used.
+>
+
+
+
+
+10.1             Cleaning process
+                                                                                                                                                 51991
+
+► Clean the surface of the unit when necessary.
+► Do not use any caustic cleaning agents for this!
+
+
+
+
+52
+IO-Link Master with IoT Interface DataLine 4 Ports IP 65 / IP 66 / IP 67
+
+
+>
+
+
+
+
+10.2             Update firmware
+                                                                                                 52258
+
+The firmware of the IO-Link master can be updated with the following options:
+     IoT Core: → Example: Update firmware (→ S. 43)
+     Web interface:
+
+            If the firmware update is not successful, deactivate all connections to the LR
+            SMARTOBSERVER and LR DEVICE and repeat the process.
+            ► Deactivate the connection to the IoT core PLC.
+            ► Set the parameter [IP address LR SMARTOBSERVER] to 255.255.255.255 or 0.0.0.0
+                 (→ IoT: Configure the interface to the LR SMARTOBSERVER (→ S. 27)).
+            ► Stop the LRAgent.LRDevice service in the Windows task manager.
+            After the firmware update, check the settings of the interface to the LR SMARTOBSERVER!
+
+Prerequisites
+    > Zip file with new firmware has been downloaded and unpacked.
+    > Ethernet connection between laptop/PC and device is established.
+1 Call up web interface
+    ► Start web browser.
+    ► Enter the following into the address field of the browser and confirm with [ENTER]:
+        http://<IP address of the device>/web/update
+    > Web browser shows the [Firmware Update] page.
+2 Load new firmware to AL1350
+    ► Click on [Select file].
+    > Dialogue window appears.
+    ► Select the firmware file (.bin) and click on [Open].
+    ► Click on [Submit] to start the firmware update.
+    > Firmware is being loaded to the device.
+    > After successful storage, the success message is displayed.
+3 Restart the device
+    ► Click on [Restart device now] to restart the device.
+    > The status LED RDY flashes quickly.
+    > Firmware is updating.
+    ► Follow the instructions in the browser.
+
+
+
+
+                                                                                                      53
+IO-Link Master with IoT Interface DataLine 4 Ports IP 65 / IP 66 / IP 67
+
+
+>
+
+
+
+
+10.3             Replace IO-Link device
+                                                                                               34182
+
+To replace an IO-Link device:
+Requirement:
+    > IO-Link device is with factory settings.
+    > IO-Link device supports IO-Link standard 1.1 or higher.
+1 Set data storage
+    ► Set the following parameters of the IO-Link port:
+        Validation and Data Storage = [Type compatible V1.1 device with Restore]
+    ► Save changes.
+2 Replace IO-Link device
+    ► Disconnect old IO-Link device from IO-Link master.
+    ► Connect new IO-Link device with the same IO-Link port of the AL1350.
+    > IO-Link master copies parameter values from the data memory to the new IO-Link device.
+
+
+
+
+54
+IO-Link Master with IoT Interface DataLine 4 Ports IP 65 / IP 66 / IP 67
+
+
+
+
+11               Factory settings
+                                                                              52259
+
+In the factory settings, the device has the following parameter settings:
+
+
+Parameter                                                   Factory setting
+
+[IP address] (IoT interface)                                169.254.X.X
+[Subnet mask] (IoT interface)                               255.255.0.0
+[IP gateway address] (IoT interface)                        0.0.0.0
+[Host name]                                                 blank
+Data memory (data storage)                                  blank
+
+
+
+
+                                                                               55
+IO-Link Master with IoT Interface DataLine 4 Ports IP 65 / IP 66 / IP 67
+
+
+
+
+12               Accessories
+                                                                            33870
+
+List of accessories of AL1350: → www.ifm.com > Product page > Accessories
+
+
+
+
+56
+IO-Link Master with IoT Interface DataLine 4 Ports IP 65 / IP 66 / IP 67
+
+
+
+
+13               Appendix
+Content
+Technical data ........................................................................................................................................58
+ifm IoT Core ............................................................................................................................................62
+                                                                                                                                                     33879
+
+
+
+
+                                                                                                                                                       57
+IO-Link Master with IoT Interface DataLine 4 Ports IP 65 / IP 66 / IP 67
+
+
+>
+
+
+
+
+13.1             Technical data
+Content
+Application ..............................................................................................................................................58
+Electrical data .........................................................................................................................................58
+Inputs / outputs .......................................................................................................................................58
+Inputs ......................................................................................................................................................59
+Outputs ...................................................................................................................................................59
+Interfaces ................................................................................................................................................59
+Operating conditions ...............................................................................................................................60
+Approvals / tests .....................................................................................................................................60
+Mechanical data ....................................................................................................................................60
+Electrical connection ...............................................................................................................................61
+                                                                                                                                                         34188
+>
+
+
+
+
+13.1.1           Application
+                                                                                                                                                         33878
+
+
+Application
+Application                                                  I/O modules for field applications
+Daisy-chain function                                         Fieldbus interface
+
+>
+
+
+
+
+13.1.2           Electrical data
+                                                                                                                                                         33808
+
+
+Electrical data
+Operating voltage [V]                                        20...30 DC; (US; to SELV/PELV)
+Current Consumption [mA]                                     300...3900; (US)
+Protection class                                             III
+
+Sensor supply US
+Max. current load total [A]                                  3.6
+
+>
+
+
+
+
+13.1.3           Inputs / outputs
+                                                                                                                                                         34068
+
+
+Inputs / outputs
+Total number of inputs and outputs                           8; (configurable)
+
+
+
+
+58
+IO-Link Master with IoT Interface DataLine 4 Ports IP 65 / IP 66 / IP 67
+
+
+>
+
+
+
+
+13.1.4           Inputs
+                                                                                                 34069
+
+
+Inputs
+
+Number of digital inputs                                     8; (IO-Link Port Class A: 4 x 2)
+Switching level high [V]                                     11...30
+Switching level low [V]                                      0...5
+Digital inputs protected against short circuits              yes
+
+>
+
+
+
+
+13.1.5           Outputs
+                                                                                                 34053
+
+
+Outputs
+
+Number of digital outputs                                    4; (IO-Link Port Class A: 4 x 1)
+Max. current load per output [mA]                            300
+Short-circuit protection                                     yes
+
+>
+
+
+
+
+13.1.6           Interfaces
+                                                                                                 52260
+
+
+Interfaces
+
+Communication interface                                      Ethernet; IO-Link
+Communication interface                                      IO-Link; TCP/IP; TCP/IP JSON
+
+Ethernet
+Transmission standard                                        10Base-T; 100Base-TX
+Transmission rate [MBit/s]                                   10; 100
+Protocol                                                     DCP, DHCP, Auto IP
+Factory settings                                                  IP address: 169.254.X.X
+                                                                  Subnet mask: 255.255.0.0
+                                                                  Gateway IP address: 0.0.0.0
+                                                                  MAC address: see type label
+
+IO-Link master
+
+Type of transmission                                         COM 1 / COM 2 / COM 3
+IO-Link revision                                             V1.1
+Number of ports class A                                      4
+
+
+
+
+                                                                                                  59
+IO-Link Master with IoT Interface DataLine 4 Ports IP 65 / IP 66 / IP 67
+
+
+>
+
+
+
+
+13.1.7           Operating conditions
+                                                                                                        34062
+
+
+Operating conditions
+
+Applications                                                 Indoor use
+Ambient temperature [°C]                                     -25...60
+Storage temperature [°C]                                     -25...85
+Max. perm. relative air humidity [%]                         90
+Max. height above sea level [m]                              2000
+Protection rating                                            IP 65; IP 66; IP 67
+Pollution Degree                                             2
+
+>
+
+
+
+
+13.1.8           Approvals / tests
+                                                                                                        33877
+
+
+Approval / tests
+
+EMC                                                               EN 61000-6-2
+                                                                  EN 61000-6-4
+MTTF [Years]                                                 90
+
+>
+
+
+
+
+13.1.9           Mechanical data
+                                                                                                        34050
+
+
+Mechanical data
+
+Weight [g]                                                   295
+Materials                                                    Housing: PA; socket: brass nickel-plated
+
+
+
+
+60
+IO-Link Master with IoT Interface DataLine 4 Ports IP 65 / IP 66 / IP 67
+
+
+>
+
+
+
+
+13.1.10 Electrical connection
+                                                                                                 52261
+
+
+Voltage supply IN X31
+
+Plug and socket connection                                   M12
+Wiring                                                                     1:   + 24 V DC (US)
+                                                                           2:   -
+                                                                           3:   GND (US)
+                                                                           4:   -
+
+IoT port X21, X22
+
+Plug and socket connection                                   M12
+
+Wiring                                                                     1:   TX +
+                                                                           2:   RX +
+                                                                           3:   TX -
+                                                                           4:   RX -
+                                                                           5:   -
+
+Process connection IO-Link ports class A X01...X0<IOL_AnzPorts>
+
+Plug and socket connection                                   M12
+Wiring                                                                     1:   + 24 V DC (US)
+                                                                           2:   DI
+                                                                           3:   GND (US)
+                                                                           4:   C/Q IO-Link
+                                                                           5:   -
+
+
+
+
+                                                                                                  61
+IO-Link Master with IoT Interface DataLine 4 Ports IP 65 / IP 66 / IP 67
+
+
+>
+
+
+
+
+13.2             ifm IoT Core
+Content
+Overview: IoT profile ...............................................................................................................................63
+Overview: IoT types ................................................................................................................................69
+Overview: IoT services ...........................................................................................................................70
+                                                                                                                                                 33803
+
+
+
+
+62
+IO-Link Master with IoT Interface DataLine 4 Ports IP 65 / IP 66 / IP 67
+
+
+>
+
+
+
+
+13.2.1           Overview: IoT profile
+Content
+Profile: blob .............................................................................................................................................63
+Profile: deviceinfo ...................................................................................................................................64
+Profile: devicetag ....................................................................................................................................65
+Profile: iolinkdevice_full ..........................................................................................................................65
+Profile: iolinkmaster ................................................................................................................................66
+Profile: network .......................................................................................................................................67
+Profile: parameter ...................................................................................................................................67
+Profile: processdata ................................................................................................................................67
+Profile: service ........................................................................................................................................68
+Profile: software ......................................................................................................................................68
+Profile: software/uploadedablesoftware .................................................................................................68
+Profile: timer ...........................................................................................................................................69
+                                                                                                                                                       34054
+>
+
+
+
+
+Profile: blob
+                                                                                                                                                       52264
+
+
+Element (identifier)                       Characteristics                    Mandatory             Comments
+blobname                                       type = data                                         Characterises the element as device
+                                               profiles = blob                                     information
+
+../size                                    type = data                        mandatory
+../chunksize                               type = data                        mandatory
+../setblobdata                             type = service                     optional
+../getblobdata                             type = service                     optional
+../start_stream_set                        type = service                     optional
+../stream_set                              type = service                     optional
+../clear                                   type = service                     optional
+../getcrc                                  type = service                     optional
+../getmd5                                  type = service                     optional
+../getdata                                 type = service                     optional
+../setdata                                 type = service                     optional
+
+
+
+
+                                                                                                                                                         63
+IO-Link Master with IoT Interface DataLine 4 Ports IP 65 / IP 66 / IP 67
+
+
+>
+
+
+
+
+Profile: deviceinfo
+                                                                                                                             34207
+
+
+Element (identifier)                       Properties                      mandatory   Comments
+deviceinfo                                     type = structure                       characterises the element as device
+                                               profile = deviceinfo                   information
+
+../devicename                              type = data                     optional
+../devicefamiliy                           type = data                     optional
+../devicevariant                           type = data                     optional
+../devicesymbol                            type = data                     optional
+../deviceicon                              type = data                     optional
+../serialnumber                            type = data                     mandatory
+../productid                               type = data                     optional
+../productname                             type = data                     optional
+../productcode                             type = data                     mandatory
+../producttext                             type = data                     optional
+../ordernumber                             type = data                     optional
+../productiondate                          type = data                     optional
+../productioncode                          type = data                     optional
+../hwrevision                              type = data                     mandatory
+../swrevision                              type = data                     mandatory
+../bootloaderrevision                      type = data                     optional
+../vendor                                  type = data                     optional
+../vendortext                              type = data                     optional
+../vendorurl                               type = data                     optional
+../vendorlogo                              type = data                     optional
+../productwebsite                          type = data                     optional
+../supportcontact                          type = data                     optional
+../icon                                    type = data                     optional
+../image                                   type = data                     optional
+../standards                               type = data                     optional
+
+
+
+
+64
+IO-Link Master with IoT Interface DataLine 4 Ports IP 65 / IP 66 / IP 67
+
+
+>
+
+
+
+
+Profile: devicetag
+                                                                                                                           34206
+
+
+Element (identifier)                        Properties                        mandatory   Comments
+devicetag                                        type = structure
+                                                 profile = devicetag
+../applicationtag                           type = data                       mandatory
+../applicationgroup                         type = data                       optional
+../machinecode                              type = data                       optional
+../tenant                                   type = data                       optional
+
+>
+
+
+
+
+Profile: iolinkdevice_full
+                                                                                                                           52265
+
+
+Element (identifier)                    Characteristics                       Mandatory   Comments
+
+iolinkdevice                                   type = structure                          Structure of an IO-Link device
+                                               profile = iolinkdevice_full
+../vendorid                             type = data                           mandatory
+../deviceid                             type = data                           mandatory
+../productname                          type = data                           mandatory
+../serial                               type = data                           mandatory
+../applicationspecifictag               type = data                           mandatory
+../pdin                                 type = data                           mandatory
+../pdout                                type = data                           mandatory
+../status                               type = data                           mandatory
+../iolreadacyclic                       type = data                           mandatory
+../iolwriteacyclic                      type = data                           mandatory
+../iolinkevent                          type = data                           mandatory
+
+
+
+
+                                                                                                                            65
+IO-Link Master with IoT Interface DataLine 4 Ports IP 65 / IP 66 / IP 67
+
+
+>
+
+
+
+
+Profile: iolinkmaster
+                                                                                                                     34205
+
+
+Element (identifier)                                   Properties                   mandatory   Comments
+masterport                                                type = structure                     Executable service
+                                                          profile = iolinkmaster
+../mode                                                   type = data              mandatory
+                                                          profile = parameter
+../comspeed                                               type = data              mandatory
+                                                          profile = parameter
+../mastercycletime_actual                                 type = data              mandatory
+                                                          profile = parameter
+../mastercycletime_preset                                 type = data              mandatory
+                                                          profile = parameter
+../validation_datastorage_mode                            type = data              mandatory
+                                                          profile = parameter
+../validation_vendorid                                    type = data              mandatory
+                                                          profile = parameter
+../validation_deviceid                                    type = data              mandatory
+                                                          profile = parameter
+../additionalpins_in                                      type = data              optional
+                                                          profile = processdata
+../additionalpins_out                                     type = data              optional
+                                                          profile = processdata
+../portevent                                              type = data              mandatory
+../iolinkdevice                                           type = structure         mandatory
+                                                          profile =
+                                                           iolinkdevice_full
+
+
+
+
+66
+IO-Link Master with IoT Interface DataLine 4 Ports IP 65 / IP 66 / IP 67
+
+
+>
+
+
+
+
+Profile: network
+                                                                                                                             52266
+
+
+Element (identifier)                       Characteristics                 Mandatory   Comments
+network                                        type = structure                       Characterises the element as device
+                                               profiles = deviceinfo                  information
+
+../macaddress                                  type = data                mandatory
+                                               profile = parameter
+../ipaddress                                   type = data                optional
+                                               profile = parameter
+../ipv6address                                 type = data                mandatory
+                                               profile = parameter
+../subnetmask                                  type = data                mandatory
+                                               profile = parameter
+../ipdefaultgateway                            type = data                mandatory
+                                               profile = parameter
+../dhcp                                        type = data                optional
+                                               profile = parameter
+../ipversion                                   type = data                optional
+                                               profile = parameter
+../hostname                                    type = data                optional
+                                               profile = parameter
+../autonegotiation                             type = data                optional
+                                               profile = parameter
+../portspeed                                   type = data                optional
+                                               profile = parameter
+../enablenetwork                           type = service                  optional
+../disablenetwork                          type = service                  optional
+
+>
+
+
+
+
+Profile: parameter
+                                                                                                                             34215
+
+The profile is used to mark the elements of type data as parameters (acyclic data). The profile defines
+no substructure.
+>
+
+
+
+
+Profile: processdata
+                                                                                                                             34225
+
+The profile is used to mark the elements of type data as process data (cyclic data). The profile does
+not define a substructure.
+
+
+
+
+                                                                                                                              67
+IO-Link Master with IoT Interface DataLine 4 Ports IP 65 / IP 66 / IP 67
+
+
+>
+
+
+
+
+Profile: service
+                                                                                                                                34224
+
+
+Element (identifier)                       Properties                      mandatory    Comments
+service                                        type = service                          Executable service
+                                               profile = service
+
+>
+
+
+
+
+Profile: software
+                                                                                                                                34223
+
+
+Element (identifier)                       Properties                      mandatory    Comments
+software                                       type = structure                        characterises the element as software
+                                               profile = software
+../version                                 type = data                     mandatory
+../type                                    type = data                     mandatory
+../status                                  type = structure                optional
+../diag                                    type = structure                optional
+
+>
+
+
+
+
+Profile: software/uploadedablesoftware
+                                                                                                                                52267
+
+
+Element (identifier)                       Characteristics                  Mandatory   Comments
+
+software                                       type = structure                        Software that can be loaded to the device via
+                                               profiles =                              the IoT Core
+                                                software/uploadablesoft
+                                                ware
+../lastinstall                             type = data                      optional
+../installhistory                          type = data                      optional
+../container                                   type = data                 mandatory
+                                               profile = blob
+../preinstall                              type = service                   optional
+../install                                 type = service                   mandatory
+../postinstall                             type = service                   optional
+../abortinstall                            type = service                   optional
+../installstatus                           type = data                      optional
+
+
+
+
+68
+IO-Link Master with IoT Interface DataLine 4 Ports IP 65 / IP 66 / IP 67
+
+
+>
+
+
+
+
+Profile: timer
+                                                                                                            34226
+
+
+Element (identifier)                       Properties                      mandatory   Comments
+timer                                          type = structure                       Executable service
+                                               profile = timer
+../counter                                     type = data                mandatory
+                                               profile = parameter
+../interval                                    type = data                optional
+                                               profile = parameter
+../start                                   type = service                  optional
+../stop                                    type = service                  optional
+
+>
+
+
+
+
+13.2.2           Overview: IoT types
+                                                                                                            34055
+
+The ifm IoT Core uses the following element types:
+
+
+Name                Description
+
+structure           Element is a structure element (like a folder in a file system)
+service             Element is a service that can be addressed from the network
+event               Element is an event that can be started by the firmware and sends messages.
+data                Element is a data point
+device              Root element a device represents
+
+
+
+
+                                                                                                             69
+IO-Link Master with IoT Interface DataLine 4 Ports IP 65 / IP 66 / IP 67
+
+
+>
+
+
+
+
+13.2.3           Overview: IoT services
+Content
+Service: factoryreset ...............................................................................................................................70
+Service: gettree ......................................................................................................................................71
+Service: getblobdata ...............................................................................................................................71
+Service: getdata ......................................................................................................................................72
+Service: getdatamulti ..............................................................................................................................72
+Service: getelementinfo ..........................................................................................................................73
+Service: getidentity .................................................................................................................................74
+Service: getsubscriptioninfo....................................................................................................................75
+Service: install ........................................................................................................................................76
+Service: iolreadacyclic ............................................................................................................................76
+Service: iolwriteacyclic ............................................................................................................................76
+Service: reboot .......................................................................................................................................77
+Service: setblock ....................................................................................................................................77
+Service: setdata ......................................................................................................................................78
+Service: setelementinfo ..........................................................................................................................78
+Service: signal ........................................................................................................................................79
+Service: start_stream_set .......................................................................................................................79
+Service: stream_set ................................................................................................................................79
+Service: subscribe ..................................................................................................................................80
+Service: unsubscribe ..............................................................................................................................80
+Service: validation_useconnecteddevice ...............................................................................................80
+                                                                                                                                                     34056
+>
+
+
+
+
+Service: factoryreset
+                                                                                                                                                     34184
+
+Name: factoryreset
+Description: The service sets the parameters of the device to the factory settings.
+Applicable to: different objects
+Request data: none
+Return data (data): none
+Example:
+{"code": "request", "cid": 4711, "adr": "/firmware/factoryreset"}
+
+
+
+
+70
+IO-Link Master with IoT Interface DataLine 4 Ports IP 65 / IP 66 / IP 67
+
+
+>
+
+
+
+
+Service: gettree
+                                                                                                                             34175
+
+Name: gettree
+Description: The service reads the complete device description of the AL1350 and provides it as
+JSON object.
+Applicable to: Objects of the device type
+Request data: none
+Return data (data):
+Data field                     Required            Data type               Default    Description
+                               field
+
+Identifier                     mandatory           STRING                             Identifier of the root element
+type                           mandatory           STRING                             Type of the element
+format                         optional            JSON object             empty      Format of the data content
+uid                            optional            STRING                  empty
+profiles                       optional            JSON array              empty
+subs                           mandatory           JSON array                         Subelements
+hash                           optional            STRING
+
+
+Example:
+{"code": "request", "cid": 4, "adr": "/gettree"}
+>
+
+
+
+
+Service: getblobdata
+                                                                                                                             52345
+
+Name: getblobdata
+Description: The service reads a binary large object (blob).
+Applicable to: datastorage
+Request data (data):
+Data field                     Required            Data type       Default         Description
+                               field
+pos                            mandatory           number          0               Byte position
+length                         mandatory           number          -               Size of the object (number of bytes)
+
+
+Return data (data):
+Data field                     Required            Data type       Default         Description
+                               field
+data                           mandatory           STRING          0               Data to be decoded (BASE64 coded)
+crc                            optional            HEX                             CRC of the data after decoding
+                                                   STRING
+md5                            optional            HEX                             MD5 checksum of the data after decoding
+                                                   STRING
+
+
+
+
+                                                                                                                              71
+IO-Link Master with IoT Interface DataLine 4 Ports IP 65 / IP 66 / IP 67
+
+
+>
+
+
+
+
+Service: getdata
+                                                                                                                                       34183
+
+Name: getdata
+Description: Service reads the value of a data point and provides it.
+Applicable to: Objects of the data type
+Request data: none
+Return data (data):
+Data field                     Required            Data type       Default   Description
+                               field
+
+value                          mandatory           STRING                    Value of the element/data point
+
+
+Example:
+{"code":"request","cid":4711,"adr":"devicetag/applicationtag/getdata"}
+>
+
+
+
+
+Service: getdatamulti
+                                                                                                                                       34174
+
+Name: getdatamulti
+Description: The service sequentially reads the values of several data points and provides them. The
+value and the diagnostic code are provided for each data point.
+Applicable to: Objects of the data type
+Request data:
+Data field                     Required            Data type       Default   Description
+                               field
+datatosend                     mandatory           ARRAY                     List of data points to be requested; data points must support
+                                                   OF                        the service getdata
+                                                   STRINGS
+consistent                     optional            BOOL            false
+
+
+Return data (data): for each requested data point
+Data field                     Required            Data type       Default   Description
+                               field
+Data point                     mandatory           STRING                    Data point request
+code                           mandatory           INT                       Diagnostic code of the request
+data                           mandatory           STRING                    Value of the data point
+
+
+
+
+72
+IO-Link Master with IoT Interface DataLine 4 Ports IP 65 / IP 66 / IP 67
+
+
+>
+
+
+
+
+Service: getelementinfo
+                                                                                                                            52269
+
+Name: getelementinfo
+Description: The service reads the uid of an element.
+Applicable to: Objects of the type device
+Request data (data):
+Data field                     Required            Data type          Default   Description
+                               field
+
+url                            mandatory           STRING                       URL of the element to be changed
+
+
+Return data (data):
+Data field                     Required            Data type          Default   Description
+                               field
+
+identifier                     mandatory           STRING                       Identifier of the element
+type                           mandatory           STRING                       Type of the element
+format                         optional            JSON object        blank     Format of the data or the service content
+uid                            optional            STRING             blank
+profiles                       optional            JSON array         blank
+hash                           optional            STRING             --
+
+
+
+
+                                                                                                                             73
+IO-Link Master with IoT Interface DataLine 4 Ports IP 65 / IP 66 / IP 67
+
+
+>
+
+
+
+
+Service: getidentity
+                                                                                                                 34173
+
+Name: getidentity
+Description: The service reads the complete device description of the AL1350 and provides it as
+JSON object.
+Applicable to: Objects of the device type
+Request data: none
+Return data (data):
+Data field                     Required            Data type       Default   Description
+                               field
+
+iot                                                device                    Device description as JSON object
+iot.name                       mandatory           STRING
+iot.uid                        optional            STRING
+iot.version                    mandatory           STRING
+
+iot.catalogue                  optional            ARRAY
+                                                   OF
+                                                   OBJECTS
+iot.deviceclass                optional            ARRAY
+                                                   OF
+                                                   STRING
+iot.serverlist                                     ARRAY
+                                                   OF
+                                                   OBJECTS
+device                         optional                                      AL1350
+device.serialnumber            optional                                      Serial number
+device.hwrevision              optional                                      Hardware version
+device.swrevision              optional                                      Software version
+device.custom                  optional
+
+
+
+
+74
+IO-Link Master with IoT Interface DataLine 4 Ports IP 65 / IP 66 / IP 67
+
+
+>
+
+
+
+
+Service: getsubscriptioninfo
+                                                                                                                                       34172
+
+Name: getsubscriptioninfo
+Description: The service provides information about an existing subscription (subscribe).
+Applicable to: Objects of the event type
+Request data:
+Data field                     Required            Data type       Default   Description
+                               field
+
+callback                       mandatory           STRING                    Address to which IoT Core event notifications are to be sent;
+                                                                             complete URL: http://ipaddress:port/path
+
+
+Return data (data):
+Data field                     Required            Data type       Default   Description
+                               field
+callback                       mandatory           STRING                    Address to which IoT Core event notifications are to be sent;
+                                                                             complete URL: http://ipaddress:port/path
+datatosend                     mandatory           ARRAY                     List of subscribed data points
+                                                   OF
+                                                   STRINGS
+
+
+Example:
+ Request object:
+{
+"code":"request",
+"cid": 4715,
+"adr":"/timer[1]/counter/datachanged/getsubscriptioninfo",
+"data":{
+"callback":"http://192.168.0.44:80/temp"}
+}
+ Return object:
+{
+"cid": 4715,
+"data":{
+"callback":"http://192.168.0.44:80/temp",
+"datatosend":[
+"/iolinkmaster/port[2]/iolinkdevice/productname",
+"/iolinkmaster/port[2]/iolinkdevice/pdin",
+"/processdatamaster/temperature"]},
+"code":200
+}
+
+
+
+
+                                                                                                                                         75
+IO-Link Master with IoT Interface DataLine 4 Ports IP 65 / IP 66 / IP 67
+
+
+>
+
+
+
+
+Service: install
+                                                                                                                                       52343
+
+Name: install
+Description: The service installs the firmware stored in the container area of the device.
+Applicable to: container
+Request data (data): none
+Return data (data): none
+>
+
+
+
+
+Service: iolreadacyclic
+                                                                                                                                       34178
+
+Name: iolreadacyclic
+Description: The service acyclically reads the parameter value of an IO-Link device. It is accessed via
+IO-Link index and subindex.
+Applicable to: IO-Link specific objects
+Request data:
+Data field                     Required            Data type       Default   Description
+                               field
+index                          mandatory           NUMBER                    IO-Link index of the parameter
+subindex                       mandatory           NUMBER                    IO-Link subindex of the parameter
+
+
+Return data (data):
+Data field                     Required            Data type       Default   Description
+                               field
+value                          mandatory           STRING                    Value of the parameter; Value in hexadecimal format
+
+>
+
+
+
+
+Service: iolwriteacyclic
+                                                                                                                                       34177
+
+Name: iolwriteacyclic
+Description: The service acyclically writes the parameter value of an IO-Link device. It is accessed
+via IO-Link index and subindex.
+Applicable to: IO-Link specific objects
+Request data:
+Data field                     Required            Data type       Default   Description
+                               field
+index                          mandatory           NUMBER                    IO-Link index of the parameter
+subindex                       mandatory           NUMBER                    IO-Link subindex of the parameter
+value                          mandatory           STRING                    New value of the parameter; Value in hexadecimal format
+
+
+Return data (data): none
+
+
+
+
+76
+IO-Link Master with IoT Interface DataLine 4 Ports IP 65 / IP 66 / IP 67
+
+
+>
+
+
+
+
+Service: reboot
+                                                                                                                                          34176
+
+Name: reboot
+Description: The service reboots the device.
+Applicable to: different objects
+Request data: none
+Return data (data): none
+Example:
+{"code": "request", "cid": 4, "adr": "/firmware/reboot"}
+>
+
+
+
+
+Service: setblock
+                                                                                                                                          34186
+
+Name: setblock
+Description: The service simultaneously sets the values of several data points of a structure.
+Applicable to: Objects of the data type
+Request data:
+Data field                     Required            Data type       Default   Description
+                               field
+
+datatosend                     mandatory           ARRAY OF                  List of data points and their new values; data points must
+                                                   (STRINGS)                 support the service setdata
+
+consistent                     optional            BOOL            false
+
+
+
+
+Return data (data): none
+Example:
+{
+"code":"request",
+"cid":4711,
+"adr":"/iotsetup/network/setblock",
+"data":{"consistent":true,"datatosend":["ipaddresse":"192.168.0.6","ipdefaultgatew
+ay":"192.168.0.250"]}
+}
+
+
+
+
+                                                                                                                                           77
+IO-Link Master with IoT Interface DataLine 4 Ports IP 65 / IP 66 / IP 67
+
+
+>
+
+
+
+
+Service: setdata
+                                                                                                                              34196
+
+Name: setdata
+Description: The service sets the value of the data point.
+Applicable to: Objects of the data type
+Request data:
+Data field                     Required            Data type       Default      Description
+                               field
+
+newvalue                       mandatory           STRING                       New value of the element/data point
+
+
+Return data (data): none
+Example:
+{
+"code":"request",
+"cid":4711,
+"adr":"devicetag/applicationtag/setdata",
+"data":{"newvalue":"ifm IO-Link master"}
+}
+>
+
+
+
+
+Service: setelementinfo
+                                                                                                                              34195
+
+Name: setelementinfo
+Description: The service sets the uid of an element.
+Applicable to: Objects of the device type
+Request data:
+Data field                     Required            Data type          Default     Description
+                               field
+
+url                            mandatory           STRING                         URL of the element to be changed
+uid                            optional            STRING                         UID to be set
+profiles                       optional            JSON array
+format                         optional            JSON object
+
+
+Return data (data):
+Data field                     Required            Data type          Default     Description
+                               field
+
+identifier                     mandatory           STRING                         Identifier of the element
+type                           mandatory           STRING                         Type of the element
+format                         optional            JSON object        blank       Format of the data or the service content
+uid                            optional            STRING             blank
+profiles                       optional            JSON array         blank
+hash                           optional            STRING             --
+
+
+
+
+78
+IO-Link Master with IoT Interface DataLine 4 Ports IP 65 / IP 66 / IP 67
+
+
+>
+
+
+
+
+Service: signal
+                                                                                                                                             33819
+
+Name: signal
+Description: The service starts the flashing of the status LEDs of the AL1350.
+Applicable to: various objects
+Request data (data): none
+Return data (data): none
+Example:
+{"code": "request", "cid": 4711, "adr": "/firmware/signal"}
+>
+
+
+
+
+Service: start_stream_set
+                                                                                                                                             52342
+
+Name: start_stream_set
+Description: The service starts the sequential transfer of multiple data segments.
+Applicable to: Objects of type data
+Request data (data):
+Data field                     Required            Data type               Default   Description
+                               field
+size                           mandatory           STRING                            Total size of data to be transfered (number of bytes)
+
+
+Return data (data): none
+>
+
+
+
+
+Service: stream_set
+                                                                                                                                             52341
+
+Name: stream_set
+Description: The service transfers a data segment.
+Applicable to: Objects of type data
+Request data (data):
+Data field                     Required            Data type               Default   Description
+                               field
+
+value                          mandatory           BIN (BASE64)            *         Segment of binary data (BASE64 coded)
+
+
+Return data (data): none
+
+
+
+
+                                                                                                                                              79
+IO-Link Master with IoT Interface DataLine 4 Ports IP 65 / IP 66 / IP 67
+
+
+>
+
+
+
+
+Service: subscribe
+                                                                                                                                           34194
+
+Name: subscribe
+Description: The service subscribes to the values of data points. The data points to be subscribed are
+transferred as a list. The IO-Link master sends changes to the data drain defined in callback.
+Applicable to: Objects of the event type
+Request data:
+Data field               Required            Data type       Default       Description
+                         field
+
+callback                 mandatory           STRING                        Address to which IoT Core event notifications are to be sent;
+                                                                           complete URL: http://ipaddress:port/path
+datatosend               mandatory           ARRAY                         List from URLs of data elements; elements have to support
+                                             OF                            getdata
+                                             STRINGS
+
+
+Return data (data): none
+>
+
+
+
+
+Service: unsubscribe
+                                                                                                                                           34197
+
+Name: unsubscribe
+Description: The service deletes an existing subscription. unsubcribe is successful if cid and the
+callback address are registered for a subscription (subscribe). If the STRING "DELETE" is provided in
+callback, the IO-Link master deletes all active subscriptions.
+Applicable to: Objects of the event type
+Request data:
+Data field               Required            Data type       Default       Description
+                         field
+callback                 mandatory           STRING                        Address to which IoT Core event notifications are to be sent;
+                                                                           complete URL: http://ipaddress:port/path
+
+
+Return data (data): none
+>
+
+
+
+
+Service: validation_useconnecteddevice
+                                                                                                                                           52340
+
+Name: validation_connecteddevice
+Description: The service checks, whether Device ID and Vendor ID of the connected IO-Link device
+match with the values of the datapoints ../validation_vendorid and ../validation_deviceid.
+Applicable to: Objects of type stucture
+Request data (data): none
+Return data (data): none
+
+
+
+
+80
+IO-Link Master with IoT Interface DataLine 4 Ports IP 65 / IP 66 / IP 67
+
+
+
+                                                                                                                                Activate data transfer to the LR SMARTOBSERVER .................................. 28
+14                         Index                                                                                                Configuration of fail-safe values.................................................................... 31
+                                                                                                                                Configure operating mode............................................................................. 29
+A                                                                                                                               Set the device validation and data storage................................................... 30
+                                                                                                                         IO-Link supply ........................................................................................11
+Access the ifm IoT Core ........................................................................49                       IoT
+Accessories ...........................................................................................56                       Configure IP settings ..................................................................................... 26
+Appendix ................................................................................................57                     Configure the interface to the LR SMARTOBSERVER................................ 27
+Application .............................................................................................58              IoT Core
+Approvals / tests ....................................................................................60                        Diagnostic codes ........................................................................................... 51
+                                                                                                                                General information ....................................................................................... 48
+C                                                                                                                        IoT interface ...........................................................................................19
+Cleaning process ...................................................................................52                   IoT ports .................................................................................................14
+Communication, parameter setting, evaluation .....................................10
+                                                                                                                         L
+Configuration .........................................................................................23
+Configure IO-Link devices ...............................................................33, 38                          LED indicators .......................................................................................19
+Configure IO-Link ports .........................................................................36                      Legal and copyright information ..............................................................5
+Configure the IoT interface ....................................................................35                       LR DEVICE ............................................................................................24
+Connect the device ................................................................................17
+Control IO-Link master ..........................................................................42
+                                                                                                                         M
+                                                                                                                         Maintenance, repair and disposal .........................................................52
+D                                                                                                                        Mechanical data.....................................................................................60
+Digital inputs ..........................................................................................11              Modification history ..................................................................................6
+                                                                                                                         Mount the device ...................................................................................12
+E                                                                                                                        Mounting ................................................................................................12
+Electrical connection ........................................................................13, 61
+                                                                                                                         N
+Electrical data ........................................................................................58
+Example                                                                                                                  Notes......................................................................................................13
+       Change name of the IO-Link master ............................................................ 40
+       Change the parameter value of an IO-Link device....................................... 39                         O
+       Clone the Data Storage of an IO-Link port ................................................... 37                  Offline parameter setting .......................................................................25
+       Read process data of an IO-Link device ...................................................... 41
+                                                                                                                         Operating and display elements ............................................................18
+       Read several parameter values of the IO-Link master simultaneously ....... 44
+                                                                                                                         Operating conditions..............................................................................60
+       Read the parameter value of an IO-Link device ........................................... 38
+       Subscribe to event......................................................................................... 47
+                                                                                                                         Operation as IO-Link port class A .........................................................15
+       Update firmware ............................................................................................ 43   Operation as IO-Link port class B .........................................................16
+Explanation of Symbols ...........................................................................6                      Outputs ..................................................................................................59
+                                                                                                                         Overview ................................................................................................18
+F                                                                                                                               IoT profile ....................................................................................................... 63
+                                                                                                                                IoT services ................................................................................................... 70
+Factory settings .....................................................................................55
+                                                                                                                                IoT types ........................................................................................................ 69
+Firmware
+       Reboot the device ......................................................................................... 32    P
+       Reset device to factory settings .................................................................... 32
+First steps ..............................................................................................34             Parameter setting ..................................................................................10
+Function ...................................................................................................9            Permitted use...........................................................................................8
+                                                                                                                         POST method ........................................................................................50
+G                                                                                                                        Preliminary note .......................................................................................5
+                                                                                                                         Profile
+General ....................................................................................................7
+                                                                                                                                blob ................................................................................................................ 63
+General functions...................................................................................35
+                                                                                                                                deviceinfo....................................................................................................... 64
+GET method ..........................................................................................49                         devicetag ....................................................................................................... 65
+                                                                                                                                iolinkdevice_full ............................................................................................. 65
+I                                                                                                                               iolinkmaster ................................................................................................... 66
+ifm IoT Core .....................................................................................34, 62                        network .......................................................................................................... 67
+Info                                                                                                                            parameter ...................................................................................................... 67
+       Show device information ............................................................................... 31               processdata ................................................................................................... 67
+                                                                                                                                service ........................................................................................................... 68
+Inputs .....................................................................................................59
+                                                                                                                                software ......................................................................................................... 68
+Inputs / outputs ......................................................................................58
+                                                                                                                                software/uploadedablesoftware .................................................................... 68
+Intended use ............................................................................................8                      timer ............................................................................................................... 69
+Interfaces ...............................................................................................59             Programmers' notes ..............................................................................48
+Internet of Things (IoT) ..........................................................................10                    Prohibited use ..........................................................................................8
+IO-Link ...................................................................................................10            Purpose of the document ........................................................................5
+IO-Link ports ..........................................................................................15
+
+
+
+
+                                                                                                                                                                                                                                                 81
+IO-Link Master with IoT Interface DataLine 4 Ports IP 65 / IP 66 / IP 67
+
+
+
+
+R
+Read / write cyclic process data ............................................................41
+Read device and diagnostic information ...............................................22
+Read device information of the IO-Link master .....................................45
+Read diagnostic data of the AL1350 .....................................................44
+Read information about IO-Link devices ...............................................45
+Remarks.................................................................................................25
+Replace IO-Link device .........................................................................54
+Required background knowledge ............................................................7
+
+S
+Safety instructions ...................................................................................7
+Safety symbols on the device ..................................................................7
+Service
+       factoryreset .................................................................................................... 70
+       getblobdata .................................................................................................... 71
+       getdata ........................................................................................................... 72
+       getdatamulti ................................................................................................... 72
+       getelementinfo ............................................................................................... 73
+       getidentity ...................................................................................................... 74
+       getsubscriptioninfo ........................................................................................ 75
+       gettree............................................................................................................ 71
+       install.............................................................................................................. 76
+       iolreadacyclic ................................................................................................. 76
+       iolwriteacyclic................................................................................................. 76
+       reboot............................................................................................................. 77
+       setblock ......................................................................................................... 77
+       setdata ........................................................................................................... 78
+       setelementinfo ............................................................................................... 78
+       signal ............................................................................................................. 79
+       start_stream_set ............................................................................................ 79
+       stream_set ..................................................................................................... 79
+       subscribe ....................................................................................................... 80
+       unsubscribe ................................................................................................... 80
+       validation_useconnecteddevice .................................................................... 80
+Set application identification ..................................................................40
+Set-up ....................................................................................................21
+Status LEDs ...........................................................................................19
+Subscribe to events ...............................................................................46
+
+T
+Tampering with the unit ...........................................................................7
+Technical data .......................................................................................58
+
+U
+Update firmware ....................................................................................53
+
+V
+Visual indication .....................................................................................10
+Voltage supply .......................................................................................20
+VPN connection .....................................................................................25
+
+
+
+
+82
+
