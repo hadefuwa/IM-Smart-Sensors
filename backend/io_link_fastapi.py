@@ -982,6 +982,136 @@ async def system_health():
     )
 
 
+# ================================================================
+# Wi-Fi configuration endpoints (uses nmcli / NetworkManager)
+# ================================================================
+
+async def _run(cmd: list) -> tuple:
+    proc = await asyncio.create_subprocess_exec(
+        *cmd,
+        stdout=asyncio.subprocess.PIPE,
+        stderr=asyncio.subprocess.PIPE,
+    )
+    stdout, stderr = await proc.communicate()
+    return proc.returncode, stdout.decode().strip(), stderr.decode().strip()
+
+
+@app.get("/api/system/wifi/status")
+async def wifi_status():
+    code, out, err = await _run(["nmcli", "-t", "-f", "DEVICE,TYPE,STATE,CONNECTION,CON-PATH", "dev", "status"])
+    if code != 0:
+        return JSONResponse({"success": False, "error": "nmcli not available — NetworkManager may not be installed."})
+
+    wifi_device = None
+    for line in out.splitlines():
+        parts = line.split(":")
+        if len(parts) >= 4 and parts[1] == "wifi":
+            wifi_device = {"device": parts[0], "state": parts[2], "connection": parts[3]}
+            break
+
+    if not wifi_device:
+        return JSONResponse({"success": True, "state": "unavailable", "device": None, "ssid": None, "ip": None})
+
+    ip = None
+    if wifi_device["state"] == "connected":
+        _, ip_out, _ = await _run(["nmcli", "-t", "-f", "IP4.ADDRESS", "dev", "show", wifi_device["device"]])
+        for line in ip_out.splitlines():
+            if line.startswith("IP4.ADDRESS"):
+                ip = line.split(":")[-1].split("/")[0]
+                break
+
+    return JSONResponse({
+        "success": True,
+        "device": wifi_device["device"],
+        "state": wifi_device["state"],
+        "ssid": wifi_device["connection"] if wifi_device["state"] == "connected" else None,
+        "ip": ip,
+    })
+
+
+@app.get("/api/system/wifi/scan")
+async def wifi_scan():
+    # Trigger a fresh scan then list results
+    await _run(["nmcli", "dev", "wifi", "rescan"])
+    code, out, err = await _run([
+        "nmcli", "--terse", "--fields", "IN-USE,SSID,SIGNAL,SECURITY", "dev", "wifi", "list"
+    ])
+    if code != 0:
+        return JSONResponse({"success": False, "error": "nmcli not available."})
+
+    networks = []
+    seen = set()
+    for line in out.splitlines():
+        parts = line.split(":")
+        if len(parts) < 4:
+            continue
+        in_use = parts[0].strip() == "*"
+        ssid = parts[1].strip()
+        if not ssid or ssid in seen:
+            continue
+        seen.add(ssid)
+        try:
+            signal = int(parts[2].strip())
+        except ValueError:
+            signal = 0
+        security = parts[3].strip()
+        networks.append({"ssid": ssid, "signal": signal, "security": security, "in_use": in_use})
+
+    networks.sort(key=lambda n: (-n["in_use"], -n["signal"]))
+    return JSONResponse({"success": True, "networks": networks})
+
+
+@app.post("/api/system/wifi/connect")
+async def wifi_connect(request: Request):
+    body = await request.json()
+    ssid = (body.get("ssid") or "").strip()
+    password = (body.get("password") or "").strip()
+
+    if not ssid:
+        return JSONResponse({"success": False, "error": "SSID is required."}, status_code=400)
+
+    # Try connecting to an existing saved connection first
+    code, out, err = await _run(["nmcli", "con", "up", ssid])
+    if code == 0:
+        return JSONResponse({"success": True, "message": f"Connected to {ssid}"})
+
+    # New connection — password required for secured networks
+    if password:
+        cmd = ["nmcli", "dev", "wifi", "connect", ssid, "password", password]
+    else:
+        cmd = ["nmcli", "dev", "wifi", "connect", ssid]
+
+    code, out, err = await _run(cmd)
+    if code == 0:
+        return JSONResponse({"success": True, "message": f"Connected to {ssid}"})
+
+    error_msg = err or out or "Connection failed."
+    # Simplify common nmcli error messages for the UI
+    if "Secrets were required" in error_msg or "password" in error_msg.lower():
+        error_msg = "Wrong password or no password provided."
+    elif "not found" in error_msg.lower():
+        error_msg = f'Network "{ssid}" not found. Try scanning again.'
+    return JSONResponse({"success": False, "error": error_msg}, status_code=400)
+
+
+@app.post("/api/system/wifi/disconnect")
+async def wifi_disconnect():
+    # Find the active wifi device and disconnect it
+    _, out, _ = await _run(["nmcli", "-t", "-f", "DEVICE,TYPE,STATE", "dev", "status"])
+    device = None
+    for line in out.splitlines():
+        parts = line.split(":")
+        if len(parts) >= 3 and parts[1] == "wifi" and parts[2] == "connected":
+            device = parts[0]
+            break
+    if not device:
+        return JSONResponse({"success": False, "error": "No active Wi-Fi connection."})
+    code, _, err = await _run(["nmcli", "dev", "disconnect", device])
+    if code == 0:
+        return JSONResponse({"success": True, "message": "Disconnected."})
+    return JSONResponse({"success": False, "error": err or "Disconnect failed."}, status_code=400)
+
+
 @app.get("/{file_name}", include_in_schema=False)
 async def serve_root_static(file_name: str):
     """Serve root-level frontend static files (e.g., matrix.png, favicon.svg)."""

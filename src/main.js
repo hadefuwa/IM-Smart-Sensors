@@ -40,6 +40,22 @@ Chart.register(
 );
 
 // ================================================================
+// KIOSK TOUCH MODE
+// Hides the cursor permanently once a touch event is detected.
+// Persists across page loads via localStorage so the Pi never shows
+// a cursor even if the touchscreen driver reports pointer:fine.
+// ================================================================
+(function () {
+  if (localStorage.getItem('matrix-kiosk-touch') === 'true') {
+    document.documentElement.classList.add('kiosk-touch');
+  }
+  document.addEventListener('touchstart', () => {
+    localStorage.setItem('matrix-kiosk-touch', 'true');
+    document.documentElement.classList.add('kiosk-touch');
+  }, { once: true, passive: true });
+}());
+
+// ================================================================
 // SIMPLE TEMPLATE SYSTEM (PHASE 1)
 // ================================================================
 // - All "pages" are plain functions that return HTML strings.

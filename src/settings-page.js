@@ -114,6 +114,47 @@ export function renderSettingsPage() {
           </div>
         </div>
       </div>
+      <div class="card bg-base-200 shadow-xl border border-base-300" id="wifi-card">
+        <div class="card-body gap-4">
+          <h2 class="card-title text-lg text-base-content border-b border-base-300 pb-2">Wi-Fi</h2>
+          <p class="text-xs text-base-content/60">Connect this Raspberry Pi to a wireless network.</p>
+
+          <div id="wifi-status-row" class="flex items-center gap-3 p-3 rounded-lg bg-base-300 text-sm">
+            <span class="loading loading-spinner loading-xs"></span>
+            <span class="text-base-content/60">Checking status…</span>
+          </div>
+
+          <div class="flex gap-2">
+            <button type="button" id="wifi-scan-btn" class="btn btn-outline btn-sm gap-2">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.111 16.404a5.5 5.5 0 017.778 0M12 20h.01m-7.08-7.071c3.904-3.905 10.236-3.905 14.14 0M1.394 9.393c5.857-5.857 15.355-5.857 21.213 0"/></svg>
+              Scan for networks
+            </button>
+            <button type="button" id="wifi-disconnect-btn" class="btn btn-ghost btn-sm hidden">Disconnect</button>
+          </div>
+
+          <div id="wifi-networks-list" class="hidden space-y-1 max-h-48 overflow-y-auto pr-1"></div>
+
+          <div id="wifi-connect-form" class="space-y-3 pt-2 border-t border-base-300">
+            <div class="form-control gap-1">
+              <label class="label py-0" for="wifi-ssid-input">
+                <span class="label-text font-medium text-base-content">Network name (SSID)</span>
+              </label>
+              <input type="text" id="wifi-ssid-input" placeholder="e.g. MySchoolWifi" class="input input-bordered input-sm w-full" autocomplete="off" />
+            </div>
+            <div class="form-control gap-1">
+              <label class="label py-0" for="wifi-password-input">
+                <span class="label-text font-medium text-base-content">Password</span>
+              </label>
+              <input type="password" id="wifi-password-input" placeholder="Leave blank for open networks" class="input input-bordered input-sm w-full" autocomplete="off" />
+            </div>
+            <div class="flex items-center gap-3">
+              <button type="button" id="wifi-connect-btn" class="btn btn-primary btn-sm">Connect</button>
+              <span id="wifi-message" class="text-sm"></span>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <footer class="pt-4 border-t border-base-300">
         <a href="#" data-page="io-link-master" class="btn btn-outline btn-sm gap-2">Back to IO-Link Master</a>
       </footer>
@@ -141,6 +182,12 @@ export function initSettingsPage() {
     });
   }
 
+  // Wi-Fi panel
+  loadWifiStatus();
+  document.getElementById('wifi-scan-btn')?.addEventListener('click', scanWifi);
+  document.getElementById('wifi-connect-btn')?.addEventListener('click', connectWifi);
+  document.getElementById('wifi-disconnect-btn')?.addEventListener('click', disconnectWifi);
+
   const connectionBarCheck = document.getElementById('settings-show-connection-bar');
   if (connectionBarCheck) {
     const saved = localStorage.getItem(APP_CONNECTION_BAR_KEY);
@@ -149,6 +196,154 @@ export function initSettingsPage() {
     connectionBarCheck.addEventListener('change', function () {
       applyConnectionBarVisible(connectionBarCheck.checked);
     });
+  }
+}
+
+// ================================================================
+// Wi-Fi helpers
+// ================================================================
+
+function getApiBase() {
+  return window.IO_LINK_API_BASE || '';
+}
+
+function setWifiMessage(msg, isError = false) {
+  const el = document.getElementById('wifi-message');
+  if (!el) return;
+  el.textContent = msg;
+  el.className = `text-sm ${isError ? 'text-error' : 'text-success'}`;
+}
+
+function renderWifiStatus(data) {
+  const row = document.getElementById('wifi-status-row');
+  const disconnectBtn = document.getElementById('wifi-disconnect-btn');
+  if (!row) return;
+
+  if (!data.success) {
+    row.innerHTML = `<span class="text-warning">⚠ ${data.error || 'Wi-Fi unavailable on this device.'}</span>`;
+    return;
+  }
+
+  if (data.state === 'connected') {
+    row.innerHTML = `
+      <span class="text-success font-bold">●</span>
+      <span class="text-base-content">Connected to <strong>${data.ssid}</strong></span>
+      ${data.ip ? `<span class="text-base-content/60 text-xs">(${data.ip})</span>` : ''}
+    `;
+    if (disconnectBtn) disconnectBtn.classList.remove('hidden');
+  } else if (data.state === 'unavailable') {
+    row.innerHTML = `<span class="text-base-content/60">No Wi-Fi adapter detected.</span>`;
+  } else {
+    row.innerHTML = `<span class="text-base-content/60">● Not connected</span>`;
+    if (disconnectBtn) disconnectBtn.classList.add('hidden');
+  }
+}
+
+function renderNetworkList(networks) {
+  const list = document.getElementById('wifi-networks-list');
+  if (!list) return;
+  if (!networks.length) {
+    list.innerHTML = `<p class="text-sm text-base-content/60 py-2">No networks found. Move closer to your router and scan again.</p>`;
+    list.classList.remove('hidden');
+    return;
+  }
+
+  list.innerHTML = networks.map(n => {
+    const bars = n.signal > 66 ? '▂▄▆█' : n.signal > 33 ? '▂▄▆' : n.signal > 10 ? '▂▄' : '▂';
+    const lock = n.security && n.security !== '--' ? '🔒 ' : '';
+    const active = n.in_use ? ' btn-active' : '';
+    return `<button type="button" class="btn btn-ghost btn-sm justify-start gap-3 font-normal${active}" data-ssid="${n.ssid.replace(/"/g, '&quot;')}">
+      <span class="text-xs font-mono text-base-content/50 w-8">${bars}</span>
+      <span class="flex-1 text-left truncate">${lock}${n.ssid}</span>
+      ${n.in_use ? '<span class="badge badge-success badge-xs">connected</span>' : ''}
+    </button>`;
+  }).join('');
+  list.classList.remove('hidden');
+
+  list.querySelectorAll('button[data-ssid]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const ssidInput = document.getElementById('wifi-ssid-input');
+      if (ssidInput) {
+        ssidInput.value = btn.dataset.ssid;
+        document.getElementById('wifi-password-input')?.focus();
+      }
+    });
+  });
+}
+
+async function loadWifiStatus() {
+  try {
+    const res = await fetch(`${getApiBase()}/api/system/wifi/status`);
+    const data = await res.json();
+    renderWifiStatus(data);
+  } catch {
+    const row = document.getElementById('wifi-status-row');
+    if (row) row.innerHTML = `<span class="text-base-content/60">Backend not reachable.</span>`;
+  }
+}
+
+async function scanWifi() {
+  const btn = document.getElementById('wifi-scan-btn');
+  const list = document.getElementById('wifi-networks-list');
+  if (btn) { btn.disabled = true; btn.innerHTML = '<span class="loading loading-spinner loading-xs"></span> Scanning…'; }
+  try {
+    const res = await fetch(`${getApiBase()}/api/system/wifi/scan`);
+    const data = await res.json();
+    if (data.success) {
+      renderNetworkList(data.networks);
+    } else {
+      if (list) { list.innerHTML = `<p class="text-sm text-error py-2">${data.error}</p>`; list.classList.remove('hidden'); }
+    }
+  } catch {
+    if (list) { list.innerHTML = `<p class="text-sm text-error py-2">Scan failed — backend not reachable.</p>`; list.classList.remove('hidden'); }
+  } finally {
+    if (btn) { btn.disabled = false; btn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.111 16.404a5.5 5.5 0 017.778 0M12 20h.01m-7.08-7.071c3.904-3.905 10.236-3.905 14.14 0M1.394 9.393c5.857-5.857 15.355-5.857 21.213 0"/></svg> Scan for networks'; }
+  }
+}
+
+async function connectWifi() {
+  const ssid = document.getElementById('wifi-ssid-input')?.value.trim();
+  const password = document.getElementById('wifi-password-input')?.value;
+  const btn = document.getElementById('wifi-connect-btn');
+
+  if (!ssid) { setWifiMessage('Enter a network name first.', true); return; }
+
+  if (btn) { btn.disabled = true; btn.innerHTML = '<span class="loading loading-spinner loading-xs"></span> Connecting…'; }
+  setWifiMessage('');
+
+  try {
+    const res = await fetch(`${getApiBase()}/api/system/wifi/connect`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ssid, password }),
+    });
+    const data = await res.json();
+    if (data.success) {
+      setWifiMessage(`✓ ${data.message}`);
+      document.getElementById('wifi-password-input').value = '';
+      setTimeout(loadWifiStatus, 1500);
+    } else {
+      setWifiMessage(data.error || 'Connection failed.', true);
+    }
+  } catch {
+    setWifiMessage('Backend not reachable.', true);
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = 'Connect'; }
+  }
+}
+
+async function disconnectWifi() {
+  const btn = document.getElementById('wifi-disconnect-btn');
+  if (btn) { btn.disabled = true; btn.textContent = 'Disconnecting…'; }
+  try {
+    const res = await fetch(`${getApiBase()}/api/system/wifi/disconnect`, { method: 'POST' });
+    const data = await res.json();
+    setWifiMessage(data.success ? '✓ Disconnected.' : (data.error || 'Failed.'), !data.success);
+    setTimeout(loadWifiStatus, 1000);
+  } catch {
+    setWifiMessage('Backend not reachable.', true);
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = 'Disconnect'; }
   }
 }
 
