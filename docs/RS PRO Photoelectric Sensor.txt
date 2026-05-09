@@ -1,0 +1,184 @@
+Photoelectric Sensor
+
+Features
+
+
+M18 short housing
+
+
+
+Sensitivity
+adjustment via
+potentiometer
+
+
+
+IO-Link
+
+
+
+Calibrated range
+
+
+
+Immunity to mutual
+interferences
+
+RS PRO Photoelectric Sensor
+RS Stock No.: 0360240
+
+RS PRO is the own brand of RS. The RS PRO Seal of Approval is your
+assurance of professional quality, a guarantee that every part is
+rigorously tested, inspected, and audited against demanding
+standards. Making RS PRO the Smart Choice for our customers.
+
+Buy this product from www.rspro.com
+
+Page 1 of 4
+
+Photoelectric Sensor
+Product Description
+
+
+
+
+
+
+
+M18 short housing
+Sensitivity adjustment via potentiometer
+IO-Link
+Calibrated range
+Immunity to mutual interferences
+
+General Specifications
+Detection Type
+Sensing/Detection Range
+Operating Distance
+Standard Sensing Object
+Light Source
+Diameter of the Light Spot
+Sensing Distance Adjustment
+Output Type
+Response Time
+Connection/Terminal Type
+Indicator
+Interface
+Minimum Operating Temperature
+Maximum Operating Temperature
+
+Buy this product from www.rspro.com
+
+Diffuse
+3...1’200 mm
+5...1’000 mm
+Object with 90% reflectance (standard white paper)
+Red LED
+Ø 11 mm (500 mm)/Ø 21 mm (1 m)
+30...1’200 mm, 3/4-turn pot
+PNP / Output 1: Light-on/IO-Link, Output 2: Dark-on
+≤ 300 ms (normal)/≤ 1 ms/≤ 100 ms
+4-pin M12
+LED
+IO-Link
+-25°C
++65°C
+
+Page 2 of 4
+
+Photoelectric Sensor
+Electrical Specifications
+Operating Supply Voltage
+
+10...30 VDC
+
+Current Consumption
+
+≤ 200 mA
+
+Voltage Drop
+
+≤ (Ub-2.0 V)/approx. 0 V
+
+Maximum Switching Frequency
+
+≤ 5 kHz
+
+Reverse Polarity Protection
+
+YES
+
+Overload Protection
+
+YES
+
+Short Circuit Protection
+
+YES
+
+Mechanical Specifications
+Body Style
+
+Barrel
+
+Mounting Type
+
+Screw
+
+Housing Material
+
+ABS
+
+Lens/Face Material
+
+PMMA
+
+Dimensions
+
+M18 x 37 mm
+
+Width / Diameter
+
+15 mm
+
+Length
+
+37 mm
+
+Depth
+
+M18
+
+Weight
+
+6g
+
+Shock Resistance
+
+IEC 60947-5-2
+
+Vibration Resistance
+
+IEC 60947-5-2
+
+Protection Category
+IP Rating
+
+IP67
+
+Approvals
+Compliance/Certifications
+
+Buy this product from www.rspro.com
+
+CE / CULus / ECOLAB
+
+Page 3 of 4
+
+Photoelectric Sensor
+
+Buy this product from www.rspro.com
+
+Page 4 of 4
+
+

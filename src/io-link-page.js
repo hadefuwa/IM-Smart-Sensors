@@ -218,18 +218,24 @@ function updatePortTable(ports) {
   }
   for (const p of ports) {
     const isActive = (p.mode || '').toLowerCase().includes('io-link');
+    const isInactiveLabelled = !isActive && p.label;
     const pdin = p.pdin ? (p.pdin.length <= 8 ? p.pdin : p.pdin.substring(0, 8) + '...') : '-';
     const pdout = p.pdout ? (p.pdout.length <= 8 ? p.pdout : p.pdout.substring(0, 8) + '...') : '-';
+    const displayName = escapeHtml(p.label || p.name || '-');
+    const modeCell = isInactiveLabelled
+      ? `${escapeHtml(p.mode || '-')} <span class="badge badge-warning badge-xs ml-1">Disconnected</span>`
+      : escapeHtml(p.mode || '-');
     const row = document.createElement('tr');
     if (isActive) row.className = 'bg-success/20';
+    else if (isInactiveLabelled) row.className = 'opacity-60';
     row.innerHTML = `
       <td data-label="Port">${p.port}</td>
-      <td data-label="Mode">${escapeHtml(p.mode || '-')}</td>
+      <td data-label="Mode">${modeCell}</td>
       <td data-label="Comm. Mode">${escapeHtml(p.comm_mode || '-')}</td>
       <td data-label="MasterCycle">${escapeHtml(p.master_cycle_time || '-')}</td>
       <td data-label="Vendor ID">${escapeHtml(p.vendor_id || '-')}</td>
       <td data-label="Device ID">${escapeHtml(p.device_id || '-')}</td>
-      <td data-label="Name">${escapeHtml(p.name || '-')}</td>
+      <td data-label="Name">${displayName}</td>
       <td data-label="Serial">${escapeHtml(p.serial || '-')}</td>
       <td data-label="PD In"><code class="text-xs">${escapeHtml(pdin)}</code></td>
       <td data-label="PD Out"><code class="text-xs">${escapeHtml(pdout)}</code></td>
@@ -250,7 +256,7 @@ function hideEmptyPortColumns(ports) {
     const key = dataKeys[i];
     if (key === 'port' || key === 'mode') { th.classList.remove('hidden'); return; }
     const hasValue = ports.some(p => {
-      const v = p[key];
+      const v = key === 'name' ? (p.label || p[key]) : p[key];
       return v != null && String(v).trim() !== '' && String(v).trim() !== '-';
     });
     th.classList.toggle('hidden', !hasValue);
@@ -270,7 +276,8 @@ async function loadActivePortDetails(ports) {
   const section = document.getElementById('portDetailsSection');
   if (!container) return;
   const active = (ports || []).filter(p => (p.mode || '').toLowerCase().includes('io-link'));
-  if (active.length === 0) {
+  const inactiveLabelled = (ports || []).filter(p => !(p.mode || '').toLowerCase().includes('io-link') && p.label);
+  if (active.length === 0 && inactiveLabelled.length === 0) {
     if (section) section.classList.add('hidden');
     container.innerHTML = '';
     return;
@@ -287,17 +294,34 @@ async function loadActivePortDetails(ports) {
       html += `<div class="alert alert-warning">Port ${port.port}: Error</div>`;
     }
   }
+  for (const port of inactiveLabelled) {
+    html += generateDisconnectedPortHTML(port);
+  }
   container.innerHTML = html || '<p class="text-center">No details</p>';
 }
 
 const LEARN_BLURBS = {
   status_led: { blurb: 'Status lights show machine or line state (e.g. green = running, red = fault). Check supervision and that the correct state is displayed.', anchor: 'status-led' },
-  photo_electric: { blurb: 'Photoelectric sensors detect objects and often report signal quality. Keep the lens clean and watch signal quality; a drop means cleaning or alignment before failure.', anchor: 'photo-electric' },
+  photo_electric: { blurb: 'RS PRO diffuse photoelectric sensor (M18, Red LED, 5–1000 mm range). Output 1 activates on light-on — object present when beam is reflected back. Keep the lens clean; signal quality drops before total failure, giving early warning. Adjust sensitivity via the potentiometer for reliable detection at your target distance.', anchor: 'photo-electric' },
   temperature: { blurb: 'Temperature sensors report °C for process and maintenance. Check supervision current and wiring; use trends to spot overheating.', anchor: 'temperature' },
   proximity: { blurb: 'Proximity sensors report presence or distance. Check mounting distance and contamination; use event flags and cycle count for MTTF-based replacement.', anchor: 'proximity' },
-  capacitive: { blurb: 'Capacitive sensors detect objects through non-conductive materials and liquids. Keep sensing face clean and dry; set the sensitivity correctly to avoid false triggers.', anchor: 'proximity' }
+  capacitive: { blurb: 'RS PRO / Carlo Gavazzi M18 capacitive sensor (model 2377240, non-flush, 12 mm range). Detects conductive and non-conductive targets — SO1 activates when an object is present. Also outputs a 16-bit analogue dielectric value useful for level sensing and material identification. Keep the sensing face clean and dry; use the Quality of Run (QoR) value to detect gradual contamination before output failure.', anchor: 'proximity' }
 };
 let portCycleCounts = {};
+
+function generateDisconnectedPortHTML(port) {
+  const dtype = port.device_type || 'unknown';
+  const label = port.label || port.name || 'Unknown device';
+  const blurb = LEARN_BLURBS[dtype];
+  let h = `<div class="port-detail-card rounded-lg border border-warning/40 bg-base-100 p-4 mb-3 opacity-70" data-port="${port.port}">`;
+  h += `<h3 class="font-semibold text-warning">Port ${port.port} – ${escapeHtml(label)} <span class="badge badge-warning badge-sm ml-1">Disconnected</span></h3>`;
+  if (blurb) {
+    h += `<div class="my-2 p-2 rounded bg-warning/10 border-l-4 border-warning"><strong>Expected device:</strong> ${escapeHtml(blurb.blurb)} <a href="${API_BASE}/learn#${blurb.anchor}" target="_blank" class="link link-primary text-sm">Learn more</a></div>`;
+  }
+  h += `<p class="text-sm opacity-60">No IO-Link device detected on this port. Connect a ${escapeHtml(label)} to activate.</p>`;
+  h += '</div>';
+  return h;
+}
 
 function generatePortDetailsHTML(port) {
   const dtype = port.device_type || 'unknown';
@@ -305,7 +329,7 @@ function generatePortDetailsHTML(port) {
   const showDecodedByDefault = hasDecodedPdin;
 
   let h = `<div class="port-detail-card rounded-lg border border-base-300 bg-base-100 p-4 mb-3" data-port="${port.port}">`;
-  h += `<h3 class="font-semibold text-primary">Port ${port.port} – ${escapeHtml(port.name || 'Unknown')}</h3>`;
+  h += `<h3 class="font-semibold text-primary">Port ${port.port} – ${escapeHtml(port.label || port.name || 'Unknown')}</h3>`;
   if (dtype !== 'unknown' && LEARN_BLURBS[dtype]) {
     const blurb = LEARN_BLURBS[dtype];
     h += `<div class="my-2 p-2 rounded bg-success/10 border-l-4 border-success"><strong>About this sensor:</strong> ${escapeHtml(blurb.blurb)} <a href="${API_BASE}/learn#${blurb.anchor}" target="_blank" class="link link-primary text-sm">Learn more</a></div>`;
@@ -319,6 +343,11 @@ function generatePortDetailsHTML(port) {
   }
   h += `<p class="text-sm opacity-80">Type: ${escapeHtml(dtype)} | Vendor: ${escapeHtml(port.vendor_id || '-')} | Device: ${escapeHtml(port.device_id || '-')} | Serial: ${escapeHtml(port.serial || '-')}</p>`;
 
+  if (dtype === 'capacitive' && port.pdin && port.pdin.decoded && port.pdin.decoded.analogue_value != null) {
+    const av = port.pdin.decoded.analogue_value;
+    const pct = Math.round((av / 65535) * 100);
+    h += `<div class="my-1"><strong>Dielectric value:</strong> <progress class="progress progress-info w-48" value="${pct}" max="100"></progress> ${av} <span class="text-xs opacity-70">(raw 16-bit · higher = denser/closer target)</span></div>`;
+  }
   if ((dtype === 'photo_electric' || dtype === 'proximity' || dtype === 'capacitive') && port.pdin && port.pdin.decoded) {
     portCycleCounts[port.port] = (portCycleCounts[port.port] || 950000) + Math.floor(Math.random() * 50) + 1;
     const count = portCycleCounts[port.port];

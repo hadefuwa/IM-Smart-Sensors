@@ -7,6 +7,7 @@ import { renderLearnPage, initLearnPage } from './learn-page.js';
 import { renderWorksheetsPage, initWorksheetsPage } from './worksheets-page.js';
 import { renderSettingsPage, initSettingsPage, applySavedAppSettings } from './settings-page.js';
 import { renderAdminPage, initAdminPage, destroyAdminPage } from './admin-page.js';
+import { renderEdgeDevicePage, initEdgeDevicePage, destroyEdgeDevicePage } from './edge-device-page.js';
 import {
   Chart,
   LineController,
@@ -6164,6 +6165,7 @@ const PAGES = {
   'worksheets': renderWorksheetsPage,
   'settings': renderSettingsPage,
   'admin': renderAdminPage,
+  'edge-device': renderEdgeDevicePage,
 };
 
 // ================================================================
@@ -6256,6 +6258,7 @@ app.innerHTML = `
           <li><a href="#" data-page="home">HMI Dashboard</a></li>
           <li><a href="#" data-page="io-link-master">IO-Link Master</a></li>
           <li><a href="#" data-page="admin">Connection Diagnostics</a></li>
+          <li><a href="#" data-page="edge-device">Edge Device</a></li>
           <li><a href="#" data-page="datasheet">Datasheet</a></li>
           <li><a href="#" data-page="models-3d">3D Models</a></li>
           <li><a href="#" data-page="user-manual">User Manual</a></li>
@@ -6378,6 +6381,7 @@ function renderPage(pageKey) {
   destroyHomePage();
   destroyIOLinkPage();
   destroyAdminPage();
+  destroyEdgeDevicePage();
   activeCharts.forEach(chart => chart.destroy());
   activeCharts = [];
 
@@ -6426,6 +6430,8 @@ function renderPage(pageKey) {
     initLearnPage();
   } else if (pageKey === 'admin') {
     initAdminPage();
+  } else if (pageKey === 'edge-device') {
+    initEdgeDevicePage();
   }
 }
 
@@ -7346,6 +7352,11 @@ function setMatrixLogoForTheme(theme) {
   if (logo) logo.src = theme === 'light' ? baseUrl + 'matrix2.png' : baseUrl + 'matrix.png';
 }
 
+function setIOLinkLogoForTheme(theme) {
+  const logo = document.querySelector('.io-link-header-logo img');
+  if (logo) logo.src = theme === 'dark' ? baseUrl + 'assets/img/Logo_IO-link_dark.png' : baseUrl + 'assets/img/Logo_IO-link.svg';
+}
+
 // Simple theme switcher (Light / Dark)
 const html = document.documentElement;
 const themeSelect = document.getElementById('theme-select');
@@ -7360,6 +7371,7 @@ if (savedTheme === 'light' || savedTheme === 'dark') {
   if (themeSelect) themeSelect.value = 'dark';
 }
 setMatrixLogoForTheme(html.getAttribute('data-theme'));
+setIOLinkLogoForTheme(html.getAttribute('data-theme'));
 
 // When user changes theme (header dropdown)
 themeSelect.addEventListener('change', () => {
@@ -7367,6 +7379,7 @@ themeSelect.addEventListener('change', () => {
   html.setAttribute('data-theme', newTheme);
   localStorage.setItem('matrix-theme', newTheme);
   setMatrixLogoForTheme(newTheme);
+  setIOLinkLogoForTheme(newTheme);
 });
 
 // Apply saved app settings (e.g. hide connection bar if user turned it off in Settings)

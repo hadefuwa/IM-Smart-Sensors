@@ -8,7 +8,7 @@ import {
   createTemperatureGauge,
   createLEDIndicator,
   createCounterDisplay,
-  createProximityIndicator,
+  createCapacitiveIndicator,
   createMasterStatusDisplay
 } from './components/mimic-components.js';
 import Chart from 'chart.js/auto';
@@ -61,8 +61,8 @@ export function renderHomePage() {
             <!-- Photoelectric Sensor -->
             <div id="mimic-photoelectric" class="mimic-component"></div>
             
-            <!-- Proximity Sensor -->
-            <div id="mimic-proximity" class="mimic-component"></div>
+            <!-- Capacitive Sensor -->
+            <div id="mimic-capacitive" class="mimic-component"></div>
             
             <!-- Status LED -->
             <div id="mimic-led" class="mimic-component"></div>
@@ -250,29 +250,25 @@ function renderConfigModals() {
       <form method="dialog" class="modal-backdrop"><button>close</button></form>
     </dialog>
 
-    <!-- Proximity Sensor Config Modal -->
-    <dialog id="modal-prox-config" class="modal">
+    <!-- Capacitive Sensor Config Modal -->
+    <dialog id="modal-capacitive-config" class="modal">
       <div class="modal-box">
-        <h3 class="font-bold text-lg">Proximity Sensor Configuration</h3>
+        <h3 class="font-bold text-lg">Capacitive Sensor Configuration</h3>
         <div class="py-4 space-y-4">
           <div class="form-control">
-            <label class="label"><span class="label-text">Detection Range (mm)</span></label>
-            <input type="number" id="prox-range" class="input input-bordered" value="50" />
-          </div>
-          <div class="form-control">
-            <label class="label"><span class="label-text">Switching Point (mm)</span></label>
-            <input type="number" id="prox-switching" class="input input-bordered" value="25" />
+            <label class="label"><span class="label-text">Sensing Range (mm)</span></label>
+            <input type="number" id="cap-range" class="input input-bordered" value="12" />
           </div>
           <div class="form-control">
             <label class="label"><span class="label-text">Output Mode</span></label>
-            <select id="prox-output" class="select select-bordered">
+            <select id="cap-output" class="select select-bordered">
               <option value="NO">Normally Open (NO)</option>
               <option value="NC">Normally Closed (NC)</option>
             </select>
           </div>
           <div class="form-control">
             <label class="label"><span class="label-text">Maintenance Cycle Limit</span></label>
-            <input type="number" id="prox-cycle-limit" class="input input-bordered" value="1000000" />
+            <input type="number" id="cap-cycle-limit" class="input input-bordered" value="1000000" />
           </div>
         </div>
         <div class="modal-action">
@@ -441,7 +437,7 @@ function initializeMimicComponents() {
   mimicComponents.master = createMasterStatusDisplay('mimic-master', {});
   mimicComponents.temperature = createTemperatureGauge('mimic-temperature', 0);
   mimicComponents.photoelectric = createCounterDisplay('mimic-photoelectric', {});
-  mimicComponents.proximity = createProximityIndicator('mimic-proximity', {});
+  mimicComponents.capacitive = createCapacitiveIndicator('mimic-capacitive', {});
   mimicComponents.led = createLEDIndicator('mimic-led', {});
 }
 
@@ -560,11 +556,11 @@ function setupConfigModalHandlers() {
     });
   }
 
-  // Proximity sensor
-  const proxMimic = document.getElementById('mimic-proximity');
-  if (proxMimic) {
-    proxMimic.addEventListener('click', () => {
-      document.getElementById('modal-prox-config').showModal();
+  // Capacitive sensor
+  const capMimic = document.getElementById('mimic-capacitive');
+  if (capMimic) {
+    capMimic.addEventListener('click', () => {
+      document.getElementById('modal-capacitive-config').showModal();
     });
   }
 
@@ -698,8 +694,8 @@ function processPortData(port) {
       const count = mimicComponents.photoelectric.getCount();
       updateCycleCounter(count);
     }
-  } else if (deviceType === 'proximity' && mimicComponents.proximity) {
-    mimicComponents.proximity.update(port.pdin_decoded || {});
+  } else if (deviceType === 'capacitive' && mimicComponents.capacitive) {
+    mimicComponents.capacitive.update(port.pdin_decoded || {});
   } else if (deviceType === 'led' && mimicComponents.led) {
     mimicComponents.led.update(port.pdout_decoded || {});
   }
@@ -715,12 +711,13 @@ function getDeviceType(port) {
   if (backendType === 'temperature') return 'temperature';
   if (backendType === 'proximity') return 'proximity';
   if (backendType === 'status_led') return 'led';
-  if (backendType === 'capacitive') return 'proximity';
+  if (backendType === 'capacitive') return 'capacitive';
 
   // Name-based fallback
   const name = (port.name || '').toUpperCase();
   if (name.includes('TEMP') || name.includes('TN') || name.includes('TR')) return 'temperature';
   if (name.includes('PHOTO') || name.includes('O5D') || name.includes('O2D')) return 'photoelectric';
+  if (name.includes('CAPACITIVE') || name.includes('23772') || name.includes('KI') || name.includes('KQ')) return 'capacitive';
   if (name.includes('PROX') || name.includes('INDUCTIVE')) return 'proximity';
   if (name.includes('LED') || name.includes('CL50') || name.includes('LIGHT')) return 'led';
 

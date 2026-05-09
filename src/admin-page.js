@@ -59,8 +59,7 @@ export function renderAdminPage() {
         </div>
       </div>
 
-      <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <div class="card bg-base-200 shadow-xl border border-base-300">
+      <div class="card bg-base-200 shadow-xl border border-base-300">
           <div class="card-body">
             <h2 class="card-title text-base-content text-base">Transport + Link</h2>
             <div class="grid grid-cols-2 gap-3 text-sm">
@@ -87,35 +86,6 @@ export function renderAdminPage() {
             </div>
           </div>
         </div>
-
-        <div class="card bg-base-200 shadow-xl border border-base-300">
-          <div class="card-body">
-            <h2 class="card-title text-base-content text-base">Raspberry Pi Runtime</h2>
-            <div class="grid grid-cols-2 gap-3 text-sm">
-              <div class="p-3 rounded-lg bg-base-100 border border-base-300">
-                <div class="text-base-content/60">CPU usage</div>
-                <div id="diagCpuPct" class="font-semibold text-lg">-</div>
-              </div>
-              <div class="p-3 rounded-lg bg-base-100 border border-base-300">
-                <div class="text-base-content/60">CPU temp</div>
-                <div id="diagCpuTemp" class="font-semibold text-lg">-</div>
-              </div>
-              <div class="p-3 rounded-lg bg-base-100 border border-base-300">
-                <div class="text-base-content/60">Memory usage</div>
-                <div id="diagMemPct" class="font-semibold text-lg">-</div>
-              </div>
-              <div class="p-3 rounded-lg bg-base-100 border border-base-300">
-                <div class="text-base-content/60">Load (1m)</div>
-                <div id="diagLoad1m" class="font-semibold text-lg">-</div>
-              </div>
-              <div class="p-3 rounded-lg bg-base-100 border border-base-300 col-span-2">
-                <div class="text-base-content/60">Kiosk cursor service</div>
-                <div id="diagUnclutter" class="font-semibold text-sm">-</div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
 
       <div class="card bg-base-200 shadow-xl border border-base-300">
         <div class="card-body">
@@ -190,7 +160,8 @@ export function renderAdminPage() {
 let _charts = [];
 let _refreshInterval = null;
 let _tickInterval = null;
-let _lastDropTs = null; // Unix seconds of the most recent disconnect event
+let _lastDropTs = null;   // Unix seconds of the most recent disconnect event
+let _backendStartTs = null; // Unix seconds when backend last started
 
 function formatUptimeDuration(seconds) {
   if (seconds < 0) seconds = 0;
@@ -207,13 +178,21 @@ function formatUptimeDuration(seconds) {
 function tickUptimeCounter() {
   const el = document.getElementById('diagSinceLastDrop');
   if (!el) return;
-  if (_lastDropTs === null) {
+  if (_lastDropTs !== null) {
+    // Time since the last real drop
+    const secs = Math.floor(Date.now() / 1000 - _lastDropTs);
+    el.textContent = formatUptimeDuration(secs);
+    el.className = `text-2xl font-bold font-mono ${secs < 120 ? 'text-error' : secs < 600 ? 'text-warning' : 'text-success'}`;
+  } else if (_backendStartTs !== null) {
+    // No drops recorded — show continuous uptime since backend started
+    const secs = Math.floor(Date.now() / 1000 - _backendStartTs);
+    el.textContent = formatUptimeDuration(secs);
+    el.className = 'text-2xl font-bold font-mono text-success';
+    const labelEl = document.getElementById('diagLastDropAt');
+    if (labelEl) labelEl.textContent = 'no drops recorded';
+  } else {
     el.textContent = '—';
-    return;
   }
-  const secs = Math.floor(Date.now() / 1000 - _lastDropTs);
-  el.textContent = formatUptimeDuration(secs);
-  el.className = `text-2xl font-bold font-mono ${secs < 120 ? 'text-error' : secs < 600 ? 'text-warning' : 'text-success'}`;
 }
 
 function destroyCharts() {
@@ -388,7 +367,7 @@ function fillPortFreshness(stats) {
   wrapper.innerHTML = cards.join('');
 }
 
-function fillStats(stats, health) {
+function fillStats(stats) {
   const setText = (id, value, cls = '') => {
     const el = document.getElementById(id);
     if (!el) return;
@@ -437,22 +416,6 @@ function fillStats(stats, health) {
     linkEl.className = `font-semibold text-sm ${link.has_route_to_master && link.carrier_up ? 'text-success' : 'text-warning'}`;
   }
 
-  const sys = (health && health.system) || stats.system || {};
-  const cpuPct = sys.cpu_pct;
-  const cpuTemp = sys.cpu_temp_c;
-  const memPct = sys.mem_pct;
-  const load1m = sys.load_1m;
-  setText('diagCpuPct', cpuPct != null ? `${cpuPct}%` : '-', getClassForUpperBound(cpuPct, 70, 90));
-  setText('diagCpuTemp', cpuTemp != null ? `${cpuTemp}°C` : '-', getClassForUpperBound(cpuTemp, 70, 82));
-  setText('diagMemPct', memPct != null ? `${memPct}%` : '-', getClassForUpperBound(memPct, 75, 90));
-  setText('diagLoad1m', load1m != null ? String(load1m) : '-', getClassForUpperBound(load1m, 2.5, 4.0));
-  const unclutter = document.getElementById('diagUnclutter');
-  if (unclutter) {
-    const running = sys.unclutter_running;
-    unclutter.textContent = running == null ? 'unknown' : (running ? 'running' : 'not running');
-    unclutter.className = `font-semibold text-sm ${running ? 'text-success' : 'text-warning'}`;
-  }
-
   fillPortFreshness(stats);
 }
 
@@ -471,20 +434,19 @@ function fillDegradedBanner(stats) {
 
 async function refreshDiagnostics() {
   try {
-    const [diagRes, cfgRes, healthRes, logsRes] = await Promise.all([
+    const [diagRes, cfgRes, logsRes] = await Promise.all([
       fetch(`${API_BASE}/api/io-link/diagnostics`),
       fetch(`${API_BASE}/api/io-link/config`),
-      fetch(`${API_BASE}/api/system/health`),
       fetch(`${API_BASE}/api/logs?n=200`),
     ]);
     const data = await diagRes.json();
     const cfg = await cfgRes.json();
-    const health = await healthRes.json();
     const logsData = await logsRes.json().catch(() => ({ logs: [] }));
     if (!data.success) return;
+    if (data.start_ts) _backendStartTs = data.start_ts;
 
     // Populate text/table content first so a chart error never blocks it
-    fillStats(data.stats || {}, health.success ? health : null);
+    fillStats(data.stats || {});
     fillDegradedBanner(data.stats || {});
     fillEventsTable(data.events || []);
     fillLogViewer(logsData.logs || []);
@@ -520,5 +482,6 @@ export function destroyAdminPage() {
   if (_refreshInterval) { clearInterval(_refreshInterval); _refreshInterval = null; }
   if (_tickInterval) { clearInterval(_tickInterval); _tickInterval = null; }
   _lastDropTs = null;
+  _backendStartTs = null;
   destroyCharts();
 }

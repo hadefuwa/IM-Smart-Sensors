@@ -97,6 +97,10 @@ class AL1350ClientManager:
         self.last_error: Optional[str] = None
         self.port_freshness_ts: Dict[int, Optional[float]] = {1: None, 2: None, 3: None, 4: None}
 
+        # Adaptive polling: per-port cache and next-due timestamps
+        self._port_last_data: Dict[int, Dict[str, Any]] = {}
+        self._port_next_poll_ts: Dict[int, float] = {i: 0.0 for i in range(1, 5)}
+
         self.request_latencies_ms: deque = deque(maxlen=500)
         self.request_successes: int = 0
         self.request_failures: int = 0
@@ -390,15 +394,22 @@ class AL1350ClientManager:
                 result[supervision_paths[idx][1]] = response.get("data", {}).get("value")
         return result
 
-    async def poll_ports(self, include_static: bool = True) -> List[Dict[str, Any]]:
-        tasks = [self.get_port_info(i, include_static=include_static) for i in range(1, 5)]
-        results = await asyncio.gather(*tasks, return_exceptions=True)
-        ports: List[Dict[str, Any]] = []
-        for idx, result in enumerate(results, start=1):
-            if isinstance(result, Exception):
-                ports.append(
-                    {
-                        "port": idx,
+    async def poll_ports(
+        self,
+        include_static: bool = True,
+        connected_interval: float = 1.0,
+        disconnected_interval: float = 5.0,
+    ) -> List[Dict[str, Any]]:
+        now = time.time()
+        ports_due = [i for i in range(1, 5) if now >= self._port_next_poll_ts[i]]
+
+        if ports_due:
+            tasks = [self.get_port_info(i, include_static=include_static) for i in ports_due]
+            results = await asyncio.gather(*tasks, return_exceptions=True)
+            for port_num, result in zip(ports_due, results):
+                if isinstance(result, Exception):
+                    port_data: Dict[str, Any] = {
+                        "port": port_num,
                         "mode": "error",
                         "comm_mode": "",
                         "master_cycle_time": "",
@@ -410,9 +421,27 @@ class AL1350ClientManager:
                         "pdout": "",
                         "source": "error",
                     }
-                )
+                else:
+                    port_data = result
+                self._port_last_data[port_num] = port_data
+                mode = port_data.get("mode", "inactive")
+                is_active = mode in ("io-link", "digital_in", "digital_out")
+                next_interval = connected_interval if is_active else disconnected_interval
+                self._port_next_poll_ts[port_num] = now + next_interval
+
+        # Return all 4 ports — cached data for any skipped this cycle
+        ports: List[Dict[str, Any]] = []
+        for i in range(1, 5):
+            if i in self._port_last_data:
+                ports.append(self._port_last_data[i])
             else:
-                ports.append(result)
+                # Not yet fetched (first boot); schedule immediate retry
+                self._port_next_poll_ts[i] = 0.0
+                ports.append({
+                    "port": i, "mode": "inactive", "comm_mode": "",
+                    "master_cycle_time": "", "vendor_id": "", "device_id": "",
+                    "name": "", "serial": "", "pdin": "", "pdout": "", "source": "pending",
+                })
         return ports
 
     async def get_device_info(self) -> Dict[str, Any]:
@@ -451,10 +480,19 @@ class AL1350ClientManager:
             pass
         return info
 
-    async def poll_snapshot(self, include_static: bool = True) -> Tuple[List[Dict[str, Any]], Dict[str, Any], Dict[str, Any]]:
+    async def poll_snapshot(
+        self,
+        include_static: bool = True,
+        connected_interval: float = 1.0,
+        disconnected_interval: float = 5.0,
+    ) -> Tuple[List[Dict[str, Any]], Dict[str, Any], Dict[str, Any]]:
         await self.refresh_gettree(force=False)
         ports, supervision = await asyncio.gather(
-            self.poll_ports(include_static=include_static),
+            self.poll_ports(
+                include_static=include_static,
+                connected_interval=connected_interval,
+                disconnected_interval=disconnected_interval,
+            ),
             self.get_supervision(),
         )
         device_info = (
@@ -605,6 +643,17 @@ class AL1350ClientManager:
         except Exception:
             return False
 
+    def _count_chromium_processes(self) -> int:
+        if os.name != "posix":
+            return 0
+        try:
+            out = subprocess.check_output(["pgrep", "-f", "chromium"], timeout=1.5)
+            return len(out.strip().splitlines())
+        except subprocess.CalledProcessError:
+            return 0
+        except Exception:
+            return 0
+
     def diagnostics_snapshot(self) -> Dict[str, Any]:
         lats = sorted(self.request_latencies_ms)
         success_total = self.request_successes + self.request_failures
@@ -645,6 +694,7 @@ class AL1350ClientManager:
                 "load_1m": self._read_linux_load(),
                 "cpu_temp_c": self._read_linux_cpu_temp_c(),
                 "unclutter_running": self._is_unclutter_running(),
+                "chromium_proc_count": self._count_chromium_processes(),
             },
         }
         return payload

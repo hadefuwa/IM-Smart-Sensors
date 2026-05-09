@@ -1,0 +1,1446 @@
+RS PRO Capacitive Proximity Sensors with IOLink communication
+Benefits
+
+Description
+The new generation of 23772xx sensors are a
+complete family of high performance capacitive
+sensors for detection of most solid or liquid targets
+in industrial applications such as Plastic & Rubber,
+Agriculture, Food & Beverage and Materials
+handling. The 4th Generation of TRIPLESHIELDTM
+technology provides increased immunity to
+electromagnetic interference (EMI), especially
+to frequency drives, and improves immunity to
+humidity and dust.
+The sensor housing has the IP69K rating as well as
+approval by ECOLAB for cleaning and disinfection
+agents.
+On-board IO-Link communication opens up a
+variety of functions, such as easy communication
+and customization of advanced parameter settings.
+
+• A complete family. Available in M18 in a robust PBT
+housing with an operation of 2-10 mm flush or 3-15 mm
+non-flush.
+• Enhanced EMC performance: 4th Generation
+TRIPLESHIELDTM
+• Easy customization to specific OEM requests:
+different cable lengths and materials, special labelling:
+customized pig-tail solutions with special cables and
+connectors are possible on request..
+• The output can be operated either as a switching output
+or in IO-Link mode.
+• Fully configurable via output IO-Link v 1.1. Electrical
+outputs can be configured as PNP / NPN / Push-Pull /
+External input, normally open or normally closed.
+• Timer functions can be set, such as ON-delay, Offdelay, and one shots.
+• Logging functions: Temperatures, detecting counter,
+power cycles and operating hours.
+• Detection modes Single point, two point and windows
+mode.
+• Analogue output: In IO-Link mode the sensor
+will generate 16 bit analogue process data output
+representing the dielectric value measured by the sensor.
+•
+
+Applications
+• Detection not only of the level of plastic pellets in plastic moulding machines but also the dielectric value of the pellets to
+ensure correct manufacturing.
+• Detection not only of the wood pellets in pellet burners but also the density of the wood pellets.
+
+15/02/2022 23772xx ENG
+
+RS Components Ltd
+
+1
+
+23772xx
+
+Main functions
+• The sensor can be operated in IO-Link mode once connected to an IO-Link master or in standard I/O mode.
+• Adjustable parameters via IO-Link interface:
+
+► Sensing distance and hysteresis.
+► Sensing modes: single point or two point or window mode.
+► Timer functions, e.g.: On-delay, Off delay, One shot leading edge or trailing edge.
+► Logic functions such as: AND, OR, X-OR and SR-FF.
+► External input.
+► Logging functions: Maximum temperatures, minimum temperatures, operating hours, operating
+cycles, power cycles, minutes above maximum temperature, minutes below minimum temperature,
+etc.
+
+15/02/2022 23772xx ENG
+
+RS Components Ltd
+
+2
+
+23772xx
+
+References
+
+Type selection
+Connection
+Cable
+Plug
+
+15/02/2022 23772xx ENG
+
+Distance
+8 mm
+12 mm
+8 mm
+12 mm
+
+Mounting
+Flush
+Non-flush
+Flush
+Non-flush
+
+Code
+2377236
+2377238
+2377237
+2377240
+
+RS Components Ltd
+
+3
+
+23772xx
+
+Structure
+
+E
+
+F
+
+D
+
+G
+
+Fig. 1 Cable
+A
+B
+C
+D
+E
+
+Sensitivity adjustment
+Yellow LED
+Green LED
+Brown
+White
+
+15/02/2022 23772xx ENG
+
+Fig. 2 Plug
+F
+G
+H
+I
+J
+
+Fig. 3 Colour code
+Blue
+Black
+Sensing face
+2 m, 4 wire PVC Ø 5,2 mm cable
+M12x1, 4-pin male connector
+
+RS Components Ltd
+
+4
+
+23772xx
+
+Sensing
+
+Detection
+
+Sensor front
+S.P., Two P.
+1. SSC1 Window,
+Adj. Hyst.
+S.P., Two P.
+2. SSC2 Window,
+Adj. Hyst.
+3. Dust 1
+4. Dust 2
+5. Temp
+6. EXT-Input
+
+Selector
+A
+One
+of1 to
+6
+
+One
+of1 to
+6
+
+Switching mode
+
+Rated operating distance (Sn)
+
+Sensitivity control
+
+Potentiometer
+
+Adjustable distance
+Effective operating distance (Sr)
+Usable operating dist. (Su)*
+Hysteresis (H)
+2377236/2377237
+2377238/2377240
+
+15/02/2022 23772xx ENG
+
+B
+
+Selector
+B
+
+Sensor switching channel SSC1 and
+SSC2
+
+Detection filter
+
+A
+
+Logic
+A-B
+
+Time
+delay
+
+Output
+inverter
+
+Sensor
+output
+
+AND,
+OR,XOR,
+S-R
+divide
+r
+
+ON, OFF
+One-shot
+
+N.O., N.C.
+
+NPN, PNP,
+Push-Pull
+
+Logic
+A-B
+
+Time
+delay
+
+Output
+inverter
+
+Sensor
+output
+
+ON, OFF
+One-shot
+
+N.O., N.C.
+
+NPN, PNP,
+PushPullEXTInput
+
+AND,
+OR,XOR,
+S-R
+B
+divide
+r
+A
+
+Out
+1
+
+Out
+2
+EXTInpu
+t
+
+SSC1
+SSC2
+• Enabled
+• Enabled
+• Disabled
+• Disabled
+Factory settings: Enabled
+Factory settings: Enabled
+SSC1
+SSC2
+• Deactivated
+• Deactivated
+• Single point mode
+• Single point mode
+• Two point mode
+• Two point mode
+• Windows mode
+• Windows mode
+Factory settings: Single point mode Factory settings: Single point mode
+0 - 12 mm (Factory settings: 12
+mm), (ref. target 36x36 mm ST37, 1 Non-flush-mounted sensor
+mm thick, grounded)
+0 - 8 mm (Factory settings: 8 mm),
+(ref. target 24x24 mm ST37, 1 mm
+Flush-mounted sensor
+thick, grounded)
+Adjustable by potentiometer, external teach or by IO-Link settings
+• Potentiometer disabled
+• Potentiometer enabled
+• External teach
+Factory settings: Potentiometer enabled
+Electrical adjustment
+11 turns
+Mechanical adjustment
+16 turns
+2 ... 10 mm (flush types)
+Factory settings: SP1 1000 and SP2 10000
+3 ... 15 mm (Non- flush types)
+Factory settings: SP1 1000 and SP2 10000
+0.9 x Sn ≤ Sr ≤ 1.1 x Sn
+0.85 x Sr ≤ Su ≤ 1.15 x Sr
+Adjustable by IO-Link (1% to 100%)
+Factory settings: Typical 6%
+Factory settings: Typical 15%
+This function can increase the immunity towards unstable targets and
+electromagnetic disturbances: Value can be set from 1 to 255.
+Factory settings: 1
+(1 is max. operating frequency and 255 is min. operating frequency)
+RS Components Ltd
+
+5
+
+23772xx
+
+* For Flush-mounted sensors in conductive material, the usable operating distance (Su) is 0.80 x Sr ≤ Su ≤ 1.2
+x Sr for temperatures exceeding 0°C - 60 °C ( 32°F - 140°F).
+Alarm settings
+
+Dust alarm SSC1 and SSC2
+
+Temperature alarm
+
+15/02/2022 23772xx ENG
+
+SSC1
+SSC2
+• 0 to 100 % of actual SP
+• 0 to 100 % of actual SP
+Factory settings: 2 times standard
+Factory settings: 2 times standard
+hysteresis
+hysteresis
+• High threshold -50 to +150 °C
+• Low threshold -50 to +150 °C
+Factory settings:
+High value 120 °C (front temperature sensor used)
+Low value -30 °C (front temperature sensor used)
+
+RS Components Ltd
+
+6
+
+23772xx
+
+Detection diagram
+
+Y
+
+S
+
+Y
+
+S
+
+X
+
+X
+
+T
+-0,31 -0,24 -0,16 -0,08
+25
+
+Y
+
+T
+
+X’
+0,08 0,16 0,24 0,31 0,39 0,47 0,55
+
+X’
+
+0,98
+
+20
+
+0,79
+
+20
+
+0,79
+
+15
+
+0,59
+
+15
+
+0,59
+
+10
+
+0,39
+
+10
+
+0,39
+
+5
+
+0,20
+
+5
+
+0,00
+
+S
+
+Y’
+
+Y
+
+0
+
+0,08 0,16 0,24 0,31 0,39 0,47 0,55
+
+-0,31 -0,24 -0,16 -0,08
+25
+
+0
+
+0
+
+0,98
+
+0,20
+
+0
+
+-5
+
+-0,20
+
+-5
+
+-0,20
+
+-10
+
+-0,39
+
+-10
+
+-0,39
+
+-15
+
+-0,59
+
+-15
+
+-0,59
+
+-20
+
+-0,79
+
+-20
+
+-0,79
+
+-25
+
+-0,98
+
+-25
+
+-8
+
+Y
+X
+Y'
+
+-6
+
+-4
+
+-2
+
+0
+
+2
+
+4
+
+6
+
+8
+
+10
+
+12
+
+14
+
+-0,98
+-8
+
+-6
+
+-4
+
+-2
+
+0
+
+2
+
+4
+
+6
+
+8
+
+X
+
+X
+
+Fig. 4 Flush
+
+Fig. 5 Non-flush
+
+Detection width [mm]
+Sensing range [mm]
+Detection width [inches]
+
+Y’
+
+0,00
+
+S
+
+X'
+S
+T
+
+10
+
+12
+
+14
+
+Sensing range [inches]
+Sensor
+Target
+
+Accuracy
+Repeat accuracy (R)
+
+≤ 5%
+
+Operation diagram
+A
+
+B
+
+C
+D
+
+E
+
+F
+G
+
+H
+I
+J
+
+>1 sec.
+
+>1 sec.
+
+>1 sec.
+
+>2 sec.
+
+K
+
+>1 sec.
+
+>1 sec.
+
+>1 sec.
+
+>2 sec.
+
+L
+
+15/02/2022 23772xx ENG
+
+RS Components Ltd
+
+7
+
+23772xx
+
+A
+B
+C
+D
+E
+F
+
+Target influence
+stable ON
+Output ON
+Output OFF
+stable OFF
+Time
+
+15/02/2022 23772xx ENG
+
+G
+H
+I
+J
+K
+L
+
+Green LED ON
+Yellow LED ON
+Output N.O.
+Output N.C.
+Dust alarm N.O.
+Dust alarm N.C.
+
+RS Components Ltd
+
+8
+
+23772xx
+
+Features
+
+Power Supply
+Rated operational voltage (UB)
+Ripple (Urpp)
+No load supply current (Io)
+Rated insulation voltage (Ui)
+Power-ON delay (tv)
+
+10 ... 40 VDC (ripple included)
+≤ 10%
+≤ 20 mA
+50 VDC
+≤ 300 ms
+
+Input selector
+
+Input selector
+
+Channel A
+• Deactivated
+• SSC1
+• SSC2
+• Dust alarm 1
+• Dust alarm 2
+• Temperature alarm
+• External input
+Factory settings: SSC1
+
+Channel B
+• Deactivated
+• SSC1
+• SSC2
+• Dust alarm 1
+• Dust alarm 2
+• Temperature alarm
+• External input
+Factory settings: SSC1
+
+Channel A + B for SO1
+• Direct
+• AND
+• OR
+• X-OR
+• SR-FF
+Factory settings: Direct
+
+Channel A + B for SO2
+• Direct
+• AND
+• OR
+• X-OR
+• SR-FF
+Factory settings: Direct
+
+Logic functions
+
+Logic functions
+
+15/02/2022 23772xx ENG
+
+RS Components Ltd
+
+9
+
+23772xx
+
+Time delays
+
+Timer mode
+
+Timer scale
+
+Timer value
+
+For SO1
+• Disabled
+• Power-ON delay
+• Power-OFF delay
+• Power-ON delay and Power-OFF
+delay
+• One-shot leading edge
+• One-shot trailing edge
+Factory settings: Disabled
+For SO1
+• [ms]
+• [s]
+• [min]
+Factory settings: ms
+For SO1
+• 0 ... 32 767
+Factory settings: 0
+
+For SO2
+• Disabled
+• Power-ON delay
+• Power-OFF delay
+• Power-ON delay and Power-OFF
+delay
+• One-shot leading edge
+• One-shot trailing edge
+Factory settings: Disabled
+For SO2
+• [ms]
+• [s]
+• [min]
+Factory settings: ms
+For SO2
+• 0 ... 32 767
+Factory settings: 0
+
+For SO1 Pin 4 Black wire:
+• N.O.
+• N.C.
+Factory settings: N.O.
+
+For SO2 Pin 2 White wire:
+• N.O.
+• N.C.
+Factory settings: N.C.
+
+For SO1 Pin 4 Black wire:
+• NPN
+• PNP
+• Push-Pull
+
+For SO2 Pin 2 White wire:
+• NPN
+• PNP
+• Push-Pull
+• External input, active high
+• External input, active low
+• External teach
+Factory settings: PNP
+
+Output Inverter
+
+Output Inverter
+
+Sensor Output
+
+Switching Output Stage SO1 and SO2
+
+Factory settings: PNP
+
+Outputs
+Rated operational current (Ie) (Ie)
+OFF-state current (Ir)
+Minimum operational current (Im)
+Voltage drop (Ud)
+Protection
+Utilization category
+Load capacitance max at (Ue)
+
+15/02/2022 23772xx ENG
+
+≤ 200 mA (Continuous, SO1 + SO2)
+≤ 100 μA
+> 0,5 mA
+≤ 1.0 VDC @ 200 mA DC
+Short circuit, reverse polarity, transients
+Control of resistive loads and solidDC-12
+state loads with optical isolation
+DC-13
+Control of electromagnets
+100 nF
+
+RS Components Ltd
+
+10
+
+23772xx
+
+Operation diagram
+
+For default factory sensor
+Tv = Power-ON delay
+Power supply
+Target (Object)
+Break output
+(N.C.)
+Make output
+(N.O.)
+
+ON
+Present
+Tv
+
+ON
+
+Tv
+
+ON
+
+Response times
+Operating frequency (f)
+
+50 Hz.
+tON (OFF-ON)
+tOFF (ON-OFF)
+
+Response times
+
+< 10 ms
+< 10 ms
+
+Indication
+Green LED
+
+Yellow LED
+
+ON
+ON
+OFF
+OFF
+
+ON
+OFF
+ON
+OFF
+Flashing 10Hz
+50% dutycycle
+Flashing
+(0.5…20Hz)
+
+-
+
+Power
+SIO and IO-Link mode
+ON
+ON
+-
+
+Function
+ON (stable)* SSC1
+OFF (stable)* SSC1
+ON (Not stable) SSC1
+OFF (Not stable) SSC1
+
+ON
+
+Output short-circuit
+
+ON
+
+Timer indication
+
+SIO mode only
+-
+
+-
+
+-
+
+-
+
+Flashing 1 HZ
+ON 100 ms
+OFF 900 ms
+Flashing 1 HZ
+ON 900 ms
+OFF 100 ms
+Flashing 10 HZ
+ON 50 ms
+OFF 50 ms
+Flashing for 2 sec
+Flashing 2 HZ
+ON 250 ms
+OFF 250 ms
+Flashing for 2 sec
+
+ON
+
+External teach by wire.
+Only for single point mode
+
+ON
+
+Teach time window (3 - 6 sec)
+
+ON
+
+Teach time out (12 sec)
+
+ON
+
+Teach successful
+
+IO-Link mode only
+Flashing 1 HZ
+ON 900 ms
+OFF 100 ms
+
+15/02/2022 23772xx ENG
+
+-
+
+ON
+
+Sensor is in IO-Link mode
+
+RS Components Ltd
+
+11
+
+23772xx
+
+*See operation diagram
+LED indication
+
+LED indications
+
+• LED Indication disabled
+• LED Indication enabled
+Factory settings: LED Indication enabled
+
+Environmental
+
+Ambient temperature
+Max. temperature on sensing face
+Ambient humidity range
+Vibration
+Shock
+Drop test
+Rated impulse withstand voltage
+Overvoltage category
+Pollution degree
+IP rating
+NEMA Enclosure Types
+Tightening torque
+
+-30°C... +85°C (-22°F... +185°F)
+-40°C ... +85°C (-40°F ... +185°F)
+120°C (248°F)
+35% ... 95%
+35% ... 95%
+10 ... 150 Hz, 1 mm / 15 G
+30 G / 11 ms, 3 pos, 3 neg per axis
+2x1m
+100 x 0,5 m
+≥2 kV
+III
+3
+IP 67, IP 68/60 min.,
+IP69K*
+1, 2, 4, 4X, 5, 6, 6P, 12
+≤ 2.6 Nm
+
+Operating
+Storage
+Operating
+Storage
+EN 60068-2-6
+EN 60068-2-27
+EN 60068-2-31
+with 500 Ω
+IEC 60664, EN 60947-1
+IEC 60664, 60664A; EN 60947-1
+EN 60529; EN 60947-1
+DIN 40050-9
+NEMA 250
+
+* The IP69K test according to DIN 40050-9 for highpressure, high-temperature wash-down applications.
+The sensor must not only be dust tight (IP6X), but
+also able to withstand high-pressure and steam
+cleaning. The sensor is exposed to high pressure
+water from a spray nozzle that is fed with 80°C water
+at 8’000– 10’000 KPa (80–100bar) and a flow rate of
+14–6L/min. The nozzle is held 100 –150 mm from the
+sensor at angles of 0°, 30°, 60° and 90° for 30s each.
+The test device sits on a turntable that rotates with
+a speed of 5 times per minute. The sensor must not
+suffer any damaging effects in appearance or function
+from the high pressure water function.
+
+TRIPLESHIELDTM
+Exceeding the norms for capacitive sensors.
+
+15/02/2022 23772xx ENG
+
+RS Components Ltd
+
+12
+
+23772xx
+
+Electrostatic discharge immunity test
+
+contact discharge
+air discharge
+
+Electromagnetic field immunity
+
+20 V/m
+
+Electrical fast transient immunity
+
+±4kV / 5kHz
+
+Wire-conducted noise
+
+> 20 Vrms
+
+Power frequency magnetic fields
+
+Continuous
+Short-time
+
+> 40 kV
+> 40 kV
+
+> 60 A/m, 75.9 µ tesla
+> 600 A/m, 759 µ tesla
+
+IEC 61000-4-2;
+EN60947-1
+IEC 61000-4-3;
+EN60947-1
+IEC 61000-4-4;
+EN60947-1
+IEC 61000-4-3;
+EN60947-1
+IEC 61000-4-8;
+EN60947-1
+
+Diagnostic parameters
+Function
+Unit
+Values stored in the sensor (Saved every hour)
+Operating Hours
+[h]
+Number of Power Cycles
+[cycles]
+Maximum temperature - All time high [°C]
+Minimum temperature - All time low
+[°C]
+Detection counter SSC1
+[cycles]
+Minutes above Maximum Temperature [min]
+Minutes below Minimum Temperature [min]
+Values stored in the sensor (Saved with events)
+Maintenance event counter
+[counts]
+Download counter
+[counts]
+Values not saved in sensor
+Maximum temperature - Since last
+[°C]
+power-up
+Minimum temperature - Since last
+[°C]
+power-up
+Current temperature
+[°C]
+
+Range
+0 … 2 147 483 647
+0 … 2 147 483 647
+-50 ... +150
+-50 ... +150
+0 … 2 147 483 647
+0 … 2 147 483 647
+0 … 2 147 483 647
+0 … 2 147 483 647
+0 …65 536
+-50 ... +150
+-50 ... +150
+-50 ... +150
+
+Events Configuration
+Events
+Temperature fault event
+Temperature over-run
+Temperature under-run
+Short circuit
+Maintenance
+
+15/02/2022 23772xx ENG
+
+Factory default setting
+Inactive
+Inactive
+Inactive
+Inactive
+Inactive
+
+RS Components Ltd
+
+13
+
+23772xx
+
+Process data configuration
+Process Data
+Analogue value
+SO1, Switching output 1
+SO2, Switching output 2
+SSC1, Sensor switching channel 1
+SSC2, Sensor switching channel 2
+DA1, Dust Alarm for SSC1
+DA2, Dust alarm for SSC2
+TA, Temperature alarm
+SC, Short circuit
+
+15/02/2022 23772xx ENG
+
+Factory default setting
+Active
+Active
+Active
+Inactive
+Inactive
+Inactive
+Inactive
+Inactive
+Inactive
+
+RS Components Ltd
+
+14
+
+23772xx
+
+Process data structure
+4 Bytes, Analogue value 16 ... 31 (16 bit)
+Byte 0
+Byte 1
+Byte 2
+Byte 3
+
+15/02/2022 23772xx ENG
+
+31
+MSB
+23
+15
+7
+-
+
+30
+22
+14
+6
+-
+
+29
+21
+13
+SC
+5
+-
+
+28
+20
+12
+TA
+4
+-
+
+27
+19
+11
+DA2
+3
+-
+
+26
+18
+10
+DA1
+2
+-
+
+25
+17
+9
+SSC2
+1
+SO2
+
+24
+16
+LSB
+8
+SSC1
+0
+SO1
+
+RS Components Ltd
+
+15
+
+23772xx
+
+Mechanics/electronics
+
+Connection
+2 m, 4 wire, 4 x 0,34 mm2, Ø5.2 mm Oil proof PVC, grey
+M12 x 1, 4 pin male
+
+Cable
+Plug (M1)
+
+Wiring
+
+1
+BN
+4
+BK
+2
+WH
+3
+BU
+BN
+Brown
+
+BK
+Black
+
+V
+
+A
+B
+V
+
+WH
+White
+
+BU
+Blue
+
+A
+OUT/IO-Link
+
+B
+IN/OUT
+
+Housing
+Body
+Cable gland
+Finger nuts
+Trimmer shaft
+Light guides
+Dimensions
+Thread length
+Total length
+Weight
+
+15/02/2022 23772xx ENG
+
+PBT,Grey, 30% glass-reinforced
+PA12, Rectangular housing
+PA12, Rectangular housing
+Nylon, Blue
+Grilamid TR 55, Transparent
+M18 x 1
+47 mm
+55 mm
+70 mm
+150 g
+75 g
+
+Thread
+Non-flush
+Flush
+Housing
+Cable version
+Plug version
+
+RS Components Ltd
+
+16
+
+23772xx
+
+Dimensions (mm)
+86
+
+86
+70
+
+70
+
+LED
+
+LED
+
+M18 x 1.0 x 55
+
+15
+
+8
+
+Fig. 6 Cable 2377236
+
+M18 x 1.0 x 47
+
+15
+
+Fig. 7 Cable 2377238
+
+85
+
+85
+
+70
+
+70
+
+LED
+
+M18 x 1.0 x 55
+
+15
+
+Fig. 8 Plug 2377237
+
+15/02/2022 23772xx ENG
+
+LED
+
+M12 x 1.0
+
+8
+
+M18 x 1.0 x 47
+
+M12 x 1.0
+
+15
+
+Fig. 9 Plug 2377240
+
+RS Components Ltd
+
+17
+
+23772xx
+
+Compatibility and conformity
+
+Approvals and markings
+General reference
+MTTFd
+
+Sensor designed according to EN60947-5-2 and EN60947-1
+114.6 years @ 40°C (+104°F)
+ISO 13849-1, SN 29500
+
+CE-marking
+
+Approvals
+(UL508)
+Other Approvals
+
+Topax 56, Topaz AC1, Topaz
+MD3, Topaz CL1, Topactiv OKTO,
+P3-hypochloran
+
+IO-Link
+IO-Link revision
+Transmission rate
+SDCI-Norm
+Profile
+Min. cycle time
+SIO mode
+Min. master port class
+Process data length
+
+15/02/2022 23772xx ENG
+
+1.1
+COM2 (38.4 kbaud)
+IEC 61131-9
+Smart sensor profile 2nd edition, common profile
+5 ms
+Yes
+A (4-pin)
+32 bit
+
+RS Components Ltd
+
+18
+
+23772xx
+
+Delivery contents and accessories
+
+Delivery contents
+Capacitive sensor: 23772xx
+2 x M18 finger nuts
+Screwdriver
+Packaging: Carton box
+
+15/02/2022 23772xx ENG
+
+RS Components Ltd
+
+19
+
+

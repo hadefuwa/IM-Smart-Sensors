@@ -61,17 +61,18 @@ Pi credentials and network details are in `docs/PI_SSH.md`.
 
 | File | Role |
 |------|------|
-| `src/main.js` | App entry, page routing, Chart.js init |
+| `src/main.js` | App entry, page routing, Chart.js init, IO-Link logo theme switching |
 | `src/home-page.js` | HMI dashboard — gauges, charts, terminal log |
 | `src/io-link-page.js` | IO-Link port table and supervision charts |
 | `src/settings-page.js` | Theme selector and IO-Link connection config UI |
-| `src/admin-page.js` | Diagnostics — latency graph, circuit breaker state |
-| `src/components/mimic-components.js` | Reusable industrial UI components (temp gauge, LED, counters) |
+| `src/admin-page.js` | Connection Diagnostics — IO-Link latency graph, circuit breaker, log viewer |
+| `src/edge-device-page.js` | Edge Device page — Pi CPU/memory charts, service status, Chromium health |
+| `src/components/mimic-components.js` | Reusable industrial UI components (temp gauge, capacitive indicator, LED, counters) |
 | `src/components/terminal-log.js` | Datastream terminal with CSV export |
 | `backend/io_link_fastapi.py` | Main FastAPI app — all routes + WebSocket handler |
-| `backend/al1350_client.py` | AL1350 HTTP client with circuit breaker, retry/jitter, connection pooling |
-| `backend/decoder.py` | CL50 LED decoder + sensor PDin/PDout parsers |
-| `backend/config.json` | Runtime config — master IP, port, poll interval, timeout |
+| `backend/al1350_client.py` | AL1350 HTTP client with circuit breaker, retry/jitter, adaptive polling, connection pooling |
+| `backend/decoder.py` | CL50 LED decoder + sensor PDin/PDout parsers (temperature, photoelectric, capacitive, proximity) |
+| `backend/config.json` | Runtime config — master IP, port, poll intervals, port labels, timeout |
 
 ## Backend Reliability Patterns
 
@@ -81,6 +82,7 @@ Pi credentials and network details are in `docs/PI_SSH.md`.
 - **Connection pooling:** Shared `AsyncClient` capped at 3 concurrent connections (AL1350 hardware limit). Do not increase.
 - **Retry with jitter:** Exponential backoff with random jitter on transient failures. The jitter is intentional — removing it causes thundering herd on reconnect.
 - **Protocol fallback chain:** `getdatamulti` → individual GETs per endpoint. `degraded_mode=True` means getdatamulti is failing and per-request GETs are being used instead.
+- **Adaptive per-port polling:** `poll_ports()` tracks `_port_next_poll_ts` per port. Connected ports (`io-link`/`digital_in`/`digital_out`) are polled every `poll_interval_sec` (default 1 s). Inactive/error ports are polled every `disconnected_poll_interval_sec` (default 5 s). Skipped ports return cached data. The outer loop and supervision polling still run every 1 s.
 - **subscribe is NOT a polling mechanism:** The AL1350 `subscribe` service (manual §9.2.12) POSTs data to a callback URL on the client — it cannot be called as a poll. `ensure_subscription()` is intentionally a no-op; polling via getdatamulti is sufficient.
 - **Device tree cache:** `/gettree` response is cached for 5 minutes to reduce load on the AL1350.
 
@@ -120,12 +122,23 @@ Touch events on X11 (WaveShare on Debian/Openbox) are emulated as mouse events �
     "master_ip": "192.168.7.4",
     "port": 80,
     "poll_interval_sec": 1,
+    "disconnected_poll_interval_sec": 5,
     "timeout_sec": 3
+  },
+  "port_labels": {
+    "1": {"label": "Temperature Sensor",                 "device_type_hint": "temperature"},
+    "2": {"label": "Capacitive Sensor (RS PRO 2377240)", "device_type_hint": "capacitive"},
+    "3": {"label": "Photoelectric Sensor (RS PRO)",      "device_type_hint": "photo_electric"},
+    "4": {"label": "Light Stack",                        "device_type_hint": "status_led"}
   }
 }
 ```
 
-The Settings page UI writes to this file via `PUT /api/io-link/config`. Legacy fields (`dobot`, `plc`, `vision`) in the file are unused.
+- `poll_interval_sec` — how often connected ports are queried (minimum 0.5 s).
+- `disconnected_poll_interval_sec` — how often inactive/error ports are re-checked (minimum = poll_interval_sec).
+- `port_labels` — display label and device-type hint per port number. The label overrides the raw device product name in the UI; the hint fills in when auto-detection returns `unknown`.
+
+The Settings page UI writes `io_link` fields via `PUT /api/io-link/config`. `port_labels` must be edited in the file directly. Legacy fields (`dobot`, `plc`, `vision`) in the file are unused.
 
 ## Pi Infrastructure
 
@@ -133,7 +146,7 @@ The Settings page UI writes to this file via `PUT /api/io-link/config`. Legacy f
 |-----------|--------|
 | Web server | nginx on port 80, root `/var/www/im-sensors/` |
 | API server | uvicorn/FastAPI on `127.0.0.1:8000`, proxied via nginx `/api/` and `/ws` |
-| Kiosk | Chromium launched by `/home/pi/kiosk.sh` via Openbox autostart, runs as user `pi` |
+| Kiosk | Chromium launched by `/home/pi/kiosk.sh` via Openbox autostart, runs as user `pi`. Script kills any existing Chromium before launching to prevent instance accumulation. |
 | Remote debug | `--remote-debugging-port=9222` always enabled in kiosk.sh |
 | Display | X11 + Openbox on `:0`, 1024×600 WaveShare capacitive touchscreen |
 

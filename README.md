@@ -8,18 +8,21 @@ Web dashboard for monitoring **IFM IO-Link Master** devices (AL1100/AL1300/AL135
 
 ## Features
 
-- **Industrial HMI Dashboard** – Mimic-style homepage with real-time sensor status (Temperature, Photoelectric, Proximity, Status LED), condition monitoring charts, and live datastream terminal log
+- **Industrial HMI Dashboard** – Mimic-style homepage with real-time sensor status (Temperature, Capacitive, Photoelectric, Status LED), condition monitoring charts, and live datastream terminal log
 - **Real-time updates** via WebSocket — no browser polling
-- **IO-Link page** – Compact port table; blank columns auto-hidden; per-port supervision, software, and process-data detail cards
+- **IO-Link page** – Compact port table; blank columns auto-hidden; per-port supervision, software, and process-data detail cards with dielectric value bar for capacitive sensors
 - **Supervision trends** – current, voltage, temperature time-series charts
-- **Connection Diagnostics** – Timeline chart, poll latency graph, recent events table, live backend log viewer, uptime counter, and time-since-last-drop stat
+- **Connection Diagnostics** – Timeline chart, poll latency graph, recent events table, live backend log viewer, uptime counter, and time-since-last-drop stat (IO-Link Master only)
+- **Edge Device page** – Raspberry Pi runtime stats: CPU/memory rolling charts, CPU temperature, load average, service health, and Chromium kiosk process count
+- **Adaptive polling** – Connected ports polled every 1 s; inactive/disconnected ports polled every 5 s to reduce AL1350 load without slowing live sensor response
+- **Port labels & device hints** – Display names and device-type overrides configurable per port in `config.json`; disconnected labelled ports shown as greyed-out with a Disconnected badge
 - **Wi-Fi configuration panel** – Connect the Pi to a new network from the browser Settings page (via `nmcli`)
 - **IO-Link port auto-configure** – Backend detects port mode and device type on first connect; supports mode set via the AL1350 IoT Core API
-- **Device type decoding** – Photoelectric, temperature, proximity, capacitive, and CL50 LED PDin/PDout decoded in every WebSocket push
+- **Device type decoding** – Photoelectric, temperature, capacitive (Carlo Gavazzi 4-byte format with 16-bit analogue dielectric value), proximity, and CL50 LED PDin/PDout decoded in every WebSocket push
 - **File logging** – Rotating log at `logs/app.log` (10 MB × 5 files); in-memory ring buffer served at `/api/logs`
 - **Circuit breaker** – 5-failure open, 15 s recovery; transitions logged with context
 - **Change Master IP from UI** – No config file edits needed
-- **Light & dark theme** – Theme-aware styling, persisted in `localStorage`
+- **Light & dark theme** – Theme-aware IO-Link logo, persisted in `localStorage`
 
 ---
 
@@ -45,10 +48,19 @@ Edit `backend/config.json` and set your master's IP (or change it later from the
     "master_ip": "192.168.7.4",
     "port": 80,
     "poll_interval_sec": 1,
+    "disconnected_poll_interval_sec": 5,
     "timeout_sec": 3
+  },
+  "port_labels": {
+    "1": {"label": "Temperature Sensor",                 "device_type_hint": "temperature"},
+    "2": {"label": "Capacitive Sensor (RS PRO 2377240)", "device_type_hint": "capacitive"},
+    "3": {"label": "Photoelectric Sensor (RS PRO)",      "device_type_hint": "photo_electric"},
+    "4": {"label": "Light Stack",                        "device_type_hint": "status_led"}
   }
 }
 ```
+
+`poll_interval_sec` controls how often connected ports are queried. `disconnected_poll_interval_sec` controls how often inactive ports are re-checked (saves AL1350 requests when sensors are unplugged). `port_labels` sets the display name and device-type hint per port; the label overrides the raw product name from the device tree.
 
 ### 2. Install and run the backend
 
@@ -75,7 +87,7 @@ Open the URL shown (e.g. **http://localhost:5173**). To target a different backe
 
 The default homepage provides:
 
-- **Current State Overview** – Clickable mimic components for IO-Link Master, Temperature (PT100), Photoelectric, Proximity, and Status LED (CL50). Click any component to open its configuration modal.
+- **Current State Overview** – Clickable mimic components for IO-Link Master, Temperature, Capacitive (with live dielectric value bar), Photoelectric, and Status LED (CL50). Click any component to open its configuration modal.
 - **Condition Monitoring** – Temperature trend chart, signal quality bar, and cycle counter with alerts.
 - **Datastream Terminal** – Live PDin/PDout bytes and decoded values with port filter and CSV export.
 - **Health & Heartbeat** – Diagnostic status table and recent events log.
@@ -117,14 +129,15 @@ The repo builds and deploys the UI to [GitHub Pages](https://hadefuwa.github.io/
 ├── public/                      # Static assets (logos, favicons, images)
 ├── scripts/pi/                  # Bash deploy helpers for Raspberry Pi
 ├── src/                         # Vite app source
-│   ├── main.js                   # App entry, routing, sidebar
+│   ├── main.js                   # App entry, routing, sidebar, logo theme switching
 │   ├── home-page.js              # HMI dashboard
 │   ├── io-link-page.js           # IO-Link port table + supervision charts
-│   ├── admin-page.js             # Diagnostics — latency, circuit breaker, log viewer
+│   ├── admin-page.js             # Connection Diagnostics — latency, circuit breaker, log viewer
+│   ├── edge-device-page.js       # Edge Device — Pi CPU/memory charts, service status
 │   ├── settings-page.js          # Theme selector + IO-Link config + Wi-Fi panel
 │   ├── style.css
 │   └── components/
-│       ├── mimic-components.js   # Industrial UI components (gauges, LEDs, counters)
+│       ├── mimic-components.js   # Industrial UI components (gauges, capacitive indicator, LEDs, counters)
 │       └── terminal-log.js       # Datastream terminal with CSV export
 ├── index.html
 ├── package.json
@@ -158,6 +171,7 @@ The repo builds and deploys the UI to [GitHub Pages](https://hadefuwa.github.io/
 - **Connection pooling** — Shared `AsyncClient` capped at 3 concurrent connections (AL1350 hardware limit).
 - **Retry with jitter** — Exponential backoff with random jitter. Removing it causes thundering herd on reconnect.
 - **Protocol fallback** — `getdatamulti` → individual GETs per endpoint. `degraded_mode=True` means getdatamulti is failing.
+- **Adaptive per-port polling** — Connected ports polled every `poll_interval_sec` (1 s); inactive/error ports polled every `disconnected_poll_interval_sec` (5 s). Skipped ports return cached data. Reduces AL1350 requests by ~3× when sensors are unplugged.
 
 ---
 

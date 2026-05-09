@@ -35,13 +35,22 @@ from decoder import (
 from al1350_client import AL1350ClientManager
 
 
-def _enrich_port(port_data: dict) -> dict:
-    """Add device_type, pdin_hex, pdout_hex, pdin_decoded, pdout_decoded to a port dict."""
+def _enrich_port(port_data: dict, port_labels: dict = None) -> dict:
+    """Add device_type, label, pdin_hex, pdout_hex, pdin_decoded, pdout_decoded to a port dict."""
     vendor_id = port_data.get('vendor_id', '')
     device_id = port_data.get('device_id', '')
     name = port_data.get('name', '')
 
     dtype = get_device_type(vendor_id, device_id, name)
+
+    # Apply port_labels config: label overrides the raw device name for display;
+    # device_type_hint fills in when auto-detection returns unknown.
+    port_cfg = (port_labels or {}).get(str(port_data.get('port', '')), {})
+    if port_cfg.get('label'):
+        port_data['label'] = port_cfg['label']
+    if dtype == 'unknown' and port_cfg.get('device_type_hint'):
+        dtype = port_cfg['device_type_hint']
+
     port_data['device_type'] = dtype
 
     pdin_raw = port_data.get('pdin', '')
@@ -171,6 +180,8 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+_BACKEND_START_TS: float = time.time()
+
 # Global state
 system_state = {
     'device_name': '',
@@ -292,7 +303,13 @@ async def poll_io_link_master():
             await al1350.on_config_changed()
             poll_start = time.time()
             circuit_before = al1350._breaker.state
-            ports, device_info, supervision = await al1350.poll_snapshot(include_static=include_static)
+            poll_interval = max(0.5, float(io_config.get('poll_interval_sec', POLL_INTERVAL)))
+            disconnected_interval = max(poll_interval, float(io_config.get('disconnected_poll_interval_sec', 5.0)))
+            ports, device_info, supervision = await al1350.poll_snapshot(
+                include_static=include_static,
+                connected_interval=poll_interval,
+                disconnected_interval=disconnected_interval,
+            )
 
             poll_ms = round((time.time() - poll_start) * 1000)
             poll_latencies.append({'ts': time.time(), 'latency_ms': poll_ms})
@@ -346,9 +363,10 @@ async def poll_io_link_master():
                             port_data[key] = prev.get(key, '')
 
             # Enrich each port with decoded pdin/pdout and device_type
+            port_labels = config.get('port_labels', {})
             if isinstance(ports, list):
                 for port_data in ports:
-                    _enrich_port(port_data)
+                    _enrich_port(port_data, port_labels=port_labels)
 
             # Update global state
             is_connected = al1350._breaker.state != "open"
@@ -415,8 +433,7 @@ async def poll_io_link_master():
         consecutive_failures = 0 if _current else consecutive_failures + 1
         _prev_success = _current
 
-        # Wait before next poll (re-reads config each loop so interval changes take effect)
-        poll_interval = max(0.5, float(io_config.get('poll_interval_sec', POLL_INTERVAL)))
+        # Wait before next poll — poll_interval already computed above
         await asyncio.sleep(poll_interval)
 
 
@@ -478,23 +495,16 @@ async def websocket_endpoint(websocket: WebSocket):
     try:
         # Send current state immediately
         await websocket.send_json(system_state)
-        
-        # Keep connection alive and handle incoming messages
-        while True:
-            try:
-                # Wait for any message (or timeout)
-                data = await asyncio.wait_for(websocket.receive_text(), timeout=30.0)
-                # Echo back or handle commands if needed
-                logger.debug(f"Received WebSocket message: {data}")
-            except asyncio.TimeoutError:
-                # Send heartbeat/ping to keep connection alive
-                await websocket.send_json({'type': 'ping', 'timestamp': time.time()})
-            except WebSocketDisconnect:
-                break
+
+        # Hold the connection open — broadcast_to_clients() pushes data every poll cycle
+        # (typically 1 s), which is sufficient keepalive.  We must NOT send anything here
+        # concurrently with broadcast_to_clients; concurrent sends on the same WebSocket
+        # corrupt its state and close the connection.
+        await websocket.receive_text()  # blocks until client closes or sends something
     except WebSocketDisconnect:
         pass
     except Exception as e:
-        logger.error(f"WebSocket error: {e}")
+        logger.debug(f"WS closed: {e}")
     finally:
         connected_clients.discard(websocket)
         logger.info(f"WS DISCONNECT from {client_host} — total clients: {len(connected_clients)}")
@@ -638,6 +648,7 @@ async def io_link_diagnostics():
     extra = al1350.diagnostics_snapshot()
     return JSONResponse({
         'success': True,
+        'start_ts': _BACKEND_START_TS,
         'events': connection_events[-200:],
         'latencies': poll_latencies[-100:],
         'stats': {
@@ -702,12 +713,15 @@ async def io_link_port_detail(port_num: int):
         'serial': port_info.get('serial', '')
     })
 
-    # Device type (name-based first, then fallback table)
-    port_data['device_type'] = get_device_type(
-        port_data['vendor_id'],
-        port_data['device_id'],
-        port_data['name']
-    )
+    # Device type (name-based first, then fallback table, then port_labels hint)
+    _pl = load_config().get('port_labels', {})
+    _pcfg = _pl.get(str(port_num), {})
+    dtype = get_device_type(port_data['vendor_id'], port_data['device_id'], port_data['name'])
+    if dtype == 'unknown' and _pcfg.get('device_type_hint'):
+        dtype = _pcfg['device_type_hint']
+    port_data['device_type'] = dtype
+    if _pcfg.get('label'):
+        port_data['label'] = _pcfg['label']
 
     # Get PDin
     pdin_raw = port_info.get('pdin', '')

@@ -16,9 +16,11 @@ DEVICE_TYPE_UNKNOWN = 'unknown'
 # Fallback: (vendor_id, device_id, type) — used when product name is generic/numeric.
 # vendor_id and device_id are compared as strings (after stripping 0x, uppercasing).
 DEVICE_ID_FALLBACK = [
-    # IFM capacitive sensor on port 2 (vendorID 1586 / 0x0632, deviceID 1052673 / 0x101001, name '2377240')
+    # Carlo Gavazzi / RS PRO capacitive sensor M18, model 2377240
+    # (vendorID 1586 / 0x0632, deviceID 1052673 / 0x101001, productname '2377240')
     (1586, 1052673, DEVICE_TYPE_CAPACITIVE),
-    # IFM photoelectric sensor (vendorID 342 / 0x156, deviceID 131842 / 0x20302, productname 'unknown')
+    # RS PRO photoelectric sensor M18 diffuse, RS stock 0360240
+    # (vendorID 342 / 0x156, deviceID 131842 / 0x20302)
     (342, 131842, DEVICE_TYPE_PHOTO_ELECTRIC),
 ]
 
@@ -52,7 +54,7 @@ def get_device_type(vendor_id, device_id, name):
         return DEVICE_TYPE_TEMPERATURE
     if any(x in name_upper for x in ('LED', 'CL50', 'LIGHT', 'STACK', 'TOWER')):
         return DEVICE_TYPE_STATUS_LED
-    if any(x in name_lower for x in ('capacitive', 'ki', 'kq', 'kc')):
+    if any(x in name_lower for x in ('capacitive', 'ki', 'kq', 'kc')) or '23772' in name_upper:
         return DEVICE_TYPE_CAPACITIVE
     if any(x in name_lower for x in ('proximity', 'inductive', 'prox')):
         return DEVICE_TYPE_PROXIMITY
@@ -109,8 +111,8 @@ def decode_temperature_pdin(bytes_data):
     if isinstance(bytes_data, bytearray):
         bytes_data = list(bytes_data)
     decoded['raw_hex'] = ''.join(f'{b:02X}' for b in bytes_data)
-    # 16-bit little-endian signed, 0.1 °C (common in IO-Link temp sensors)
-    raw = bytes_data[0] | (bytes_data[1] << 8)
+    # 16-bit big-endian signed, 0.1 °C (IFM TV7xxx series: MSB first in bytes 0-1)
+    raw = (bytes_data[0] << 8) | bytes_data[1]
     if raw >= 0x8000:
         raw = raw - 0x10000
     decoded['temperature_c'] = round(raw * 0.1, 1)
@@ -144,11 +146,15 @@ def decode_proximity_pdin(bytes_data):
 
 def decode_capacitive_pdin(bytes_data):
     """
-    Decode Process Data In for IFM capacitive sensors.
-    Typical IFM 4-byte format: last byte bit 0 = switching output, bit 1 = secondary output.
+    Decode Process Data In for Carlo Gavazzi / RS PRO capacitive sensors (23772xx series).
+    4-byte process data layout:
+      Bytes 0-1: 16-bit analogue value (dielectric measurement, big-endian)
+      Byte 2:    bit 1 = SSC2, bit 0 = SSC1 (inactive by default)
+      Byte 3:    bit 1 = SO2,  bit 0 = SO1  (primary switching output)
     """
     decoded = {
         'object_detected': False,
+        'analogue_value': None,
         'raw_hex': '',
         'description': 'No data'
     }
@@ -157,10 +163,18 @@ def decode_capacitive_pdin(bytes_data):
     if isinstance(bytes_data, bytearray):
         bytes_data = list(bytes_data)
     decoded['raw_hex'] = ''.join(f'{b:02X}' for b in bytes_data)
-    # Use last byte for switching state (IFM capacitive sensors encode output in LSB of last byte)
-    last = bytes_data[-1]
-    decoded['object_detected'] = bool(last & 0x01) or bool(last & 0x02)
-    decoded['description'] = 'Object detected' if decoded['object_detected'] else 'No object'
+
+    if len(bytes_data) >= 4:
+        analogue = (bytes_data[0] << 8) | bytes_data[1]
+        decoded['analogue_value'] = analogue
+        decoded['object_detected'] = bool(bytes_data[3] & 0x01)
+        state = 'Object detected' if decoded['object_detected'] else 'No object'
+        decoded['description'] = f'{state} | Analogue: {analogue}'
+    else:
+        # Shorter payload fallback: last byte bit 0 = switching output
+        last = bytes_data[-1]
+        decoded['object_detected'] = bool(last & 0x01) or bool(last & 0x02)
+        decoded['description'] = 'Object detected' if decoded['object_detected'] else 'No object'
     return decoded
 
 

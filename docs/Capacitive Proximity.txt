@@ -1,0 +1,3671 @@
+ENGLISH
+
+RS PRO IO-Link
+capacitive sensors
+
+M18 and M30
+2377236, 2377237, 2377238, 2377240,
+2377241, 2377242, 2377243 and 2377244
+
+Instruction manual
+
+Table of contents
+1.
+
+2.
+
+3.
+4.
+5.
+6.
+
+7.
+
+Introduction .......................................................................................................................................... 4
+1.1 Description ..................................................................................................................................... 4
+1.2 Validity of documentation ........................................................................................................... 4
+1.3 Who should use this documentation .......................................................................................... 4
+1.4 Use of the product ........................................................................................................................ 4
+1.5 Safety precautions ........................................................................................................................ 4
+1.6 Other documents.......................................................................................................................... 4
+1.7 Acronyms ....................................................................................................................................... 5
+Product.................................................................................................................................................. 6
+2.1 Main features................................................................................................................................. 6
+2.2 Type selection................................................................................................................................ 6
+2.3 Operating modes ......................................................................................................................... 7
+2.3.1 SIO mode .................................................................................................................................... 7
+2.3.2 IO-Link mode .............................................................................................................................. 7
+2.4 Output Parameters ....................................................................................................................... 8
+2.4.1 Sensor front ................................................................................................................................. 8
+2.4.2 Input selector ........................................................................................................................... 11
+2.4.3 Logic function block................................................................................................................ 11
+2.4.4 Timer (Can be set individually for Out1 and Out2) .............................................................. 13
+2.4.5 Output Inverter ......................................................................................................................... 16
+2.4.6 Output stage mode ................................................................................................................ 16
+2.5 Teach procedure ........................................................................................................................ 17
+2.5.1 External Teach (Teach-by-wire) ............................................................................................. 17
+2.5.2 Teach from IO-Link Master ...................................................................................................... 17
+2.6 Sensor Specific adjustable parameters .................................................................................... 20
+2.6.1 Selection of local or remote adjustment .............................................................................. 20
+2.6.2 Process data and variables .................................................................................................... 20
+2.6.3 Sensor application setting ...................................................................................................... 20
+2.6.4 Temperature alarm threshold ................................................................................................. 20
+2.6.5 Safe limits .................................................................................................................................. 21
+2.6.6 Event configuration ................................................................................................................. 21
+2.6.7 Quality of run QoR ................................................................................................................... 21
+2.6.8 Quality of Teach QoT .............................................................................................................. 22
+2.6.9 Detection Filter ......................................................................................................................... 22
+2.6.10 LED activation ........................................................................................................................ 22
+2.7 Diagnostic parameters ............................................................................................................... 23
+Wiring diagrams ................................................................................................................................. 24
+Commissioning .................................................................................................................................. 24
+Operation ........................................................................................................................................... 25
+IODD file and factory setting ............................................................................................................ 26
+6.1 IODD file of an IO-Link device ................................................................................................... 26
+6.2 Factory setting ............................................................................................................................. 26
+Appendix ............................................................................................................................................ 26
+7.1 Acronyms ..................................................................................................................................... 26
+7.2 IO-Link Device Parameters for M18 and M30 .......................................................................... 27
+7.2.1 Device parameters ................................................................................................................. 27
+7.2.2 SSC parameters ....................................................................................................................... 28
+7.2.3 Output Parameters .................................................................................................................. 29
+7.2.4 Sensor specific adjustable parameters ................................................................................. 30
+
+7.2.5 Diagnostic parameters ............................................................................................................ 31
+Dimensions ................................................................................................................................................. 32
+Mounting .................................................................................................................................................... 32
+Detection stability ..................................................................................................................................... 33
+Installation hints ......................................................................................................................................... 34
+3
+RS Components Ltd
+
+1. Introduction
+This manual is a reference guide for Carlo Gavazzi IO-Link capacitive proximity sensors M18 and
+M30.It describes how to install, setup and use the product for its intended use.
+
+1.1 Description
+Carlo Gavazzi capacitive sensors are devices designed and manufactured in accordance with
+IEC international standards and are subject to the Low Voltage (2014/35/EU) and
+Electromagnetic Compatibility (2014/30/EU) EC directives.
+All rights to this document are reserved by Carlo Gavazzi Industri, copies may be made for
+internal use only.
+Please do not hesitate to make any suggestions for improving this document.
+1.2 Validity of documentation
+This manual is valid only for M18 and M30 capacitive sensors with IO-Link and until new
+documentationis published.
+This instruction manual describes the function, operation and installation of the product for its
+intended use.
+1.3 Who should use this documentation
+This manual contains important information regarding installation and must be read and
+completely understood by specialized personnel dealing with these proximity capacitive
+sensors.
+We highly recommend that you read the manual carefully before installing the sensor. Save the
+manual forfuture use. The Installation manual is intended for qualified technical personnel.
+1.4 Use of the product
+Capacitive proximity sensors are non-contact devices capable of measuring the position
+and/or change of position of any conductive target. They are also capable of measuring
+thickness or density of non- conductive materials. Capacitive proximity sensors are used in a
+wide variety of applications including plastic moulding processing, feeding systems for chicken
+or pigs, assembly line testing, filling or emptyingprocesses of solid or liquid objects.
+The M18 and M30 sensors are equipped with IO-Link communication. By using an IO-Link master
+it is possible to operate and configure these devices.
+
+1.5 Safety precautions
+This sensor must not be used in applications where personal safety depends on the function of the
+sensor (Thesensor is not designed according to the EU Machinery Directive).
+Installation and use must be carried out by trained technical personnel with basic electrical
+installation knowledge.
+The installer is responsible for correct installation according to local safety regulations and must
+ensure thata defective sensor will not result in any hazard to people or equipment. If the sensor is
+defective, it must be replaced and secured against unauthorised use.
+
+1.6 Other documents
+It is possible to find the datasheet, the IODD file and the IO-Link parameter manual on the
+Internet athttp://xxxxxxxxxxxxxxxxxx
+
+4
+RS Components Ltd
+
+1.7 Acronyms
+I/O
+PD
+PLC
+SIO
+SP
+IODD
+IEC
+NO
+NC
+NPN
+PNP
+Push-Pull
+QoR
+QoT
+UART
+SO
+SSC
+
+Input/Output
+Process Data
+Programmable Logic Controller
+Standard Input Output
+Setpoints
+I/O Device Description
+International Electrotechnical Commission
+Normally Open contact
+Normally Closed contact
+Pull load to ground
+Pull load to V+
+Pull load to ground or V+
+Quality of Run
+Quality of Teach
+Universal Asynchronous Receiver-Transmitter
+Switching Output
+Switching Signal Channel
+
+5
+RS Components Ltd
+
+2. Product
+2.1 Main features
+IO-Link RS Components 4-wire DC 4th Generation Tripleshield sensors, built to the highest
+quality standards, are available in two different housing sizes.
+• M18-cylindrical threaded barrel housing for flush or non-flush installation with 4-pole M12
+connectoror 2 metre PVC cable.
+• M30-cylindrical threaded barrel housing for flush or non-flush installation with 4-pole M12
+connectoror 2 metre PVC cable.
+They can operate in standard I/O mode (SIO), which is the default operation mode. When
+connectedto an IO-Link master, they automatically switch to IO-Link mode and can be
+operated and easily configured remotely.
+Thanks to their IO-Link interface, these devices are much more intelligent and feature many
+additionalconfiguration options, such as the settable sensing distance and hysteresis, also
+timer functions of theoutput. Advanced functionalities such as the Logic function block
+and the possibility to convert one output into an external input makes the sensor highly
+flexible in solving decentralized sensing tasks.
+
+2.2 Type selection
+Housing diameter
+
+Connection
+
+Distance
+
+Mounting
+
+Code
+
+8 mm
+
+Flush
+
+2377236
+
+12 mm
+
+Non-flush
+
+2377238
+
+8 mm
+
+Flush
+
+2377237
+
+12 mm
+
+Non-flush
+
+2377240
+
+16 mm
+
+Flush
+
+2377241
+
+25 mm
+
+Non-flush
+
+2377243
+
+16 mm
+
+Flush
+
+2377242
+
+25 mm
+
+Non-flush
+
+2377244
+
+Cable
+M18
+Plug
+
+Cable
+M30
+Plug
+
+6
+RS Components Ltd
+
+2.3 Operating modes
+IO-Link capacitive sensors are provided with two switching outputs (SO) and can operate
+in two different modes: SIO mode (standard I/O mode) or IO-Link mode.
+2.3.1 SIO mode
+When the sensor operates in SIO mode (default), an IO-Link master is not required. The
+device worksas a standard capacitive sensor, and it can be operated via a fieldbus
+device or a controller (e.g.a PLC) when connected to its PNP, NPN or push-pull digital
+inputs (standard I/O port). One of the greatest benefits of these capacitive sensors is the
+possibility to configure them via an IO-Link masterand then, once disconnected, they will
+keep the last parameter and configuration settings. In this way it is possible, for example, to
+configure the outputs of the sensor individually as a PNP, NPN orpush-pull, or to add timer
+functions such as T-on and T-off delays or logic functions and thereby satisfy several
+application requirements with the same sensor.
+2.3.2 IO-Link mode
+IO-Link is a standardized IO technology that is recognized worldwide as an international
+standard (IEC 61131-9).
+It is today considered to be the “USB interface” for sensors and actuators in the industrial
+automationenvironment.
+When the sensor is connected to one IO-Link port, the IO-Link master sends a wakeup
+request (wakeup pulse) to the sensor, which automatically switches to IO-Link mode: pointto-point bidirectional communication then starts automatically between the master and
+the sensor.
+IO Link communication requires only standard 3 wire unshielded cable with a maximum length
+L+
+
+2
+
+1
+3
+
+IO-Link
+4
+
+C/Q
+SIO
+
+L-
+
+IO-Link communication takes place with a 24 V pulse modulation, standard UART protocol
+via the switching and communication cable (combined switching status and data channel
+C/Q) PIN 4 or black wire.
+For instance, an M12 4-pin male connector has:
+• Positive power supply: pin 1, brown
+• Negative power supply: pin 3, blue
+• Digital output 1: pin 4, black
+• Digital output 2: pin 2, white
+The transmission rate of M18 and M30 sensors is 38.4 kBaud (COM2).
+Once connected to the IO-Link port, the master has remote access to all the parameters
+of the sensorand to advanced functionalities, allowing the settings and configuration to be
+changed during operation, and enabling diagnostic functions, such as temperature
+warnings, temperature alarms andprocess data.
+7
+RS Components Ltd
+
+Thanks to IO-Link it is possible to see the manufacturer information and part number (Service
+Data) ofthe device connected, starting from V1.1. Thanks to the data storage feature it is
+possible to replacethe device and automatically have all the information stored in the old
+device transferred into the replacement unit.
+Access to internal parameters allows the user to see how the sensor is performing, for
+example by reading the internal temperature.
+Event Data allows the user to get diagnostic information such as an error, an alarm, a
+warning or a communication problem.
+There are two different communication types between the sensor and the master and they
+are independent of each other:
+• Cyclical for process data and value status – this data is exchanged cyclically.
+• Acyclical for parameter configuration, identification data, diagnostic information
+and events(e.g. error messages or warnings) – this data can be exchanged on
+request.
+2.4 Output Parameters
+The sensor measures five different physical values. These values can be independently
+adjusted and used as source for the Switching Output 1 or 2; in addition to those an external
+input can be selectedfor SO2. After selecting one of these sources, it is possible to configure
+the output of the sensor with an IO-Link master, following the six steps shown in the Switching
+Output setup below.
+Once the sensor has been disconnected from the master, it will switch to the SIO mode and
+keep thelast configuration setting
+1
+
+2
+
+Sensor front
+
+Selector
+A
+
+S.P., Two P.
+1. SSC1 Window,
+Adj. Hyst.
+S.P., Two P.
+2. SSC2 Window,
+Adj. Hyst.
+3. Dust 1
+4. Dust 2
+5. Temp
+6. EXT-Input
+
+3
+
+4
+
+5
+
+6
+
+Logic
+A-B
+
+Time
+delay
+
+Output
+inverter
+
+Sensor
+output
+
+One
+of1 to
+6
+
+B AND, OR,
+XOR, S-R
+divider
+
+ON, OFF
+One-shot
+
+N.O., N.C.
+
+NPN, PNP,
+Push-Pull
+
+Selector
+B
+
+Logic
+A-B
+
+Time
+delay
+
+Output
+inverter
+
+Sensor
+output
+
+One
+of1 to
+6
+
+A AND, OR,
+XOR, S-R
+B divider
+
+ON, OFF
+One-shot
+
+N.O., N.C.
+
+NPN, PNP,
+PushPullEXTInput
+
+A
+
+Out 1
+
+Out 2
+EXTInput
+
+1
+2.4.1. Sensor front
+When an object, solid or liquid, approaches the face of the sensor, the capacitance of the
+detectingcircuit is influenced and the sensor output changes its status.
+2.4.1.1. SSC (Switching Signal Channel)
+For presence (or absence of presence) detection of an object in front of the face of the
+sensor, the following settings are available: SSC1 or SSC2.
+The setpoints can be set from 0 to 10.000 units which represent the change of capacitance
+of the detecting circuit. The higher the value, the closer the target appears to the sensing
+face of the sensor,also a higher dielectric value of the target will increase the value. E.g. a
+metal target has a higher dielectric value than a plastic target.
+8
+RS Components Ltd
+
+2.4.1.2. Switchpoint mode:
+The Switchpoint mode setting can be used to create more advanced output behaviour.
+The followingswitchpoint modes can be selected for the switching behaviour of SSC1 and
+SSC2
+Disabled
+SSC1 or SSC2 can be disabled individually, but this will also disable the output if it is
+selectedin the input selector (the logic value will always be “0”).
+Single point mode
+The switching information changes, when the measurement value passes the threshold
+defined insetpoint SP1 with rising or falling measurement values taking into
+Hysteresi
+
+Sensor
+OFF
+
+ON
+SP1
+
+Sensing distance
+
+Example of presence detection - with non-
+
+Two point mode
+The switching information changes when the measurement value passes the threshold
+defined in setpoint SP1. This change occurs only with rising measurement values. The
+switching information also changes when the measurement value passes the threshold
+defined in setpoint SP2. This change occurs only with falling measurement values.
+Hysteresis is not considered in this case
+Hysteresi
+
+Sensor
+OFF
+
+ON
+SP2
+
+Sensing distance
+
+SP1
+Example of presence detection - with non-
+
+Window mode
+The switching information changes, when the measurement value passes the thresholds
+defined insetpoint SP1 and setpoint SP2, with rising or falling measurement values, taking
+into considerationthe hysteresis.
+Hyst
+
+Hyst
+
+Sensor
+OFF
+
+OFF
+
+ON
+
+Sensing distance
+
+window
+
+SP2
+
+SP1
+
+Example of presence detection - with non9
+RS Components Ltd
+
+2.4.1.3. Hysteresis Settings
+In SSC1 and SSC2 - single point mode and in windows mode the hysteresis can be set
+between 1 and100 % of the actual switching value. Standard settings depend on the
+i Flush
+t
+6%
+M18
+M18 Non15%
+flushM30
+7%
+Fl
+M30hNon10%
+(SP2 + Hysteresis < SP1) & (SP1 + hysteresis < Sensing range upper limit).
+Information
+An extended hysteresis is generally used to solve vibration or EMC issues in the
+2.4.1.4. Dust alarm 1 and Dust alarm 2
+The safe limit between when the sensing output is switching and the value at which the
+sensor candetect safely even with a slightly build up of dust, can be set.
+See 2.6.5 Safe limits.
+2.4.1.5. Temperature alarm (TA)
+The sensor constantly monitors the internal temperature in the front part of the sensor. Using
+the temperature alarm setting it is possible to get an alarm from the sensor if temperature
+thresholds are exceeded. See §2.6.4
+The temperature alarm has two separate values, one for setting maximum temperature
+and one for setting minimum temperature.
+It is possible to read the temperature of the sensor via the acyclic IO-Link parameter data.
+NOTE!
+The temperature measured by the sensor will always be higher than the ambient
+temperature, due tointernal heating.
+The difference between ambient temperature and internal temperature is influenced by
+how the sensoris installed in the application. If the sensor is installed in a metal bracket the
+difference will be lowerthan if the sensor is mounted in a plastic one.
+2.4.1.6. External input
+The output 2 (SO2) can be configured as an external input allowing external signals to be
+fed into thesensor, this can be from a second sensor or from a PLC or directly from machine
+output.
+
+10
+RS Components Ltd
+
+EN
+
+2
+Sensor front
+S.P., Two P.
+1. SSC1 Window,
+Adj. Hyst.
+S.P., Two P.
+2. SSC2 Window,
+Adj. Hyst.
+3. Dust 1
+4. Dust 2
+5. Temp
+6. EXT-Input
+
+Selector
+A
+
+Logic
+A-B
+
+Time
+delay
+
+Output
+inverter
+
+Sensor
+output
+
+One
+of1 to
+6
+
+B AND, O R,
+XOR, S-R
+divider
+
+ON, OFF
+Oneshot
+
+N.O., N.C.
+
+NPN, PNP,
+Push-Pull
+
+Selector
+B
+
+Logic
+A-B
+
+Time
+delay
+
+Output
+inverter
+
+Sensor
+output
+
+One
+of1 to
+6
+
+A AND, O R,
+XOR, S-R
+divider
+B
+
+ON, OFF
+Oneshot
+
+A
+
+Ch ann el A
+Ch ann el B
+
+N.O., N.C.
+
+NPN, PNP,
+PushPullEXTInput
+
+Out
+
+Out
+EXTInpu
+
+2.4.2.
+Input selector
+This function block allows the user to select any of the signals from the “sensor front” to
+the ChannelA or B.
+Channels A and B: can select from SSC1, SSC2, Dust1, Dust2, Temperature alarm and
+i
+3
+
+Sensor front
+S.P., Two P.
+1. SSC1 Window,
+Adj. Hyst.
+S.P., Two P.
+2. SSC2 Window,
+Adj. Hyst.
+3. Dust 1
+4. Dust 2
+5. Temp
+6. EXT-Input
+
+Selector
+A
+
+Logic
+A-B
+
+Time
+delay
+
+Output
+inverter
+
+Sensor
+output
+
+One
+of1 to
+6
+
+B AND, OR,
+XOR, S-R
+divider
+
+ON, OFF
+One-shot
+
+N.O., N.C.
+
+NPN, PNP,
+Push-Pull
+
+Selector
+B
+
+Logic
+A-B
+
+Time
+delay
+
+Output
+inverter
+
+Sensor
+output
+
+One
+of1 to
+6
+
+A AND, OR,
+XOR, S-R
+B divider
+
+ON, OFF
+One-shot
+
+A
+
+Ou t 1
+Ou t 2
+
+N.O., N.C.
+
+NPN, PNP,
+PushPullEXTInput
+
+Out
+
+Out
+EXTInpu
+
+2.4.3.
+Logic function block
+In the logic function block a logic functionca be added directly to the selected signals
+from the inputselector without using a PLC – making decentralised decisions possible.
+The logic functions available are: AND, OR, XOR, SR-FF.
+
+11
+RS Components Ltd
+
+AND
+Symbol
+
+2-input AND Gate
+
+Truth table
+A
+
+B
+
+Q
+
+0
+
+0
+
+0
+
+0
+
+1
+
+0
+
+1
+
+0
+
+0
+
+1
+
+1
+
+1
+
+Boolean Expression Q = A.B
+
+Read as A AND B gives Q
+
+OR
+Symbol
+
+2-input OR Gate
+
+Truth table
+A
+
+B
+
+Q
+
+0
+
+0
+
+0
+
+0
+
+1
+
+1
+
+1
+
+0
+
+1
+
+1
+
+1
+
+1
+
+Boolean Expression Q = A + B
+
+Read as A OR B gives Q
+
+XOR
+Symbol
+
+2-input XOR Gate
+Boolean Expression Q = A + B
+12
+RS Components Ltd
+
+Truth table
+A
+
+B
+
+Q
+
+0
+
+0
+
+0
+
+0
+
+1
+
+1
+
+21-input OR Gate 0
+
+1
+
+1
+
+0
+
+1
+
+A OR B but NOT BOTH gives Q
+
+“Gated SR-FF” function
+The function is designed (to: e.g. function) as a filling or emptying function using only two
+intercon-nected sensors
+Symbol
+
+Truth table
+A
+
+B
+
+Q
+
+0
+
+0
+
+0
+
+0
+
+1
+
+X
+
+1
+
+0
+
+X
+
+1
+
+1
+
+1
+
+X – no changes to the
+4
+
+Sensor front
+S.P., Two P.
+1. SSC1 Window,
+Adj. Hyst.
+S.P., Two P.
+2. SSC2 Window,
+Adj. Hyst.
+3. Dust 1
+4. Dust 2
+5. Temp
+6. EXT-Input
+
+Selector
+A
+
+A
+
+Logic
+A-B
+
+Time
+delay
+
+Output
+inverter
+
+Sensor
+output
+NPN, PNP,
+Push-Pull
+
+Ou 1
+
+One
+of1 to
+6
+
+B AND, OR,
+XOR, S-R
+divider
+
+ON, OFF
+One-shot
+
+N.O., N.C.
+
+Selector
+B
+
+Logic
+A-B
+
+Time
+delay
+
+Output
+inverter
+
+Sensor
+output
+
+One
+of1 to
+6
+
+AND, OR,
+A XOR, S-R
+B divider
+
+ON, OFF
+One-shot
+
+N.O., N.C.
+
+NPN, PNP,
+Push-Pull
+EXT-Input
+
+Ou t 2
+
+Out 1
+
+Out 2
+EXTInput
+
+2.4.4. Timer (Can be set individually for Out1 and Out2)
+The Timer allows the user to introduce different timer functions by editing the 3 timer
+parameters:
+• Timer mode
+• Timer scale
+• Timer value
+2.4.4.1. Timer mode
+th
+This selects which type of timer function is introduced on the Switching Output.
+ff ll i
+i
+ibl
+2.4.4.1.1. Disabled
+This option disables the timer function no matter how the timer scale and timer delay is
+set up.
+2.4.4.1.2. Turn On delay (T-on)
+The activation of the switching output is generated after the actual sensor actuation
+13
+RS Components Ltd
+
+Presence
+tParregseetnce of
+
+N.O.
+
+Ton
+
+Ton
+
+Ton
+
+Example with normally open
+2.4.4.1.3. Turn Off delay (T-off)
+The deactivation of the switching output is delayed until after to the time of removal
+of the targetin the front of the sensor, as like shown in the figure below.
+Presence
+tParregseetnce of
+
+N.O.
+
+Toff
+
+Toff
+
+Toff
+
+Toff
+
+Example with normally open
+output
+2.4.4.1.4. Turn ON and Turn Off delay (T-on and T-off)
+When selected, both the T-on and the Toff delays are applied to the generation of
+th
+it hi
+t t
+Presence of
+
+N.O.
+
+Ton
+
+Ton
+
+Toff
+
+Ton
+
+Toff
+
+Example with normally open
+
+14
+RS Components Ltd
+
+2.4.4.1.5. One shot leading edge
+Each time a target is detected in front of the sensor the switching output generates
+a pulse ofconstant length on the leading edge of the detection. See figure below.
+
+Presence of
+
+Example with normally open
+2.4.4.1.6. One shot trailing edge
+Similar in function to the one shot leading edge mode, but in this mode the
+switching output ischanged on the trailing edge of the activation as shown in the
+fi
+b l
+Presence of
+
+Example with normally open
+2.4.4.1.7. Timer scale
+The parameter defines if the delay specified in the Timer delay should be in
+milliseconds, secondsor minutes
+2.4.4.1.8. Timer Value
+The parameter defines the actual duration of the delay. The delay can be set to any
+integer valuebetween 1 and 32 767
+
+15
+RS Components Ltd
+
+5
+
+Sensor front
+S.P., Two P.
+1. SSC1 Window,
+Adj. Hyst.
+S.P., Two P.
+2. SSC2 Window,
+Adj. Hyst.
+3. Dust 1
+4. Dust 2
+5. Temp
+6. EXT-Input
+
+Selector
+A
+
+Logic
+A-B
+
+Time
+delay
+
+Output
+inverter
+
+Sensor
+output
+
+One
+of1 to
+6
+
+AND, OR,
+B XOR, S-R
+divider
+
+ON, OFF
+One-shot
+
+N.O., N.C.
+
+NPN, PNP,
+Push-Pull
+
+Selector
+B
+
+Logic
+A-B
+
+Time
+delay
+
+Output
+inverter
+
+Sensor
+output
+
+One
+of1 to
+6
+
+AND, OR,
+A XOR, S-R
+B divider
+
+ON, OFF
+One-shot
+
+N.O., N.C.
+
+NPN, PNP,
+Push-Pull
+EXT-Input
+
+A
+
+Ou t
+
+1
+
+Out 1
+
+Ou t 2
+
+Out 2
+EXTInput
+
+2.4.5. Output Inverter
+This function allows the user to invert the operation of the switching output between
+Normally Open and Normally Closed.
+RECOMMENDED FUNCTION
+The recommended function is found in the parameters under 64 (0x40) sub index 8 (0x08)
+for SO1and 65 (0x41) sub index 8 (0x08) for SO2. It has no negative influence on the Logic
+functions or thetimer functions of the sensor as it is added after those functions.
+CAUTION!
+The Switching logic function found under 61 (0x3D) sub index 1 (0x01) for SSC1 and 63 (0x3F)
+subindex 1 (0x01) for SSC2 are not recommended for use as they will have a negative
+influence on thelogic or timer functions. Using this function will turn an ON delay into an Off
+delay if it is added for the SSC1 and SSC2. It is only for the SO1 and SO2.
+6
+
+Sensor front
+S.P., Two P.
+1. SSC1 Window,
+Adj. Hyst.
+S.P., Two P.
+2. SSC2 Window,
+Adj. Hyst.
+3. Dust 1
+4. Dust 2
+5. Temp
+6. EXT-Input
+
+Selector
+A
+
+A
+
+Logic
+A-B
+
+One
+of1 to
+6
+
+AND, OR,
+B XOR, S-R
+divider
+
+Selector
+B
+
+Logic
+A-B
+
+One
+of1 to
+6
+
+A AND, OR,
+XOR, S-R
+B divider
+
+Time
+delay
+
+Output
+inverter
+
+Sensor
+output
+
+ON, OFF
+One-shot
+
+N.O., N.C.
+
+NPN, PNP,
+Push-Pull
+
+Time
+delay
+
+Output
+inverter
+
+Sensor
+output
+
+ON, OFF
+One-shot
+
+N.O., N.C.
+
+NPN, PNP,
+PushPullEXTInput
+
+Out
+
+1
+
+Out 2
+
+2.4.6. Output stage mode
+In this function block the user can select if the switching outputs should
+operate as:SO1:
+Disabled, NPN, PNP or Push-Pull configuration.
+SO2: Disabled, NPN, PNP, Push-Pull , External input (Active high/Pull-down),
+External input(Active low/pull up) or External Teach input.
+16
+RS Components Ltd
+
+Out 1
+
+Out 2
+EXTInput
+
+2.5. Teach procedure
+2.5.1. External Teach (Teach-by-wire)
+NB! This function works in single point mode and only for SP1 in
+SSC1.The Teach-by-wire must be set up first using an IO-link
+master:
+a) Select: “2=Teach by wire” in the Selection of local/remote adjustment parameters 68
+(0x44).
+b) Select: “1=Single Point Mode”, is already selected in “SSC1 Configuration”
+61(0x3D),“Mode 1” 2(0x02), (this value should already be set as
+default).
+c) Select: 6=Teach-In (Active High) in Channel 2 (SO2) 65 (0x41) sub index 1 (0x01).
+Teach-by-wire procedure.
+1) Place the target in front of the sensor and connect the teach-by-wire input (pin 2 white
+wire) to V+(pin 1 brown wire). The yellow LED will Flash with 1Hz (ON 100mS and OFF 900
+mS).
+2) Within 3-6 seconds the wire must be disconnected, and the yellow led will be flashing
+with 1Hz(ON 900 mS and OFF 100 mS).
+3) After a successful Teach the yellow LED will flash with 2 Hz (ON 250 mS and OFF 250 mS)
+2.5.2. Teach from IO-Link Master
+a) To enable Teach from the IO-Link master first disable the trimmer input:
+Select: “0=Disabled” in the Selection of local/remote adjustment parameters 68
+(0x44).
+b) The individual team commands can be written to index 2.
+2.5.2.1. Single point mode procedure
+Select the Switching channel to be taught
+a) Select: 1=SSC1 or 2=SSC2 in the “Teach-in Select” 58(0x3A) or 255 = All SSC.
+b) Change the Hysteresis if requested for SSC1 or SSC2.
+• “SSC1 configuration” 61(0x3D) “Hysteresis” 3(0x03).
+• “SSC2 configuration” 62(0x3E) “Hysteresis” 3(0x03).
+NB! It is not recommended to change the hysteresis below the values stated
+in the SSCparameter list.
+1) Single value teach command sequence:
+#65“SP1 Single value teach”
+#64“T
+h
+l ” ( ti
+l
+Sensor
+Command Sequence
+1) “SP1 Single value
+Teach”
+
+SSC
+
+Sensing
+
+17
+RS Components Ltd
+
+2) Dynamic teach command sequence
+#71“SP1 dynamic teach start”
+#72“SP1 dynamic teach stop”
+#64“Teach apply” (optional
+command)
+3) Two value teach command sequence
+#67“SP1 two value teach TP1”
+#68“SP1 two value teach TP2”
+#64“Teach apply” (optional
+
+SSC
+
+Sensor
+Command Sequence
+1) “SP1 Two value Teach
+TP1”
+2) “SP1 Two value Teach
+
+2.5.2.2.
+
+Sensing
+
+Two point mode procedure
+
+1) Two value teach command sequence:
+#67“SP1 two value teach TP1”
+#68“SP1 two value teach TP2”
+#64“Teach apply” (optional
+command)
+#69“SP2 two value teach TP1”
+#70“SP2 two value teach TP2”
+#64“Teach apply” (optional
+Sensor
+Command
+1) “SP1 Two value Teach
+TP1”
+2) “SP1 Two value Teach
+TP2”
+3) “Teach Apply”
+4) “SP2 Two value Teach
+
+18
+RS Components Ltd
+
+SSC
+Sensing
+
+2) Dynamic teach command sequence:
+#71“SP1 dynamic teach start”
+#72“SP1 dynamic teach stop”
+#73“SP2 dynamic teach start”
+#74“SP2 dynamic teach stop”
+#64“Teach apply” (optional
+command)
+Sensor
+
+SSC
+
+Command Sequence
+1) “SP1 Dynamic Teach
+Start”
+2) “SP2 Dynamic Teach
+
+2.5.2.3.
+
+Sensing
+
+Windows mode procedure
+
+1) Single value teach command sequence:
+#65“SP1 Single value
+teach”#66“SP2 Single
+value teach”
+#64“T
+h
+l ” ( ti
+l
+d)
+Sensor
+
+SSC
+
+Command Sequence
+1) “SP1 Single value
+Teach”
+3) “Teach Apply”
+2) “SP2 Single value
+
+Sensing
+
+2) Dynamic teach command sequence:
+#71“SP1 dynamic teach start”
+#72“SP1 dynamic teach stop”
+#73“SP2 dynamic teach start”
+#74“SP2 dynamic teach stop”
+#64“Teach apply” (optional
+command)
+Sensor
+Command Sequence
+1) “SP1 Dynamic Teach
+Start”
+2) “SP2 Dynamic Teach
+
+SSC
+Sensing
+
+19
+RS Components Ltd
+
+2.6. Sensor Specific adjustable parameters
+Besides the parameters directly related to output configuration, the sensor also have
+various internalparameters useful for setup and diagnostics.
+2.6.1. Selection of local or remote adjustment
+It is possible to select how to set the sensing distance by either selecting the Trimmer or
+Teach-by-wireusing the external input of the sensor, or to disable the potentiometer to
+make the sensor tamperproof.
+2.6.2. Process data and variables
+When the sensor is operated in IO-Link mode, the user has access to the cyclic Process Data
+Variable. By default the process data shows the following parameters as active: 16 bit
+Analogue value, SwitchingOutput1 (SO1) and Switching Output 2 (SO2).
+The following parameters are set as Inactive: SSC1, SSC2, DA1, DA2, TA, SC.
+However by changing the Process Data Configuration parameter, the user can decide to
+also enablethe status of the inactive parameters. This way several states can be observed
+in the sensor at the same time.
+
+Byte 0
+
+31
+
+Byte 1
+
+23
+
+30
+
+29
+
+28
+
+27
+
+26
+
+25
+
+24
+
+22
+
+21
+
+20
+
+19
+
+18
+
+17
+
+16
+
+MSB
+LSB
+
+Byte 2
+
+15
+
+Byte 3
+
+7
+
+14
+6
+
+13
+
+12
+
+11
+
+10
+
+9
+
+8
+
+SC
+
+TA
+
+DA2
+
+DA1
+
+SSC2
+
+SSC1
+
+5
+
+4
+
+3
+
+2
+
+1
+
+0
+
+SO2
+
+SO1
+
+4 Bytes
+Analogue value 16 … 31 (16 BIT)
+2.6.3. Sensor application setting
+The sensor has 3 pre-settings depending on the
+• Full scale range, the setpoints of the sensor can be adjusted at full scale and
+speed is set to maximum
+• Liquid level: this is to be used for slow moving objects with a high dielectric value
+such as inthe detection of water-based liquids. When this function is selected the
+teach and potentiometer settings are optimized to high range scaling.
+In this mode the “Filter Scaler” is set to 100
+• Plastic Pellets: this is to be used for slow moving objects with a low dielectric value
+such as inthe detection of plastic pellets. When this function is selected the teach
+and potentiometer settings are optimized to low range scaling.
+In this mode the “Filter Scaler” is set to 100.
+2.6.4. Temperature alarm threshold
+The temperature at which the temperature alarm will activate can be changed for the
+maximum and minimum temperature. This means that the sensor will give an alarm if the
+maximum or minimum temperature is exceeded. The temperatures can be set between 50 °C to +150 °C. The default factory settings are, Low threshold -30 °C and high threshold
++120 °C
+20
+RS Components Ltd
+
+2.6.5. Safe limits
+The sensor has a built-in in safety margin that helps to adjust the sensing up to the set points
+with an additional safety margin. The factory settings are twice the standard hysteresis of
+the sensor e.g. for a CA19CAN… sensor with a hysteresis of 15% the safety margin is set to
+30%.
+This value can be set individually from 0% to 100% for SSC1 or SSC2.
+2.6.6. Event configuration
+Temperature events transmitted over the IO-Link interface are turned off by default in
+the sensor. Ifthe user wants to get information about critical temperatures detected in the
+sensor application, this parameter allows the following 3 events to be enabled or disabled:
+•
+fault event:
+the sensor
+detects
+temperature
+theset
+specified
+Temperature over-run:
+the sensor
+detects
+temperatures
+higher outside
+than those
+in the
+• Temperature
+TemperatureAlarm threshold.
+• Temperature under-run: the sensor detects temperatures lower than those set in the
+TemperatureAlarm threshold.
+• Short-circuit: the sensor detects if the sensor output is short-circuited.
+• Maintenance: the sensor detects if maintenance is needed, e.g. the sensor needs
+l
+i
+2.6.7. Quality of run QoR
+The quality of run value informs the user about the actual sensing performance
+compared to the set-points of the sensor: the higher the value the better quality of
+detection.
+The value for QoR can vary from 0 … 255 %.
+The QoR value is updated for every detection
+c cle E amples of QoR is listed in the table
+Quality of run values
+Definitions
+> 150%
+
+Excellent sensing conditions, the sensor is not expected to
+have anymaintenance issues.
+
+100%
+
+50%
+
+Good sensing conditions, the sensor performs as well as when
+the set- points were taught or set-up manually with a safety
+margin of twice thestandard hysteresis.
+• Long term reliability is expected for all environmental
+conditions.
+M i t sensing conditions
+i
+t
+t dt b
+i d
+Average
+
+0%
+
+Poor to unreliable working sensing conditions are expected.
+
+• Short-term reliability and maintenance is expected due to
+environ-mental conditions
+• Reliable detection can be expected with restricted
+environmentalinfluence.
+
+21
+RS Components Ltd
+
+2.6.8.Quality of Teach QoT
+The quality of Teach value lets the user know how well the actually the tteach procedure
+was carriedout, in terms of the margin between the actual setpoints and the environmental
+influences on the sensor.
+The value for QoT can vary from 0 … 255 %.
+The QoT value is updated after every Teach
+procedure.Examples of QoT are listed in the table
+below
+Quality of teach value
+
+Definitions
+
+> 150%
+
+Excellent teach conditions, the sensor is not expected to
+have anymaintenance issues.
+
+100%
+
+Good teach conditions, the sensor has been taught with a
+safety mar-gin of twice the standard hysteresis.
+• Long term reliability is expected for all environmental
+conditions.
+i teach conditions.
+i
+i
+Average
+
+50%
+
+0%
+
+• Short-term reliability and maintenance is expected due to
+environ-mental conditions.
+• Reliable detection can be expected with restricted
+environmentalinfluence.
+Poor teach result.
+• Unreliable working sensing conditions are expected. (e.g.
+too smallmeasuring margin between the target and the
+di
+)
+
+2.6.9. Filter Scaler
+This function can increase the immunity towards unstable targets and electromagnetic
+disturbances:Its value can be set from 1 to 255, the default factory setting is 1.
+A filter setting of 1 gives the maximum sensing frequency and a setting of 255 gives the
+minimumsensing frequency.
+2.6.10. LED indication
+This parameter allows the user to disable the LED indications in the sensor if it is disturbing to
+have theLEDs lighting up in the application.
+
+22
+RS Components Ltd
+
+2.7. Diagnostic parameters
+2.7.1. Operating hours
+The sensor has a built-in counter that logs every hour in which the sensor has been
+operational. The maximum hours that can be recorded are 2 147 483 647 hours: this value
+can be read from an IO-Link master.
+2.7.2. Number of power cycles [cycles]
+The sensor has a built-in counter that logs every time the sensor has been powered-up. The
+value is saved every hour. The maximum numbers of power cycles that can be recorded is
+2 147 483 647. This value can be read from an IO-Link master.
+2.7.3. Maximum temperature – all time high [°C]
+The sensor has a built-in function that logs the highest temperature that the sensor has been
+exposedto during its full operational lifetime. This parameter is updated once per hour and
+can be read froman IO-Link master.
+2.7.4. Minimum temperature – all time low [°C]
+The sensor has a built-in function that logs the lowest temperature that the sensor has been
+exposed to during its full operational lifetime. This parameter is updated once per hour and
+can be read froman IO-Link master.
+2.7.5. Maximum temperature since last power-up [°C]
+From this parameter the user can get information about what the maximum registered
+temperature hasbeen since start-up. This value is not saved in the sensor.
+2.7.6. Minimum temperature since last power-up [°C]
+From this parameter the user can get information about what the minimum registered
+temperature hasbeen since start-up. This value is not saved in the sensor.
+2.7.7. Current temperature [°C]
+From this parameter the user can get information about the current temperature of the
+sensor.
+2.7.8. Detection counter [cycles]
+The sensor logs every time the SSC1 changes state. This parameter is updated once per hour
+and canbe read from an IO-Link master.
+2.7.9. Minutes above maximum temperature [min]
+The sensor logs how many minutes the sensor has been operational above the maximum
+temperature. The maximum number of minutes to be recorded is 2 147 483 647. This
+parameter is updated onceper hour and can be read from an IO-Link master.
+2.7.10. Minutes below minimum temperature [min]
+The sensor logs how many minutes the sensor has been operational below the minimum
+temperature. The maximum number of minutes to be recorded is 2 147 483 647. This
+parameter is updated onceper hour and can be read from an IO-Link master.
+
+23
+RS Components Ltd
+
+2.7.11. Maintenance event counter
+The sensor logs how many times the event counter has asked for maintenance.The
+maximum numberof events to be recorded is 2 147 483 647. This parameter is updated
+once per hour and can be read from an IO-Link master.
+2.7.12. Download counter
+The sensor logs how many times its parameters have been changed. The maximum number
+of changesto be recorded is 65 536. This parameter is updated once per hour and can be
+read from an IO-Linkmaster.
+NOTE!
+The temperature measured by the sensor will always be higher than the ambient
+temperature, due tointernal heating.
+The difference between ambient temperature and internal temperature is influenced by
+how the sensoris installed in the application. If the sensor is installed in a metal bracket the
+difference will be lowerthan if the sensor is mounted in a plastic one.
+
+3. Wiring diagrams
+
+1
+
+V
+
+4
+2
+3
+V
+PIN
+1
+2
+3
+4
+
+Color
+
+Signal
+
+Description
+
+Brown
+White
+Blue
+Black
+
+10 to 40 VDC
+Load
+GND
+Load
+
+Sensor Supply
+Output 2 / SIO mode / External input / External Teach
+Ground
+IO-Link /Output 1 /SIO mode
+
+4. Commissioning
+50 ms after the power supply is switched on, the sensor will be operational.
+If it is connected to an IO-link master, no additional setting is needed and the IO-Link
+communicationwill start automatically after the IO-Link master sends a wake-up request
+t th
+24
+RS Components Ltd
+
+5. Operation
+5.1. User interface of M18 and M30
+M18 and M30 sensors are equipped with one yellow and one green LED.
+SIO and IO-Link mode
+Yellow LED
+Green LED
+ON
+OFF
+ON
+OFF
+Flashing 10 Hz
+50% dutycycle
+Flashing
+(0,5 … 20 Hz)
+SIO mode only
+
+Detection
+
+ON
+ON
+OFF
+OFF
+
+ON
+ON
+-
+
+ON (Stable)*
+OFF (Stable)*
+ON (Not stable)
+OFF (Not stable)
+
+-
+
+ON
+
+Output shortcircuit
+
+-
+
+ON
+
+Timer indication
+
+-
+
+ON
+
+Teach activated (single point only)
+
+-
+
+ON
+
+Teach window (3-6 sec)
+
+-
+
+ON
+
+Teach Time out (12 sec)
+
+-
+
+ON
+
+Teach Successful
+
+Flashing 1 HZ
+ON 900 ms,
+OFF 100 mS
+
+ON
+
+Sensor is in IO_Link mode
+
+Flashing 1 Hz
+ON 100 mS
+OFF 900 mS
+Flashing 1 Hz
+ON 900 mS
+OFF 100 mS
+Flashing 10 Hz
+ON 50 mS
+Off 50 mS
+Flashing 2 Hz
+ON 250 mS
+Off 250 mS
+IO-Link mode only
+-
+
+Power
+
+* Possibility to disable both
+
+25
+RS Components Ltd
+
+6. IODD file and factory setting
+6.1. IODD file of an IO-Link device
+All features, device parameters and setting values of the sensor are collected in a file
+called I/O Device Description (IODD file). The IODD file is needed in order to establish
+communication between the IO-Link master and the sensor. Every supplier of an IO-Link
+device has to supply this file and makeit available for download on their web site. The file is
+compressed, so it is important to de-compress it.The IODD file includes:
+• process and diagnostic data
+•
+•
+•
+
+parameters description with the name, the allowed range, type of data and address
+(index andsub-index)
+communication properties, including the minimum cycle time of the device
+device identity, article number, picture of the device and Logo of the manufacturer
+
+6.2. Factory settings
+The Default factory settings are listed in appendix 7 under default values.
+
+7. Appendix
+7.1. Acronyms
+DA
+IntegerT
+OctetStringT
+PDV
+R/W
+RO
+SO
+SP
+SSC
+StringT
+TA
+UIntegerT
+WO
+
+26
+RS Components Ltd
+
+Dust Alarm
+Signed Integer
+Array of Octets
+Process Data Variable
+Read and Write
+Read Only
+Switching Output
+Set point
+Switching Signal Channel
+String of ASCII characters
+Temperature Alarm
+Unsigned Integer
+Write Only
+
+7.2. IO-Link Device Parameters for M18 and M30
+7.2.1. Device parameters
+
+Vendor Name
+
+Index
+Dec
+(Hex)
+
+16 (0x10)
+
+Acce
+ss
+R
+
+RS Components
+
+-
+
+Vendor Text
+
+17 (0x11)
+
+R
+
+www.xxxxxxxxxxxx.co
+
+Parameter Name
+
+Default value
+
+Data range
+
+Data
+Type
+
+Length
+
+StringT
+
+20 Byte
+
+-
+
+StringT
+
+26 Byte
+
+-
+
+StringT
+
+20 Byte
+
+-
+
+StringT
+
+13 Byte
+
+-
+
+StringT
+
+30 Byte
+
+-
+
+StringT
+
+13 Byte
+
+-
+
+StringT
+
+6
+Byte
+
+-
+
+StringT
+
+***
+
+Any string up to 32
+
+StringT
+
+6
+Byte
+max 32
+
+StringT
+
+max 32
+
+(Sensor
+name)
+
+Product Name
+
+18 (0x12)
+
+R
+O
+
+Product ID
+
+19 (0x13)
+
+Product Text
+
+20 (0x14)
+
+R
+O
+R
+
+Serial Number
+
+21 (0x15)
+
+R
+O
+
+Hardware Revision
+
+22 (0x16)
+
+R
+O
+
+Firmware Revision
+
+23 (0x17)
+
+Application Specific 24 (0x18)
+
+R
+O
+R
+
+Function Tag
+
+25 (0x19)
+
+R
+
+***
+
+Any string up to 32
+
+Location Tag
+
+26 (0x1A)
+
+R
+
+***
+
+Any string up to 32
+
+StringT
+
+max 32
+
+Error Count
+
+32 (0x20)
+
+R
+
+0
+
+0…65 535
+
+IntegerT
+
+16
+
+0 = Device is operating
+properly
+
+UInteger
+T
+
+8 Bit
+
+-
+
+0 = Device is
+operating properly 1
+= Maintenance
+required
+2 = Out-ofifi ti
+-
+
+-
+
+-
+
+Temperature over- -
+
+R
+O
+R
+
+-
+
+Temperature
+
+-
+
+R
+
+-
+
+Short-circuit
+
+-
+
+R
+
+Maintenaince
+
+40 (0x28)
+
+Device Status
+
+36 (0x24)
+
+Detailed Device
+
+37 (0x25)
+
+Temperature fault
+
+Process-DataInput
+
+-
+
+R
+O
+
+(EAN code of
+product)
+e g xxxxxxxxxxxxx
+Capacitive Proximity
+(Unique serial
+number)
+e g xxxxxxxxxxxx
+(Hardware
+revision)
+e g v01 00
+(Software revision)
+e.g. v01.00
+
+3
+
+-
+
+OctetStri
+T
+OctetStri
+
+3
+B t
+3
+
+-
+
+OctetStri
+
+3
+
+-
+
+-
+
+OctetStri
+
+3
+
+R
+
+-
+
+-
+
+OctetStri
+
+3
+
+R
+
+-
+
+-
+
+IntegerT
+
+32
+
+27
+RS Components Ltd
+
+7.2.2. SSC parameters
+Parameter Name
+
+Index
+Dec
+(Hex)
+
+Acce
+ss
+
+Default value
+
+Teach-In Select
+
+58 (0x3A)
+
+R
+W
+
+1 = Switching Signal
+Channel 1
+
+Teach-In Result
+
+59 (0x3B)
+
+-
+
+-
+
+Teach-in State
+
+1 (0x01)
+
+Flag SP1 TP1
+2 (0x02)
+TeachPoint 1 of Set
+i t1
+Flag SP1 TP2
+3 (0x03)
+TeachPoint 2 of Set
+i t1
+Flag SP2 TP1
+4 (0x04)
+TeachPoint 1 of Set
+i t2
+Flag SP2 TP2
+5 (0x05)
+TeachPoint 2 of Set
+i t2
+SSC1 Parameter
+60 (0x3C)
+(Switching Signal
+Ch
+l)
+Set point 1 (SP1)
+1 (0x01)
+Set point 2 (SP2)
+SSC1
+Configuration
+(S it hi
+Si
+l
+Switching Logic 1
+Mode 1
+
+Hysteresis 1
+SSC2 Parameter
+
+Data range
+0 = Default channel
+1 = Switching Signal
+Channel 1
+2 = Switching Signal
+Ch
+l 2 255 All
+-
+
+Data
+Type
+
+Length
+
+UInteger
+T
+
+8 bit
+
+RecordT
+
+8 bit
+
+R
+O
+
+0 = Idle
+
+R
+O
+R
+O
+R
+O
+R
+O
+
+0 = Not OK
+
+0 = Idle
+1 =Success
+4 = Wait for
+command 5 =
+Busy
+7 E
+0 = Not OK
+1 = OK
+
+0 = Not OK
+
+0 = Not OK
+1 = OK
+
+-
+
+-
+
+0 = Not OK
+
+0 = Not OK
+1 = OK
+
+-
+
+-
+
+0 = Not OK
+
+0 = Not OK
+1 = OK
+
+-
+
+-
+
+-
+
+-
+
+-
+
+-
+
+-
+
+-
+
+-
+
+-
+
+R/W
+
+1 000
+
+0 ... 10 000
+
+IntegerT
+
+16
+
+2 (0x02)
+
+R/W
+
+10 000
+
+0 ... 10 000
+
+IntegerT
+
+16
+
+61 (0x3D)
+
+-
+
+-
+
+-
+
+-
+
+-
+
+1 (0x01)
+
+R/W
+
+UInteger
+T
+
+8 bit
+
+2 (0x02)
+
+R/W
+
+UInteger
+T
+
+8 bit
+
+1 ... 100
+
+UInteger
+T
+
+16
+bit
+
+-
+
+-
+
+-
+
+3 (0x03)
+
+R/W
+
+62 (0x3E)
+
+0 = High active
+1 = Single Point
+Mode
+M18 Flush 6%
+M18 Nonflush 15%
+M30 Flush 7%
+M30 N
+-
+
+0 = High
+active 1 =
+L
+0 = Deactivated
+1 = Single
+Point Mode 2
+= Window
+M d
+
+Set point 1 (SP1)
+
+1 (0x01)
+
+R/W
+
+1 000
+
+0 ... 10 000
+
+IntegerT
+
+16
+
+Set point 2 (SP2)
+
+2 (0x02)
+
+R/W
+
+10 000
+
+0 ... 10 000
+
+IntegerT
+
+16
+
+SSC2 Configuration
+
+63 (0x3F)
+
+UInteger
+
+8 bit
+
+Switching Logic 2
+
+1 (0x01)
+
+R/W
+
+UInteger
+T
+
+8 bit
+
+Mode 2
+
+2 (0x02)
+
+R/W
+
+UInteger
+T
+
+8 bit
+
+Hysteresis 2
+
+3 (0x03)
+
+R/W
+
+UInteger
+T
+
+16
+bit
+
+28
+RS Components Ltd
+
+0 = High active
+1 = Single Point
+Mode
+M18 Flush 6%
+M18 Nonflush 15%
+M30 Flush 7%
+M30 N
+
+0 = High
+active 1 =
+L
+0 = Deactivated
+1 = Single
+Point Mode 2
+= Window
+M d
+1 ... 100
+
+7.2.3. Output Parameters
+
+64 (0x40)
+
+Acce
+ss
+
+Default value
+
+Channel 1 (SO1)
+
+Index
+Dec
+(Hex)
+
+Stage Mode 1
+
+1 (0x01)
+
+R/W
+
+1 = PNP output
+
+Input selector 1
+
+2 (0x02)
+
+R/W
+
+1 = SSC 1
+
+Timer 1 - Mode
+
+3 (0x03)
+
+R/W
+
+0 = Disabled timer
+
+Timer 1 - Scale
+
+4 (0x04)
+
+R/W
+
+0 = Milliseconds
+
+Timer 1 – Value
+
+5 (0x05)
+
+R/W
+
+Parameter Name
+
+Logic function 1
+
+7 (0x07)
+
+R/W
+
+Output Inverter 1
+
+8 (0x08)
+
+R/W
+
+Channel 2 (SO2)
+
+65 (0x41)
+
+Data
+Type
+
+Length
+
+UInteger
+T
+
+8 bit
+
+UInteger
+T
+
+8 bit
+
+UInteger
+T
+
+8 bit
+
+1 = Seconds
+2 = Minutes
+
+UInteger
+T
+
+8 bit
+
+0
+
+0 to 32’767
+
+IntegerT
+
+0 = Direct
+
+0 = Direct
+1 = AND
+2 = OR
+3 = XOR
+4 = Gated SR-FF
+
+16
+bit
+
+UInteger
+T
+
+8 bit
+
+0 = Not
+inverte
+d
+
+0 = Not inverted
+(Normal Open) 1 =
+I
+t d (N
+l
+
+UInteger
+T
+
+8 bit
+
+UInteger
+T
+
+8 bit
+
+UInteger
+T
+
+8 bit
+
+UInteger
+T
+
+8 bit
+
+1 = Seconds
+2 = Minutes
+
+UInteger
+T
+
+8 bit
+
+0
+
+0 to 32’767
+
+IntegerT
+
+16
+bit
+
+UInteger
+T
+
+8 bit
+
+UInteger
+T
+
+8 bit
+
+Stage Mode 2
+
+1 (0x01)
+
+R/W
+
+1 = PNP output
+
+Input selector 2
+
+2 (0x02)
+
+R/W
+
+1 = SSC 1
+
+Timer 2 – Mode
+
+3 (0x03)
+
+R/W
+
+0 = Disabled timer
+
+Timer 2 – Scale
+
+4 (0x04)
+
+R/W
+
+0 = Milliseconds
+
+Timer 2 – Value
+
+5 (0x05)
+
+R/W
+
+Data range
+
+0 = Disabled
+output 1 =
+PNP output
+2 = NPN output
+3 P h
+ll
+t t
+0 = Deactivated
+1 = SSC 1
+2 = SSC 2
+3 = Dust Alarm 1
+(DA1)
+4 = Dust Alarm 2
+(DA2)
+5 = Temperature
+0=
+Disabled
+timer 1 = Ton delay
+2 = T-off delay
+3 = T-on/T-off delay
+O
+h t
+0 4= Milliseconds
+
+0 = Disabled
+output 1 =
+PNP output
+2 = NPN output
+3 = Push-Pull output
+4 = Digital logic input
+(Active high/ Pulldown)
+5 = Digital logic input
+0 = Deactivated
+1 = SSC 1
+2 = SSC 2
+3 = Dust Alarm 1
+(DA1)
+4 = Dust Alarm 2
+(DA2)
+5 T
+t
+0=
+Disabled
+timer 1 = Ton delay
+2 = T-off delay
+3 = T-on/T-off delay
+O
+h t
+0 4= Milliseconds
+
+Logic function 2
+
+7 (0x07)
+
+R/W
+
+0 = Direct
+
+0 = Direct
+1 = AND
+2 = OR
+3 = XOR
+4 = Gated SR-FF
+
+Output Inverter 2
+
+8 (0x08)
+
+R/W
+
+1 = Inverted (Normally
+Closed)
+
+0 = Not inverted
+(Normally Open) 1 =
+I
+t d (N
+ll
+
+29
+RS Components Ltd
+
+7.2.4. Sensor specific adjustable parameters
+Parameter Name
+
+Index
+Dec
+(Hex)
+
+Acce
+ss
+
+Default value
+1 = Trimmer input
+
+69 (0x45)
+
+R
+W
+R
+
+70 (0x46)
+
+R
+
+Analogue value
+
+1 (0x01)
+
+Switching Output 1
+
+2(0x02)
+
+Switching Output 2
+
+3 (0x03)
+
+Switching Signal
+Channel 1
+Switching Signal
+Channel 2
+
+4 (0x04)
+
+Dust alarm 1
+
+6 (0x06)
+
+Dust alarm 2
+
+7 (0x07)
+
+Temperature alarm
+
+8 (0x08)
+
+Short-circuit
+
+9 (0x09)
+
+R
+W
+R
+W
+R
+W
+R
+W
+R
+W
+R
+W
+R
+W
+R
+W
+R
+W
+
+Selection of
+local/remote
+adjustment
+Trimmer value
+Process data
+
+Sensor Application
+pre-set
+Temperature Alarm
+
+68 (0x44)
+
+5 (0x05)
+
+1 = Analogue value
+Active
+1 = Switching Output
+1 Active
+1 = Switching Output
+2 Active
+0 = SSC1 Inactive
+0 = SSC2 Inactive
+0 = DA1 Inactive
+0 = DA2 Inactive
+0 = TA Inactive
+0 = SC Inactive
+0 = Full scale range
+
+Data range
+0 = Disabled
+1 = Trimmer
+input 2 =
+T
+hb
+10 … 10 000
+0 = Analogue
+value Inactive 1 =
+A l
+l
+0 = Switching Output 1
+Inactive
+1 S it hi
+O t t1
+0 = Switching Output 2
+Inactive
+1 S it hi
+O t t2
+0 = SSC1
+Inactive 1
+SSC1
+0 = SSC2
+Inactive 1
+SSC2
+0 = DA1
+Inactive 1
+DA1
+0 = DA2
+Inactive 1
+DA2
+0 = TA
+Inactive
+1 TA
+0 = SC
+Inactive
+1 SC
+0 = Full scale
+range 1 =
+Liquid level
+2 Pl ti
+ll t
+
+Data
+Type
+
+Length
+
+Uinteger
+T
+
+8 bit
+
+RecordT
+
+16
+
+Uinteger
+T
+RecordT
+
+8 bit
+
+71 (0x47)
+
+R/W
+
+72 (0x48)
+
+R/W
+
+High Threshold
+
+1 (0x01)
+
+R/W
+
+120
+
+-50 to 150 [°C]
+
+IntegerT
+
+16
+
+Low Threshold
+
+2 (0x02)
+
+R/W
+
+- 30
+
+-50 to 150 [°C]
+
+IntegerT
+
+16
+
+Safe ON/OFF Limits
+
+73 (0x49)
+
+R/W
+
+RecordT
+
+16
+
+SSC 1 - Safe limit
+
+1 (0x01)
+
+R/W
+
+2 x standard
+
+0…100
+
+Uinteger
+
+8 bit
+
+SSC 2 - Safe limit
+
+2(0x02)
+
+R/W
+
+2 x standard
+
+0…100
+
+Uinteger
+
+8 bit
+
+Event Configuration
+
+74 (0x4A)
+
+R/W
+
+RecordT
+
+16
+
+Maintenance
+(0x8C30)
+Temperature
+fault event
+(0 4000)
+Temperature overrun (0x4210)
+
+1 (0x01)
+
+R/W
+
+2 (0x02)
+
+R/W
+
+3 (0x03)
+
+R/W
+
+4 (0x04)
+
+R/W
+
+5 (0x05)
+
+R/W
+
+0 = Notification
+event Inactive 1 =
+N tifi ti
+t
+0 = Error event
+Inactive 1 =
+E
+t
+0 = Warning
+event Inactive 1
+W
+i
+t
+0 = Warning
+event Inactive 1
+W
+i
+t
+0 = Error event
+Inactive 1 =
+E
+t
+0…255
+
+Uinteger
+
+8 bit
+
+0=
+Maintenance
+N tifi ti
+0=
+Temperature
+f lt E
+0 = Temperature
+over-run
+W
+i
+t
+0 = Temperature
+under-run
+W
+i
+t
+0 = Short
+circuit Error
+t
+-
+
+30
+
+Temperature
+under-run
+(0 4220)
+Short circuit
+(0x7710)
+Quality of Teach
+
+75 (0x4B)
+
+Quality of Run
+
+76 (0x4C)
+
+R
+
+-
+
+0…255
+
+Uinteger
+
+8 bit
+
+Filter scaler
+
+77 (0x4D)
+
+R/W
+
+1
+
+1…255
+
+Uinteger
+
+8 bit
+
+LED indication
+
+78 (0x4E)
+
+R/W
+
+1 = LED indication
+Active
+
+0 = LED
+indication
+I
+ti 1 LED
+
+Boolean
+T
+
+8 bit
+
+30
+RS Components Ltd
+
+R
+
+7.2.5. Diagnostic parameters
+
+Operating Hours
+
+Index
+Dec
+(Hex)
+
+201 (0xC9)
+
+Acce
+ss
+R
+
+0
+
+0 … 2 147 483 647 [h]
+
+Number of Power
+
+Parameter Name
+
+Default value
+
+Data range
+
+Data
+Type
+
+Length
+
+IntegerT
+
+32
+
+202 (0xCA)
+
+R
+
+0
+
+0 … 2 147 483 647
+
+IntegerT
+
+32
+
+Maximum
+203 (0xCB)
+temperature
+All ti
+hi h
+Minimum
+204 (0xCC)
+temperature
+All ti
+l
+Maximum
+205 (0xCD)
+temperature
+i
+Minimum
+206 (0xCE)
+temperature
+i
+Current temperature 207 (0xCF)
+
+R
+O
+R
+O
+R
+O
+R
+O
+R
+
+0
+
+-50 to 150 [°C]
+
+IntegerT
+
+0
+
+-50 to 150 [°C]
+
+IntegerT
+
+-
+
+-50 to 150 [°C]
+
+IntegerT
+
+-
+
+-50 to 150 [°C]
+
+IntegerT
+
+-
+
+-50 to 150 [°C]
+
+IntegerT
+
+16
+bit
+16
+bit
+16
+bit
+16
+bit
+16
+
+Detection counter
+
+210 (0xD2)
+
+R
+
+-
+
+0 … 2 147 483 647
+
+IntegerT
+
+32
+
+211 (0xD3)
+
+-
+
+0
+
+0 … 2 147 483 647
+[min]
+0 … 2 147 483 647
+[min]
+0 … 2 147 483 647
+
+IntegerT
+
+213 (0xD5)
+
+R
+O
+R
+O
+R
+
+IntegerT
+
+32
+bit
+32
+bit
+32
+
+214 (0xD6)
+
+R
+
+0
+
+0 … 65 536
+
+UInteger
+
+16
+
+Minutes above
+Maximum
+T
+t
+Minutes below
+Minimum
+T
+t
+Maintenance event
+Download counter
+
+212 (0xD4)
+
+-
+
+IntegerT
+
+31
+RS Components Ltd
+
+Dimensions
+
+M30
+
+M18
+
+2377241
+
+2377236
+81
+
+86
+61
+
+70
+LED
+
+LED
+
+M18 x 1.0 x 55
+
+15
+
+M30 x 1.5 x 59.5
+
+2377242
+
+2377237
+74
+
+85
+
+61
+
+70
+LED
+
+LED
+
+M12 x 1.0
+
+M18 x 1.0 x 55
+
+M30 x 1.5 x 59.5
+
+2377243
+
+M12 x 1.0
+
+15
+
+2377238
+81
+
+86
+61
+
+70
+LED
+
+LED
+
+14,5
+
+8
+
+M18 x 1.0 x 47
+
+15
+
+M30 x 1.5 x 45.5
+
+2377244
+
+2377240
+74
+
+85
+
+61
+
+70
+LED
+
+LED
+
+M12 x 1.0
+14,5
+
+8
+
+M18 x 1.0 x 47
+
+M30 x 1.5 x 45.5
+
+Mounting
+
+Flush mounting
+
+32
+RS Components Ltd
+
+Non-flush mounting
+
+15
+
+M12 x 1.0
+
+Detection Stability
+
+Target influence
+
+Stable ON
+
+Output ON
+Output OFF
+
+Stable OFF
+
+Time
+Green LED ON
+Yellow LED
+ONOutput NO
+Output NC
+Dust alarm NO
+Dust alarm NC
+
+>1 sec.
+
+>1 sec.
+
+>1 sec.
+
+>2 sec.
+
+>1 sec.
+
+>1 sec.
+
+>1 sec.
+
+>2 sec.
+
+M30
+Sensitivity
+adjustment
+Green LED
+
+Yellow LED
+
+Sensitivity
+adjustment
+
+M18
+Green LED
+
+DIST.
+
+Yellow LED
+SCC1
+
+STABLE
+
+33
+RS Components Ltd
+
+Installation Hints
+
+To avoid interference from inductive
+voltage/ current peaks, separate
+the prox. switch power cables from
+any other power cables, e.g. motor,
+contactor or solenoid cables
+
+34
+RS Components Ltd
+
+Relief of cable strain
+
+Protection of the sensing face
+
+Switch mounted on mobile carrier
+
+The cable should not be
+pulled
+
+A proximity switch should not
+serve as mechanical stop
+
+Any repetitive flexing of the cableshould
+be avoided
+
+RS Components Ltd
+
+Certified in accordance with ISO 9001
+
+

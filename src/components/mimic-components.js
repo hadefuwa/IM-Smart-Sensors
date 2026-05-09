@@ -245,51 +245,46 @@ export function createCounterDisplay(containerId, state = {}, options = {}) {
  * @param {Object} state - Sensor state object
  * @returns {Object} Component controller with update method
  */
-export function createProximityIndicator(containerId, state = {}, options = {}) {
+export function createCapacitiveIndicator(containerId, state = {}, options = {}) {
   const container = document.getElementById(containerId);
   if (!container) {
-    console.error(`Proximity indicator container ${containerId} not found`);
+    console.error(`Capacitive indicator container ${containerId} not found`);
     return null;
   }
 
-  // Render the proximity indicator
   const render = (sensorState) => {
-    const isPresent = sensorState.object_present || false;
-    const distance = sensorState.distance_mm || null;
+    const isDetected = sensorState.object_detected || false;
+    const analogue = sensorState.analogue_value != null ? sensorState.analogue_value : null;
+    const pct = analogue != null ? Math.round((analogue / 65535) * 100) : null;
 
     container.innerHTML = `
-      <div class="proximity-indicator-wrapper flex flex-col items-center justify-center p-4 cursor-pointer hover:bg-base-300/50 rounded-lg transition-all">
-        <!-- Target In Range Indicator -->
+      <div class="capacitive-indicator-wrapper flex flex-col items-center justify-center p-4 cursor-pointer hover:bg-base-300/50 rounded-lg transition-all">
         <div class="mb-3 relative">
-          <div class="indicator-ring w-16 h-16 rounded-full border-4 ${isPresent ? 'border-success' : 'border-base-content/20'} flex items-center justify-center" style="box-shadow: ${isPresent ? '0 0 20px #22c55e' : 'none'};">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 ${isPresent ? 'text-success' : 'text-base-content/30'}" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+          <div class="indicator-ring w-16 h-16 rounded-full border-4 ${isDetected ? 'border-success' : 'border-base-content/20'} flex items-center justify-center" style="box-shadow: ${isDetected ? '0 0 20px #22c55e' : 'none'};">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 ${isDetected ? 'text-success' : 'text-base-content/30'}" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 3H5a2 2 0 00-2 2v4m6-6h10a2 2 0 012 2v4M9 3v18m0 0h10a2 2 0 002-2v-4M9 21H5a2 2 0 01-2-2v-4m0 0h18" />
             </svg>
           </div>
-          ${isPresent ? '<div class="absolute inset-0 rounded-full border-4 border-success animate-ping opacity-75"></div>' : ''}
+          ${isDetected ? '<div class="absolute inset-0 rounded-full border-4 border-success animate-ping opacity-75"></div>' : ''}
         </div>
 
-        <!-- Distance Display -->
-        ${distance !== null ? `
-          <div class="text-center mb-2">
-            <div class="text-2xl font-bold">${distance}</div>
-            <div class="text-xs opacity-60">mm</div>
+        ${pct !== null ? `
+          <div class="w-full px-2 mb-1">
+            <progress class="progress progress-info w-full h-2" value="${pct}" max="100"></progress>
+            <div class="text-xs text-center opacity-60">${analogue} <span class="opacity-70">(dielectric)</span></div>
           </div>
         ` : ''}
 
-        <div class="mt-3 text-center">
-          <div class="text-sm font-semibold">Proximity Sensor</div>
-          <div class="text-xs opacity-60">${isPresent ? 'Target In Range' : 'No Target'}</div>
+        <div class="mt-2 text-center">
+          <div class="text-sm font-semibold">Capacitive Sensor</div>
+          <div class="text-xs opacity-60">${isDetected ? 'Object Detected' : 'No Object'}</div>
         </div>
       </div>
     `;
   };
 
-  // Initial render
   render(state);
 
-  // Return controller object
   return {
     update: (newState) => {
       render(newState);
