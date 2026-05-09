@@ -4,8 +4,10 @@
  */
 
 import Chart from 'chart.js/auto';
+import { TerminalLog } from './components/terminal-log.js';
 
 const API_BASE = window.IO_LINK_API_BASE || window.location.origin;
+const WS_BASE = API_BASE.replace(/^http/, 'ws');
 
 export function renderAdminPage() {
   return `
@@ -153,6 +155,12 @@ export function renderAdminPage() {
           <p class="text-xs text-base-content/40 mt-1">Last 200 entries · saved to <code>logs/app.log</code> on the Pi · auto-refreshes every 2 s.</p>
         </div>
       </div>
+
+      <div class="card bg-base-200 shadow-xl border border-base-300">
+        <div class="card-body p-0 flex flex-col" style="height:360px;">
+          <div id="diag-terminal-container" class="flex-1 min-h-0"></div>
+        </div>
+      </div>
     </div>
   `;
 }
@@ -160,8 +168,12 @@ export function renderAdminPage() {
 let _charts = [];
 let _refreshInterval = null;
 let _tickInterval = null;
-let _lastDropTs = null;   // Unix seconds of the most recent disconnect event
-let _backendStartTs = null; // Unix seconds when backend last started
+let _lastDropTs = null;
+let _backendStartTs = null;
+let _terminalLog = null;
+let _diagSocket = null;
+let _diagReconnectTimer = null;
+let _diagPageActive = false;
 
 function formatUptimeDuration(seconds) {
   if (seconds < 0) seconds = 0;
@@ -467,7 +479,38 @@ async function refreshDiagnostics() {
   }
 }
 
+function connectDiagSocket() {
+  if (!_diagPageActive) return;
+  _diagSocket = new WebSocket(`${WS_BASE}/ws`);
+
+  _diagSocket.onmessage = (event) => {
+    try {
+      const data = JSON.parse(event.data);
+      if (_terminalLog && data.ports && Array.isArray(data.ports)) {
+        data.ports.forEach(port => {
+          _terminalLog.append({
+            port: port.port,
+            portName: port.name || `Port ${port.port}`,
+            pdinHex: port.pdin_hex || '00',
+            pdoutHex: port.pdout_hex || '00',
+            pdinDecoded: port.pdin_decoded?.description || '',
+            pdoutDecoded: port.pdout_decoded?.description || '',
+            level: 'normal'
+          });
+        });
+      }
+    } catch (_) {}
+  };
+
+  _diagSocket.onclose = () => {
+    if (!_diagPageActive) return;
+    if (_diagReconnectTimer) clearTimeout(_diagReconnectTimer);
+    _diagReconnectTimer = setTimeout(connectDiagSocket, 5000);
+  };
+}
+
 export function initAdminPage() {
+  _diagPageActive = true;
   refreshDiagnostics();
   _refreshInterval = setInterval(refreshDiagnostics, 2000);
   _tickInterval = setInterval(tickUptimeCounter, 1000);
@@ -476,11 +519,19 @@ export function initAdminPage() {
   document.addEventListener('change', e => {
     if (e.target && e.target.id === 'logLevelFilter') refreshDiagnostics();
   });
+
+  _terminalLog = new TerminalLog('diag-terminal-container');
+  _terminalLog.init();
+  connectDiagSocket();
 }
 
 export function destroyAdminPage() {
+  _diagPageActive = false;
   if (_refreshInterval) { clearInterval(_refreshInterval); _refreshInterval = null; }
   if (_tickInterval) { clearInterval(_tickInterval); _tickInterval = null; }
+  if (_diagReconnectTimer) { clearTimeout(_diagReconnectTimer); _diagReconnectTimer = null; }
+  if (_diagSocket) { _diagSocket.close(); _diagSocket = null; }
+  if (_terminalLog) { _terminalLog.destroy(); _terminalLog = null; }
   _lastDropTs = null;
   _backendStartTs = null;
   destroyCharts();

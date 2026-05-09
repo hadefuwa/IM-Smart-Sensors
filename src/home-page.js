@@ -3,7 +3,6 @@
  * Real-time monitoring dashboard for IO-Link Master and connected sensors
  */
 
-import { TerminalLog } from './components/terminal-log.js';
 import {
   createTemperatureGauge,
   createLEDIndicator,
@@ -17,14 +16,14 @@ import Chart from 'chart.js/auto';
 let socket = null;
 let reconnectTimer = null;
 let isHomePageActive = false;
-let terminalLog = null;
 let mimicComponents = {};
 let charts = {};
 
 // Historical data buffers
 let temperatureHistory = [];
-let signalQualityHistory = [];
-let cycleCountHistory = [];
+let detectionHistory = [];
+let detectionCycleCount = 0;
+let _lastDetectedState = false;
 const MAX_HISTORY_POINTS = 50;
 
 // API/WebSocket base
@@ -37,98 +36,61 @@ const WS_BASE = API_BASE.replace(/^http/, 'ws');
 export function renderHomePage() {
   return `
     <div class="hmi-homepage space-y-4">
-      <!-- Page Header -->
-      <div class="flex flex-wrap items-center justify-between gap-2">
-        <div>
-          <h1 class="text-2xl font-bold text-base-content">HMI Dashboard</h1>
-          <p class="text-base-content/70">Real-time IO-Link Master monitoring and control</p>
-        </div>
-      </div>
-
       <!-- Current State Overview Section -->
       <div class="card bg-base-200 shadow-xl">
         <div class="card-body">
           <h2 class="card-title text-base-content mb-4">Current State Overview</h2>
-          
+
           <!-- Mimic Components Grid -->
-          <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-5 gap-4">
-            <!-- IO-Link Master Status -->
+          <div class="mimic-grid">
             <div id="mimic-master" class="mimic-component"></div>
-            
-            <!-- Temperature Sensor -->
             <div id="mimic-temperature" class="mimic-component"></div>
-            
-            <!-- Photoelectric Sensor -->
             <div id="mimic-photoelectric" class="mimic-component"></div>
-            
-            <!-- Capacitive Sensor -->
             <div id="mimic-capacitive" class="mimic-component"></div>
-            
-            <!-- Status LED -->
             <div id="mimic-led" class="mimic-component"></div>
           </div>
         </div>
       </div>
 
-      <!-- Main Content: Condition Monitoring + Terminal Log -->
-      <div class="grid grid-cols-1 xl:grid-cols-3 gap-4">
-        <!-- Condition Monitoring Zone (Left 2 columns) -->
-        <div class="xl:col-span-2 space-y-4">
-          <!-- Temperature Trend -->
-          <div class="card bg-base-200 shadow-xl">
-            <div class="card-body">
-              <h3 class="card-title text-base-content text-lg">Temperature Trend (24h)</h3>
-              <div class="h-48">
-                <canvas id="chart-temperature-trend"></canvas>
-              </div>
-            </div>
-          </div>
-
-          <!-- Signal Quality and Cycle Counter -->
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <!-- Signal Quality Bar -->
-            <div class="card bg-base-200 shadow-xl">
-              <div class="card-body">
-                <h3 class="card-title text-base-content text-lg">Signal Quality</h3>
-                <div class="h-32">
-                  <canvas id="chart-signal-quality"></canvas>
-                </div>
-                <div id="signal-quality-alert" class="hidden mt-2 alert alert-warning">
-                  <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                  </svg>
-                  <span>Clean lens recommended</span>
-                </div>
-              </div>
-            </div>
-
-            <!-- Cycle Counter Progress -->
-            <div class="card bg-base-200 shadow-xl">
-              <div class="card-body">
-                <h3 class="card-title text-base-content text-lg">Cycle Counter</h3>
-                <div class="flex flex-col justify-center h-32">
-                  <div class="text-center mb-2">
-                    <div class="text-3xl font-bold" id="cycle-count-display">0</div>
-                    <div class="text-sm opacity-60">/ 1,000,000 cycles</div>
-                  </div>
-                  <progress id="cycle-progress" class="progress progress-success w-full" value="0" max="1000000"></progress>
-                </div>
-                <div id="cycle-service-alert" class="hidden mt-2 alert alert-info">
-                  <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                  <span>Service due soon</span>
-                </div>
-              </div>
+      <!-- Condition Monitoring -->
+      <div class="space-y-4">
+        <!-- Temperature Trend -->
+        <div class="card bg-base-200 shadow-xl">
+          <div class="card-body">
+            <h3 class="card-title text-base-content text-lg">Temperature Trend</h3>
+            <div class="h-48">
+              <canvas id="chart-temperature-trend"></canvas>
             </div>
           </div>
         </div>
 
-        <!-- Terminal Log (Right column) -->
-        <div class="lg:col-span-1">
-          <div class="card bg-base-200 shadow-xl h-full">
-            <div class="card-body p-0 flex flex-col terminal-panel-body">
-              <div id="terminal-log-container" class="flex-1"></div>
+        <!-- Detection History + Cycle Counter -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div class="card bg-base-200 shadow-xl">
+            <div class="card-body">
+              <h3 class="card-title text-base-content text-lg">Detection History</h3>
+              <div class="h-32">
+                <canvas id="chart-detection-history"></canvas>
+              </div>
+            </div>
+          </div>
+
+          <div class="card bg-base-200 shadow-xl">
+            <div class="card-body">
+              <h3 class="card-title text-base-content text-lg">Cycle Counter</h3>
+              <div class="flex flex-col justify-center h-32">
+                <div class="text-center mb-2">
+                  <div class="text-3xl font-bold" id="cycle-count-display">0</div>
+                  <div class="text-sm opacity-60">/ 1,000,000 cycles</div>
+                </div>
+                <progress id="cycle-progress" class="progress progress-success w-full" value="0" max="1000000"></progress>
+              </div>
+              <div id="cycle-service-alert" class="hidden mt-2 alert alert-info">
+                <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <span>Service due soon</span>
+              </div>
             </div>
           </div>
         </div>
@@ -138,7 +100,7 @@ export function renderHomePage() {
       <div class="card bg-base-200 shadow-xl">
         <div class="card-body">
           <h2 class="card-title text-base-content mb-4">Health & Heartbeat</h2>
-          
+
           <div class="overflow-x-auto">
             <table class="table table-zebra touch-stack-table">
               <thead>
@@ -160,7 +122,6 @@ export function renderHomePage() {
             </table>
           </div>
 
-          <!-- Event Log -->
           <div class="mt-4">
             <h3 class="text-sm font-semibold mb-2">Recent Events</h3>
             <div id="event-log" class="rounded p-3 font-mono text-xs h-32 overflow-y-auto">
@@ -227,10 +188,6 @@ function renderConfigModals() {
               <input type="number" id="photo-counter" class="input input-bordered flex-1" value="0" readonly />
               <button id="photo-reset-counter" class="btn btn-error">Reset</button>
             </div>
-          </div>
-          <div class="form-control">
-            <label class="label"><span class="label-text">Signal Quality Threshold (%)</span></label>
-            <input type="number" id="photo-quality-threshold" class="input input-bordered" value="20" />
           </div>
           <div class="form-control">
             <label class="label"><span class="label-text">Detection Mode</span></label>
@@ -348,13 +305,6 @@ function renderConfigModals() {
             <label class="label"><span class="label-text">Timeout (seconds)</span></label>
             <input type="number" id="master-timeout" class="input input-bordered" value="2" min="1" max="10" />
           </div>
-          <div class="form-control">
-            <label class="label"><span class="label-text">Data Source</span></label>
-            <select id="master-data-source" class="select select-bordered">
-              <option value="real">Real Data (Hardware)</option>
-              <option value="simulated">Simulated Data (Demo)</option>
-            </select>
-          </div>
         </div>
         <div class="modal-action">
           <form method="dialog">
@@ -373,8 +323,7 @@ function renderConfigModals() {
  */
 function updateChartColors() {
   const colors = getChartColors();
-  
-  // Update temperature chart
+
   if (charts.temperature) {
     charts.temperature.options.scales.y.grid.color = colors.gridColor;
     charts.temperature.options.scales.y.ticks.color = colors.tickColor;
@@ -382,13 +331,13 @@ function updateChartColors() {
     charts.temperature.options.scales.x.ticks.color = colors.tickColor;
     charts.temperature.update('none');
   }
-  
-  // Update signal quality chart
-  if (charts.signalQuality) {
-    charts.signalQuality.options.scales.x.grid.color = colors.gridColor;
-    charts.signalQuality.options.scales.x.ticks.color = colors.tickColor;
-    charts.signalQuality.options.scales.y.ticks.color = colors.tickColor;
-    charts.signalQuality.update('none');
+
+  if (charts.detectionHistory) {
+    charts.detectionHistory.options.scales.x.grid.color = colors.gridColor;
+    charts.detectionHistory.options.scales.x.ticks.color = colors.tickColor;
+    charts.detectionHistory.options.scales.y.grid.color = colors.gridColor;
+    charts.detectionHistory.options.scales.y.ticks.color = colors.tickColor;
+    charts.detectionHistory.update('none');
   }
 }
 
@@ -399,20 +348,17 @@ export function initHomePage() {
   console.log('Initializing HMI Homepage...');
   isHomePageActive = true;
 
-  // Initialize terminal log
-  terminalLog = new TerminalLog('terminal-log-container');
-  terminalLog.init();
+  // Restore cycle count from sessionStorage
+  const saved = sessionStorage.getItem('photoDetectionCycles');
+  if (saved) detectionCycleCount = parseInt(saved, 10) || 0;
 
-  // Initialize mimic components
   initializeMimicComponents();
-
-  // Initialize charts
   initializeCharts();
-
-  // Set up click handlers for mimic components to open config modals
   setupConfigModalHandlers();
 
-  // Listen for theme changes
+  // Update cycle counter display with restored value
+  if (detectionCycleCount > 0) updateCycleCounter(detectionCycleCount);
+
   const observer = new MutationObserver((mutations) => {
     mutations.forEach((mutation) => {
       if (mutation.type === 'attributes' && mutation.attributeName === 'data-theme') {
@@ -420,13 +366,8 @@ export function initHomePage() {
       }
     });
   });
-  
-  observer.observe(document.documentElement, {
-    attributes: true,
-    attributeFilter: ['data-theme']
-  });
+  observer.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
 
-  // Connect to WebSocket
   connectWebSocket();
 }
 
@@ -447,7 +388,6 @@ function initializeMimicComponents() {
 function getChartColors() {
   const theme = document.documentElement.getAttribute('data-theme') || 'dark';
   const isDark = theme === 'dark';
-  
   return {
     gridColor: isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)',
     tickColor: isDark ? '#ffffff' : '#000000',
@@ -461,7 +401,7 @@ function getChartColors() {
  */
 function initializeCharts() {
   const colors = getChartColors();
-  
+
   // Temperature trend chart
   const tempCtx = document.getElementById('chart-temperature-trend');
   if (tempCtx) {
@@ -481,9 +421,7 @@ function initializeCharts() {
       options: {
         responsive: true,
         maintainAspectRatio: false,
-        plugins: {
-          legend: { display: false }
-        },
+        plugins: { legend: { display: false } },
         scales: {
           y: {
             beginAtZero: false,
@@ -499,36 +437,42 @@ function initializeCharts() {
     });
   }
 
-  // Signal quality chart
-  const signalCtx = document.getElementById('chart-signal-quality');
-  if (signalCtx) {
-    charts.signalQuality = new Chart(signalCtx, {
-      type: 'bar',
+  // Detection history step chart (replaces signal quality bar)
+  const detectionCtx = document.getElementById('chart-detection-history');
+  if (detectionCtx) {
+    charts.detectionHistory = new Chart(detectionCtx, {
+      type: 'line',
       data: {
-        labels: ['Signal Quality'],
+        labels: [],
         datasets: [{
-          label: 'Quality (%)',
-          data: [0],
-          backgroundColor: colors.borderColor
+          label: 'Detected',
+          data: [],
+          borderColor: colors.borderColor,
+          backgroundColor: colors.backgroundColor,
+          stepped: 'before',
+          fill: true,
+          pointRadius: 0,
+          tension: 0
         }]
       },
       options: {
         responsive: true,
         maintainAspectRatio: false,
-        indexAxis: 'y',
-        plugins: {
-          legend: { display: false }
-        },
+        plugins: { legend: { display: false } },
         scales: {
-          x: {
-            beginAtZero: true,
-            max: 100,
-            grid: { color: colors.gridColor },
-            ticks: { color: colors.tickColor }
-          },
           y: {
-            grid: { display: false },
-            ticks: { color: colors.tickColor }
+            min: -0.1,
+            max: 1.2,
+            grid: { color: colors.gridColor },
+            ticks: {
+              color: colors.tickColor,
+              stepSize: 1,
+              callback: v => v === 1 ? 'ON' : v === 0 ? 'OFF' : ''
+            }
+          },
+          x: {
+            grid: { color: colors.gridColor },
+            ticks: { color: colors.tickColor, maxTicksLimit: 8 }
           }
         }
       }
@@ -540,53 +484,25 @@ function initializeCharts() {
  * Set up click handlers for configuration modals
  */
 function setupConfigModalHandlers() {
-  // Temperature sensor
-  const tempMimic = document.getElementById('mimic-temperature');
-  if (tempMimic) {
-    tempMimic.addEventListener('click', () => {
-      document.getElementById('modal-temp-config').showModal();
-    });
-  }
+  const bindings = [
+    ['mimic-temperature',  'modal-temp-config'],
+    ['mimic-photoelectric', 'modal-photo-config'],
+    ['mimic-capacitive',   'modal-capacitive-config'],
+    ['mimic-led',          'modal-led-config'],
+    ['mimic-master',       'modal-master-config'],
+  ];
+  bindings.forEach(([elId, modalId]) => {
+    const el = document.getElementById(elId);
+    if (el) el.addEventListener('click', () => document.getElementById(modalId)?.showModal());
+  });
 
-  // Photoelectric sensor
-  const photoMimic = document.getElementById('mimic-photoelectric');
-  if (photoMimic) {
-    photoMimic.addEventListener('click', () => {
-      document.getElementById('modal-photo-config').showModal();
-    });
-  }
-
-  // Capacitive sensor
-  const capMimic = document.getElementById('mimic-capacitive');
-  if (capMimic) {
-    capMimic.addEventListener('click', () => {
-      document.getElementById('modal-capacitive-config').showModal();
-    });
-  }
-
-  // Status LED
-  const ledMimic = document.getElementById('mimic-led');
-  if (ledMimic) {
-    ledMimic.addEventListener('click', () => {
-      document.getElementById('modal-led-config').showModal();
-    });
-  }
-
-  // IO-Link Master
-  const masterMimic = document.getElementById('mimic-master');
-  if (masterMimic) {
-    masterMimic.addEventListener('click', () => {
-      document.getElementById('modal-master-config').showModal();
-    });
-  }
-
-  // Counter reset button
   const resetBtn = document.getElementById('photo-reset-counter');
   if (resetBtn) {
     resetBtn.addEventListener('click', () => {
-      if (mimicComponents.photoelectric && mimicComponents.photoelectric.reset) {
-        mimicComponents.photoelectric.reset();
-      }
+      detectionCycleCount = 0;
+      _lastDetectedState = false;
+      sessionStorage.setItem('photoDetectionCycles', '0');
+      updateCycleCounter(0);
     });
   }
 }
@@ -597,12 +513,9 @@ function setupConfigModalHandlers() {
 function connectWebSocket() {
   if (!isHomePageActive) return;
   const wsUrl = `${WS_BASE}/ws`;
-  console.log(`Connecting to WebSocket: ${wsUrl}`);
-
   socket = new WebSocket(wsUrl);
 
   socket.onopen = () => {
-    console.log('WebSocket connected');
     addEventLog('System', 'WebSocket connection established', 'success');
   };
 
@@ -615,14 +528,12 @@ function connectWebSocket() {
     }
   };
 
-  socket.onerror = (error) => {
-    console.error('WebSocket error:', error);
+  socket.onerror = () => {
     addEventLog('System', 'WebSocket connection error', 'error');
   };
 
   socket.onclose = () => {
     if (!isHomePageActive) return;
-    console.log('WebSocket closed. Attempting to reconnect in 5 seconds...');
     addEventLog('System', 'WebSocket connection closed. Reconnecting...', 'warning');
     if (reconnectTimer) clearTimeout(reconnectTimer);
     reconnectTimer = setTimeout(connectWebSocket, 5000);
@@ -633,24 +544,11 @@ function connectWebSocket() {
  * Update dashboard with new data from WebSocket
  */
 function updateDashboard(data) {
-  // Update master status
-  if (mimicComponents.master) {
-    mimicComponents.master.update(data);
-  }
-
-  // Update health table
+  if (mimicComponents.master) mimicComponents.master.update(data);
   updateHealthTable(data);
 
-  // Process each port
   if (data.ports && Array.isArray(data.ports)) {
-    data.ports.forEach(port => {
-      processPortData(port);
-    });
-  }
-
-  // Update supervision data
-  if (data.supervision) {
-    updateSupervisionData(data.supervision);
+    data.ports.forEach(port => processPortData(port));
   }
 }
 
@@ -658,42 +556,26 @@ function updateDashboard(data) {
  * Process data from a single port
  */
 function processPortData(port) {
-  const portNum = port.port;
   const deviceType = getDeviceType(port);
 
-  // Add to terminal log
-  if (terminalLog) {
-    terminalLog.append({
-      port: portNum,
-      portName: port.name || `Port ${portNum}`,
-      pdinHex: port.pdin_hex || '00',
-      pdoutHex: port.pdout_hex || '00',
-      pdinDecoded: port.pdin_decoded?.description || '',
-      pdoutDecoded: port.pdout_decoded?.description || '',
-      level: 'normal'
-    });
-  }
-
-  // Update appropriate mimic component based on device type
   if (deviceType === 'temperature' && mimicComponents.temperature) {
     const temp = port.pdin_decoded?.temperature_c || 0;
     mimicComponents.temperature.update(temp);
-    
-    // Add to temperature history
     addToHistory(temperatureHistory, temp);
     updateTemperatureChart();
   } else if (deviceType === 'photoelectric' && mimicComponents.photoelectric) {
     mimicComponents.photoelectric.update(port.pdin_decoded || {});
-    
-    // Update signal quality
-    const quality = port.pdin_decoded?.signal_quality_percent || 0;
-    updateSignalQuality(quality);
-    
-    // Update cycle counter display
-    if (mimicComponents.photoelectric.getCount) {
-      const count = mimicComponents.photoelectric.getCount();
-      updateCycleCounter(count);
+
+    // Track rising edges (OFF → ON) as detection cycles
+    const isDetected = port.pdin_decoded?.object_detected || false;
+    addToHistory(detectionHistory, isDetected ? 1 : 0);
+    if (isDetected && !_lastDetectedState) {
+      detectionCycleCount++;
+      sessionStorage.setItem('photoDetectionCycles', String(detectionCycleCount));
     }
+    _lastDetectedState = isDetected;
+    updateDetectionHistory();
+    updateCycleCounter(detectionCycleCount);
   } else if (deviceType === 'capacitive' && mimicComponents.capacitive) {
     mimicComponents.capacitive.update(port.pdin_decoded || {});
   } else if (deviceType === 'led' && mimicComponents.led) {
@@ -705,115 +587,64 @@ function processPortData(port) {
  * Determine device type from port data
  */
 function getDeviceType(port) {
-  // Use backend-resolved device_type when present
   const backendType = port.device_type || '';
   if (backendType === 'photo_electric') return 'photoelectric';
   if (backendType === 'temperature') return 'temperature';
-  if (backendType === 'proximity') return 'proximity';
   if (backendType === 'status_led') return 'led';
   if (backendType === 'capacitive') return 'capacitive';
 
-  // Name-based fallback
   const name = (port.name || '').toUpperCase();
   if (name.includes('TEMP') || name.includes('TN') || name.includes('TR')) return 'temperature';
   if (name.includes('PHOTO') || name.includes('O5D') || name.includes('O2D')) return 'photoelectric';
   if (name.includes('CAPACITIVE') || name.includes('23772') || name.includes('KI') || name.includes('KQ')) return 'capacitive';
-  if (name.includes('PROX') || name.includes('INDUCTIVE')) return 'proximity';
   if (name.includes('LED') || name.includes('CL50') || name.includes('LIGHT')) return 'led';
 
   return 'unknown';
 }
 
-/**
- * Add value to history buffer
- */
 function addToHistory(historyArray, value) {
   historyArray.push(value);
-  if (historyArray.length > MAX_HISTORY_POINTS) {
-    historyArray.shift();
-  }
+  if (historyArray.length > MAX_HISTORY_POINTS) historyArray.shift();
 }
 
-/**
- * Update temperature chart
- */
 function updateTemperatureChart() {
   if (!charts.temperature) return;
-
   const labels = temperatureHistory.map((_, i) => `-${MAX_HISTORY_POINTS - i}s`);
   charts.temperature.data.labels = labels;
   charts.temperature.data.datasets[0].data = temperatureHistory;
-  charts.temperature.update('none'); // 'none' mode for better performance
+  charts.temperature.update('none');
 }
 
-/**
- * Update signal quality display
- */
-function updateSignalQuality(quality) {
-  if (!charts.signalQuality) return;
-
-  // Update chart
-  charts.signalQuality.data.datasets[0].data = [quality];
-  
-  // Change color based on quality
-  if (quality < 40) {
-    charts.signalQuality.data.datasets[0].backgroundColor = '#ef4444';
-  } else if (quality < 70) {
-    charts.signalQuality.data.datasets[0].backgroundColor = '#eab308';
-  } else {
-    charts.signalQuality.data.datasets[0].backgroundColor = '#22c55e';
-  }
-  
-  charts.signalQuality.update('none');
-
-  // Show/hide alert
-  const alert = document.getElementById('signal-quality-alert');
-  if (alert) {
-    if (quality < 20) {
-      alert.classList.remove('hidden');
-    } else {
-      alert.classList.add('hidden');
-    }
-  }
+function updateDetectionHistory() {
+  if (!charts.detectionHistory) return;
+  const labels = detectionHistory.map((_, i) => `-${detectionHistory.length - i}s`);
+  charts.detectionHistory.data.labels = labels;
+  charts.detectionHistory.data.datasets[0].data = detectionHistory;
+  charts.detectionHistory.update('none');
 }
 
-/**
- * Update cycle counter display
- */
 function updateCycleCounter(count) {
   const display = document.getElementById('cycle-count-display');
   const progress = document.getElementById('cycle-progress');
   const alert = document.getElementById('cycle-service-alert');
 
-  if (display) {
-    display.textContent = count.toLocaleString();
-  }
+  if (display) display.textContent = count.toLocaleString();
 
   if (progress) {
     progress.value = count;
-    
-    // Change color based on percentage
-    if (count > 900000) {
-      progress.className = 'progress progress-error w-full';
-    } else if (count > 750000) {
-      progress.className = 'progress progress-warning w-full';
-    } else {
-      progress.className = 'progress progress-success w-full';
-    }
+    progress.className = count > 900000
+      ? 'progress progress-error w-full'
+      : count > 750000
+        ? 'progress progress-warning w-full'
+        : 'progress progress-success w-full';
   }
 
   if (alert) {
-    if (count > 900000) {
-      alert.classList.remove('hidden');
-    } else {
-      alert.classList.add('hidden');
-    }
+    if (count > 900000) alert.classList.remove('hidden');
+    else alert.classList.add('hidden');
   }
 }
 
-/**
- * Update health table
- */
 function updateHealthTable(data) {
   const tbody = document.getElementById('health-table-body');
   if (!tbody) return;
@@ -838,37 +669,19 @@ function updateHealthTable(data) {
   `;
 }
 
-/**
- * Update supervision data (voltage, current, etc.)
- */
-function updateSupervisionData(supervision) {
-  // This could be expanded to show master voltage/current/temperature
-  // For now, just log it
-  console.log('Supervision data:', supervision);
-}
-
-/**
- * Add event to event log
- */
 function addEventLog(component, message, level = 'info') {
   const eventLog = document.getElementById('event-log');
   if (!eventLog) return;
 
   const timestamp = new Date().toLocaleTimeString();
   const colorClass = level === 'error' ? 'text-error' : level === 'warning' ? 'text-warning' : 'text-success';
-  
+
   const entry = document.createElement('div');
   entry.className = colorClass;
   entry.textContent = `[${timestamp}] ${component}: ${message}`;
-  
   eventLog.appendChild(entry);
-  
-  // Keep only last 20 entries
-  while (eventLog.children.length > 20) {
-    eventLog.removeChild(eventLog.firstChild);
-  }
-  
-  // Auto-scroll
+
+  while (eventLog.children.length > 20) eventLog.removeChild(eventLog.firstChild);
   eventLog.scrollTop = eventLog.scrollHeight;
 }
 
@@ -884,29 +697,15 @@ export function destroyHomePage() {
     reconnectTimer = null;
   }
 
-  // Close WebSocket
   if (socket) {
     socket.close();
     socket = null;
   }
 
-  // Destroy terminal log
-  if (terminalLog) {
-    terminalLog.destroy();
-    terminalLog = null;
-  }
-
-  // Destroy charts
-  Object.values(charts).forEach(chart => {
-    if (chart) chart.destroy();
-  });
+  Object.values(charts).forEach(chart => { if (chart) chart.destroy(); });
   charts = {};
-
-  // Clear mimic components
   mimicComponents = {};
 
-  // Clear history
   temperatureHistory = [];
-  signalQualityHistory = [];
-  cycleCountHistory = [];
+  detectionHistory = [];
 }
