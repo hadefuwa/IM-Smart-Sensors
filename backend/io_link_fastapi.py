@@ -219,6 +219,8 @@ _transition_ts: Optional[float] = None
 consecutive_failures: int = 0
 _prev_circuit_state: Optional[str] = None
 _prev_degraded_mode: Optional[bool] = None
+# Detection counter tracking per port (capacitive sensor ISDU index 210)
+_cap_counter_prev: dict = {}  # port -> last raw counter value
 
 # Configuration
 POLL_INTERVAL = 1.0
@@ -299,11 +301,12 @@ async def poll_io_link_master():
         include_static = (cycle_count % STATIC_REFRESH_EVERY_CYCLES == 0)
         cycle_count += 1
 
+        poll_start = time.time()
+        poll_interval = max(0.5, float(io_config.get('poll_interval_sec', POLL_INTERVAL)))
+
         try:
             await al1350.on_config_changed()
-            poll_start = time.time()
             circuit_before = al1350._breaker.state
-            poll_interval = max(0.5, float(io_config.get('poll_interval_sec', POLL_INTERVAL)))
             disconnected_interval = max(poll_interval, float(io_config.get('disconnected_poll_interval_sec', 5.0)))
             ports, device_info, supervision = await al1350.poll_snapshot(
                 include_static=include_static,
@@ -367,6 +370,21 @@ async def poll_io_link_master():
             if isinstance(ports, list):
                 for port_data in ports:
                     _enrich_port(port_data, port_labels=port_labels)
+
+            # Read detection counters for all capacitive ports in parallel
+            if isinstance(ports, list):
+                cap_ports = [p for p in ports if p.get('device_type') == 'capacitive' and p.get('mode') == 'io-link']
+                if cap_ports:
+                    counter_tasks = [al1350.read_isdu_int32(p['port'], 210, 0) for p in cap_ports]
+                    counter_values = await asyncio.gather(*counter_tasks, return_exceptions=True)
+                    for port_data, val in zip(cap_ports, counter_values):
+                        if isinstance(val, int):
+                            pn = port_data['port']
+                            prev = _cap_counter_prev.get(pn)
+                            delta = (val - prev) if prev is not None else 0
+                            _cap_counter_prev[pn] = val
+                            port_data['detection_counter'] = val
+                            port_data['detection_counter_delta'] = max(0, delta)
 
             # Update global state
             is_connected = al1350._breaker.state != "open"
@@ -433,8 +451,8 @@ async def poll_io_link_master():
         consecutive_failures = 0 if _current else consecutive_failures + 1
         _prev_success = _current
 
-        # Wait before next poll — poll_interval already computed above
-        await asyncio.sleep(poll_interval)
+        # Deadline-based sleep: target a fixed cycle time regardless of how long the poll took
+        await asyncio.sleep(max(0, poll_interval - (time.time() - poll_start)))
 
 
 @app.on_event("startup")
@@ -744,6 +762,14 @@ async def io_link_port_detail(port_num: int):
             port_data['pdin']['decoded'] = decode_proximity_pdin(pdin_bytes)
         elif dtype == DEVICE_TYPE_CAPACITIVE and pdin_bytes:
             port_data['pdin']['decoded'] = decode_capacitive_pdin(pdin_bytes)
+
+    # For capacitive sensors, read the onboard detection counter (ISDU index 210)
+    if dtype == DEVICE_TYPE_CAPACITIVE and port_info.get('mode') == 'io-link':
+        counter_val = await al1350.read_isdu_int32(port_num, 210, 0)
+        if counter_val is not None:
+            port_data['detection_counter'] = counter_val
+            prev = _cap_counter_prev.get(port_num)
+            port_data['detection_counter_delta'] = max(0, counter_val - prev) if prev is not None else 0
 
     # Get PDout and decode
     pdout_raw = port_info.get('pdout', '')

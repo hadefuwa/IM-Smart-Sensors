@@ -188,6 +188,13 @@ export function initSettingsPage() {
   document.getElementById('wifi-connect-btn')?.addEventListener('click', connectWifi);
   document.getElementById('wifi-disconnect-btn')?.addEventListener('click', disconnectWifi);
 
+  // On-screen keyboard for touch kiosk
+  mountVirtualKeyboard();
+  ['wifi-ssid-input', 'wifi-password-input', 'masterIpInput', 'masterPortInput', 'masterTimeoutInput', 'masterPollInput'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.addEventListener('focus', () => showVK(el));
+  });
+
   const connectionBarCheck = document.getElementById('settings-show-connection-bar');
   if (connectionBarCheck) {
     const saved = localStorage.getItem(APP_CONNECTION_BAR_KEY);
@@ -345,6 +352,110 @@ async function disconnectWifi() {
   } finally {
     if (btn) { btn.disabled = false; btn.textContent = 'Disconnect'; }
   }
+}
+
+// ================================================================
+// Virtual on-screen keyboard (touch kiosk)
+// ================================================================
+
+let _vkTarget = null;
+let _vkShift  = false;
+let _vkNums   = false;
+
+const VK_ALPHA_LOWER = [
+  ['q','w','e','r','t','y','u','i','o','p'],
+  ['a','s','d','f','g','h','j','k','l'],
+  ['⇧','z','x','c','v','b','n','m','⌫'],
+  ['123',' ','Done'],
+];
+const VK_ALPHA_UPPER = [
+  ['Q','W','E','R','T','Y','U','I','O','P'],
+  ['A','S','D','F','G','H','J','K','L'],
+  ['⇩','Z','X','C','V','B','N','M','⌫'],
+  ['123',' ','Done'],
+];
+const VK_NUMS = [
+  ['1','2','3','4','5','6','7','8','9','0'],
+  ['-','_','.','@','#','!','&','*','(',')'],
+  ['/','\\',':',';','"',"'",'%','+','=','⌫'],
+  ['ABC',' ','Done'],
+];
+
+function mountVirtualKeyboard() {
+  if (document.getElementById('vk-overlay')) return;
+  const el = document.createElement('div');
+  el.id = 'vk-overlay';
+  el.style.cssText = [
+    'position:fixed','bottom:0','left:0','right:0',
+    'background:#1e1e2e','padding:8px 6px 12px',
+    'z-index:9999','display:none',
+    'box-shadow:0 -4px 24px rgba(0,0,0,0.6)',
+    'border-top:2px solid #7c3aed',
+  ].join(';');
+  document.body.appendChild(el);
+  _renderVKKeys();
+
+  // Hide when tapping outside keyboard and outside an input
+  document.addEventListener('mousedown', e => {
+    if (!e.target.closest('#vk-overlay') && !e.target.matches('input')) hideVK();
+  });
+}
+
+function _renderVKKeys() {
+  const overlay = document.getElementById('vk-overlay');
+  if (!overlay) return;
+  const rows = _vkNums ? VK_NUMS : (_vkShift ? VK_ALPHA_UPPER : VK_ALPHA_LOWER);
+  const SPECIAL = new Set(['⇧','⇩','⌫','Done','123','ABC']);
+
+  overlay.innerHTML = rows.map(row => {
+    const btns = row.map(k => {
+      const isSpace   = k === ' ';
+      const isSpecial = SPECIAL.has(k);
+      const isDone    = k === 'Done';
+      const flex      = isSpace ? '4' : isSpecial ? '1.6' : '1';
+      const bg        = isDone ? '#7c3aed' : isSpecial ? '#2d2d50' : '#2a2a42';
+      return `<button data-vk="${encodeURIComponent(k)}" style="flex:${flex};min-width:28px;padding:12px 4px;background:${bg};color:#fff;border:1px solid #444;border-radius:6px;font-size:15px;cursor:pointer;-webkit-user-select:none;user-select:none">${isSpace ? 'space' : k}</button>`;
+    }).join('');
+    return `<div style="display:flex;justify-content:center;gap:4px;margin-bottom:4px">${btns}</div>`;
+  }).join('');
+
+  overlay.querySelectorAll('button[data-vk]').forEach(btn => {
+    btn.addEventListener('mousedown', e => { e.preventDefault(); _handleVKKey(decodeURIComponent(btn.dataset.vk)); });
+  });
+}
+
+function _handleVKKey(key) {
+  if (!_vkTarget) return;
+  if (key === 'Done')         { hideVK(); return; }
+  if (key === '⇧' || key === '⇩') { _vkShift = !_vkShift; _renderVKKeys(); return; }
+  if (key === '123')          { _vkNums = true;  _renderVKKeys(); return; }
+  if (key === 'ABC')          { _vkNums = false; _vkShift = false; _renderVKKeys(); return; }
+  if (key === '⌫') {
+    const s = _vkTarget.selectionStart;
+    if (s > 0) { _vkTarget.value = _vkTarget.value.slice(0, s - 1) + _vkTarget.value.slice(s); _vkTarget.setSelectionRange(s - 1, s - 1); }
+    return;
+  }
+  const s = _vkTarget.selectionStart;
+  _vkTarget.value = _vkTarget.value.slice(0, s) + key + _vkTarget.value.slice(s);
+  _vkTarget.setSelectionRange(s + 1, s + 1);
+  if (_vkShift) { _vkShift = false; _renderVKKeys(); }
+}
+
+function showVK(input) {
+  _vkTarget = input;
+  _vkNums   = input.type === 'number';
+  _vkShift  = false;
+  _renderVKKeys();
+  const overlay = document.getElementById('vk-overlay');
+  if (overlay) overlay.style.display = 'block';
+  // Scroll the input into view above the keyboard
+  setTimeout(() => input.scrollIntoView({ behavior: 'smooth', block: 'center' }), 50);
+}
+
+function hideVK() {
+  _vkTarget = null;
+  const overlay = document.getElementById('vk-overlay');
+  if (overlay) overlay.style.display = 'none';
 }
 
 /** Apply saved "show connection bar" on app load (called from main.js). */

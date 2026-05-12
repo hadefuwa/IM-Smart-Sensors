@@ -6230,20 +6230,10 @@ app.innerHTML = `
     </div>
 
     <!-- Body with sidebar + main content -->
-    <div class="flex flex-1 min-h-0 bg-base-100 relative overflow-hidden">
-      <!-- Mobile backdrop overlay -->
-      <div id="sidebar-backdrop" class="fixed inset-0 bg-black/50 z-40 hidden transition-opacity duration-300 md:hidden"></div>
-      
+    <div class="flex flex-1 min-h-0 bg-base-100 overflow-hidden">
+
       <!-- Sidebar -->
-      <aside id="sidebar" class="fixed md:static inset-y-0 left-0 z-50 w-72 border-r border-base-300 bg-base-200 transition-all duration-300 ease-in-out transform -translate-x-full md:translate-x-0 flex flex-col overflow-hidden min-h-0">
-        <!-- Close button for mobile -->
-        <div class="flex justify-end p-4 md:hidden border-b border-base-300 flex-shrink-0">
-          <button id="sidebar-close" class="btn btn-ghost btn-sm btn-square">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          </button>
-        </div>
+      <aside id="sidebar" class="w-72 flex-shrink-0 border-r border-base-300 bg-base-200 flex flex-col overflow-hidden min-h-0 transition-[width] duration-300 ease-in-out">
         <!-- Scrollable menu container -->
         <div class="flex-1 min-h-0 overflow-y-auto overscroll-contain">
           <ul class="menu p-4 gap-1" id="sidebar-menu">
@@ -7392,205 +7382,72 @@ applySavedAppSettings();
 setTimeout(() => {
   const sidebar = document.getElementById('sidebar');
   const sidebarToggle = document.getElementById('sidebar-toggle');
-  const sidebarBackdrop = document.getElementById('sidebar-backdrop');
-  const sidebarClose = document.getElementById('sidebar-close');
 
   if (!sidebar || !sidebarToggle) return;
 
-  const isTouchKioskLayout = () =>
-    window.matchMedia('(pointer: coarse)').matches ||
-    (window.innerWidth <= 1280 && window.innerHeight <= 900);
-
-  // Load saved sidebar state (desktop only)
-  const savedSidebarState = localStorage.getItem('matrix-sidebar-collapsed');
-  const isCollapsed = savedSidebarState === 'true';
-
-  // Apply saved state on page load (desktop only)
-  if (isCollapsed && window.innerWidth >= 768 && !isTouchKioskLayout()) {
-    sidebar.classList.add('w-0', 'overflow-hidden');
+  // Apply saved state immediately (before paint) to avoid flicker
+  if (localStorage.getItem('matrix-sidebar-collapsed') === 'true') {
     sidebar.classList.remove('w-72');
+    sidebar.classList.add('w-0');
   }
 
-  // Toggle sidebar function
   function toggleSidebar() {
-    const isMobile = window.innerWidth < 768 || isTouchKioskLayout();
-    
-    if (isMobile) {
-      // Mobile: toggle drawer (translate-x)
-      const isOpen = !sidebar.classList.contains('-translate-x-full');
-      
-      if (isOpen) {
-        // Close drawer
-        sidebar.classList.add('-translate-x-full');
-        if (sidebarBackdrop) sidebarBackdrop.classList.add('hidden');
-        // Re-enable body scroll
-        document.body.style.overflow = '';
-      } else {
-        // Open drawer
-        sidebar.classList.remove('-translate-x-full');
-        if (sidebarBackdrop) sidebarBackdrop.classList.remove('hidden');
-        // Prevent body scroll when sidebar is open
-        document.body.style.overflow = 'hidden';
-      }
+    const collapsed = sidebar.classList.contains('w-0');
+    if (collapsed) {
+      sidebar.classList.remove('w-0');
+      sidebar.classList.add('w-72');
+      localStorage.setItem('matrix-sidebar-collapsed', 'false');
     } else {
-      // Desktop: toggle width
-      const currentlyCollapsed = sidebar.classList.contains('w-0');
-      
-      if (currentlyCollapsed) {
-        // Expand
-        sidebar.classList.remove('w-0', 'overflow-hidden');
-        sidebar.classList.add('w-72');
-        localStorage.setItem('matrix-sidebar-collapsed', 'false');
-      } else {
-        // Collapse
-        sidebar.classList.remove('w-72');
-        sidebar.classList.add('w-0', 'overflow-hidden');
-        localStorage.setItem('matrix-sidebar-collapsed', 'true');
-      }
+      sidebar.classList.remove('w-72');
+      sidebar.classList.add('w-0');
+      localStorage.setItem('matrix-sidebar-collapsed', 'true');
     }
   }
 
-  // Add event listener to toggle button
   sidebarToggle.addEventListener('click', toggleSidebar);
-  
-  // Add event listener to close button (mobile)
-  if (sidebarClose) {
-    sidebarClose.addEventListener('click', () => {
-      const isMobile = window.innerWidth < 768 || isTouchKioskLayout();
-      if (isMobile) {
-        toggleSidebar();
+
+  // Drag-to-scroll: X11 touch emulation on Pi produces mouse events, not
+  // touch events, so CSS overflow scroll doesn't respond to finger swipes.
+  const sidebarScrollContainer = sidebar.querySelector('.overflow-y-auto');
+  if (sidebarScrollContainer) {
+    sidebarScrollContainer.addEventListener('wheel', (e) => {
+      const { scrollTop, scrollHeight, clientHeight } = sidebarScrollContainer;
+      const atTop = scrollTop === 0;
+      const atBottom = scrollTop + clientHeight >= scrollHeight - 1;
+      if ((!atTop && e.deltaY < 0) || (!atBottom && e.deltaY > 0)) {
+        e.stopPropagation();
       }
+    }, { passive: false });
+
+    let dragActive = false;
+    let dragStartY = 0;
+    let dragStartScrollTop = 0;
+    let dragMoved = false;
+
+    sidebarScrollContainer.addEventListener('mousedown', (e) => {
+      dragActive = true;
+      dragMoved = false;
+      dragStartY = e.clientY;
+      dragStartScrollTop = sidebarScrollContainer.scrollTop;
+      e.preventDefault();
+    });
+
+    window.addEventListener('mousemove', (e) => {
+      if (!dragActive) return;
+      const dy = dragStartY - e.clientY;
+      if (!dragMoved && Math.abs(dy) > 5) {
+        dragMoved = true;
+        sidebar.classList.add('sidebar-scrolling');
+      }
+      if (dragMoved) sidebarScrollContainer.scrollTop = dragStartScrollTop + dy;
+    });
+
+    window.addEventListener('mouseup', () => {
+      if (!dragActive) return;
+      dragActive = false;
+      sidebar.classList.remove('sidebar-scrolling');
     });
   }
-  
-  // Close mobile sidebar when clicking backdrop
-  if (sidebarBackdrop) {
-    sidebarBackdrop.addEventListener('click', () => {
-      const isMobile = window.innerWidth < 768 || isTouchKioskLayout();
-      if (isMobile && !sidebar.classList.contains('-translate-x-full')) {
-        toggleSidebar();
-      }
-    });
-  }
-  
-  // Close mobile sidebar when clicking a menu item
-  const sidebarMenu = document.getElementById('sidebar-menu');
-  if (sidebarMenu) {
-    sidebarMenu.addEventListener('click', (e) => {
-      const link = e.target.closest('a[data-page]');
-      if (link && (window.innerWidth < 768 || isTouchKioskLayout())) {
-        // Close sidebar on mobile after selecting a menu item
-        setTimeout(() => {
-          if (!sidebar.classList.contains('-translate-x-full')) {
-            toggleSidebar();
-          }
-        }, 100);
-      }
-    });
-  }
-  
-  // Prevent scroll events from propagating from sidebar to body
-  if (sidebar) {
-    const sidebarScrollContainer = sidebar.querySelector('.overflow-y-auto');
-    if (sidebarScrollContainer) {
-      // Stop wheel events from propagating to body when scrolling within sidebar
-      sidebarScrollContainer.addEventListener('wheel', (e) => {
-        const { scrollTop, scrollHeight, clientHeight } = sidebarScrollContainer;
-        const isAtTop = scrollTop === 0;
-        const isAtBottom = scrollTop + clientHeight >= scrollHeight - 1;
-        
-        // If we can scroll within the sidebar, prevent body scroll
-        if ((!isAtTop && e.deltaY < 0) || (!isAtBottom && e.deltaY > 0)) {
-          e.stopPropagation();
-        }
-      }, { passive: false });
-      
-      // ── Telemetry: report sidebar events to backend for remote diagnosis ──
-      const dbg = (data) => fetch('/api/debug/event', {
-        method: 'POST', headers: {'Content-Type':'application/json'},
-        body: JSON.stringify({
-          ...data,
-          scrollTop: sidebarScrollContainer.scrollTop,
-          scrollHeight: sidebarScrollContainer.scrollHeight,
-          clientHeight: sidebarScrollContainer.clientHeight
-        })
-      }).catch(() => {});
-
-      ['mousedown','mousemove','mouseup','touchstart','touchmove','touchend','scroll','click','pointerdown','pointermove','pointerup'].forEach(evt => {
-        const passive = !['mousedown','touchmove'].includes(evt);
-        sidebarScrollContainer.addEventListener(evt, (e) => {
-          if (evt === 'mousemove' && !window._sdbg) return;
-          if (evt === 'mousedown') window._sdbg = true;
-          if (evt === 'mouseup') window._sdbg = false;
-          const touch = e.touches?.[0] || e.changedTouches?.[0];
-          dbg({ evt, tag: e.target?.tagName, clientY: e.clientY ?? touch?.clientY, pointerType: e.pointerType });
-        }, { passive });
-      });
-
-      // ── Drag-to-scroll for the sidebar.
-      // X11 touch emulation produces mouse events, not touch events, so CSS
-      // touch-action and overflow scroll do not respond to finger swipes.
-      // We implement scroll manually using mousedown/mousemove/mouseup.
-      let dragActive = false;
-      let dragStartY = 0;
-      let dragStartScrollTop = 0;
-      let dragMoved = false;
-
-      sidebarScrollContainer.addEventListener('mousedown', (e) => {
-        dragActive = true;
-        dragMoved = false;
-        dragStartY = e.clientY;
-        dragStartScrollTop = sidebarScrollContainer.scrollTop;
-        e.preventDefault(); // stop text selection while dragging
-      });
-
-      window.addEventListener('mousemove', (e) => {
-        if (!dragActive) return;
-        const dy = dragStartY - e.clientY;
-        if (!dragMoved && Math.abs(dy) > 5) {
-          dragMoved = true;
-          sidebar.classList.add('sidebar-scrolling');
-        }
-        if (dragMoved) {
-          sidebarScrollContainer.scrollTop = dragStartScrollTop + dy;
-        }
-      });
-
-      window.addEventListener('mouseup', () => {
-        if (!dragActive) return;
-        dragActive = false;
-        sidebar.classList.remove('sidebar-scrolling');
-      });
-    }
-  }
-  
-  // Handle window resize - ensure proper state
-  let resizeTimer;
-  window.addEventListener('resize', () => {
-    clearTimeout(resizeTimer);
-    resizeTimer = setTimeout(() => {
-      const isMobile = window.innerWidth < 768 || isTouchKioskLayout();
-      if (isMobile) {
-        // On mobile, ensure sidebar is closed by default
-        sidebar.classList.add('-translate-x-full');
-        if (sidebarBackdrop) sidebarBackdrop.classList.add('hidden');
-        // Restore body scroll
-        document.body.style.overflow = '';
-      } else {
-        // On desktop, restore saved state
-        sidebar.classList.remove('-translate-x-full');
-        if (sidebarBackdrop) sidebarBackdrop.classList.add('hidden');
-        const savedState = localStorage.getItem('matrix-sidebar-collapsed');
-        if (savedState === 'true') {
-          sidebar.classList.add('w-0', 'overflow-hidden');
-          sidebar.classList.remove('w-72');
-        } else {
-          sidebar.classList.remove('w-0', 'overflow-hidden');
-          sidebar.classList.add('w-72');
-        }
-      }
-    }, 250);
-  });
 }, 0);
 
 // ================================================================

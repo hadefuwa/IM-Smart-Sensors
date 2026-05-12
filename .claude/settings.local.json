@@ -1,0 +1,7 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(\"C:\\\\Program Files\\\\PuTTY\\\\plink.exe\" -pw ummah123 -batch hamed@iolink.local \"ip addr show && echo '---' && nmcli connection show --active 2>&1\")"
+    ]
+  }
+}

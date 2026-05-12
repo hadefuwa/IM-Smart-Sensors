@@ -307,8 +307,6 @@ const LEARN_BLURBS = {
   proximity: { blurb: 'Proximity sensors report presence or distance. Check mounting distance and contamination; use event flags and cycle count for MTTF-based replacement.', anchor: 'proximity' },
   capacitive: { blurb: 'RS PRO / Carlo Gavazzi M18 capacitive sensor (model 2377240, non-flush, 12 mm range). Detects conductive and non-conductive targets — SO1 activates when an object is present. Also outputs a 16-bit analogue dielectric value useful for level sensing and material identification. Keep the sensing face clean and dry; use the Quality of Run (QoR) value to detect gradual contamination before output failure.', anchor: 'proximity' }
 };
-let portCycleCounts = {};
-
 function generateDisconnectedPortHTML(port) {
   const dtype = port.device_type || 'unknown';
   const label = port.label || port.name || 'Unknown device';
@@ -348,10 +346,13 @@ function generatePortDetailsHTML(port) {
     const pct = Math.round((av / 65535) * 100);
     h += `<div class="my-1"><strong>Dielectric value:</strong> <progress class="progress progress-info w-48" value="${pct}" max="100"></progress> ${av} <span class="text-xs opacity-70">(raw 16-bit · higher = denser/closer target)</span></div>`;
   }
-  if ((dtype === 'photo_electric' || dtype === 'proximity' || dtype === 'capacitive') && port.pdin && port.pdin.decoded) {
-    portCycleCounts[port.port] = (portCycleCounts[port.port] || 950000) + Math.floor(Math.random() * 50) + 1;
-    const count = portCycleCounts[port.port];
-    h += `<p class="text-xs my-1"><strong>Total activations (simulated):</strong> ${count.toLocaleString()}. <span class="opacity-70">Parts have a mechanical life cycle (MTTF). Smart sensors can support replacement planning.</span></p>`;
+  if (dtype === 'capacitive' && port.detection_counter != null) {
+    const total = port.detection_counter.toLocaleString();
+    const delta = port.detection_counter_delta ?? 0;
+    const deltaHtml = delta > 0 ? ` <span class="badge badge-success badge-sm">+${delta} this cycle</span>` : '';
+    h += `<p class="text-xs my-1"><strong>Detection counter (SSC1):</strong> ${total} activations${deltaHtml}. <span class="opacity-70">Onboard counter — increments on every SSC1 state change even if missed by polling. Persisted in sensor every hour.</span></p>`;
+  } else if ((dtype === 'photo_electric' || dtype === 'proximity') && port.pdin && port.pdin.decoded) {
+    h += `<p class="text-xs my-1 opacity-60">No onboard activation counter available for this sensor type.</p>`;
   }
   if (dtype === 'photo_electric' && port.pdin && port.pdin.decoded && port.pdin.decoded.signal_quality_percent != null) {
     const sq = port.pdin.decoded.signal_quality_percent;

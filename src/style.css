@@ -156,6 +156,15 @@ body {
   }
 }
 
+/* Mimic grid — responds to the container's actual width, not the viewport.
+   With sidebar open (~736px): 4 columns of ~184px.
+   With sidebar closed (~1024px): 5 columns of ~205px (all sensors in one row). */
+.mimic-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 1rem;
+}
+
 /* Mimic Component Styles */
 [data-theme="dark"] .mimic-component {
   position: relative;

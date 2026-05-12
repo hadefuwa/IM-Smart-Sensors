@@ -290,6 +290,27 @@ class AL1350ClientManager:
         self.degraded_reason = ""
         return out
 
+    async def read_isdu_int32(self, port: int, index: int, subindex: int = 0) -> Optional[int]:
+        """Read an acyclic ISDU parameter from an IO-Link device and return it as a signed 32-bit int.
+        Returns None on failure. The hex value from the device is decoded as big-endian."""
+        try:
+            res = await self._service_request(
+                f"/iolinkmaster/port[{port}]/iolinkdevice/iolreadacyclic",
+                data={"index": index, "subindex": subindex},
+            )
+            if not isinstance(res, dict) or res.get("code") != 200:
+                return None
+            hex_str = (res.get("data") or {}).get("value", "")
+            if not hex_str:
+                return None
+            raw = int(hex_str, 16)
+            # Treat as signed 32-bit
+            if raw >= 0x80000000:
+                raw -= 0x100000000
+            return raw
+        except Exception:
+            return None
+
     async def ensure_subscription(self) -> None:
         # The AL1350 subscribe service (manual §9.2.12) is a push mechanism: the device
         # POSTs data to a callback URL on the client at a timer interval.  It cannot be
