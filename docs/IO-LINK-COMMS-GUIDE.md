@@ -4,7 +4,9 @@
 ---
 
 > **Who is this for?**
-> This guide is written for students learning industrial automation. No prior knowledge of IO-Link is assumed — just a basic understanding of computers and networks. By the end, you will understand how a software system talks to real industrial sensors over a network and why each step is done the way it is.
+> This guide is written for students learning industrial automation. No prior knowledge of IO-Link or MQTT is assumed — just a basic understanding of computers and networks. By the end, you will understand how a modern industrial system uses push messaging to receive real-time sensor data, why this is better than polling, and how every component in our stack connects together.
+
+> **Note:** An earlier version of this guide ([IO-LINK-COMMS-GUIDE-ARCHIVED-http-polling.md](IO-LINK-COMMS-GUIDE-ARCHIVED-http-polling.md)) covers the previous HTTP polling architecture. Read that first if you want to understand why we changed — knowing the problem makes the solution easier to understand.
 
 ---
 
@@ -12,35 +14,31 @@
 
 1. [What is IO-Link?](#1-what-is-io-link)
 2. [The Hardware Stack](#2-the-hardware-stack)
-3. [How the AL1350 Talks to the Outside World](#3-how-the-al1350-talks-to-the-outside-world)
-4. [Finding and Connecting to the Master](#4-finding-and-connecting-to-the-master)
-5. [The API: How You Ask the Master Questions](#5-the-api-how-you-ask-the-master-questions)
-6. [Reading a Single Data Point](#6-reading-a-single-data-point)
-7. [Reading Many Data Points at Once (getdatamulti)](#7-reading-many-data-points-at-once-getdatamulti)
-8. [Exploring the Device Tree (gettree)](#8-exploring-the-device-tree-gettree)
-9. [Understanding Port Modes](#9-understanding-port-modes)
-10. [Process Data — PDin and PDout](#10-process-data--pdin-and-pdout)
-11. [Decoding Sensor Data](#11-decoding-sensor-data)
-12. [Writing to a Port — Controlling Actuators](#12-writing-to-a-port--controlling-actuators)
-13. [Configuring a Port](#13-configuring-a-port)
-14. [Supervision Data — Monitoring the Master Itself](#14-supervision-data--monitoring-the-master-itself)
-15. [Reliability in Real Systems](#15-reliability-in-real-systems)
-16. [How Our HMI Puts It All Together](#16-how-our-hmi-puts-it-all-together)
-17. [Quick Reference: All the Key Paths](#17-quick-reference-all-the-key-paths)
-18. [Student Exercises](#18-student-exercises)
+3. [Why We Moved Away from HTTP Polling](#3-why-we-moved-away-from-http-polling)
+4. [What is MQTT?](#4-what-is-mqtt)
+5. [The New Architecture — Push, Not Pull](#5-the-new-architecture--push-not-pull)
+6. [The AL1350 Subscribe Service](#6-the-al1350-subscribe-service)
+7. [The MQTT Message Format](#7-the-mqtt-message-format)
+8. [Mosquitto — The Message Broker](#8-mosquitto--the-message-broker)
+9. [The Python MQTT Listener](#9-the-python-mqtt-listener)
+10. [Parsing the Push Message](#10-parsing-the-push-message)
+11. [Understanding Port Modes and Process Data](#11-understanding-port-modes-and-process-data)
+12. [Decoding Sensor Data](#12-decoding-sensor-data)
+13. [The Capacitive Sensor Detection Counter (ISDU)](#13-the-capacitive-sensor-detection-counter-isdu)
+14. [The Dual-Track Architecture — MQTT + HTTP Fallback](#14-the-dual-track-architecture--mqtt--http-fallback)
+15. [Supervision Data in the Push Payload](#15-supervision-data-in-the-push-payload)
+16. [Reliability in Real Systems](#16-reliability-in-real-systems)
+17. [How Our HMI Puts It All Together](#17-how-our-hmi-puts-it-all-together)
+18. [Quick Reference](#18-quick-reference)
+19. [Student Exercises](#19-student-exercises)
 
 ---
 
 ## 1. What is IO-Link?
 
-Before factories became computerised, sensors and actuators were wired directly to a PLC (Programmable Logic Controller) using plain analogue signals — a wire carrying 0–10 V or 4–20 mA. The voltage level told the PLC how hot something was, or whether a door was open. This worked, but it had serious limits:
+IO-Link (standardised as IEC 61131-9) is a short-range, point-to-point digital communication protocol between a smart sensor or actuator and a device called an **IO-Link Master**. Before IO-Link, sensors were wired directly to PLCs using plain analogue signals (0–10 V or 4–20 mA). A single voltage level told the PLC one number — temperature, pressure, or whether something was present. There was no way to read diagnostics, identify the device type, or change its configuration remotely.
 
-- You could only send one value per wire.
-- You could not tell the PLC *what type* of sensor was connected.
-- There was no way to send diagnostics or faults back.
-- Calibration meant physically adjusting a potentiometer on the sensor body.
-
-**IO-Link** (standardised as IEC 61131-9) solves all of this. It is a short-range, point-to-point digital communication protocol between a sensor/actuator and a device called an **IO-Link Master**. Instead of a voltage level, the sensor sends a digital packet of data — a structured message that can carry many values at once, including measurement data, status flags, fault codes, and configuration parameters.
+IO-Link replaces that single analogue value with a rich digital packet: a structured message that carries measurement data, status flags, fault codes, and configuration parameters — all down the same standard 3-wire M12 cable.
 
 ### Key facts about IO-Link
 
@@ -61,164 +59,174 @@ Think of IO-Link as a tiny industrial Ethernet for your sensors. The physical wi
 Before writing a single line of code, you need to understand what physical hardware is involved.
 
 ```
-┌──────────────────────────────────────────────────────────────┐
-│                        FACTORY NETWORK (Ethernet)             │
-│                        e.g. 192.168.7.0/24                    │
-└────────────────────┬─────────────────────────────────────────┘
-                     │  Ethernet cable
-                     │
-            ┌────────▼────────┐
-            │  IFM AL1350      │   ← IO-Link MASTER
-            │  IO-Link Master  │     IP: 192.168.7.4
-            │                  │     4 x IO-Link ports
-            └────────┬─────────┘
-           ┌─────────┼───────────┐
-     Port 1│   Port 2│     Port 3│     Port 4│
-           │         │           │           │
-     ┌─────▼─┐  ┌────▼──┐  ┌────▼──┐  ┌────▼──┐
-     │ Temp  │  │ Cap.  │  │Photo  │  │ LED   │
-     │Sensor │  │Sensor │  │Sensor │  │ Stack │
-     └───────┘  └───────┘  └───────┘  └───────┘
-       PDin        PDin       PDin      PDout
-    (reading)   (reading)  (reading) (writing)
+┌───────────────────────────────────────────────────────────────────┐
+│                    FACTORY NETWORK (Ethernet)                      │
+│                     e.g. 192.168.7.0/24                            │
+└──────┬──────────────────────────────────────────────┬─────────────┘
+       │ Ethernet                                     │ Ethernet
+       │                                              │
+┌──────▼──────┐                             ┌─────────▼─────────┐
+│  IFM AL1350  │   ← IO-Link MASTER          │  Raspberry Pi      │
+│  IP:192.168. │     4 x IO-Link ports       │  IP:192.168.7.2    │
+│  7.4         │                             │  Mosquitto broker  │
+└──────┬───────┘                             │  FastAPI backend   │
+       │ IO-Link (M12 cables)                │  Chromium kiosk    │
+  ┌────┴──────────────────────┐              └───────────────────┘
+  │    │           │          │
+Port1 Port2      Port3      Port4
+  │    │           │          │
+┌─▼──┐ ┌─▼──┐  ┌──▼──┐  ┌───▼──┐
+│Temp│ │Cap.│  │Photo│  │ LED  │
+│Sen │ │Sen │  │Sen  │  │Stack │
+└────┘ └────┘  └─────┘  └──────┘
+ PDin   PDin    PDin      PDout
 ```
 
 ### The AL1350 is the bridge
 
-The **IFM AL1350** (or similar AL1100/AL1300) is the star of the show. It does two jobs simultaneously:
+The **IFM AL1350** does two jobs simultaneously:
 
-1. **Speaks IO-Link** to the sensors on its 4 ports (the custom IO-Link serial protocol).
-2. **Speaks Ethernet / HTTP** to the rest of the world (a standard web API).
+1. **Speaks IO-Link** to the sensors on its 4 ports (the custom IO-Link serial protocol), cycling every 1–5 ms.
+2. **Speaks Ethernet / HTTP / MQTT** to the rest of the world.
 
-Your software never directly touches the sensors. You talk to the master over Ethernet, and the master handles the IO-Link protocol for you.
-
----
-
-## 3. How the AL1350 Talks to the Outside World
-
-The AL1350 exposes its data through a **REST HTTP API** — exactly like a web server. This means you can communicate with it using any programming language, a web browser, or even a command-line tool like `curl`.
-
-The API uses two mechanisms:
-
-| Mechanism | When to use | HTTP verb |
-|---|---|---|
-| **GET data point** | Read one value from the device | `GET` |
-| **Service call** | Complex operations (read many at once, subscribe, configure) | `POST` |
-
-Both mechanisms use **JSON** (JavaScript Object Notation) for data — a simple, human-readable format that looks like a Python dictionary or a JavaScript object.
+Your software never directly touches the sensors. You talk to the master over Ethernet, and the master handles the IO-Link protocol for you. The master buffers the latest sensor values — whatever rate you read at, the value you get is always the most recent reading.
 
 ---
 
-## 4. Finding and Connecting to the Master
+## 3. Why We Moved Away from HTTP Polling
 
-### Network setup
+The previous architecture had the Python backend **polling** the AL1350 every second — sending an HTTP request and waiting for a reply. This worked, but it had serious limitations that became apparent when we needed fast sensor event detection.
 
-The AL1350 must have an IP address on your local network. In this project:
+### The getdatamulti problem
 
-- **Master IP:** `192.168.7.4`
-- **Port:** `80` (standard HTTP)
+The AL1350's `getdatamulti` API call — which reads many data points in a single HTTP request — processes each data point **sequentially inside the firmware**. The manual states explicitly:
 
-There is no authentication required by default — you simply send HTTP requests to that address. In a real factory, the master would be behind a firewall or on an isolated automation network.
+> *"The service sequentially reads the values of several data points and provides them."*
 
-### Verifying the connection
+Requesting 16 data points (4 ports × mode + pdin + vendorid + deviceid) means 16 sequential IO-Link bus reads inside the device before a single HTTP response comes back. On a constrained embedded CPU with IO-Link bus round-trips of 1–5 ms per port, a fully-loaded call takes 200–400 ms to return.
 
-The simplest way to check if the master is alive is to make a GET request to any data point. If you get a JSON response with `"code": 200`, you have a connection:
+### The hardware connection limit
 
-```
-GET http://192.168.7.4/iolinkmaster/port[1]/mode/getdata
-```
+The AL1350 can only handle **3 simultaneous HTTP connections**. Exceed this and the device starts refusing or silently dropping requests — requests that then look like mysterious timeouts to the caller.
 
-Response:
-```json
-{ "code": 200, "data": { "value": 3 } }
-```
+### The crash bug
 
-If you get a timeout or a connection refused error, the master is not reachable.
+The United Manufacturing Hub project — which integrates many IFM devices — has publicly documented a firmware bug in the AL1350:
 
----
+> *"The current ifm firmware has a software bug, that will cause the IO-Link master to crash if it receives too many requests."*
 
-## 5. The API: How You Ask the Master Questions
+The only fix is a power cycle or experimental firmware from IFM. Sustained polling faster than approximately 1 request per second risks triggering this.
 
-### Two types of request
+### What this means in practice
 
-#### Type 1 — Simple GET (reading a single data point)
-
-The URL itself encodes the path to the data you want:
-
-```
-GET http://192.168.7.4/<path>/getdata
-```
-
-Every successful response looks like this:
-
-```json
-{ "code": 200, "data": { "value": <the value you asked for> } }
-```
-
-If the path does not exist or the device is disconnected, `"code"` will not be 200.
-
-#### Type 2 — Service call (POST to root)
-
-For more complex operations, you POST a JSON "service request" to the root URL:
-
-```
-POST http://192.168.7.4/
-Body: {
-  "code": "request",
-  "cid": -1,
-  "adr": "<service name>",
-  "data": { ... }
-}
-```
-
-The `"adr"` field names the service you want. The `"cid"` field is a correlation ID — use `-1` and the master ignores it (it is designed for multi-request sequencing that we do not use here).
-
-This pattern will become very familiar. Let us now walk through the specific services one by one.
-
----
-
-## 6. Reading a Single Data Point
-
-### The path system
-
-The AL1350 organises its data in a **hierarchical tree of paths** — similar to a file system. Every piece of information has a path.
-
-Here are some examples:
-
-| What you want | Path |
+| Limitation | Effect |
 |---|---|
-| Port 1 mode (active/inactive) | `/iolinkmaster/port[1]/mode` |
-| Port 1 IO-Link device process data in | `/iolinkmaster/port[1]/iolinkdevice/pdin` |
-| Port 1 device vendor ID | `/iolinkmaster/port[1]/iolinkdevice/vendorid` |
-| Master supply voltage | `/processdatamaster/voltage` |
-| Device application tag (name) | `/devicetag/applicationtag` |
+| Sequential getdatamulti | Round-trip time is 200–400 ms minimum, not just network latency |
+| 3 connection cap | You cannot parallelise HTTP requests to reduce latency |
+| Firmware crash bug | You cannot safely poll faster than ~1 second |
+| Poll-then-sleep loop | Actual update interval = poll time + sleep time = up to 1.5 s |
 
-To **read** any of these, append `/getdata` and make a GET request:
+For a capacitive sensor that responds in under 10 ms, or a photoelectric sensor that can switch at up to 5 kHz, a 1.5 s detection window means events are routinely missed entirely. An object could pass in front of a sensor, trigger it, and release before the next poll ever fires.
 
-```
-GET http://192.168.7.4/iolinkmaster/port[2]/mode/getdata
-```
-
-Response:
-```json
-{ "code": 200, "data": { "value": 3 } }
-```
-
-The value `3` means IO-Link mode — we will decode these numbers shortly.
-
-### What can go wrong
-
-- **`"code": 400`** — Bad path or unsupported parameter.
-- **`"code": 503`** — Device on that port is not connected or not responding.
-- **No response / timeout** — The master itself is unreachable.
+The solution is to stop pulling data and let the AL1350 **push** it to us instead.
 
 ---
 
-## 7. Reading Many Data Points at Once (getdatamulti)
+## 4. What is MQTT?
 
-Imagine you have 4 ports and need mode, process data, vendor ID, and device ID for each. That is 16 separate HTTP requests per polling cycle. At 1 second per cycle, that is 16 requests per second — more than the AL1350 hardware can comfortably handle (it caps at 3 concurrent connections).
+**MQTT** (Message Queuing Telemetry Transport) is a lightweight messaging protocol designed specifically for constrained devices and unreliable networks. It is the de-facto standard for IoT communication and is used everywhere from industrial automation to home smart devices.
 
-The solution is **`getdatamulti`** — a single POST that asks for many data points in one round trip.
+### The Publish / Subscribe model
+
+HTTP is a **request/response** protocol: you ask, the server answers. MQTT is a **publish/subscribe** protocol: devices send messages when they have something to say, and any subscriber that cares about that topic receives it automatically.
+
+```
+           HTTP (old way):                    MQTT (new way):
+                                     
+  Client ──── "give me data" ────> Server     AL1350 ──── data ────> Broker ──> Client
+  Client <─── data ─────────────── Server                                (whenever data changes)
+  (repeat every second)                        (broker stores & routes messages)
+```
+
+Three roles exist in MQTT:
+
+- **Publisher:** A device that produces data and sends it to the broker. In our system: the AL1350.
+- **Broker:** A server that receives all messages and routes them to subscribers. In our system: **Mosquitto**, running on the Raspberry Pi.
+- **Subscriber:** A client that registers interest in a topic and receives all matching messages. In our system: the Python FastAPI backend.
+
+### Topics
+
+Every MQTT message is tagged with a **topic** — a string that looks like a path:
+
+```
+iolink
+sensors/temperature
+factory/line1/conveyor/speed
+```
+
+Topics are completely free-form strings. Publishers choose what topics to use, and subscribers choose which topics to watch. In our system the AL1350 publishes everything to a single topic: `iolink`.
+
+### Why MQTT is better here
+
+- The AL1350 pushes data to the broker the moment the timer fires — no waiting for a poll request.
+- The broker handles routing. The backend just subscribes and receives.
+- MQTT has very low overhead: messages are binary frames, not HTTP headers + JSON wrappers.
+- If the backend is temporarily disconnected, the broker can buffer messages.
+- Multiple clients can subscribe to the same topic simultaneously with no extra load on the AL1350.
+
+---
+
+## 5. The New Architecture — Push, Not Pull
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                  Browser (HMI Dashboard)                         │
+│                                                                  │
+│  JavaScript ← WebSocket messages (JSON) ← FastAPI backend        │
+│  Chart.js renders gauges, trends                                 │
+└────────────────────────┬────────────────────────────────────────┘
+                         │ WebSocket  ws://iolink.local/ws
+┌────────────────────────▼────────────────────────────────────────┐
+│              Python Backend (FastAPI + aiomqtt)                  │
+│                                                                  │
+│  MQTT listener task (primary):                                   │
+│    1. Receive MQTT push from broker every 500 ms                 │
+│    2. Parse pdin, mode, supervision from payload                 │
+│    3. Decode sensor bytes → engineering values                   │
+│    4. Broadcast JSON to all WebSocket clients immediately        │
+│                                                                  │
+│  HTTP poll task (secondary / fallback):                          │
+│    1. Refresh static metadata every 6 cycles (vendor, name...)   │
+│    2. Read capacitive detection counter via ISDU each cycle      │
+│    3. Full fallback if MQTT broker is unreachable                │
+└──────┬───────────────────────────────┬───────────────────────────┘
+       │ aiomqtt subscribe             │ HTTP REST (metadata only)
+       │ topic: "iolink"               │
+┌──────▼──────────────┐     ┌──────────▼────────────────────────┐
+│  Mosquitto Broker    │     │   IFM AL1350 IO-Link Master        │
+│  127.0.0.1:1883      │<────│   192.168.7.4                     │
+│  (on Raspberry Pi)   │MQTT │                                   │
+└─────────────────────┘push  │  Ports 1-4: cyclic IO-Link (1-5ms)│
+                             └───────────────────────────────────┘
+```
+
+The AL1350 does the work. It polls its own sensors every 1–5 ms over IO-Link, buffers the latest value, and fires an MQTT publish every 500 ms to the Mosquitto broker on the Pi. The backend is a passive subscriber — it receives data without asking for it.
+
+The end result: sensor state changes reach the HMI dashboard within **500–600 ms** from the moment the AL1350 detects them, versus the previous **1–1.5 s** with additive HTTP latency. More importantly, the AL1350 is no longer under constant HTTP polling pressure, which eliminates the crash risk.
+
+---
+
+## 6. The AL1350 Subscribe Service
+
+The AL1350 has a built-in subscription system described in the manual as section 9.2.12. You configure it once (or on each backend restart), and the device handles the rest automatically.
+
+### How it works
+
+The subscription system uses a **timer** object on the device (`timer[1]`). When the timer fires, the AL1350 reads the current value of every subscribed data point and publishes them all to the configured callback address in a single message.
+
+You configure it with two service calls:
+
+**Step 1 — Register the data points and callback address:**
 
 ```
 POST http://192.168.7.4/
@@ -226,163 +234,336 @@ Body:
 {
   "code": "request",
   "cid": -1,
-  "adr": "getdatamulti",
+  "adr": "/timer[1]/counter/datachanged/subscribe",
   "data": {
+    "callback": "mqtt://192.168.7.2:1883/iolink",
     "datatosend": [
-      "iolinkmaster/port[1]/mode",
-      "iolinkmaster/port[1]/iolinkdevice/pdin",
-      "iolinkmaster/port[2]/mode",
-      "iolinkmaster/port[2]/iolinkdevice/pdin"
+      "/iolinkmaster/port[1]/iolinkdevice/pdin",
+      "/iolinkmaster/port[2]/iolinkdevice/pdin",
+      "/iolinkmaster/port[3]/iolinkdevice/pdin",
+      "/iolinkmaster/port[4]/iolinkdevice/pdin",
+      "/iolinkmaster/port[1]/mode",
+      "/iolinkmaster/port[2]/mode",
+      "/iolinkmaster/port[3]/mode",
+      "/iolinkmaster/port[4]/mode",
+      "/processdatamaster/temperature",
+      "/processdatamaster/voltage",
+      "/processdatamaster/current",
+      "/processdatamaster/supervisionstatus"
     ]
   }
 }
 ```
 
-> **Important:** The paths inside `datatosend` must **not** end in `/getdata`. They are data-point paths, not service paths. This is a common mistake — if you include `/getdata` in the list, the master will ignore those entries.
+**Step 2 — Set the timer interval (minimum 500 ms):**
 
-The response bundles all the values together:
+```
+POST http://192.168.7.4/
+Body:
+{
+  "code": "request",
+  "cid": -1,
+  "adr": "/timer[1]/interval/setdata",
+  "data": { "newvalue": 500 }
+}
+```
+
+Both calls return `{ "code": 200 }` on success.
+
+### The callback URL format
+
+The callback URL tells the AL1350 **where** to send its push messages. It supports two forms:
+
+| Format | Example | When to use |
+|---|---|---|
+| MQTT broker | `mqtt://192.168.7.2:1883/iolink` | Push to MQTT broker, topic `iolink` |
+| HTTP callback | `http://192.168.7.2:8000/api/push` | POST to an HTTP endpoint on the client |
+
+We use the MQTT form. The URL structure is `mqtt://<broker-host>:<port>/<topic>`. The topic segment (`iolink`) is where all messages will be published.
+
+### Important: subscriptions do not survive power cycles
+
+When the AL1350 is powered off or rebooted, **all subscriptions are lost**. The device does not persist them to flash memory. Our backend calls `ensure_mqtt_subscription()` on every startup to re-register. This is why you will see "MQTT subscription active" in the backend logs each time the service starts.
+
+### The 500 ms floor
+
+The firmware enforces a **minimum timer interval of 500 ms**. You cannot set it lower. This is the fundamental limit of the push mechanism — the fastest you can receive data is twice per second. This is still a significant improvement over the previous ~1.5 s HTTP polling cycle.
+
+---
+
+## 7. The MQTT Message Format
+
+When the AL1350 fires its timer, it publishes a single JSON message to the `iolink` topic. Here is a real example captured from our system:
 
 ```json
 {
-  "code": 200,
+  "code": "event",
+  "cid": -1,
+  "adr": "/iolink",
   "data": {
-    "iolinkmaster/port[1]/mode": { "code": 200, "data": 3 },
-    "iolinkmaster/port[1]/iolinkdevice/pdin": { "code": 200, "data": "01A4" },
-    "iolinkmaster/port[2]/mode": { "code": 200, "data": 0 },
-    "iolinkmaster/port[2]/iolinkdevice/pdin": { "code": 503, "data": null }
+    "eventno": 47,
+    "srcurl": "00-02-01-AA-26-64/timer[1]/counter/datachanged",
+    "payload": {
+      "/timer[1]/counter": { "code": 200, "data": 47 },
+      "/iolinkmaster/port[1]/iolinkdevice/pdin": { "code": 200, "data": "00EB" },
+      "/iolinkmaster/port[2]/iolinkdevice/pdin": { "code": 200, "data": "0A8C0001" },
+      "/iolinkmaster/port[3]/iolinkdevice/pdin": { "code": 200, "data": "0164" },
+      "/iolinkmaster/port[4]/iolinkdevice/pdin": { "code": 503 },
+      "/iolinkmaster/port[1]/mode": { "code": 200, "data": 3 },
+      "/iolinkmaster/port[2]/mode": { "code": 200, "data": 3 },
+      "/iolinkmaster/port[3]/mode": { "code": 200, "data": 3 },
+      "/iolinkmaster/port[4]/mode": { "code": 200, "data": 3 },
+      "/processdatamaster/temperature": { "code": 200, "data": 42 },
+      "/processdatamaster/voltage": { "code": 200, "data": 24.1 },
+      "/processdatamaster/current": { "code": 200, "data": 0.35 },
+      "/processdatamaster/supervisionstatus": { "code": 200, "data": 0 }
+    }
   }
 }
 ```
 
-Notice that each entry in the response has its own `"code"` — port 2 returned 503 because nothing is connected there, but this did not prevent the other ports from returning valid data.
+### Anatomy of the message
 
-### Response key format
+| Field | What it contains |
+|---|---|
+| `code` | Always `"event"` for push messages |
+| `data.eventno` | Incrementing counter — useful to detect missed messages |
+| `data.srcurl` | The device MAC address and which timer fired |
+| `data.payload` | Dictionary of all subscribed data points and their current values |
 
-The response keys have **no leading slash**, even though the request paths may have one. In code you need to strip the leading `/` when looking up a result by path.
+### Reading values from the payload
+
+Each entry in `payload` is a mini-response in the same format as a direct HTTP GET:
+
+```json
+"/iolinkmaster/port[1]/iolinkdevice/pdin": { "code": 200, "data": "00EB" }
+```
+
+- `"code": 200` means the device returned a valid value.
+- `"code": 503` means the device on that port is not connected or not responding.
+- The actual value is always at `"data"` (not `"value"` — this differs from the direct GET API).
+
+### Checking for missed messages
+
+The `eventno` field increments by 1 on every message. If you receive event 47, then 49 (skipping 48), a message was dropped somewhere between the AL1350 and your subscriber. This can happen if the broker was briefly unreachable or the subscriber was processing a previous message too slowly.
+
+In practice on a local LAN, dropped MQTT messages are extremely rare. But you should be aware the counter exists — if you ever see gaps in the diagnostics panel, check event numbers.
 
 ---
 
-## 8. Exploring the Device Tree (gettree)
+## 8. Mosquitto — The Message Broker
 
-When you first connect to a master, you may not know exactly what data is available. The `gettree` service returns the full hierarchy of available data points:
+**Mosquitto** is an open-source MQTT broker maintained by the Eclipse Foundation. It is the most widely used MQTT broker in the world — lightweight (runs in ~2 MB of RAM), battle-tested, and available on Raspberry Pi OS via `apt`.
+
+### What the broker does
+
+The broker is the central post office of the MQTT system. It:
+
+1. Accepts incoming connections from publishers (the AL1350) and subscribers (the Python backend).
+2. Receives published messages and stores them temporarily.
+3. Routes each message to every subscriber whose topic filter matches.
+
+The broker does **not** care about the content of the messages — it just routes them based on topic strings.
+
+### Our Mosquitto configuration
+
+Mosquitto runs as a systemd service on the Pi. Its configuration is at `/etc/mosquitto/conf.d/iolink.conf`:
 
 ```
-POST http://192.168.7.4/
-Body: { "code": "request", "cid": -1, "adr": "gettree" }
+listener 1883 0.0.0.0
+allow_anonymous true
 ```
 
-The response is a large nested JSON structure describing every readable and writeable path on the device. This is very useful during development to discover new data points without reading the manual.
+- `listener 1883 0.0.0.0` — listen on port 1883 on all network interfaces (so the AL1350, which is on the same LAN, can publish to it).
+- `allow_anonymous true` — no username/password required. This is acceptable on an isolated factory LAN. In a production deployment with untrusted network access, you would add password authentication.
 
-Because the tree almost never changes, our system caches it for **5 minutes** after the first fetch. Calling gettree on every poll cycle would be wasteful — the hardware has limited CPU.
+### Checking the broker
+
+To see all messages flowing through the broker in real time, run from the Pi terminal:
+
+```bash
+mosquitto_sub -h 127.0.0.1 -p 1883 -t '#' -v
+```
+
+The `#` is an MQTT wildcard meaning "all topics". The `-v` flag shows the topic name alongside the message. You will see the AL1350's push messages arrive every 500 ms.
+
+### The broker as a reliability buffer
+
+If the Python backend restarts (for example during a code deploy), the Mosquitto broker keeps running. The AL1350 continues publishing to it without interruption. When the backend reconnects, it immediately starts receiving the latest values. There is no gap in the data from the sensors' perspective — only the browser display is briefly interrupted.
 
 ---
 
-## 9. Understanding Port Modes
+## 9. The Python MQTT Listener
+
+The backend uses **`aiomqtt`** — an asynchronous Python MQTT client built on top of the well-established `paho-mqtt` library. The `async` design is critical: the MQTT listener runs as a background task alongside the HTTP polling loop and the WebSocket server, all on the same Python event loop, without blocking each other.
+
+### The listener task
+
+The `run_mqtt_listener()` function in [io_link_fastapi.py](../backend/io_link_fastapi.py) is started at application startup alongside the HTTP polling task:
+
+```python
+async def run_mqtt_listener():
+    reconnect_delay = 5.0
+    while True:
+        try:
+            # 1. Register the subscription with the AL1350
+            ok = await al1350.ensure_mqtt_subscription(
+                broker_host, broker_port, interval_ms
+            )
+
+            # 2. Connect to Mosquitto and subscribe to the "iolink" topic
+            async with aiomqtt.Client(broker_host, port=broker_port) as client:
+                await client.subscribe("iolink")
+
+                # 3. Process messages as they arrive
+                async for message in client.messages:
+                    _parse_mqtt_message(bytes(message.payload))
+                    await broadcast_to_clients(system_state)
+
+        except Exception as e:
+            # 4. On any error, wait and retry
+            await asyncio.sleep(reconnect_delay)
+            reconnect_delay = min(reconnect_delay * 2, 60.0)
+```
+
+There are four distinct phases worth understanding:
+
+**Phase 1 — Subscribe registration:** Before connecting to the broker, the backend calls `ensure_mqtt_subscription()` on the AL1350 via HTTP. This tells the AL1350 which data points to include in its push messages and where to send them. This is the only HTTP call made at startup for MQTT purposes.
+
+**Phase 2 — Broker connection:** `aiomqtt.Client` opens a TCP connection to Mosquitto on `127.0.0.1:1883`. This is a loopback connection — the broker is on the same Pi, so it is essentially instant and never congested.
+
+**Phase 3 — Message loop:** `async for message in client.messages` is an asynchronous generator that yields a new message object each time the broker delivers one. The `await` here yields control to the event loop between messages, allowing WebSocket broadcasts and HTTP polls to run concurrently.
+
+**Phase 4 — Reconnect with backoff:** If anything goes wrong — Mosquitto crashes, the network blips, or the broker refuses the connection — the `except` block catches it, logs a warning, and waits before retrying. The delay doubles on each failure (5 s, 10 s, 20 s, up to 60 s maximum) to avoid hammering a broker that is struggling to come back up.
+
+---
+
+## 10. Parsing the Push Message
+
+When a message arrives from the broker, `_parse_mqtt_message()` in [io_link_fastapi.py](../backend/io_link_fastapi.py) extracts all the values and merges them into the global `system_state` dictionary that the WebSocket server broadcasts to browsers.
+
+### The merge strategy
+
+The push message contains **pdin, mode, and supervision** — but not the static metadata that rarely changes (vendor ID, device ID, product name, serial number). Those are fetched by the HTTP polling loop and cached. When a push message arrives, the parser:
+
+1. Takes the existing `system_state["ports"]` (which has the static metadata already populated by HTTP).
+2. Overwrites just the `pdin` and `mode` fields with the fresh values from the MQTT payload.
+3. Re-runs `_enrich_port()` to decode the raw hex PDin bytes into engineering values.
+4. Updates the supervision fields (temperature, voltage, current) from the payload.
+
+This is called a **merge** strategy — the push message provides the fast-changing fields, HTTP provides the slow-changing fields, and the result is a complete picture.
+
+### Code path
+
+```python
+def _parse_mqtt_message(raw: bytes) -> None:
+    msg = json.loads(raw)
+    payload = msg["data"]["payload"]
+
+    for port_num in range(1, 5):
+        pdin_entry = payload.get(f"/iolinkmaster/port[{port_num}]/iolinkdevice/pdin", {})
+        mode_entry = payload.get(f"/iolinkmaster/port[{port_num}]/mode", {})
+
+        if pdin_entry.get("code") == 200:
+            port["pdin"] = pdin_entry["data"]     # raw hex string
+        if mode_entry.get("code") == 200:
+            port["mode"] = MODE_MAP[mode_entry["data"]]  # int → "io-link" etc.
+
+        _enrich_port(port, port_labels=port_labels)  # decode PDin bytes
+```
+
+The `_enrich_port()` function is shared between both the MQTT path and the HTTP polling path — decoding logic lives in one place ([decoder.py](../backend/decoder.py)).
+
+### What happens when a port returns code 503
+
+If `"code": 503` appears for a port's pdin (meaning the IO-Link device is not connected), the parser **does not overwrite** the existing cached value — the port keeps its last known state and the mode field drives the "disconnected" display in the UI.
+
+---
+
+## 11. Understanding Port Modes and Process Data
+
+These concepts are unchanged from the HTTP polling era. They are fundamental to IO-Link regardless of whether data arrives via MQTT or HTTP polling.
+
+### Port modes
 
 Each of the master's 4 ports can operate in one of 4 modes. The master returns these as integers:
 
-| Integer value | String name | Meaning |
+| Integer | String name | Meaning |
 |---|---|---|
 | `0` | `inactive` | Port is disabled or nothing connected |
 | `1` | `digital_in` | Classic digital input (0 V or 24 V) |
 | `2` | `digital_out` | Classic digital output |
 | `3` | `io-link` | Full IO-Link mode — smart sensor/actuator connected |
 
-Only mode `3` (IO-Link) gives you access to rich process data, device identification, and parameter configuration. Modes 1 and 2 are the old-fashioned way — you only get a single 1 or 0.
-
-The mode is configured either via the AL1350 web interface or via a `setdata` service call (covered in section 13).
-
----
-
-## 10. Process Data — PDin and PDout
-
-This is the heart of IO-Link. **Process data** is the cyclically exchanged payload between the master and a sensor/actuator — the actual measurement values and control signals.
+Only mode `3` gives you rich process data and device identification.
 
 ### PDin — Process Data Input
 
-**PDin** flows **from the sensor to the master** (and ultimately to your software). It contains the sensor's measurement.
+**PDin** flows from the sensor to the master. It arrives in the MQTT push payload as a **hexadecimal string** — for example `"0A8C0001"`. That is raw bytes encoded in hex. What those bytes mean depends entirely on the sensor type.
 
-- A temperature sensor puts its current temperature reading in PDin.
-- A photoelectric sensor puts a detection flag (object present/absent) in PDin.
-- A capacitive sensor puts a detection flag plus an analogue dielectric value.
-
-The master gives you PDin as a **hexadecimal string**. For example: `"01A4"`.
-
-That is raw bytes encoded in hex. `01A4` means two bytes: `0x01` and `0xA4`, or in decimal: `1` and `164`.
-
-What those bytes *mean* depends entirely on the sensor's IODD (IO-Link Device Description) file — a standardised XML document that every IO-Link device manufacturer publishes. Your job as a programmer is to decode those bytes according to the IODD.
+The master cycles PDin with every connected IO-Link device every 1–5 ms. When the MQTT timer fires at 500 ms, the master reads the latest buffered PDin for all ports and includes them in the push message. You are always getting the most recent value.
 
 ### PDout — Process Data Output
 
-**PDout** flows **from the master to the actuator** (the reverse direction). It contains commands.
-
-- An LED light stack receives colour, animation, and intensity settings in PDout.
-- A valve actuator would receive open/close commands in PDout.
-
-Not all devices have both PDin and PDout. A pure sensor typically has only PDin. A pure actuator typically has only PDout. Some devices have both.
-
-### Timing
-
-The master exchanges process data with every connected IO-Link device in its **cycle time** — typically 1–5 ms per port. Your software polls much more slowly (1–5 seconds). That is fine: the master buffers the latest value and your poll reads it.
+**PDout** flows from the master to actuators (the reverse direction). It carries commands — for example, telling an LED light stack what colour to display. PDout is not included in the MQTT push payload because it does not change unless we write to it. It is still read via HTTP when needed.
 
 ---
 
-## 11. Decoding Sensor Data
+## 12. Decoding Sensor Data
 
-Raw hex bytes need to be interpreted. Here is how the real sensors on this system are decoded.
+Raw hex bytes need to be interpreted. The `_enrich_port()` function calls the appropriate decoder from [decoder.py](../backend/decoder.py) based on the detected device type. Here is how each sensor on this system is decoded.
 
-### Temperature Sensor (IFM TV7 series)
+### Temperature Sensor (IFM TV7 series) — Port 1
 
 PDin: **2 bytes, big-endian, signed 16-bit integer, 0.1 °C resolution**
 
 ```
-Raw PDin: "00EB"
+Raw PDin from MQTT: "00EB"
 Bytes: [0x00, 0xEB] = [0, 235]
 16-bit value: (0 << 8) | 235 = 235
 Temperature = 235 × 0.1 = 23.5 °C
 ```
 
-The formula is simply: `(byte0 << 8) | byte1`, then multiply by 0.1. If the result is ≥ 32768 (0x8000), it is a negative number — subtract 65536 to get the signed value (standard two's complement).
+If the 16-bit value is ≥ 32768 (0x8000), it is a negative number — subtract 65536 for the signed result (standard two's complement).
 
-### Photoelectric Sensor
-
-PDin: **1–2 bytes**
-
-```
-Raw PDin: "01"
-Byte 0: 0x01
-Bit 0 of byte 0: 1 → Object detected
-
-Raw PDin: "0064"
-Byte 0: 0x00 → No object
-Byte 1: 0x64 = 100 → Signal quality: 100%
-```
-
-The first bit of the first byte is the switching output — the answer to "is something in front of the sensor?" Any additional bytes carry signal quality or distance information depending on the device model.
-
-### Capacitive Sensor (RS PRO 2377240 / Carlo Gavazzi)
+### Capacitive Sensor (RS PRO 2377240 / Carlo Gavazzi) — Port 2
 
 PDin: **4 bytes**
 
 ```
-Raw PDin: "0A8C0001"
+Raw PDin from MQTT: "0A8C0001"
 Bytes: [0x0A, 0x8C, 0x00, 0x01]
 
-Bytes 0-1 (big-endian): (0x0A << 8) | 0x8C = 2700  → Analogue dielectric value
-Byte 2:  0x00  → SSC1/SSC2 flags (both inactive)
+Bytes 0–1 (big-endian): (0x0A << 8) | 0x8C = 2700  → Analogue dielectric value
+Byte 2:  0x00  → SSC1/SSC2 switching channel flags (both inactive)
 Byte 3:  0x01  → bit 0 = 1 → Switching output 1 active → Object detected
 ```
 
-The analogue value represents the strength of the dielectric effect — higher means more material detected. The switching output bit is the simple yes/no answer.
+The analogue value represents the strength of the dielectric effect — higher means more material detected. The switching output bit is the simple yes/no answer. The analogue value is useful for level sensing (e.g., gradually rising liquid) because it gives a continuous reading, not just a threshold.
 
-### LED Light Stack (IFM CL50 PRO SELECT)
+### Photoelectric Sensor (RS PRO) — Port 3
+
+PDin: **1–2 bytes**
+
+```
+Raw PDin from MQTT: "01"
+Byte 0: 0x01 → bit 0 = 1 → Object detected (beam reflected back)
+
+Raw PDin from MQTT: "0064"
+Byte 0: 0x00 → No object detected
+Byte 1: 0x64 = 100 → Signal quality: 100%
+```
+
+The first bit of the first byte is the switching output. Additional bytes carry signal quality — a value that drops before total failure, giving early warning to clean the lens or adjust alignment.
+
+### LED Light Stack (IFM CL50 PRO SELECT) — Port 4
 
 The LED uses **PDout** (we send commands *to* it). It expects **3 bytes**:
 
 ```
-Byte 0:  [AudibleState (2 bits)] [Color2 Intensity (3 bits)] [Color1 Intensity (3 bits)]
-Byte 1:  [Speed (2 bits)] [Pulse Pattern (3 bits)] [Animation (3 bits)]
-Byte 2:  [Color 2 (4 bits)] [Color 1 (4 bits)]
+Byte 0: [AudibleState (2 bits)] [Color2 Intensity (3 bits)] [Color1 Intensity (3 bits)]
+Byte 1: [Speed (2 bits)] [Pulse Pattern (3 bits)] [Animation (3 bits)]
+Byte 2: [Color 2 (4 bits)] [Color 1 (4 bits)]
 ```
 
 Example — solid green at high intensity, no sound:
@@ -392,20 +573,36 @@ Byte 2: Color1 = 0 (Green), Color2 = 0 (Green) → 0x00
 Byte 1: Animation = 1 (Steady), Pulse = 0, Speed = 0 → 0x01
 Byte 0: Color1 Intensity = 0 (High), Color2 Intensity = 3 (Off), Audible = 0 → 0x18
 
-PDout = "180100"  (bytes 0, 1, 2 concatenated as hex)
+PDout = "180100"
 ```
 
-Reading this back via the master's PDout data point tells you what the LED is currently commanded to display.
+Port 4 returns `"code": 503` in the MQTT PDin payload because the LED stack has no PDin — it only has PDout. This is normal and expected.
 
 ---
 
-## 12. Writing to a Port — Controlling Actuators
+## 13. The Capacitive Sensor Detection Counter (ISDU)
 
-Reading is done with GET. **Writing** to a device is done with a `setdata` service call.
+The MQTT push mechanism delivers the current PDin state at 500 ms intervals. But what about events that happen and complete *between* two push messages? An object touching the capacitive sensor for 100 ms would never appear in any push message — it arrived and left in the gap.
 
-### Writing PDout
+The RS PRO 2377240 capacitive sensor has a hardware solution for exactly this problem: a built-in **Detection Counter**.
 
-To command the LED light stack (on port 4) to show red:
+### What it is
+
+The sensor has an internal counter that increments every time **SSC1 changes state** — every single detection event, regardless of duration. This counter is stored in the sensor's own non-volatile memory (saved to flash once per hour to protect against power loss) but updates in the sensor's live memory on every state change.
+
+| Counter property | Value |
+|---|---|
+| ISDU index | 210 (0xD2), subindex 0 |
+| Data type | 32-bit signed integer |
+| Range | 0 to 2,147,483,647 |
+| Updated | On every SSC1 state change (real-time in memory) |
+| Persisted to flash | Once per hour |
+
+### What is ISDU?
+
+**ISDU** (Indexed Service Data Unit) is IO-Link's mechanism for reading and writing a device's **parameter memory** — data that is not part of the fast cyclic PDin/PDout exchange. Think of it as a slow, acyclic read that goes directly to the sensor's internal registers.
+
+Reading an ISDU parameter is done via the AL1350's `iolreadacyclic` service:
 
 ```
 POST http://192.168.7.4/
@@ -413,126 +610,131 @@ Body:
 {
   "code": "request",
   "cid": -1,
-  "adr": "/iolinkmaster/port[4]/iolinkdevice/pdout/setdata",
-  "data": { "newvalue": "010109" }
+  "adr": "/iolinkmaster/port[2]/iolinkdevice/iolreadacyclic",
+  "data": { "index": 210, "subindex": 0 }
 }
-```
 
-The `"newvalue"` is the hex-encoded byte string you want to write. The master sends it to the device as PDout in the next IO-Link cycle.
-
-> **Safety note:** In real automation, writing to actuators requires careful interlocking — you should only send commands when you are sure it is safe to do so. Never write to a port without understanding what the actuator will do.
-
-### Writing a parameter to a sensor
-
-IO-Link devices also have **parameters** — settings you can read and change, such as the detection threshold of a capacitive sensor, or the measuring range of a temperature sensor. These are stored in the device's parameter memory (ISDU — Indexed Service Data Unit).
-
-Writing a parameter looks like this:
-
-```
-POST http://192.168.7.4/
-Body:
+Response:
 {
-  "code": "request",
   "cid": -1,
-  "adr": "/iolinkmaster/port[2]/iolinkdevice/parameter/index/1/subindex/0/setdata",
-  "data": { "newvalue": "0A" }
+  "code": 200,
+  "data": { "value": "000003E8" }
 }
 ```
 
-- **Index** refers to the parameter number in the device's IODD file.
-- **Subindex** is used for structured parameters with sub-fields.
+The `value` is the raw data as a **hex string** and must be decoded. For the detection counter (32-bit signed integer, big-endian):
 
-Finding the right index requires reading the sensor's IODD or datasheet.
+```
+Hex: "000003E8"
+Raw integer: 0x000003E8 = 1000
+Detection counter = 1000 activations
+```
+
+### How we use it
+
+The HTTP polling loop (which still runs every 1 s alongside MQTT) reads the detection counter each cycle for any capacitive port in IO-Link mode. The current value is compared to the previous value to compute a **delta** — the number of detections that occurred in the last poll interval, regardless of whether any MQTT push message captured a state change.
+
+```python
+prev = _cap_counter_prev.get(port_num)          # e.g. 1000
+current = await al1350.read_isdu_int32(port, 210, 0)  # e.g. 1003
+
+delta = current - prev   # 3 detections occurred since last poll
+_cap_counter_prev[port_num] = current
+```
+
+This `detection_counter_delta` field appears in the IO-Link page's port detail panel. A delta of 3 when the switching output shows "No object" means the capacitive sensor triggered and released 3 times between polls — something that would be completely invisible from PDin alone.
+
+### Why ISDU and not MQTT?
+
+The detection counter is not a cyclic PDin data point — it is an acyclic parameter in the sensor's internal memory. The AL1350 subscription system only supports cyclic data points (those accessible via `getdatamulti`). ISDU reads require a separate explicit request to the AL1350, so they must remain as HTTP calls. This is expected — ISDU reads are relatively infrequent and the counter changes slowly enough that 1 Hz reading is more than adequate.
 
 ---
 
-## 13. Configuring a Port
+## 14. The Dual-Track Architecture — MQTT + HTTP Fallback
 
-You can also change how the master itself behaves on each port — for example, switching a port from digital input mode to IO-Link mode.
-
-```
-POST http://192.168.7.4/
-Body:
-{
-  "code": "request",
-  "cid": -1,
-  "adr": "/iolinkmaster/port[1]/mode/setdata",
-  "data": { "newvalue": 3 }
-}
-```
-
-Setting mode to `3` enables IO-Link on port 1. The master will immediately begin the IO-Link startup handshake with whatever device is plugged in.
-
-### The IO-Link startup handshake
-
-When the master switches a port to IO-Link mode, the following sequence happens automatically inside the master hardware:
+The system runs two data paths simultaneously. This is not redundancy for reliability — it is a deliberate separation of concerns:
 
 ```
-Master                          Sensor
-  │                               │
-  │── Wakeup pulse (DC signal) ──>│
-  │<── Sensor wakes up ───────────│
-  │                               │
-  │── COM speed negotiation ─────>│
-  │<── Speed agreed ──────────────│
-  │                               │
-  │── Request device identity ───>│
-  │<── VendorID, DeviceID ────────│
-  │<── ProductName, SerialNum ────│
-  │                               │
-  │── Begin cyclic data exchange >│
-  │<── PDin (sensor data) ────────│  } every 1-5 ms
-  │── PDout (commands) ──────────>│  }
+┌────────────────────────────────────────────────────────────┐
+│                   Data Source Split                         │
+│                                                            │
+│  MQTT push (500 ms)      │  HTTP poll (1 s)                │
+│  ─────────────────────── │  ────────────────────────       │
+│  pdin (all 4 ports)      │  vendor_id, device_id           │
+│  mode (all 4 ports)      │  product name, serial number    │
+│  supervision data        │  ISDU detection counter         │
+│                          │  Full fallback if MQTT down     │
+└────────────────────────────────────────────────────────────┘
 ```
 
-This entire handshake takes roughly 0.5–2 seconds. Your software will see the port mode change from `inactive` to `io-link` and the device identity fields (vendor ID, device ID, name, serial) will populate. Only then will valid PDin data start appearing.
+### Why keep HTTP at all?
+
+**Static metadata** — the device's vendor ID, product name, and serial number — never changes while the sensor is connected. Fetching it via MQTT every 500 ms would be wasteful. The HTTP poll fetches it once and caches it.
+
+**ISDU reads** — as explained in section 13, the detection counter must be read via a direct HTTP service call.
+
+**Fallback** — if Mosquitto crashes or the broker is unrestarted after a Pi reboot, the MQTT listener fails to connect. The HTTP polling loop continues running at 1 s intervals, providing all data including pdin, at the old polling rate. The UI continues functioning. The MQTT listener retries with exponential backoff until the broker comes back.
+
+### Data source tagging
+
+Every port data object in the WebSocket broadcast carries a `"source"` field:
+
+| Value | Meaning |
+|---|---|
+| `"mqtt"` | This pdin value came from an MQTT push message |
+| `"getdatamulti"` | This pdin value came from an HTTP getdatamulti response |
+| `"fallback"` | HTTP was used because getdatamulti failed; individual GETs were used |
+
+The admin page diagnostics panel shows whether MQTT is connected (`mqtt_connected: true/false`), making it easy to tell at a glance which data path is active.
 
 ---
 
-## 14. Supervision Data — Monitoring the Master Itself
+## 15. Supervision Data in the Push Payload
 
-The AL1350 does not only give you sensor data — it also reports its own health. This is called **supervision data** and lives under the `processdatamaster` path.
+The AL1350 reports its own health alongside the sensor data in each MQTT push message. This is called **supervision data** and covers the master device itself:
 
-| Path | What it tells you | Example value |
+| MQTT payload path | What it tells you | Example |
 |---|---|---|
 | `/processdatamaster/temperature` | Master CPU temperature (°C) | `42` |
-| `/processdatamaster/voltage` | Supply voltage (V) | `24.1` |
+| `/processdatamaster/voltage` | Supply voltage to all sensors (V) | `24.1` |
 | `/processdatamaster/current` | Total current drawn by all sensors (A) | `0.35` |
-| `/processdatamaster/supervisionstatus` | Bitmask of fault flags | `0` = all OK |
+| `/processdatamaster/supervisionstatus` | Fault bitmask — `0` = all OK | `0` |
 
-These are polled with `getdatamulti` on every cycle:
+These arrive in every MQTT message at no extra cost. The parser extracts them and stores them in `system_state["supervision"]`, which is displayed on the IO-Link page supervision table and graphed as a trend in the supervision charts.
 
-```
-POST http://192.168.7.4/
-Body:
-{
-  "code": "request",
-  "cid": -1,
-  "adr": "getdatamulti",
-  "data": {
-    "datatosend": [
-      "processdatamaster/temperature",
-      "processdatamaster/voltage",
-      "processdatamaster/current",
-      "processdatamaster/supervisionstatus"
-    ]
-  }
-}
-```
-
-If the voltage drops below 18 V or temperature rises above 70 °C, the `supervisionstatus` bitmask will reflect a fault. Monitoring this lets you detect power supply problems before they cause mysterious sensor failures.
+If the voltage drops below 18 V or temperature rises above 70 °C, the `supervisionstatus` bitmask will set fault bits. Monitoring this lets you detect power supply problems before they cause mysterious sensor failures.
 
 ---
 
-## 15. Reliability in Real Systems
+## 16. Reliability in Real Systems
 
-This section explains some important engineering patterns that appear in the backend code. They exist because **industrial networks are not perfect** — cables get knocked, power blips, and the master has limited resources. A naive polling loop that just sends requests and assumes they succeed will break badly in the field.
+This section explains the engineering patterns that appear in the backend code. Industrial networks are not perfect — cables get knocked, Mosquitto may restart, the AL1350 may need to be power-cycled. A naive MQTT listener that crashes on the first error is unusable in the field.
 
-### Circuit Breaker
+### MQTT reconnect with exponential backoff
 
-A **circuit breaker** is a software pattern borrowed from electrical engineering. Just like a physical circuit breaker trips when too much current flows (protecting the wiring), a software circuit breaker "trips" when too many requests fail in a row — protecting the system from being overwhelmed by constant retries to a device that is clearly not responding.
+If the connection to Mosquitto drops (or was never established), `run_mqtt_listener()` catches the exception, logs a warning, and sleeps before retrying. The sleep time doubles on each consecutive failure:
 
-Our circuit breaker has three states:
+```
+Attempt 1 fails → wait 5 s
+Attempt 2 fails → wait 10 s
+Attempt 3 fails → wait 20 s
+Attempt 4 fails → wait 40 s
+Attempt 5+ fails → wait 60 s (capped)
+```
+
+The cap at 60 s means the system will always recover within a minute of the broker returning, without hammering it constantly if it is struggling.
+
+### Re-subscribing after reconnect
+
+Each time the MQTT listener successfully reconnects, it calls `ensure_mqtt_subscription()` again before subscribing to the broker topic. This is because the AL1350 may have been power-cycled while the broker was down — meaning its subscription registration was lost. Re-registering on every connect ensures the AL1350 always knows where to push data.
+
+### HTTP fallback
+
+The HTTP polling task runs continuously, independent of the MQTT listener. It uses the same circuit breaker, retry-with-jitter, and connection pooling patterns as before. If MQTT is working correctly, the HTTP poll's pdin data is overwritten by the more recent MQTT data on each WebSocket broadcast. If MQTT fails, the HTTP poll's pdin data is the only source and takes over seamlessly.
+
+### Circuit breaker (HTTP path)
+
+The HTTP client implements a circuit breaker pattern for calls to the AL1350:
 
 ```
 CLOSED (normal) ──5 failures──> OPEN (blocking)
@@ -546,170 +748,144 @@ CLOSED (normal) ──5 failures──> OPEN (blocking)
                               CLOSED      OPEN
 ```
 
-- **Closed:** Everything is fine. Requests go through.
-- **Open:** Too many failures. All requests are immediately rejected without even trying — this prevents the system from hammering a dead device.
-- **Half-open:** After 15 seconds, the breaker tries one request. If it succeeds, the breaker closes again. If it fails, it goes back to open.
+The MQTT path does not use a circuit breaker because MQTT failure is handled by the broker connection retry loop — if the broker is unreachable, `aiomqtt.Client` raises an exception and the backoff loop handles it.
 
-### Retry with Jitter
+### Adaptive polling (HTTP path)
 
-When a single request fails (network glitch, timeout), it is worth trying again — but not immediately. Our code waits a short, **randomly varied** delay (jitter) before retrying. The randomness is critical: if 100 systems all retry at exactly the same time, they can overwhelm a device that is just recovering. Random delays spread the load.
-
-The delay grows exponentially: 0.2 s, then ~0.4 s, then ~0.8 s — capped at 1.5 s.
-
-### Connection Pooling
-
-The AL1350 hardware can only handle **3 simultaneous HTTP connections**. If you open more, it starts refusing or silently dropping them. Our code uses a semaphore — a concurrency limit — to ensure no more than 3 requests run at the same time, even if the software wants to fire 16 at once.
-
-### Adaptive Polling
-
-Not all ports need polling at the same rate. A port with nothing connected does not change every second — checking it every 5 seconds is sufficient. Our system tracks when each port last changed mode and adjusts its polling interval:
-
-- **Connected ports** (IO-Link, digital): polled every **1 second**
-- **Inactive/error ports**: polled every **5 seconds**
-
-This reduces unnecessary load on the master by about 40% in a typical 4-port setup.
+The HTTP poll still uses adaptive intervals for ports. Connected IO-Link ports are polled every 1 second (needed for ISDU counter reads). Inactive or error ports are polled every 5 seconds (no sensor data to read).
 
 ---
 
-## 16. How Our HMI Puts It All Together
+## 17. How Our HMI Puts It All Together
 
-This project has three layers that work together to display live sensor data on screen.
+Three layers — sensor hardware, backend, and browser — connect through two protocols: MQTT and WebSocket.
 
 ```
-┌─────────────────────────────────────────────┐
-│              Browser (HMI Dashboard)         │
-│                                              │
-│  JavaScript ← WebSocket messages (JSON)      │
-│  Chart.js renders gauges, trends             │
-└─────────────────┬───────────────────────────┘
-                  │ WebSocket  ws://localhost/ws
-┌─────────────────▼───────────────────────────┐
-│              Python Backend (FastAPI)         │
-│                                              │
-│  Background loop (1 second):                 │
-│    1. Call getdatamulti → get all port data  │
-│    2. Decode PDin for each sensor type       │
-│    3. Append to supervision history          │
-│    4. Broadcast JSON to all WS clients       │
-└─────────────────┬───────────────────────────┘
-                  │ HTTP REST (getdatamulti, GETs)
-┌─────────────────▼───────────────────────────┐
-│          IFM AL1350 IO-Link Master            │
-│                                              │
-│  Ports 1-4: cyclic IO-Link exchange           │
-│  getdatamulti returns all port data at once  │
-└─────────────────────────────────────────────┘
+MQTT push path (500 ms):
+    AL1350 ──MQTT──> Mosquitto ──aiomqtt──> FastAPI ──WebSocket──> Browser
+    
+HTTP metadata path (6 s cycle):
+    AL1350 <──HTTP GET/POST──> FastAPI ──(merged into system_state)──> Browser
+
+ISDU counter path (1 s cycle):
+    AL1350 <──HTTP POST iolreadacyclic──> FastAPI ──(merged)──> Browser
 ```
 
-### The polling loop in plain English
+### What happens from power-on to live dashboard
 
-Every second, the backend Python code:
+1. **Pi boots.** Mosquitto starts automatically as a systemd service.
+2. **FastAPI starts.** The startup event fires:
+   - Calls `refresh_gettree()` on the AL1350 over HTTP (warms the device tree cache).
+   - Starts the HTTP polling task (handles static metadata and ISDU counter).
+   - Starts the MQTT listener task.
+3. **MQTT listener registers subscription.** Calls `ensure_mqtt_subscription()` on the AL1350 via HTTP — tells it to push all pdin, mode, and supervision data to `mqtt://127.0.0.1:1883/iolink` every 500 ms.
+4. **AL1350 begins publishing.** Every 500 ms, it reads all subscribed data points and sends a JSON message to Mosquitto.
+5. **FastAPI receives messages.** The `async for message in client.messages` loop fires. Each message is parsed, decoded, and merged into `system_state`.
+6. **Browser connects.** Chromium opens, connects to the WebSocket at `ws://localhost/ws`. The FastAPI server sends the current `system_state` immediately.
+7. **Live updates flow.** Every 500 ms, the MQTT push triggers a WebSocket broadcast. The browser redraws gauges and charts in real time.
 
-1. Checks if any port is due to be polled (adaptive intervals).
-2. Builds a list of data-point paths for those ports.
-3. Sends ONE `getdatamulti` request to the AL1350 with all paths at once.
-4. Receives all the values back in one response.
-5. For each port, looks up the sensor type (temperature? photoelectric? capacitive?).
-6. Decodes the raw PDin hex bytes into meaningful engineering values.
-7. Updates the supervision data (voltage, current, temperature of the master).
-8. Pushes the complete JSON state to every connected browser over WebSocket.
+### The role of each file
 
-The browser receives this update and redraws the gauges and charts without the user having to refresh the page.
-
-### Why WebSocket?
-
-The browser cannot receive data unless it asks for it (that is how HTTP works). WebSocket is different — it keeps a persistent two-way connection open. Once connected, the server can **push** data to the browser at any time. This gives the dashboard its live, real-time feel.
+| File | Role |
+|---|---|
+| [io_link_fastapi.py](../backend/io_link_fastapi.py) | MQTT listener, message parser, WebSocket server, HTTP fallback |
+| [al1350_client.py](../backend/al1350_client.py) | HTTP client with circuit breaker; `ensure_mqtt_subscription()` |
+| [decoder.py](../backend/decoder.py) | PDin hex byte decoding for all sensor types |
+| [config.json](../backend/config.json) | MQTT broker address, poll intervals, port labels |
 
 ---
 
-## 17. Quick Reference: All the Key Paths
+## 18. Quick Reference
 
-### Port data paths (replace `[N]` with port number 1–4)
+### MQTT subscription paths (what the AL1350 pushes)
 
-| What | Path |
+| Data | Payload path |
 |---|---|
-| Port mode (0–3) | `iolinkmaster/port[N]/mode` |
-| Communication code | `iolinkmaster/port[N]/comcode` |
-| Master cycle time | `iolinkmaster/port[N]/mastercycle` |
-| Process Data In (sensor reading) | `iolinkmaster/port[N]/iolinkdevice/pdin` |
-| Process Data Out (commands) | `iolinkmaster/port[N]/iolinkdevice/pdout` |
-| Vendor ID | `iolinkmaster/port[N]/iolinkdevice/vendorid` |
-| Device ID | `iolinkmaster/port[N]/iolinkdevice/deviceid` |
-| Product name | `iolinkmaster/port[N]/iolinkdevice/productname` |
-| Serial number | `iolinkmaster/port[N]/iolinkdevice/serialnumber` |
-| Parameter read | `iolinkmaster/port[N]/iolinkdevice/parameter/index/<i>/subindex/<s>` |
+| Port N process data in | `/iolinkmaster/port[N]/iolinkdevice/pdin` |
+| Port N operating mode | `/iolinkmaster/port[N]/mode` |
+| Master temperature (°C) | `/processdatamaster/temperature` |
+| Master supply voltage (V) | `/processdatamaster/voltage` |
+| Total sensor current (A) | `/processdatamaster/current` |
+| Fault bitmask | `/processdatamaster/supervisionstatus` |
 
-### Supervision paths
+### HTTP paths still used (static metadata + ISDU)
 
-| What | Path |
+| Data | Method | Path |
+|---|---|---|
+| Vendor ID | GET/multi | `iolinkmaster/port[N]/iolinkdevice/vendorid` |
+| Device ID | GET/multi | `iolinkmaster/port[N]/iolinkdevice/deviceid` |
+| Product name | GET/multi | `iolinkmaster/port[N]/iolinkdevice/productname` |
+| Serial number | GET/multi | `iolinkmaster/port[N]/iolinkdevice/serialnumber` |
+| Capacitive detection counter | POST iolreadacyclic | index 210, subindex 0 on port 2 |
+
+### AL1350 subscribe service calls
+
+| Service | Address (`adr`) |
 |---|---|
-| Master temperature (°C) | `processdatamaster/temperature` |
-| Supply voltage (V) | `processdatamaster/voltage` |
-| Supply current (A) | `processdatamaster/current` |
-| Fault status bitmask | `processdatamaster/supervisionstatus` |
+| Register subscription | `/timer[1]/counter/datachanged/subscribe` |
+| Set push interval | `/timer[1]/interval/setdata` |
+| Read current interval | `/timer[1]/interval/getdata` |
 
-### Device info paths
+### MQTT broker (Mosquitto on Pi)
 
-| What | Path |
+| Setting | Value |
 |---|---|
-| Application tag (name) | `devicetag/applicationtag` |
-| Firmware version | `deviceinfo/software` |
-| Device icon URL | `deviceinfo/deviceicon` |
+| Host | `127.0.0.1` (loopback from FastAPI) / `192.168.7.2` (from AL1350) |
+| Port | `1883` |
+| Topic subscribed by AL1350 | `iolink` |
+| Config file | `/etc/mosquitto/conf.d/iolink.conf` |
+| Systemd service | `mosquitto.service` |
 
-### Service names (used as `"adr"` in POST requests)
+### Port mode integers
 
-| Service | What it does |
-|---|---|
-| `gettree` | Returns full data-point tree |
-| `getdatamulti` | Read many data points in one request |
-| `<path>/setdata` | Write a value to a data point |
-| `iotsetup/network/setblock` | Configure network settings (IP, DHCP, gateway) |
+| Integer | String | Meaning |
+|---|---|---|
+| `0` | `inactive` | Nothing connected |
+| `1` | `digital_in` | Classic 24 V digital input |
+| `2` | `digital_out` | Classic 24 V digital output |
+| `3` | `io-link` | Smart IO-Link device |
 
 ---
 
-## 18. Student Exercises
+## 19. Student Exercises
 
 Work through these to test and deepen your understanding.
 
-### Exercise 1 — First contact
-Using a browser or `curl`, make a GET request to:
+### Exercise 1 — Watch the raw MQTT stream
+From the Pi terminal, run:
+```bash
+mosquitto_sub -h 127.0.0.1 -p 1883 -t '#' -v
 ```
-http://192.168.7.4/iolinkmaster/port[1]/mode/getdata
-```
-What integer value do you see? What does it mean?
+Watch the messages arrive every 500 ms. Notice the `eventno` counter incrementing. What happens to it if you disconnect and reconnect the subscriber?
 
-### Exercise 2 — Read the temperature sensor
-Port 1 is connected to a temperature sensor. Read its PDin:
-```
-GET http://192.168.7.4/iolinkmaster/port[1]/iolinkdevice/pdin/getdata
-```
-You will receive a hex string. Convert those 2 bytes to a temperature in °C using the formula from section 11.
+### Exercise 2 — Identify the temperature
+Find the PDin value for port 1 in a raw MQTT message. Apply the formula from section 12 to convert the hex bytes to °C. Then compare it with the value displayed in the HMI dashboard — do they match?
 
-### Exercise 3 — Batch read with getdatamulti
-Write a `getdatamulti` POST request that reads both the temperature PDin AND the master supply voltage in a single request. Compare the response structure to a single GET.
+### Exercise 3 — Simulate a missed event
+Hold an object in front of the capacitive sensor on port 2, then quickly pull it away before the next MQTT message fires. Watch the IO-Link page port detail panel — does the `detection_counter_delta` show that an event occurred even though the pdin switching output never showed "Object detected" in the UI?
 
-### Exercise 4 — Identify all connected devices
-For each of the 4 ports, read `vendorid`, `deviceid`, and `productname` using one `getdatamulti` call. Look up the vendor ID numbers online — what manufacturers are they?
+### Exercise 4 — Trace the subscription registration
+Look at the `ensure_mqtt_subscription()` method in [al1350_client.py](../backend/al1350_client.py). How many HTTP calls does it make? What happens if the first one succeeds but the second one (setting the timer interval) fails? Is the system in a safe state?
 
-### Exercise 5 — Trace the circuit breaker
-Without touching the hardware, look at the backend code in [al1350_client.py](../backend/al1350_client.py) and find the `CircuitBreaker` class. Draw a state diagram on paper. Under what exact conditions does it move from closed → open? From open → half-open?
+### Exercise 5 — Understand eventno gaps
+The MQTT message includes an `eventno` counter. Write pseudocode for a monitor that tracks this counter and logs a warning whenever it detects a gap (i.e., a skipped event number). What would cause a gap, and under what conditions on a local LAN would you expect to see one?
 
-### Exercise 6 — Decode a PDout manually
-The LED stack on port 4 is sending the following PDout: `"180100"`.
-- Split into bytes: `[0x18, 0x01, 0x00]`
-- Using the bit layout from section 11, decode:
-  - What colour is Color 1?
-  - What is the animation mode?
-  - Is the audible buzzer on?
+### Exercise 6 — MQTT vs HTTP latency thought experiment
+The AL1350 pushes data every 500 ms. The HTTP poll runs every 1 s with deadline-based sleep. If a sensor state changes at time T = 0:
+- What is the **worst case** time for the MQTT path to deliver this to the browser?
+- What is the **worst case** for the HTTP poll path?
+- Draw a timeline diagram showing both paths.
 
-### Exercise 7 — Research question
-Look up the IO-Link standard IEC 61131-9. What is the maximum cable length between a master port and a device? Why do you think this limit exists (hint: think about signal quality and propagation delay at 230 kbaud)?
+### Exercise 7 — Detection counter arithmetic
+The detection counter for the capacitive sensor reads `1247` at t=0, and `1251` at t=1 s. How many SSC1 state changes occurred? Is that 4 detections or 2 detections? (Think carefully: what counts as one "state change"?)
 
-### Exercise 8 — Design challenge
-Imagine you are adding a new sensor to port 3: a pressure sensor with 2-byte PDin where bytes 0–1 form a 16-bit unsigned integer representing pressure in millibar.
+### Exercise 8 — Design challenge: adding MQTT support for a new data point
+You want to add the `mastercycletime_actual` value for port 2 to the MQTT push payload (this is the live IO-Link cycle time between the master and the capacitive sensor, in microseconds).
 
-- Write the pseudocode for a `decode_pressure_pdin(bytes_data)` function.
-- What would you add to the device type detection logic to recognise this sensor?
+- What would you add to the `datatosend` list in `ensure_mqtt_subscription()`?
+- What key would you look for in `_parse_mqtt_message()`?
+- Where in the `port` dict would you store it?
+- What existing code path is responsible for calling `_enrich_port()` after the merge?
 
 ---
 
@@ -720,21 +896,29 @@ Imagine you are adding a new sensor to port 3: a pressure sensor with 2-byte PDi
 | **IO-Link** | IEC 61131-9 standard for smart sensor/actuator communication |
 | **IO-Link Master** | The device that bridges IO-Link ports to Ethernet |
 | **AL1350** | IFM's 4-port IO-Link Master used in this system |
-| **PDin** | Process Data Input — data from sensor to master |
-| **PDout** | Process Data Output — data from master to actuator |
-| **IODD** | IO-Link Device Description — XML file describing a device's data |
-| **ISDU** | Indexed Service Data Unit — IO-Link parameter access mechanism |
-| **getdatamulti** | AL1350 API service to read many data points in one request |
-| **gettree** | AL1350 API service returning full data-point hierarchy |
-| **Circuit breaker** | Software pattern that stops retrying a clearly-failed connection |
-| **Jitter** | Random delay added to retries to prevent thundering-herd problems |
+| **PDin** | Process Data Input — data from sensor to master (cyclic) |
+| **PDout** | Process Data Output — data from master to actuator (cyclic) |
+| **ISDU** | Indexed Service Data Unit — IO-Link acyclic parameter access |
+| **MQTT** | Message Queuing Telemetry Transport — lightweight IoT messaging protocol |
+| **Publish/Subscribe** | Messaging pattern where producers and consumers are decoupled via a broker |
+| **Topic** | An MQTT string label used to route messages from publishers to subscribers |
+| **Broker** | The MQTT server that receives and routes messages (Mosquitto in our system) |
+| **Publisher** | A device that sends MQTT messages (the AL1350 in our system) |
+| **Subscriber** | A client that receives messages on a topic (the FastAPI backend) |
+| **Mosquitto** | Open-source MQTT broker running on the Raspberry Pi |
+| **aiomqtt** | Async Python MQTT client library used in the FastAPI backend |
+| **Subscribe service** | AL1350 API feature (§9.2.12) that configures the device to push data |
+| **timer[1]** | The AL1350's internal timer object that controls push interval |
+| **eventno** | Incrementing counter in each MQTT message; gaps indicate dropped messages |
+| **Detection counter** | Onboard SSC1 state-change counter in the capacitive sensor (ISDU index 210) |
+| **getdatamulti** | AL1350 HTTP API service that reads multiple data points in one sequential request |
+| **Circuit breaker** | Software pattern that stops retrying a clearly-failed HTTP connection |
+| **Exponential backoff** | Reconnect strategy that doubles the wait time on each consecutive failure |
 | **WebSocket** | Protocol for persistent two-way browser-server communication |
-| **FastAPI** | Python web framework used for the backend API and WebSocket server |
+| **FastAPI** | Python web framework used for the backend API, MQTT listener, and WebSocket server |
 | **HMI** | Human-Machine Interface — the dashboard the operator uses |
-| **PLC** | Programmable Logic Controller — the industrial computer that runs automation logic |
-| **Semaphore** | Concurrency primitive that limits how many operations run simultaneously |
-| **COM speed** | IO-Link communication speed: COM1 = 4.8 kbaud, COM2 = 38.4 kbaud, COM3 = 230.4 kbaud |
+| **Semaphore** | Concurrency primitive that limits how many HTTP operations run simultaneously |
 
 ---
 
-*This guide was written alongside real working code. Cross-reference with [al1350_client.py](../backend/al1350_client.py), [decoder.py](../backend/decoder.py), and [io_link_fastapi.py](../backend/io_link_fastapi.py) to see every concept implemented.*
+*This guide was written alongside real working code. Cross-reference with [al1350_client.py](../backend/al1350_client.py), [decoder.py](../backend/decoder.py), and [io_link_fastapi.py](../backend/io_link_fastapi.py) to see every concept implemented. The archived HTTP polling guide is at [IO-LINK-COMMS-GUIDE-ARCHIVED-http-polling.md](IO-LINK-COMMS-GUIDE-ARCHIVED-http-polling.md).*
