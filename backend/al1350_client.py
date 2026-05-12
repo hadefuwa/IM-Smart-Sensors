@@ -311,16 +311,45 @@ class AL1350ClientManager:
         except Exception:
             return None
 
+    async def ensure_mqtt_subscription(self, broker_host: str, broker_port: int = 1883, interval_ms: int = 500) -> bool:
+        """Register the AL1350 MQTT push subscription. Called at startup and on reconnect.
+        The AL1350 will publish all subscribed data points to mqtt://broker_host:broker_port/iolink
+        at the given interval. Returns True on success."""
+        datatosend = [
+            "/iolinkmaster/port[1]/iolinkdevice/pdin",
+            "/iolinkmaster/port[2]/iolinkdevice/pdin",
+            "/iolinkmaster/port[3]/iolinkdevice/pdin",
+            "/iolinkmaster/port[4]/iolinkdevice/pdin",
+            "/iolinkmaster/port[1]/mode",
+            "/iolinkmaster/port[2]/mode",
+            "/iolinkmaster/port[3]/mode",
+            "/iolinkmaster/port[4]/mode",
+            "/processdatamaster/temperature",
+            "/processdatamaster/voltage",
+            "/processdatamaster/current",
+            "/processdatamaster/supervisionstatus",
+        ]
+        callback = f"mqtt://{broker_host}:{broker_port}/iolink"
+        sub_res = await self._service_request(
+            "/timer[1]/counter/datachanged/subscribe",
+            data={"callback": callback, "datatosend": datatosend},
+        )
+        if not sub_res or sub_res.get("code") not in (200, 204):
+            self._logger.warning(f"MQTT subscribe failed: {sub_res}")
+            return False
+        interval_res = await self._service_request(
+            "/timer[1]/interval/setdata",
+            data={"newvalue": interval_ms},
+        )
+        if not interval_res or interval_res.get("code") not in (200, 204):
+            self._logger.warning(f"MQTT interval set failed: {interval_res}")
+            return False
+        self.subscription_enabled = True
+        self._logger.info(f"MQTT subscription active — callback={callback} interval={interval_ms}ms")
+        return True
+
     async def ensure_subscription(self) -> None:
-        # The AL1350 subscribe service (manual §9.2.12) is a push mechanism: the device
-        # POSTs data to a callback URL on the client at a timer interval.  It cannot be
-        # used as a polling replacement with a simple POST request.  We use getdatamulti
-        # polling instead, so this method is intentionally a no-op.
-        # To implement real push subscription: add a POST /iot-callback endpoint to the
-        # FastAPI app, then call:
-        #   adr = /timer[1]/counter/datachanged/subscribe
-        #   data = {"callback": "http://192.168.7.2:8000/iot-callback", "datatosend": [...]}
-        # followed by setting /timer[1]/interval/setdata to the desired ms interval.
+        # Legacy no-op kept for compatibility. Use ensure_mqtt_subscription() instead.
         self.subscription_enabled = False
 
     async def get_port_info(self, port_number: int, include_static: bool = True) -> Dict[str, Any]:

@@ -32,7 +32,13 @@ from decoder import (
     DEVICE_TYPE_PROXIMITY,
     DEVICE_TYPE_CAPACITIVE,
 )
-from al1350_client import AL1350ClientManager
+from al1350_client import AL1350ClientManager, MODE_MAP
+
+try:
+    import aiomqtt
+    _AIOMQTT_AVAILABLE = True
+except ImportError:
+    _AIOMQTT_AVAILABLE = False
 
 
 def _enrich_port(port_data: dict, port_labels: dict = None) -> dict:
@@ -204,6 +210,8 @@ connected_clients: Set[WebSocket] = set()
 
 # Background polling task handle
 polling_task: Optional[asyncio.Task] = None
+mqtt_task: Optional[asyncio.Task] = None
+mqtt_connected: bool = False
 
 # Simulated fault overlay per port (for training: show fault without touching hardware)
 # Keys: port number (1-4), Values: list of {"code": "0x02", "label": "Short circuit"} or None to clear
@@ -455,17 +463,124 @@ async def poll_io_link_master():
         await asyncio.sleep(max(0, poll_interval - (time.time() - poll_start)))
 
 
+def _parse_mqtt_message(raw: bytes) -> None:
+    """Parse an AL1350 MQTT push message and merge pdin/mode/supervision into system_state."""
+    global system_state, mqtt_connected, _cap_counter_prev
+    try:
+        msg = json.loads(raw)
+        payload = msg.get("data", {}).get("payload", {})
+        if not payload:
+            return
+
+        config = load_config()
+        port_labels = config.get("port_labels", {})
+
+        # Update each port's pdin and mode from the MQTT payload
+        ports = {p["port"]: p for p in (system_state.get("ports") or []) if isinstance(p, dict)}
+        for port_num in range(1, 5):
+            pdin_val = (payload.get(f"/iolinkmaster/port[{port_num}]/iolinkdevice/pdin") or {})
+            mode_val = (payload.get(f"/iolinkmaster/port[{port_num}]/mode") or {})
+
+            port = ports.get(port_num, {"port": port_num, "mode": "inactive", "pdin": "", "pdout": "",
+                                        "comm_mode": "", "master_cycle_time": "", "vendor_id": "",
+                                        "device_id": "", "name": "", "serial": "", "source": "mqtt"})
+            if isinstance(pdin_val, dict) and pdin_val.get("code") == 200:
+                port["pdin"] = pdin_val.get("data", "")
+                port["source"] = "mqtt"
+            if isinstance(mode_val, dict) and mode_val.get("code") == 200:
+                raw_mode = mode_val.get("data")
+                port["mode"] = MODE_MAP.get(raw_mode, str(raw_mode)) if isinstance(raw_mode, int) else (raw_mode or "inactive")
+            _enrich_port(port, port_labels=port_labels)
+            ports[port_num] = port
+
+        # Update supervision from MQTT payload
+        supervision = dict(system_state.get("supervision") or {})
+        for key, path in (("temperature", "/processdatamaster/temperature"),
+                          ("voltage", "/processdatamaster/voltage"),
+                          ("current", "/processdatamaster/current"),
+                          ("supervisionstatus", "/processdatamaster/supervisionstatus")):
+            entry = payload.get(path)
+            if isinstance(entry, dict) and entry.get("code") == 200:
+                supervision[key] = entry.get("data")
+        if supervision:
+            append_supervision_history(supervision)
+
+        # Detection counter reads for capacitive ports (still via HTTP; updated by poll loop)
+        # Merge any existing detection_counter fields from the poll loop cache
+        for port_num, port in ports.items():
+            if port.get("device_type") == "capacitive" and port_num in _cap_counter_prev:
+                port["detection_counter"] = _cap_counter_prev[port_num]
+
+        system_state = {
+            **system_state,
+            "ports": [ports[i] for i in sorted(ports)],
+            "supervision": supervision,
+            "timestamp": time.time(),
+            "source": "mqtt",
+            "success": True,
+            "error": None,
+        }
+        mqtt_connected = True
+    except Exception as e:
+        logger.debug(f"MQTT message parse error: {e!r}")
+
+
+async def run_mqtt_listener():
+    """Subscribe to the Mosquitto broker and update system_state from AL1350 push messages."""
+    global mqtt_connected
+    if not _AIOMQTT_AVAILABLE:
+        logger.warning("aiomqtt not installed — MQTT listener disabled, falling back to HTTP polling only")
+        return
+
+    cfg = load_config().get("mqtt", {})
+    broker_host = cfg.get("broker_host", "127.0.0.1")
+    broker_port = int(cfg.get("broker_port", 1883))
+    interval_ms = int(cfg.get("publish_interval_ms", 500))
+
+    reconnect_delay = 5.0
+    while True:
+        try:
+            logger.info(f"MQTT connecting to {broker_host}:{broker_port}")
+            # Register the subscription with the AL1350 (idempotent)
+            ok = await al1350.ensure_mqtt_subscription(broker_host, broker_port, interval_ms)
+            if not ok:
+                logger.warning("MQTT subscription registration failed — retrying in 15s")
+                await asyncio.sleep(15)
+                continue
+
+            async with aiomqtt.Client(broker_host, port=broker_port) as client:
+                await client.subscribe("iolink")
+                mqtt_connected = True
+                reconnect_delay = 5.0
+                logger.info("MQTT listener active — receiving AL1350 push data")
+                async for message in client.messages:
+                    _parse_mqtt_message(bytes(message.payload))
+                    await broadcast_to_clients(system_state)
+
+        except Exception as e:
+            mqtt_connected = False
+            logger.warning(f"MQTT listener error: {e!r} — reconnecting in {reconnect_delay:.0f}s")
+            await asyncio.sleep(reconnect_delay)
+            reconnect_delay = min(reconnect_delay * 2, 60.0)
+
+
 @app.on_event("startup")
 async def start_background_polling():
-    """Start IO-Link polling loop when API starts."""
-    global polling_task
+    """Start IO-Link polling loop and MQTT listener when API starts."""
+    global polling_task, mqtt_task
     try:
         await al1350.refresh_gettree(force=True)
     except Exception as e:
         logger.warning(f"Initial gettree warmup failed: {e}")
     if polling_task is None or polling_task.done():
         polling_task = asyncio.create_task(poll_io_link_master())
-        logger.info("IO-Link background polling task started")
+        logger.info("IO-Link HTTP polling task started")
+
+    cfg = load_config().get("mqtt", {})
+    if cfg.get("enabled", True) and _AIOMQTT_AVAILABLE:
+        if mqtt_task is None or mqtt_task.done():
+            mqtt_task = asyncio.create_task(run_mqtt_listener())
+            logger.info("MQTT listener task started")
 
 
 @app.on_event("shutdown")
@@ -686,6 +801,8 @@ async def io_link_diagnostics():
             'last_good_data_ts': extra.get('last_good_data_ts'),
             'port_freshness_age_sec': extra.get('port_freshness_age_sec'),
             'link': extra.get('link'),
+            'mqtt_connected': mqtt_connected,
+            'mqtt_enabled': _AIOMQTT_AVAILABLE and load_config().get('mqtt', {}).get('enabled', True),
             'system': extra.get('system'),
             'master_target': extra.get('master_target'),
         }

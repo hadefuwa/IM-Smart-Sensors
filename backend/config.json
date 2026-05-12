@@ -110,6 +110,12 @@
   "server": {
     "port": 8080
   },
+  "mqtt": {
+    "broker_host": "127.0.0.1",
+    "broker_port": 1883,
+    "publish_interval_ms": 500,
+    "enabled": true
+  },
   "io_link": {
     "master_ip": "192.168.7.4",
     "port": 80,
