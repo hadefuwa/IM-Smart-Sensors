@@ -25,6 +25,12 @@
 | [Operating Manual.pdf](Operating%20Manual.pdf) | IFM AL1350 operating manual (full) |
 | [Operating Manual.txt](Operating%20Manual.txt) | Plain-text extract for quick search |
 
+## Hardware Notes
+
+| Document | Description |
+|----------|-------------|
+| [PHOTOELECTRIC-SENSOR-REPLACEMENT.md](PHOTOELECTRIC-SENSOR-REPLACEMENT.md) | Current photoelectric sensor ISDU limitation + recommended replacements with full IO-Link parameter access |
+
 ## Archived
 
 | Document | Description |

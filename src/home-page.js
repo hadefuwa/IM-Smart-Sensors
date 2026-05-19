@@ -241,52 +241,19 @@ export function renderHomePage() {
           </div>
           <div class="card bg-base-200 shadow-xl" id="hmi-photo-isdu-card">
             <div class="card-body p-3">
-              <div class="flex items-center justify-between mb-2">
-                <span class="text-xs font-semibold opacity-50 uppercase tracking-wider">Sensor Parameters (IODD)</span>
-                <button class="btn btn-xs btn-ghost" id="hmi-photo-isdu-refresh">↻ Refresh</button>
-              </div>
+              <span class="text-xs font-semibold opacity-50 uppercase tracking-wider mb-2 block">Device Identity (IO-Link)</span>
               <div id="hmi-photo-isdu-loading" class="text-xs opacity-30 font-mono">Waiting for sensor connection…</div>
-              <div id="hmi-photo-isdu-content" class="hidden space-y-3">
-                <div>
-                  <div class="flex justify-between text-xs mb-1">
-                    <span class="font-mono opacity-60">SSC1 SP1 — Detection Threshold</span>
-                    <span class="font-mono font-bold" id="hmi-photo-sp1-display">—</span>
-                  </div>
-                  <input type="range" id="hmi-photo-sp1-slider" class="range range-xs range-accent w-full" min="2234" max="14894" step="10" value="14894">
-                  <div class="flex justify-between text-xs opacity-30 font-mono mt-0.5">
-                    <span>2234 (close range)</span><span>14894 (max range)</span>
-                  </div>
-                  <button class="btn btn-xs btn-accent mt-1.5 w-full" id="hmi-photo-sp1-write">Apply SP1</button>
+              <div id="hmi-photo-isdu-content" class="hidden space-y-2">
+                <div class="grid grid-cols-2 gap-x-4 gap-y-1 text-xs font-mono">
+                  <span class="opacity-50">Vendor ID</span><span class="font-bold" id="hmi-photo-vendor-id">—</span>
+                  <span class="opacity-50">Device ID</span><span class="font-bold" id="hmi-photo-device-id">—</span>
+                  <span class="opacity-50">IO-Link Rev</span><span class="font-bold" id="hmi-photo-iol-rev">—</span>
+                  <span class="opacity-50">PDin Length</span><span class="font-bold" id="hmi-photo-pdin-len">—</span>
                 </div>
-                <div class="grid grid-cols-2 gap-2">
-                  <div>
-                    <div class="text-xs font-mono opacity-60 mb-0.5">Output Logic</div>
-                    <select class="select select-xs select-bordered w-full font-mono" id="hmi-photo-logic-select">
-                      <option value="0">Light-ON (High active)</option>
-                      <option value="1">Dark-ON (Low active)</option>
-                    </select>
-                    <button class="btn btn-xs btn-outline mt-1 w-full" id="hmi-photo-logic-write">Apply Logic</button>
-                  </div>
-                  <div>
-                    <div class="text-xs font-mono opacity-60 mb-0.5">Sensor Mode</div>
-                    <select class="select select-xs select-bordered w-full font-mono" id="hmi-photo-mode-select">
-                      <option value="0">Fast</option>
-                      <option value="2">Medium (Normal)</option>
-                      <option value="36">Fine</option>
-                    </select>
-                    <button class="btn btn-xs btn-outline mt-1 w-full" id="hmi-photo-mode-write">Apply Mode</button>
-                  </div>
+                <div class="alert alert-info p-2 mt-2">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                  <span class="text-xs">This sensor's IO-Link 1.0 firmware exposes identity only — no ISDU parameter access. Sensitivity and detection range are adjusted via the two potentiometers on the sensor body.</span>
                 </div>
-                <div class="flex items-center justify-between text-xs pt-1 border-t border-base-300">
-                  <span class="font-mono opacity-60">Device Status</span>
-                  <span class="badge badge-xs font-mono" id="hmi-photo-status-badge">—</span>
-                </div>
-                <div class="flex gap-1.5 flex-wrap">
-                  <button class="btn btn-xs btn-warning flex-1" id="hmi-photo-teach-sp1">Teach SP1</button>
-                  <button class="btn btn-xs btn-ghost flex-1" id="hmi-photo-teach-cancel">✕ Cancel</button>
-                  <button class="btn btn-xs btn-ghost flex-1" id="hmi-photo-factory-reset">Factory Reset</button>
-                </div>
-                <div class="text-xs font-mono opacity-40" id="hmi-photo-isdu-status"></div>
               </div>
             </div>
           </div>
@@ -1341,39 +1308,35 @@ async function _loadHmiPhotoParams(portNum) {
   if (!loading || !content) return;
   loading.textContent = 'Loading…';
 
-  const STATUS_ENUM = { 0: 'OK', 1: 'Maintenance', 2: 'Out-of-spec', 3: 'Func check', 4: 'Failure' };
-
-  const [sp1, logic, sensorMode, status] = await Promise.all([
-    _hmiIsduRead(portNum, 0x3C, 1, 'uint32'),
-    _hmiIsduRead(portNum, 0x3D, 1, 'uint8'),
-    _hmiIsduRead(portNum, 0x40, 2, 'uint8'),
-    _hmiIsduRead(portNum, 0x24, 0, 'uint8'),
-  ]);
+  // Only pages 0 and 1 respond on this sensor (IO-Link 1.0 minimal ISDU)
+  const page0 = await _hmiIsduRead(portNum, 0, 0, 'string');
 
   loading.classList.add('hidden');
   content.classList.remove('hidden');
 
-  if (sp1 !== null) {
-    const slider = document.getElementById('hmi-photo-sp1-slider');
-    const disp = document.getElementById('hmi-photo-sp1-display');
-    if (slider) slider.value = sp1;
-    if (disp) disp.textContent = sp1;
-  }
-  if (logic !== null) {
-    const sel = document.getElementById('hmi-photo-logic-select');
-    if (sel) sel.value = String(logic);
-  }
-  if (sensorMode !== null) {
-    const sel = document.getElementById('hmi-photo-mode-select');
-    if (sel) sel.value = String(sensorMode);
-  }
-  if (status !== null) {
-    const badge = document.getElementById('hmi-photo-status-badge');
-    if (badge) {
-      badge.textContent = STATUS_ENUM[status] ?? `Code ${status}`;
-      badge.className = `badge badge-xs font-mono ${status === 0 ? 'badge-success' : 'badge-error'}`;
+  // Decode the raw hex from page 0 — standard IO-Link identification block
+  // Structure: [0]=MCT [1]=MinCT [2]=MSeqCap [3]=RevID [4]=PDIn [5]=PDOut [6-7]=VendorID [8-10]=DeviceID
+  const base = window.IO_LINK_API_BASE || window.location.origin;
+  try {
+    const r = await fetch(`${base}/api/io-link/port/${portNum}/parameter/read`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ index: 0, subindex: 0, dtype: 'string', scale: 1 }),
+    });
+    const j = await r.json();
+    if (j.success && j.raw_hex) {
+      const hex = j.raw_hex;
+      const b = hex.match(/.{2}/g).map(h => parseInt(h, 16));
+      const vendorId = ((b[6] << 8) | b[7]);
+      const deviceId = ((b[8] << 16) | (b[9] << 8) | b[10]);
+      const revId = b[3] ? `1.${b[3] & 0x0F}` : '1.0';
+      const pdinLen = b[4];
+      const set = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
+      set('hmi-photo-vendor-id', `${vendorId} (0x${vendorId.toString(16).toUpperCase().padStart(4,'0')})`);
+      set('hmi-photo-device-id', `${deviceId} (0x${deviceId.toString(16).toUpperCase().padStart(6,'0')})`);
+      set('hmi-photo-iol-rev', revId);
+      set('hmi-photo-pdin-len', `${pdinLen} bytes`);
     }
-  }
+  } catch { /* identity read failed, values stay at — */ }
 }
 
 function initHmiParams() {
@@ -1473,60 +1436,7 @@ function initHmiParams() {
     }
   });
 
-  // Photo slider live display
-  const photoSlider = document.getElementById('hmi-photo-sp1-slider');
-  if (photoSlider) {
-    photoSlider.addEventListener('input', () => {
-      const disp = document.getElementById('hmi-photo-sp1-display');
-      if (disp) disp.textContent = photoSlider.value;
-    });
-  }
-
-  // Photo refresh
-  document.getElementById('hmi-photo-isdu-refresh')?.addEventListener('click', () => {
-    const p = _sectionPortNum['detection-port-num'];
-    if (p) _loadHmiPhotoParams(p);
-  });
-
-  // Photo SP1 write
-  document.getElementById('hmi-photo-sp1-write')?.addEventListener('click', async () => {
-    const p = _sectionPortNum['detection-port-num'];
-    if (!p) return;
-    const val = parseInt(document.getElementById('hmi-photo-sp1-slider')?.value ?? '14894', 10);
-    await _hmiIsduWrite(p, 0x3C, 1, val, 'uint32', 1.0, 'hmi-photo-isdu-status');
-  });
-
-  // Photo logic write
-  document.getElementById('hmi-photo-logic-write')?.addEventListener('click', async () => {
-    const p = _sectionPortNum['detection-port-num'];
-    if (!p) return;
-    const val = parseInt(document.getElementById('hmi-photo-logic-select')?.value ?? '0', 10);
-    await _hmiIsduWrite(p, 0x3D, 1, val, 'uint8', 1.0, 'hmi-photo-isdu-status');
-  });
-
-  // Photo sensor mode write
-  document.getElementById('hmi-photo-mode-write')?.addEventListener('click', async () => {
-    const p = _sectionPortNum['detection-port-num'];
-    if (!p) return;
-    const val = parseInt(document.getElementById('hmi-photo-mode-select')?.value ?? '2', 10);
-    await _hmiIsduWrite(p, 0x40, 2, val, 'uint8', 1.0, 'hmi-photo-isdu-status');
-  });
-
-  // Photo teach / cancel / reset
-  document.getElementById('hmi-photo-teach-sp1')?.addEventListener('click', async () => {
-    const p = _sectionPortNum['detection-port-num'];
-    if (p) { await _hmiIsduCommand(p, 'teach_sp1', 'hmi-photo-isdu-status'); setTimeout(() => _loadHmiPhotoParams(p), 1500); }
-  });
-  document.getElementById('hmi-photo-teach-cancel')?.addEventListener('click', async () => {
-    const p = _sectionPortNum['detection-port-num'];
-    if (p) await _hmiIsduCommand(p, 'teach_cancel', 'hmi-photo-isdu-status');
-  });
-  document.getElementById('hmi-photo-factory-reset')?.addEventListener('click', async () => {
-    const p = _sectionPortNum['detection-port-num'];
-    if (p && confirm('Factory reset the LTR-M18PA? This restores all defaults.')) {
-      await _hmiIsduCommand(p, 'factory_reset', 'hmi-photo-isdu-status');
-    }
-  });
+  // Photo — identity-only panel, no write controls needed
 }
 
 function _setPortBadge(numId, labelId, port) {

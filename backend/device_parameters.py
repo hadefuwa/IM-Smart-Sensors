@@ -139,7 +139,8 @@ _CAPACITIVE_PARAMS = {
 }
 
 _PHOTOELECTRIC_PARAMS = {
-    'label': 'Contrinex LTR-M18PA-PMS-603 Diffuse Photoelectric (AdSS profile)',
+    'label': 'Contrinex LTR-M18PA-PMS-603 Diffuse Photoelectric (IO-Link 1.0 — identity only)',
+    'isdu_limited': True,  # only pages 0 and 1 respond; no configurable params accessible over IO-Link
     'pdo_write': False,
     'commands': {
         'teach_sp1':       {'value': 0x41, 'label': 'Single Value Teach SP1 — teach detection threshold to current target distance'},
