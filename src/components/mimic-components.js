@@ -255,7 +255,7 @@ export function createCapacitiveIndicator(containerId, state = {}, options = {})
   const render = (sensorState) => {
     const isDetected = sensorState.object_detected || false;
     const analogue = sensorState.analogue_value != null ? sensorState.analogue_value : null;
-    const pct = analogue != null ? Math.round((analogue / 65535) * 100) : null;
+    const pct = analogue != null ? Math.min(100, Math.round((analogue / 10000) * 100)) : null;
 
     container.innerHTML = `
       <div class="capacitive-indicator-wrapper flex flex-col items-center justify-center p-4 cursor-pointer hover:bg-base-300/50 rounded-lg transition-all">
@@ -270,14 +270,16 @@ export function createCapacitiveIndicator(containerId, state = {}, options = {})
 
         ${pct !== null ? `
           <div class="w-full px-2 mb-1">
-            <progress class="progress progress-info w-full h-2" value="${pct}" max="100"></progress>
-            <div class="text-xs text-center opacity-60">${analogue} <span class="opacity-70">(dielectric)</span></div>
+            <div class="w-full bg-base-content/10 rounded-full h-3 overflow-hidden">
+              <div class="h-3 rounded-full transition-all duration-300" style="width: ${pct}%; background: ${pct >= 80 ? '#f97316' : '#06b6d4'};"></div>
+            </div>
+            <div class="text-xs text-center opacity-60 mt-1 tabular-nums" title="${analogue} / 10000">${pct}% <span class="opacity-70">dielectric</span></div>
           </div>
         ` : ''}
 
         <div class="mt-2 text-center">
           <div class="text-sm font-semibold">Capacitive Sensor</div>
-          <div class="text-xs opacity-60">${isDetected ? 'Object Detected' : 'No Object'}</div>
+          <div class="text-xs opacity-60 whitespace-nowrap">${isDetected ? 'Object Detected' : 'No Object'}</div>
         </div>
       </div>
     `;
@@ -307,39 +309,63 @@ export function createMasterStatusDisplay(containerId, state = {}, options = {})
 
   // Render the master status
   const render = (masterState) => {
-    const deviceName = masterState.device_name || 'IO-Link Master';
+    const deviceName = masterState.device_name || 'IO-Link Master AL1350';
     const ports = masterState.ports || [];
     const isConnected = masterState.success || false;
 
+    const portCards = [1, 2, 3, 4].map(portNum => {
+      const port = ports.find(p => p.port === portNum);
+      const mode = String(port && port.mode ? port.mode : '').toLowerCase();
+      const isIoLink = mode.includes('io-link');
+      const isDigital = mode.includes('digital_in') || mode.includes('digital_out');
+      const modeLabel = isIoLink ? 'IO-Link' : isDigital ? (mode.includes('digital_in') ? 'DI' : 'DO') : 'Inactive';
+      const portName = (port && (port.label || port.name)) || `Port ${portNum}`;
+
+      const dotStyle = isIoLink
+        ? 'background:#22c55e;box-shadow:0 0 4px #22c55e'
+        : isDigital
+          ? 'background:#f59e0b'
+          : 'background:rgba(255,255,255,0.2)';
+      const borderClass = isIoLink
+        ? 'border-success/40 bg-success/5'
+        : isDigital
+          ? 'border-warning/40 bg-warning/5'
+          : 'border-base-content/10 bg-base-content/5';
+      const labelClass = isIoLink ? 'text-success' : isDigital ? 'text-warning' : 'text-base-content/40';
+
+      return `
+        <div class="flex-1 flex items-center gap-1.5 px-1.5 py-1 rounded border ${borderClass}" style="min-width:0">
+          <div class="w-1.5 h-1.5 rounded-full shrink-0" style="${dotStyle}"></div>
+          <div class="min-w-0 leading-tight">
+            <div style="font-size:10px;font-weight:600" class="${labelClass}">P${portNum} <span style="font-weight:400;opacity:0.6">${modeLabel}</span></div>
+            <div style="font-size:9px;opacity:0.45" class="truncate" title="${portName}">${portName}</div>
+          </div>
+        </div>
+      `;
+    }).join('');
+
     container.innerHTML = `
-      <div class="master-status-wrapper flex flex-col items-center justify-center p-4 cursor-pointer hover:bg-base-300/50 rounded-lg transition-all">
-        <!-- Master Device Icon -->
-        <div class="mb-3">
-          <div class="master-icon w-20 h-20 bg-base-300 rounded-lg border-2 ${isConnected ? 'border-success' : 'border-error'} flex items-center justify-center" style="box-shadow: ${isConnected ? '0 0 20px rgba(34, 197, 94, 0.3)' : '0 0 20px rgba(239, 68, 68, 0.3)'};">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 ${isConnected ? 'text-success' : 'text-error'}" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <div class="master-status-wrapper w-full flex items-center gap-2 px-2 py-1.5 cursor-pointer hover:bg-base-300/50 rounded-lg transition-all">
+        <!-- Device icon + status dot — always visible -->
+        <div class="flex items-center gap-1.5 shrink-0">
+          <div class="w-6 h-6 bg-base-300 rounded border ${isConnected ? 'border-success' : 'border-error'} flex items-center justify-center shrink-0" style="box-shadow:${isConnected ? '0 0 6px rgba(34,197,94,0.3)' : '0 0 6px rgba(239,68,68,0.3)'}">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 ${isConnected ? 'text-success' : 'text-error'}" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 12h14M5 12a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2M5 12a2 2 0 00-2 2v4a2 2 0 002 2h14a2 2 0 002-2v-4a2 2 0 00-2-2m-2-4h.01M17 16h.01" />
             </svg>
           </div>
+          <!-- Device name — hidden on narrow screens -->
+          <div class="leading-tight hidden lg:block">
+            <div style="font-size:10px;font-weight:600" class="whitespace-nowrap">AL1350</div>
+            <div style="font-size:9px" class="${isConnected ? 'text-success' : 'text-error'}">${isConnected ? 'Online' : 'Offline'}</div>
+          </div>
         </div>
 
-        <!-- Device Name -->
-        <div class="text-center mb-3">
-          <div class="text-sm font-semibold">${deviceName}</div>
-          <div class="text-xs opacity-60">${isConnected ? 'Connected' : 'Disconnected'}</div>
-        </div>
+        <!-- Divider -->
+        <div class="w-px self-stretch bg-base-content/10 shrink-0"></div>
 
-        <!-- Port Status Indicators -->
-        <div class="master-port-grid w-full max-w-[12rem] grid grid-cols-4 gap-2">
-          ${[1, 2, 3, 4].map(portNum => {
-            const port = ports.find(p => p.port === portNum);
-            const mode = String(port && port.mode ? port.mode : '').toLowerCase();
-            const isActive = mode.includes('io-link') || mode.includes('digital_in') || mode.includes('digital_out');
-            return `
-              <div class="port-indicator w-full min-h-[44px] aspect-square rounded border-2 ${isActive ? 'border-success bg-success/20' : 'border-base-content/20 bg-base-content/5'} flex items-center justify-center" title="Port ${portNum}">
-                <span class="text-xs font-bold ${isActive ? 'text-success' : 'text-base-content/30'}">${portNum}</span>
-              </div>
-            `;
-          }).join('')}
+        <!-- Port cards -->
+        <div class="flex gap-1.5 flex-1 min-w-0">
+          ${portCards}
         </div>
       </div>
     `;

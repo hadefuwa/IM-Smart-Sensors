@@ -343,8 +343,8 @@ function generatePortDetailsHTML(port) {
 
   if (dtype === 'capacitive' && port.pdin && port.pdin.decoded && port.pdin.decoded.analogue_value != null) {
     const av = port.pdin.decoded.analogue_value;
-    const pct = Math.round((av / 65535) * 100);
-    h += `<div class="my-1"><strong>Dielectric value:</strong> <progress class="progress progress-info w-48" value="${pct}" max="100"></progress> ${av} <span class="text-xs opacity-70">(raw 16-bit · higher = denser/closer target)</span></div>`;
+    const pct = Math.min(100, Math.round((av / 10000) * 100));
+    h += `<div class="my-1"><strong>Dielectric value:</strong> <progress class="progress progress-info w-48" value="${pct}" max="100"></progress> ${av} <span class="text-xs opacity-70">(0–10000 · higher = denser/closer target)</span></div>`;
   }
   if (dtype === 'capacitive' && port.detection_counter != null) {
     const total = port.detection_counter.toLocaleString();

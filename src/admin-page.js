@@ -62,6 +62,22 @@ export function renderAdminPage() {
       </div>
 
       <div class="card bg-base-200 shadow-xl border border-base-300">
+        <div class="card-body">
+          <h2 class="card-title text-base-content text-base">Component Health</h2>
+          <div class="overflow-x-auto">
+            <table class="table table-sm table-zebra">
+              <thead>
+                <tr><th>Component</th><th>Status</th><th>Last Update</th><th>Detail</th></tr>
+              </thead>
+              <tbody id="healthTableBody">
+                <tr><td colspan="4" class="text-center text-base-content/50">Waiting for data…</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <div class="card bg-base-200 shadow-xl border border-base-300">
           <div class="card-body">
             <h2 class="card-title text-base-content text-base">Transport + Link</h2>
             <div class="grid grid-cols-2 gap-3 text-sm">
@@ -431,6 +447,35 @@ function fillStats(stats) {
   fillPortFreshness(stats);
 }
 
+function fillHealthTable(data) {
+  const tbody = document.getElementById('healthTableBody');
+  if (!tbody) return;
+  const isConnected = data.success || false;
+  const lastUpdate = new Date().toLocaleTimeString();
+  const ports = Array.isArray(data.ports) ? data.ports : [];
+  const activePorts = ports.filter(p => p.mode === 'io-link' || p.mode === 'digital_in' || p.mode === 'digital_out');
+  const rows = [];
+  rows.push(`<tr>
+    <td class="font-medium">IO-Link Master</td>
+    <td><span class="badge badge-sm ${isConnected ? 'badge-success' : 'badge-error'}">${isConnected ? 'Connected' : 'Disconnected'}</span></td>
+    <td class="text-xs">${lastUpdate}</td>
+    <td class="text-xs">${activePorts.length} active port${activePorts.length !== 1 ? 's' : ''} · ${data.source || '-'}</td>
+  </tr>`);
+  ports.forEach(port => {
+    const active = port.mode === 'io-link';
+    const modeClass = active ? 'badge-success' : (port.mode === 'error' ? 'badge-error' : 'badge-ghost');
+    const label = port.label || port.name || `Port ${port.port}`;
+    const detail = port.pdin_decoded?.description || port.device_type || port.mode || '-';
+    rows.push(`<tr>
+      <td>Port ${port.port} <span class="opacity-60">— ${label}</span></td>
+      <td><span class="badge badge-sm ${modeClass}">${port.mode || 'inactive'}</span></td>
+      <td class="text-xs">${lastUpdate}</td>
+      <td class="text-xs">${detail}</td>
+    </tr>`);
+  });
+  tbody.innerHTML = rows.join('');
+}
+
 function fillDegradedBanner(stats) {
   const banner = document.getElementById('diagDegradedBanner');
   const text = document.getElementById('diagDegradedText');
@@ -486,6 +531,7 @@ function connectDiagSocket() {
   _diagSocket.onmessage = (event) => {
     try {
       const data = JSON.parse(event.data);
+      fillHealthTable(data);
       if (_terminalLog && data.ports && Array.isArray(data.ports)) {
         data.ports.forEach(port => {
           _terminalLog.append({

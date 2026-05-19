@@ -240,6 +240,11 @@ body {
   min-height: 200px;
 }
 
+/* Capacitive Indicator Styles */
+.capacitive-indicator-wrapper {
+  min-height: 200px;
+}
+
 .indicator-light {
   transition: all 0.3s ease;
   position: relative;
@@ -256,7 +261,7 @@ body {
 
 /* Master Status Display Styles */
 .master-status-wrapper {
-  min-height: 200px;
+  min-height: unset;
 }
 
 [data-theme="dark"] .master-icon {
@@ -436,9 +441,12 @@ body {
   .temp-gauge-wrapper,
   .led-indicator-wrapper,
   .counter-display-wrapper,
-  .proximity-indicator-wrapper,
-  .master-status-wrapper {
+  .capacitive-indicator-wrapper,
+  .proximity-indicator-wrapper {
     min-height: 150px;
+  }
+  .master-status-wrapper {
+    min-height: unset;
   }
   
   .radial-progress {

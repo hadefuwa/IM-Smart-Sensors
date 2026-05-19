@@ -207,6 +207,7 @@ MAX_HISTORY_SIZE = 100
 
 # Connected WebSocket clients
 connected_clients: Set[WebSocket] = set()
+_broadcast_in_progress: bool = False
 
 # Background polling task handle
 polling_task: Optional[asyncio.Task] = None
@@ -394,29 +395,55 @@ async def poll_io_link_master():
                             port_data['detection_counter'] = val
                             port_data['detection_counter_delta'] = max(0, delta)
 
-            # Update global state
+            # Update global state.
+            # When MQTT is active it owns real-time pdin/mode updates and broadcasts.
+            # The HTTP poll still runs to keep static metadata, supervision history,
+            # and ISDU counters fresh — but we only merge those fields rather than
+            # overwriting the whole state, and we skip broadcasting so the UI source
+            # label doesn't flicker between "mqtt" and "getdatamulti".
             is_connected = al1350._breaker.state != "open"
-            system_state = {
-                'device_name': (device_info.get('device_name') or system_state.get('device_name') or 'IO-Link Master'),
-                'ports': ports if isinstance(ports, list) else [],
-                'supervision': supervision,
-                'software': device_info.get('software') or system_state.get('software', {}),
-                'device_icon_url': device_info.get('device_icon_url') or system_state.get('device_icon_url'),
-                'product_image_url': '/api/io-link/product-image',
-                'timestamp': time.time(),
-                'source': 'getdatamulti' if not al1350.degraded_mode else 'fallback',
-                'degraded_mode': al1350.degraded_mode,
-                'degraded_reason': al1350.degraded_reason,
-                'last_good_data_ts': al1350.last_good_data_ts or None,
-                'error': None,
-                'success': is_connected
-            }
+            if mqtt_connected:
+                # Merge only the fields HTTP poll is authoritative for
+                system_state['device_name'] = (device_info.get('device_name') or system_state.get('device_name') or 'IO-Link Master')
+                system_state['software'] = device_info.get('software') or system_state.get('software', {})
+                system_state['device_icon_url'] = device_info.get('device_icon_url') or system_state.get('device_icon_url')
+                system_state['degraded_mode'] = al1350.degraded_mode
+                system_state['degraded_reason'] = al1350.degraded_reason
+                system_state['last_good_data_ts'] = al1350.last_good_data_ts or None
+                system_state['success'] = is_connected
+                # Merge ISDU counter values into the MQTT-sourced port list
+                if isinstance(ports, list):
+                    port_map = {p['port']: p for p in ports}
+                    for port in system_state.get('ports') or []:
+                        pn = port.get('port')
+                        if pn in port_map:
+                            for key in ('detection_counter', 'detection_counter_delta'):
+                                if key in port_map[pn]:
+                                    port[key] = port_map[pn][key]
+            else:
+                system_state = {
+                    'device_name': (device_info.get('device_name') or system_state.get('device_name') or 'IO-Link Master'),
+                    'ports': ports if isinstance(ports, list) else [],
+                    'supervision': supervision,
+                    'software': device_info.get('software') or system_state.get('software', {}),
+                    'device_icon_url': device_info.get('device_icon_url') or system_state.get('device_icon_url'),
+                    'product_image_url': '/api/io-link/product-image',
+                    'timestamp': time.time(),
+                    'source': 'getdatamulti' if not al1350.degraded_mode else 'fallback',
+                    'degraded_mode': al1350.degraded_mode,
+                    'degraded_reason': al1350.degraded_reason,
+                    'last_good_data_ts': al1350.last_good_data_ts or None,
+                    'error': None,
+                    'success': is_connected
+                }
 
             if supervision:
                 append_supervision_history(supervision)
 
-            # Broadcast to all connected WebSocket clients
-            await broadcast_to_clients(system_state)
+            # Only broadcast from the HTTP poll when MQTT is not active.
+            # When MQTT is connected it broadcasts on every push message instead.
+            if not mqtt_connected:
+                await broadcast_to_clients(system_state)
 
         except Exception as e:
             logger.error(
@@ -598,23 +625,40 @@ async def stop_background_polling():
 
 
 async def broadcast_to_clients(data: Dict):
-    """Send data to all connected WebSocket clients"""
+    """Send data to all connected WebSocket clients.
+
+    Serialises once, then fans out to all clients in parallel.
+    If a previous broadcast is still in flight (slow client or event-loop
+    back-pressure), the call returns immediately so the event loop is not
+    allowed to build up a queue of stale frames.
+    """
+    global _broadcast_in_progress
     if not connected_clients:
         return
-    
-    # Create a list of disconnected clients to remove
-    disconnected = []
-    
-    for client in connected_clients:
+    if _broadcast_in_progress:
+        return
+
+    _broadcast_in_progress = True
+    try:
         try:
-            await client.send_json(data)
+            message = json.dumps(data, default=str)
         except Exception as e:
-            logger.debug(f"Error sending to client: {e}")
-            disconnected.append(client)
-    
-    # Remove disconnected clients
-    for client in disconnected:
-        connected_clients.discard(client)
+            logger.debug(f"Broadcast serialisation error: {e}")
+            return
+
+        async def _send_one(client: WebSocket) -> Optional[WebSocket]:
+            try:
+                await client.send_text(message)
+                return None
+            except Exception:
+                return client
+
+        results = await asyncio.gather(*[_send_one(c) for c in list(connected_clients)], return_exceptions=True)
+        for result in results:
+            if isinstance(result, WebSocket):
+                connected_clients.discard(result)
+    finally:
+        _broadcast_in_progress = False
 
 
 @app.websocket("/ws")
@@ -778,7 +822,7 @@ async def io_link_diagnostics():
     disc_secs = sum(e['duration_sec'] for e in recent if e['status'] == 'connected')
     uptime_pct = round(max(0.0, (3600 - disc_secs) / 3600 * 100), 1)
     avg_lat = round(sum(p['latency_ms'] for p in poll_latencies) / len(poll_latencies)) if poll_latencies else None
-    extra = al1350.diagnostics_snapshot()
+    extra = await al1350.diagnostics_snapshot()
     return JSONResponse({
         'success': True,
         'start_ts': _BACKEND_START_TS,
@@ -998,15 +1042,31 @@ async def health_check():
     return {"status": "healthy", "clients": len(connected_clients)}
 
 
+def _get_local_ip() -> Optional[str]:
+    """Return the primary LAN IP of this host (the interface used for outbound traffic)."""
+    try:
+        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        s.connect(("8.8.8.8", 80))
+        ip = s.getsockname()[0]
+        s.close()
+        return ip
+    except Exception:
+        try:
+            return socket.gethostbyname(socket.gethostname())
+        except Exception:
+            return None
+
+
 @app.get("/api/system/health")
 async def system_health():
     """System health for admin observability."""
-    diag = al1350.diagnostics_snapshot()
+    diag = await al1350.diagnostics_snapshot()
     return JSONResponse(
         {
             "success": True,
             "timestamp": time.time(),
             "hostname": socket.gethostname(),
+            "ip_address": _get_local_ip(),
             "io_link_connected": bool(system_state.get("success")),
             "degraded_mode": bool(diag.get("degraded_mode")),
             "system": diag.get("system", {}),

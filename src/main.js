@@ -7448,6 +7448,34 @@ setTimeout(() => {
       sidebar.classList.remove('sidebar-scrolling');
     });
   }
+
+  // Drag-to-scroll for main content (X11 touch emulation fires mouse events, not touch events)
+  const mainContent = document.getElementById('main-content');
+  if (mainContent) {
+    let mainDragActive = false;
+    let mainDragStartY = 0;
+    let mainDragStartScrollTop = 0;
+    let mainDragMoved = false;
+
+    mainContent.addEventListener('mousedown', (e) => {
+      if (e.target.closest('button, a, input, select, textarea, label')) return;
+      mainDragActive = true;
+      mainDragMoved = false;
+      mainDragStartY = e.clientY;
+      mainDragStartScrollTop = mainContent.scrollTop;
+    });
+
+    window.addEventListener('mousemove', (e) => {
+      if (!mainDragActive) return;
+      const dy = mainDragStartY - e.clientY;
+      if (!mainDragMoved && Math.abs(dy) > 8) mainDragMoved = true;
+      if (mainDragMoved) mainContent.scrollTop = mainDragStartScrollTop + dy;
+    });
+
+    window.addEventListener('mouseup', () => {
+      mainDragActive = false;
+    });
+  }
 }, 0);
 
 // ================================================================

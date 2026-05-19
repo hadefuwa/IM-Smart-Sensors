@@ -19,9 +19,12 @@ DEVICE_ID_FALLBACK = [
     # Carlo Gavazzi / RS PRO capacitive sensor M18, model 2377240
     # (vendorID 1586 / 0x0632, deviceID 1052673 / 0x101001, productname '2377240')
     (1586, 1052673, DEVICE_TYPE_CAPACITIVE),
-    # RS PRO photoelectric sensor M18 diffuse, RS stock 0360240
-    # (vendorID 342 / 0x156, deviceID 131842 / 0x20302)
+    # RS PRO photoelectric sensor M18 diffuse (port 1)
+    # vendorID 342 / 0x156, deviceID 131842 / 0x20302, productname returns "unknown" from AL1350
     (342, 131842, DEVICE_TYPE_PHOTO_ELECTRIC),
+    # IFM TV7105 temperature sensor (port 3)
+    # vendorID 310 / 0x136, deviceID 733 / 0x2DD, productname "TV7105"
+    (310, 733, DEVICE_TYPE_TEMPERATURE),
 ]
 
 # Common IO-Link event codes (hex) -> human-readable label (for maintenance training)

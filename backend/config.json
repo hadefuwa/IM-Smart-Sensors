@@ -111,7 +111,7 @@
     "port": 8080
   },
   "mqtt": {
-    "broker_host": "127.0.0.1",
+    "broker_host": "192.168.7.2",
     "broker_port": 1883,
     "publish_interval_ms": 500,
     "enabled": true
@@ -124,9 +124,9 @@
     "use_https": false
   },
   "port_labels": {
-    "1": {"label": "Temperature Sensor",                  "device_type_hint": "temperature"},
-    "2": {"label": "Capacitive Sensor (RS PRO 2377240)",  "device_type_hint": "capacitive"},
-    "3": {"label": "Photoelectric Sensor (RS PRO)",       "device_type_hint": "photo_electric"},
-    "4": {"label": "Light Stack",                         "device_type_hint": "status_led"}
+    "1": {"label": "Photoelectric",  "device_type_hint": "photo_electric"},
+    "2": {"label": "Capacitive",     "device_type_hint": "capacitive"},
+    "3": {"label": "IFM TV7105",     "device_type_hint": "temperature"},
+    "4": {"label": "Light Stack",    "device_type_hint": "status_led"}
   }
 }

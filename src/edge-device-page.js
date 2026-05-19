@@ -81,6 +81,10 @@ export function renderEdgeDevicePage() {
                 <div id="edgeHostnameCard" class="font-semibold text-xl font-mono">-</div>
               </div>
               <div class="p-3 rounded-lg bg-base-100 border border-base-300">
+                <div class="text-base-content/60">IP Address</div>
+                <div id="edgeIpAddress" class="font-semibold text-xl font-mono">-</div>
+              </div>
+              <div class="p-3 rounded-lg bg-base-100 border border-base-300">
                 <div class="text-base-content/60">Memory used</div>
                 <div id="edgeMemUsedMb" class="font-semibold text-xl">-</div>
               </div>
@@ -209,6 +213,9 @@ function _fillStats(data) {
   const hostnameCard = document.getElementById('edgeHostnameCard');
   if (hostnameEl && data.hostname) hostnameEl.textContent = data.hostname;
   if (hostnameCard && data.hostname) hostnameCard.textContent = data.hostname;
+
+  const ipEl = document.getElementById('edgeIpAddress');
+  if (ipEl) ipEl.textContent = data.ip_address || '-';
 
   const lastRefresh = document.getElementById('edgeLastRefresh');
   if (lastRefresh) lastRefresh.textContent = `Last refresh: ${now}`;

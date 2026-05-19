@@ -631,7 +631,7 @@ class AL1350ClientManager:
         except Exception:
             return None
 
-    def _read_linux_cpu_usage_pct(self) -> Optional[float]:
+    async def _read_linux_cpu_usage_pct(self) -> Optional[float]:
         stat_path = "/proc/stat"
         try:
             with open(stat_path, "r", encoding="utf-8") as f:
@@ -639,7 +639,7 @@ class AL1350ClientManager:
             fields = [float(x) for x in first.split()[1:8]]
             idle = fields[3] + fields[4]
             total = sum(fields)
-            time.sleep(0.08)
+            await asyncio.sleep(0.08)
             with open(stat_path, "r", encoding="utf-8") as f:
                 first2 = f.readline()
             fields2 = [float(x) for x in first2.split()[1:8]]
@@ -704,7 +704,7 @@ class AL1350ClientManager:
         except Exception:
             return 0
 
-    def diagnostics_snapshot(self) -> Dict[str, Any]:
+    async def diagnostics_snapshot(self) -> Dict[str, Any]:
         lats = sorted(self.request_latencies_ms)
         success_total = self.request_successes + self.request_failures
         success_rate = round((self.request_successes / success_total) * 100.0, 1) if success_total else None
@@ -713,7 +713,7 @@ class AL1350ClientManager:
         for port, ts in self.port_freshness_ts.items():
             freshness_age[str(port)] = None if ts is None else round(max(0.0, now - ts), 1)
 
-        cpu_pct = self._read_linux_cpu_usage_pct()
+        cpu_pct = await self._read_linux_cpu_usage_pct()
         mem_pct, mem_used_mb = self._read_linux_mem()
         payload = {
             "request_success_rate_pct": success_rate,
