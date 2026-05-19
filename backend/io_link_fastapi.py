@@ -1043,18 +1043,34 @@ async def health_check():
 
 
 def _get_local_ip() -> Optional[str]:
-    """Return the primary LAN IP of this host (the interface used for outbound traffic)."""
+    """Return all non-loopback IPs on this host, comma-separated.
+    Uses 'hostname -I' (Linux) as the primary method — works without internet access.
+    Falls back to UDP connect probes against known local targets."""
+    import subprocess as _sp
+    # hostname -I lists all interface IPs space-separated, no DNS needed
     try:
-        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        s.connect(("8.8.8.8", 80))
-        ip = s.getsockname()[0]
-        s.close()
-        return ip
+        result = _sp.run(["hostname", "-I"], capture_output=True, text=True, timeout=2)
+        ips = [ip for ip in result.stdout.strip().split() if not ip.startswith("127.")]
+        if ips:
+            return ", ".join(ips)
     except Exception:
+        pass
+    # Fallback: UDP connect trick against known local targets (no packets sent)
+    for target in ("192.168.7.4", "192.168.0.1", "10.0.0.1"):
         try:
-            return socket.gethostbyname(socket.gethostname())
+            s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+            s.settimeout(0.1)
+            s.connect((target, 80))
+            ip = s.getsockname()[0]
+            s.close()
+            if ip and not ip.startswith("127."):
+                return ip
         except Exception:
-            return None
+            continue
+    try:
+        return socket.gethostbyname(socket.gethostname())
+    except Exception:
+        return None
 
 
 @app.get("/api/system/health")
