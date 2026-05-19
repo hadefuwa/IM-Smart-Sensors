@@ -228,6 +228,25 @@ class AL1350ClientManager:
                 continue
         return None
 
+    async def read_isdu(self, port: int, index: int, subindex: int) -> Optional[str]:
+        """Read an acyclic ISDU parameter from an IO-Link device. Returns raw hex string."""
+        result = await self._service_request(
+            f"/iolinkmaster/port[{port}]/iolinkdevice/iolreadacyclic",
+            data={"index": index, "subindex": subindex}
+        )
+        if result and result.get("code") == 200:
+            data = result.get("data", {})
+            return data.get("value") if isinstance(data, dict) else None
+        return None
+
+    async def write_isdu(self, port: int, index: int, subindex: int, value_hex: str) -> bool:
+        """Write an acyclic ISDU parameter to an IO-Link device. value_hex is a hex string."""
+        result = await self._service_request(
+            f"/iolinkmaster/port[{port}]/iolinkdevice/iolwriteacyclic",
+            data={"index": index, "subindex": subindex, "value": value_hex}
+        )
+        return result is not None and result.get("code") == 200
+
     async def refresh_gettree(self, force: bool = False) -> Optional[Dict[str, Any]]:
         now = time.time()
         if not force and self.tree_cache and (now - self.tree_last_refresh_ts) < self.tree_refresh_interval_sec:

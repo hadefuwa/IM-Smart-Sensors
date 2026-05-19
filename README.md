@@ -1,6 +1,6 @@
 # IM-Smart-Sensors
 
-Web dashboard for monitoring **IFM IO-Link Master** devices (AL1100/AL1300/AL1350). Real-time port status, supervision trends, industrial HMI homepage, CL50 LED decoding, and full diagnostics.
+Industrial HMI dashboard for monitoring **IFM IO-Link Master** devices (AL1100/AL1300/AL1350). Real-time sensor monitoring, IODD-based parameter read/write for all connected devices, condition monitoring charts, CL50 LED decoding, and interactive training worksheets.
 
 **Repository:** [github.com/hadefuwa/IM-Smart-Sensors](https://github.com/hadefuwa/IM-Smart-Sensors) · **Live app:** [hadefuwa.github.io/IM-Smart-Sensors](https://hadefuwa.github.io/IM-Smart-Sensors/)
 
@@ -8,20 +8,20 @@ Web dashboard for monitoring **IFM IO-Link Master** devices (AL1100/AL1300/AL135
 
 ## Features
 
-- **Industrial HMI Dashboard** – Mimic-style homepage with real-time sensor status (Temperature, Capacitive, Photoelectric, Status LED), condition monitoring charts, and live datastream terminal log
-- **Real-time updates** via WebSocket — no browser polling
-- **IO-Link page** – Compact port table; blank columns auto-hidden; per-port supervision, software, and process-data detail cards with dielectric value bar for capacitive sensors
+- **Industrial HMI Dashboard** – Mimic-style homepage with real-time sensor status (Temperature, Capacitive, Photoelectric, Status LED), condition monitoring charts, and IODD parameter panels for every sensor
+- **Full IODD parameter access** – Reads and writes device parameters via IO-Link ISDU (acyclic service). All three sensors are fully configurable from the browser: sensitivity thresholds, output logic, switching modes, teach sequences, and factory reset
+- **Real-time updates** via WebSocket — no browser polling; MQTT push from AL1350 at 500 ms; HTTP fallback in parallel
+- **IO-Link page** – Compact port table with per-port parameter panels (Identity / Configuration / Diagnostics groups, write controls, command buttons)
 - **Supervision trends** – current, voltage, temperature time-series charts
-- **Connection Diagnostics** – Timeline chart, poll latency graph, recent events table, live backend log viewer, uptime counter, and time-since-last-drop stat (IO-Link Master only)
+- **Connection Diagnostics** – Timeline chart, poll latency graph, recent events table, live backend log viewer, uptime counter, and time-since-last-drop stat
 - **Edge Device page** – Raspberry Pi runtime stats: CPU/memory rolling charts, CPU temperature, load average, service health, and Chromium kiosk process count
-- **Adaptive polling** – Connected ports polled every 1 s; inactive/disconnected ports polled every 5 s to reduce AL1350 load without slowing live sensor response
-- **Port labels & device hints** – Display names and device-type overrides configurable per port in `config.json`; disconnected labelled ports shown as greyed-out with a Disconnected badge
-- **Wi-Fi configuration panel** – Connect the Pi to a new network from the browser Settings page (via `nmcli`)
-- **IO-Link port auto-configure** – Backend detects port mode and device type on first connect; supports mode set via the AL1350 IoT Core API
-- **Device type decoding** – Photoelectric, temperature, capacitive (Carlo Gavazzi 4-byte format with 16-bit analogue dielectric value), proximity, and CL50 LED PDin/PDout decoded in every WebSocket push
-- **File logging** – Rotating log at `logs/app.log` (10 MB × 5 files); in-memory ring buffer served at `/api/logs`
+- **Training worksheets** – Interactive guided worksheets (CP0001/CP0002) for each sensor type with live data, ISDU controls, and quizzes
+- **Adaptive polling** – Connected ports polled every 1 s; inactive ports every 5 s to reduce AL1350 load
+- **Port labels & device hints** – Display names and device-type overrides configurable per port in `config.json`
+- **Wi-Fi configuration panel** – Connect the Pi to a new network from the Settings page (via `nmcli`)
+- **Device type decoding** – Photoelectric, temperature, capacitive (Carlo Gavazzi 4-byte PDin with 16-bit dielectric value), proximity, and CL50 LED PDin/PDout decoded in every WebSocket push
+- **File logging** – Rotating log at `logs/app.log` (10 MB × 5 files); in-memory ring buffer at `/api/logs`
 - **Circuit breaker** – 5-failure open, 15 s recovery; transitions logged with context
-- **Change Master IP from UI** – No config file edits needed
 - **Light & dark theme** – Theme-aware IO-Link logo, persisted in `localStorage`
 
 ---
@@ -30,9 +30,10 @@ Web dashboard for monitoring **IFM IO-Link Master** devices (AL1100/AL1300/AL135
 
 | Layer    | Technology |
 |----------|------------|
-| Backend  | Python 3, FastAPI, WebSockets, httpx |
+| Backend  | Python 3, FastAPI, WebSockets, httpx, aiomqtt |
 | Frontend | Vite, Tailwind CSS, DaisyUI, Chart.js |
 | API      | REST + WebSocket `/ws` |
+| Messaging | MQTT (Mosquitto broker on Pi; AL1350 publish → backend subscribe) |
 
 ---
 
@@ -87,10 +88,14 @@ Open the URL shown (e.g. **http://localhost:5173**). To target a different backe
 
 The default homepage provides:
 
-- **Current State Overview** – Clickable mimic components for IO-Link Master, Temperature, Capacitive (with live dielectric value bar), Photoelectric, and Status LED (CL50). Click any component to open its configuration modal.
-- **Condition Monitoring** – Temperature trend chart, signal quality bar, and cycle counter with alerts.
-- **Datastream Terminal** – Live PDin/PDout bytes and decoded values with port filter and CSV export.
-- **Health & Heartbeat** – Diagnostic status table and recent events log.
+- **Current State Overview** – Mimic components for IO-Link Master, Temperature, Capacitive (live dielectric value bar), Photoelectric, and Status LED (CL50)
+- **Condition Monitoring** – Temperature trend chart, signal quality bar, detection cycle counters
+- **IODD Parameter Panels** – Inline per-sensor cards for reading and writing device parameters over IO-Link without any external tool:
+  - **Photoelectric (Contrinex LTR-M18PA-PMS-603)** — SSC1 SP1 threshold slider, Light-ON/Dark-ON logic toggle, Fast/Medium/Fine sensor mode, Teach SP1, Cancel, Factory Reset
+  - **Capacitive (RS PRO / Carlo Gavazzi M18)** — SSC1 SP1 sensitivity slider, Quality of Teach and Quality of Run progress bars, Teach Start/Stop/Cancel sequence
+  - **Temperature (IFM TV7105)** — SP1 and SP2 setpoint sliders (−49.8–150°C), Device Status, Teach SP1/SP2, Factory Reset
+- **Datastream Terminal** – Live PDin/PDout bytes and decoded values with port filter and CSV export
+- **Health & Heartbeat** – Diagnostic status table and recent events log
 
 ---
 
@@ -114,24 +119,33 @@ The repo builds and deploys the UI to [GitHub Pages](https://hadefuwa.github.io/
 
 ```
 ├── backend/                     # FastAPI IO-Link API & WebSocket
-│   ├── io_link_fastapi.py        # Main app — all routes + WebSocket handler
-│   ├── al1350_client.py          # AL1350 HTTP client — circuit breaker, retry, pooling
+│   ├── io_link_fastapi.py        # Main app — all routes + WebSocket handler + ISDU endpoints
+│   ├── al1350_client.py          # AL1350 HTTP client — circuit breaker, retry, pooling, ISDU read/write
 │   ├── decoder.py                # PDin/PDout decoders + device-type detection
+│   ├── device_parameters.py      # IODD-derived parameter registry — TV7105, Contrinex LTR, Carlo Gavazzi
+│   ├── csv_logger.py             # CSV data logger
 │   ├── run_io_link_fastapi.py
 │   ├── config.json
 │   └── requirements.txt
 ├── docs/                        # Documentation
+│   ├── IO-LINK-COMMS-GUIDE.md    # Full IO-Link + MQTT architecture guide (primary reference)
 │   ├── PI_SSH.md                 # Pi SSH/SCP reference, deploy commands, network layout
 │   ├── PI_OPERATIONS.md          # Git → Pi workflow, rollback, health checks
 │   ├── port-config.md            # IO-Link port mode troubleshooting
 │   ├── SIDEBAR_SCROLL_FIX.md     # Sidebar flex constraint diagnosis
+│   ├── TV7105.pdf                # IFM TV7105 temperature sensor datasheet
+│   ├── LTR-M18PA-PM.pdf          # Contrinex LTR-M18PA-PMS-603 photoelectric datasheet
+│   ├── Capacitive Proximity.pdf  # Carlo Gavazzi / RS PRO M18 capacitive datasheet
 │   └── README.md                 # Docs index
 ├── public/                      # Static assets (logos, favicons, images)
 ├── scripts/pi/                  # Bash deploy helpers for Raspberry Pi
 ├── src/                         # Vite app source
 │   ├── main.js                   # App entry, routing, sidebar, logo theme switching
-│   ├── home-page.js              # HMI dashboard
-│   ├── io-link-page.js           # IO-Link port table + supervision charts
+│   ├── home-page.js              # HMI dashboard — gauges, charts, IODD parameter cards
+│   ├── io-link-page.js           # IO-Link port table + supervision charts + parameter panels
+│   ├── worksheets-page.js        # Interactive training worksheets with live ISDU controls
+│   ├── cp0001-page.js            # Course Package 1 — sensor fundamentals worksheets
+│   ├── cp0002-page.js            # Course Package 2 — IO-Link deep-dive worksheets
 │   ├── admin-page.js             # Connection Diagnostics — latency, circuit breaker, log viewer
 │   ├── edge-device-page.js       # Edge Device — Pi CPU/memory charts, service status
 │   ├── settings-page.js          # Theme selector + IO-Link config + Wi-Fi panel
@@ -157,6 +171,10 @@ The repo builds and deploys the UI to [GitHub Pages](https://hadefuwa.github.io/
 | `GET /api/io-link/port/<port_num>` | Detailed port data with decoded PDin/PDout |
 | `GET /api/io-link/supervision-history` | Time-series for supervision charts |
 | `GET /api/io-link/diagnostics` | Connection events, latency history, circuit state |
+| `GET /api/io-link/port/<n>/parameters` | Read all IODD parameters for a port (resolves device from registry) |
+| `POST /api/io-link/port/<n>/parameter/read` | Read a single ISDU parameter `{index, subindex, dtype, scale}` |
+| `POST /api/io-link/port/<n>/parameter/write` | Write a parameter value `{index, subindex, value, dtype, scale}` |
+| `POST /api/io-link/port/<n>/command` | Send a device command by name `{command}` (e.g. `teach_sp1`, `factory_reset`) |
 | `GET /api/logs?n=200` | Last N backend log entries (in-memory ring buffer) |
 | `GET /api/system/health` | Pi runtime stats (CPU, memory, temp, load) |
 | `WS /ws` | Real-time JSON push — ports, supervision, connection state |
@@ -171,7 +189,9 @@ The repo builds and deploys the UI to [GitHub Pages](https://hadefuwa.github.io/
 - **Connection pooling** — Shared `AsyncClient` capped at 3 concurrent connections (AL1350 hardware limit).
 - **Retry with jitter** — Exponential backoff with random jitter. Removing it causes thundering herd on reconnect.
 - **Protocol fallback** — `getdatamulti` → individual GETs per endpoint. `degraded_mode=True` means getdatamulti is failing.
-- **Adaptive per-port polling** — Connected ports polled every `poll_interval_sec` (1 s); inactive/error ports polled every `disconnected_poll_interval_sec` (5 s). Skipped ports return cached data. Reduces AL1350 requests by ~3× when sensors are unplugged.
+- **Adaptive per-port polling** — Connected ports polled every `poll_interval_sec` (1 s); inactive/error ports polled every `disconnected_poll_interval_sec` (5 s). Reduces AL1350 requests by ~3× when sensors are unplugged.
+- **MQTT push (primary)** — AL1350 publishes PDin + supervision to Mosquitto every 500 ms. Backend subscribes via `aiomqtt` and broadcasts to all WebSocket clients immediately. HTTP polling runs in parallel as fallback.
+- **ISDU acyclic access** — `al1350_client.read_isdu(port, index, subindex)` and `write_isdu(port, index, subindex, hex_value)` use the AL1350 `iolreadacyclic`/`iolwriteacyclic` service. ISDU calls are on-demand only — not polled — so they do not affect cycle timing.
 
 ---
 

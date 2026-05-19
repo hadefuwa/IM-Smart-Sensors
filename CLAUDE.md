@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What This Project Is
 
-Industrial HMI dashboard for monitoring IFM IO-Link Master devices (AL1100/AL1300/AL1350). Displays real-time port status, supervision trends (current/voltage/temperature), and CL50 LED decoding. Runs locally, on Raspberry Pi, or as a static GitHub Pages deployment (UI only).
+Industrial HMI dashboard for monitoring IFM IO-Link Master devices (AL1100/AL1300/AL1350). Displays real-time sensor data via MQTT push, supports full IODD-based parameter read/write for all connected sensors via IO-Link ISDU, and includes interactive training worksheets. Runs locally, on Raspberry Pi (kiosk on WaveShare 1024×600 touchscreen), or as a static GitHub Pages deployment (UI only).
 
 ## Commands
 
@@ -42,7 +42,7 @@ Pi credentials and network details are in `docs/PI_SSH.md`.
 
 ```powershell
 # Copy changed backend files
-& "C:\Program Files\PuTTY\pscp.exe" -pw ummah123 -hostkey "SHA256:Gyckco2TVF3FhcbSzy9vVDS6Sg0pS54p+gxLo+tuFNc" backend\al1350_client.py backend\io_link_fastapi.py hamed@iolink.local:/home/hamed/IM-Smart-Sensors/backend/
+& "C:\Program Files\PuTTY\pscp.exe" -pw ummah123 -hostkey "SHA256:Gyckco2TVF3FhcbSzy9vVDS6Sg0pS54p+gxLo+tuFNc" backend\al1350_client.py backend\io_link_fastapi.py backend\device_parameters.py hamed@iolink.local:/home/hamed/IM-Smart-Sensors/backend/
 # Restart service and confirm active
 & "C:\Program Files\PuTTY\plink.exe" -pw ummah123 -hostkey "SHA256:Gyckco2TVF3FhcbSzy9vVDS6Sg0pS54p+gxLo+tuFNc" -batch hamed@iolink.local "sudo systemctl restart im-sensors-backend.service && systemctl is-active im-sensors-backend.service"
 ```
@@ -62,15 +62,19 @@ Pi credentials and network details are in `docs/PI_SSH.md`.
 | File | Role |
 |------|------|
 | `src/main.js` | App entry, page routing, Chart.js init, IO-Link logo theme switching |
-| `src/home-page.js` | HMI dashboard — gauges, charts, terminal log |
-| `src/io-link-page.js` | IO-Link port table and supervision charts |
+| `src/home-page.js` | HMI dashboard — gauges, charts, IODD parameter cards per sensor |
+| `src/io-link-page.js` | IO-Link port table, supervision charts, per-port parameter panels |
+| `src/worksheets-page.js` | Interactive training worksheets with live ISDU read/write controls |
+| `src/cp0001-page.js` | Course Package 1 — sensor fundamentals (photoelectric, capacitive, temperature, LED) |
+| `src/cp0002-page.js` | Course Package 2 — IO-Link deep-dive worksheets |
 | `src/settings-page.js` | Theme selector and IO-Link connection config UI |
 | `src/admin-page.js` | Connection Diagnostics — IO-Link latency graph, circuit breaker, log viewer |
 | `src/edge-device-page.js` | Edge Device page — Pi CPU/memory charts, service status, Chromium health |
 | `src/components/mimic-components.js` | Reusable industrial UI components (temp gauge, capacitive indicator, LED, counters) |
 | `src/components/terminal-log.js` | Datastream terminal with CSV export |
-| `backend/io_link_fastapi.py` | Main FastAPI app — all routes + WebSocket handler |
-| `backend/al1350_client.py` | AL1350 HTTP client with circuit breaker, retry/jitter, adaptive polling, connection pooling |
+| `backend/io_link_fastapi.py` | Main FastAPI app — all routes + WebSocket handler + ISDU endpoints |
+| `backend/al1350_client.py` | AL1350 HTTP client with circuit breaker, retry/jitter, adaptive polling, ISDU read/write |
+| `backend/device_parameters.py` | IODD-derived parameter registry + ISDU encode/decode helpers |
 | `backend/decoder.py` | CL50 LED decoder + sensor PDin/PDout parsers (temperature, photoelectric, capacitive, proximity) |
 | `backend/config.json` | Runtime config — master IP, port, poll intervals, port labels, timeout |
 
@@ -83,7 +87,7 @@ Pi credentials and network details are in `docs/PI_SSH.md`.
 - **Retry with jitter:** Exponential backoff with random jitter on transient failures. The jitter is intentional — removing it causes thundering herd on reconnect.
 - **Protocol fallback chain:** `getdatamulti` → individual GETs per endpoint. `degraded_mode=True` means getdatamulti is failing and per-request GETs are being used instead.
 - **Adaptive per-port polling:** `poll_ports()` tracks `_port_next_poll_ts` per port. Connected ports (`io-link`/`digital_in`/`digital_out`) are polled every `poll_interval_sec` (default 1 s). Inactive/error ports are polled every `disconnected_poll_interval_sec` (default 5 s). Skipped ports return cached data. The outer loop and supervision polling still run every 1 s.
-- **subscribe is NOT a polling mechanism:** The AL1350 `subscribe` service (manual §9.2.12) POSTs data to a callback URL on the client — it cannot be called as a poll. `ensure_subscription()` is intentionally a no-op; polling via getdatamulti is sufficient.
+- **MQTT push (primary data path):** `ensure_mqtt_subscription()` registers the AL1350's push subscription on every backend startup (subscriptions are lost on AL1350 power cycle). The AL1350 publishes pdin + supervision to Mosquitto every 500 ms. The backend subscribes via `aiomqtt` and broadcasts to WebSocket clients immediately. HTTP polling runs in parallel as fallback and for ISDU counter reads.
 - **Device tree cache:** `/gettree` response is cached for 5 minutes to reduce load on the AL1350.
 
 ## AL1350 IoT Core API
@@ -96,6 +100,51 @@ The operating manual is at `docs/Operating Manual.txt`. Critical protocol detail
 - **getdatamulti response** keys have no leading slash; value is at `entry["data"]` not `entry["value"]`: `{"data":{"iolinkmaster/port[1]/mode":{"code":200,"data":3}}}`
 - **Supervision data** lives at `processdatamaster/temperature` (°C), `processdatamaster/voltage` (V), `processdatamaster/current` (A), `processdatamaster/supervisionstatus`. Polled each cycle via `AL1350ClientManager.get_supervision()`.
 - **poll_snapshot** returns a 3-tuple `(ports, device_info, supervision)` — update all call sites if the signature changes.
+
+## IODD / ISDU Parameter System
+
+`backend/device_parameters.py` is the single source of truth for all device parameter metadata. Understand it before touching parameter read/write logic.
+
+### Device Registry
+
+Keyed by `(vendor_id_int, device_id_int)`. Three devices registered:
+
+| Key | Device | Label |
+|-----|--------|-------|
+| `(310, 733)` | IFM TV7105 | Temperature sensor — SP1/SP2 setpoints (index 583/593, int16, scale 0.1), teach commands, calibration offset |
+| `(1586, 1052673)` or `(896, 1069056)` | Carlo Gavazzi / RS PRO capacitive M18 | SSC1 SP1 (index 60/sub1, int16), QoT (75), QoR (76), teach start/stop/cancel commands |
+| `(342, 131842)` | Contrinex LTR-M18PA-PMS-603 photoelectric | SSC1 SP1 (index 0x3C/sub1, uint32), output logic (0x3D/sub1), sensor mode (0x40/sub2), teach/cancel/reset commands |
+
+The Carlo Gavazzi IDs `(1586, 1052673)` are an RS PRO OEM branding — both entries point to the same `_CAPACITIVE_PARAMS`.
+
+### ISDU Protocol
+
+AL1350 service call for acyclic read:
+```
+POST http://<ip>/
+{"code":"request","cid":-1,"adr":"/iolinkmaster/port[N]/iolinkdevice/iolreadacyclic","data":{"index":60,"subindex":1}}
+→ {"code":200,"data":{"value":"hex-string"}}
+```
+
+For write, use `iolwriteacyclic` with `{"index":60,"subindex":1,"value":"03E8"}`.
+
+Commands are written as uint8 to index 2, subindex 0: e.g. teach SP1 for TV7105 = write `0xAC` (172) to index 2.
+
+### ISDU API Endpoints
+
+- `GET /api/io-link/port/{n}/parameters` — reads ALL parameters for a port using the registry; resolves device from system_state vendor_id/device_id
+- `POST /api/io-link/port/{n}/parameter/read` — body: `{index, subindex, dtype, scale}` → `{success, raw_hex, value}`
+- `POST /api/io-link/port/{n}/parameter/write` — body: `{index, subindex, value, dtype, scale}` → `{success}`
+- `POST /api/io-link/port/{n}/command` — body: `{command}` (name key from registry `commands` dict) → `{success}`
+
+### Frontend ISDU Helpers (home-page.js and worksheets-page.js)
+
+Both pages define the same async pattern:
+- `_hmiIsduRead(portNum, index, subindex, dtype, scale)` → value or null
+- `_hmiIsduWrite(portNum, index, subindex, value, dtype, scale, statusElId)` → bool
+- `_hmiIsduCommand(portNum, cmdName, statusElId)` → bool
+
+Parameter panels auto-load on first WebSocket message from each sensor. Port number is tracked in `_sectionPortNum['cap-port-num']` / `['temp-port-num']` / `['detection-port-num']` (populated by `_setPortBadge` in the WS handler).
 
 ## Frontend Conventions
 
@@ -118,27 +167,34 @@ Touch events on X11 (WaveShare on Debian/Openbox) are emulated as mouse events �
 
 ```json
 {
+  "mqtt": {
+    "broker_host": "192.168.7.2",
+    "broker_port": 1883,
+    "publish_interval_ms": 500,
+    "enabled": true
+  },
   "io_link": {
     "master_ip": "192.168.7.4",
     "port": 80,
     "poll_interval_sec": 1,
-    "disconnected_poll_interval_sec": 5,
-    "timeout_sec": 3
+    "timeout_sec": 3,
+    "use_https": false
   },
   "port_labels": {
-    "1": {"label": "Temperature Sensor",                 "device_type_hint": "temperature"},
-    "2": {"label": "Capacitive Sensor (RS PRO 2377240)", "device_type_hint": "capacitive"},
-    "3": {"label": "Photoelectric Sensor (Contrinex LTR-M18PA-PMx-603)", "device_type_hint": "photo_electric"},
-    "4": {"label": "Light Stack",                        "device_type_hint": "status_led"}
+    "1": {"label": "Photoelectric",  "device_type_hint": "photo_electric"},
+    "2": {"label": "Capacitive",     "device_type_hint": "capacitive"},
+    "3": {"label": "IFM TV7105",     "device_type_hint": "temperature"},
+    "4": {"label": "Light Stack",    "device_type_hint": "status_led"}
   }
 }
 ```
 
-- `poll_interval_sec` — how often connected ports are queried (minimum 0.5 s).
-- `disconnected_poll_interval_sec` — how often inactive/error ports are re-checked (minimum = poll_interval_sec).
+- `mqtt.broker_host` — IP of the Mosquitto broker (the Pi's eth0 address on the IO-Link subnet).
+- `mqtt.publish_interval_ms` — how often the AL1350 pushes data (500 ms minimum, firmware-enforced).
+- `poll_interval_sec` — how often the HTTP fallback polls connected ports (minimum 0.5 s). Also controls ISDU counter read rate.
 - `port_labels` — display label and device-type hint per port number. The label overrides the raw device product name in the UI; the hint fills in when auto-detection returns `unknown`.
 
-The Settings page UI writes `io_link` fields via `PUT /api/io-link/config`. `port_labels` must be edited in the file directly. Legacy fields (`dobot`, `plc`, `vision`) in the file are unused.
+The Settings page UI writes `io_link` fields via `PUT /api/io-link/config`. `port_labels` and `mqtt` must be edited in the file directly.
 
 ## Pi Infrastructure
 

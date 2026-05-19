@@ -77,11 +77,14 @@ def get_device_type(vendor_id, device_id, name):
 
 def decode_photo_electric_pdin(bytes_data):
     """
-    Decode Process Data In for photoelectric sensors.
-    Typical: byte 0 = status (bit 0 = object detected), optional byte 1 = signal quality 0-100%.
+    Decode Process Data In for photoelectric sensors (RS PRO M18 diffuse, vendor 342).
+    Byte 0: bit 0 = OUT1 (object detected), bit 1 = OUT2 (complementary output), bit 7 = error/fault.
+    Byte 1 (optional): signal quality 0-100%.
     """
     decoded = {
         'object_detected': False,
+        'out2': False,
+        'error': False,
         'signal_quality_percent': None,
         'raw_hex': '',
         'description': 'No data'
@@ -92,7 +95,11 @@ def decode_photo_electric_pdin(bytes_data):
         bytes_data = list(bytes_data)
     decoded['raw_hex'] = ''.join(f'{b:02X}' for b in bytes_data)
     decoded['object_detected'] = bool(bytes_data[0] & 0x01)
+    decoded['out2']            = bool(bytes_data[0] & 0x02)
+    decoded['error']           = bool(bytes_data[0] & 0x80)
     decoded['description'] = 'Object present' if decoded['object_detected'] else 'Object absent'
+    if decoded['error']:
+        decoded['description'] += ' [FAULT]'
     if len(bytes_data) >= 2:
         decoded['signal_quality_percent'] = min(100, max(0, bytes_data[1]))
         decoded['description'] += f', Signal {decoded["signal_quality_percent"]}%'
@@ -101,11 +108,15 @@ def decode_photo_electric_pdin(bytes_data):
 
 def decode_temperature_pdin(bytes_data):
     """
-    Decode Process Data In for temperature sensors.
-    Common: 2 bytes, signed or unsigned, 0.1 °C resolution (e.g. 235 = 23.5 °C).
+    Decode Process Data In for IFM TV7xxx temperature sensors.
+    Bytes 0-1: 16-bit big-endian signed, 0.1 °C resolution.
+    Byte 2:    manufacturer-specific / reserved (0xFF = unused on TV7105).
+    Byte 3:    status — bit 0 = OUT1 (switching output 1), bit 1 = OUT2 (switching output 2).
     """
     decoded = {
         'temperature_c': None,
+        'out1': None,
+        'out2': None,
         'raw_hex': '',
         'description': 'No data'
     }
@@ -114,12 +125,15 @@ def decode_temperature_pdin(bytes_data):
     if isinstance(bytes_data, bytearray):
         bytes_data = list(bytes_data)
     decoded['raw_hex'] = ''.join(f'{b:02X}' for b in bytes_data)
-    # 16-bit big-endian signed, 0.1 °C (IFM TV7xxx series: MSB first in bytes 0-1)
     raw = (bytes_data[0] << 8) | bytes_data[1]
     if raw >= 0x8000:
         raw = raw - 0x10000
     decoded['temperature_c'] = round(raw * 0.1, 1)
     decoded['description'] = f"{decoded['temperature_c']} °C"
+    if len(bytes_data) >= 4:
+        status = bytes_data[3]
+        decoded['out1'] = bool(status & 0x01)
+        decoded['out2'] = bool(status & 0x02)
     return decoded
 
 
@@ -151,12 +165,17 @@ def decode_capacitive_pdin(bytes_data):
     """
     Decode Process Data In for Carlo Gavazzi / RS PRO capacitive sensors (23772xx series).
     4-byte process data layout:
-      Bytes 0-1: 16-bit analogue value (dielectric measurement, big-endian)
-      Byte 2:    bit 1 = SSC2, bit 0 = SSC1 (inactive by default)
-      Byte 3:    bit 1 = SO2,  bit 0 = SO1  (primary switching output)
+      Bytes 0-1: 16-bit analogue dielectric value (big-endian). Requires sensor teach-in to be non-zero.
+      Byte 2:    bit 0 = SSC1, bit 1 = SSC2 (secondary switching channels, normally inactive).
+      Byte 3:    bit 0 = SO1,  bit 1 = SO2  (primary switching outputs — SO1=main, SO2=window comparator).
+    Note: SO2 (bit 1 of byte 3) can be active independently of SO1 when target is in the window range.
     """
     decoded = {
         'object_detected': False,
+        'so1': False,
+        'so2': False,
+        'ssc1': False,
+        'ssc2': False,
         'analogue_value': None,
         'raw_hex': '',
         'description': 'No data'
@@ -170,13 +189,23 @@ def decode_capacitive_pdin(bytes_data):
     if len(bytes_data) >= 4:
         analogue = (bytes_data[0] << 8) | bytes_data[1]
         decoded['analogue_value'] = analogue
-        decoded['object_detected'] = bool(bytes_data[3] & 0x01)
-        state = 'Object detected' if decoded['object_detected'] else 'No object'
+        decoded['ssc1'] = bool(bytes_data[2] & 0x01)
+        decoded['ssc2'] = bool(bytes_data[2] & 0x02)
+        decoded['so1']  = bool(bytes_data[3] & 0x01)
+        decoded['so2']  = bool(bytes_data[3] & 0x02)
+        decoded['object_detected'] = decoded['so1']
+        outputs = []
+        if decoded['so1']:  outputs.append('SO1')
+        if decoded['so2']:  outputs.append('SO2')
+        if decoded['ssc1']: outputs.append('SSC1')
+        if decoded['ssc2']: outputs.append('SSC2')
+        state = f"Active: {', '.join(outputs)}" if outputs else 'No object'
         decoded['description'] = f'{state} | Analogue: {analogue}'
     else:
-        # Shorter payload fallback: last byte bit 0 = switching output
         last = bytes_data[-1]
-        decoded['object_detected'] = bool(last & 0x01) or bool(last & 0x02)
+        decoded['so1'] = bool(last & 0x01)
+        decoded['so2'] = bool(last & 0x02)
+        decoded['object_detected'] = decoded['so1']
         decoded['description'] = 'Object detected' if decoded['object_detected'] else 'No object'
     return decoded
 

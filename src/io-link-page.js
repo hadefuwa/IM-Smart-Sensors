@@ -373,8 +373,177 @@ function generatePortDetailsHTML(port) {
     h += '<div class="pdin-raw ' + (!showDecodedByDefault ? '' : 'hidden') + '">';
     h += '<strong>Raw:</strong> <code>' + escapeHtml(port.pdin.raw) + '</code> <strong>Hex:</strong> <code>' + escapeHtml(port.pdin.hex) + '</code> <strong>Bytes:</strong> <code>[' + (port.pdin.bytes || []).join(', ') + ']</code></div></div>';
   }
+  // Device parameters panel — toggled open by user
+  h += `<div class="mt-3 border-t border-base-300 pt-3">
+    <button type="button" class="btn btn-xs btn-outline btn-primary params-toggle-btn" data-port="${port.port}">
+      Device Parameters (IODD)
+    </button>
+    <div class="params-panel hidden mt-3" id="params-panel-${port.port}">
+      <div class="params-loading text-xs text-base-content/60 italic">Loading parameters…</div>
+    </div>
+  </div>`;
   h += '</div>';
   return h;
+}
+
+// ── Device parameter panel ────────────────────────────────────────────────────
+function renderParamValue(p) {
+  if (p.value === null || p.value === undefined) return '<span class="text-base-content/30 italic">—</span>';
+  if (p.value_label) return `<span class="badge badge-sm badge-outline">${escapeHtml(p.value_label)}</span>`;
+  const unit = p.unit ? ` <span class="text-xs text-base-content/50">${escapeHtml(p.unit)}</span>` : '';
+  return `<span class="font-mono">${p.value}</span>${unit}`;
+}
+
+function renderWriteControl(p, portNum) {
+  if (p.access !== 'rw') return '';
+  const id = `wparam-${portNum}-${p.index}-${p.subindex}`;
+  let ctrl = '';
+  if (p.enum) {
+    const opts = Object.entries(p.enum).map(([v, l]) => {
+      const sel = (p.value !== null && parseInt(v) === p.value) ? ' selected' : '';
+      return `<option value="${v}"${sel}>${escapeHtml(l)}</option>`;
+    }).join('');
+    ctrl = `<select id="${id}" class="select select-xs select-bordered max-w-xs">${opts}</select>`;
+  } else if (p.dtype === 'int16' || p.dtype === 'uint16' || p.dtype === 'uint8' || p.dtype === 'int32' || p.dtype === 'uint32') {
+    const min = p.min !== undefined ? `min="${p.min}"` : '';
+    const max = p.max !== undefined ? `max="${p.max}"` : '';
+    const step = p.scale && p.scale !== 1 ? `step="${p.scale}"` : 'step="1"';
+    const val  = p.value !== null && p.value !== undefined ? `value="${p.value}"` : '';
+    ctrl = `<input type="number" id="${id}" class="input input-xs input-bordered w-24 font-mono" ${min} ${max} ${step} ${val}>`;
+  } else if (p.dtype === 'string') {
+    const val = p.value !== null ? `value="${escapeHtml(String(p.value))}"` : '';
+    ctrl = `<input type="text" id="${id}" class="input input-xs input-bordered w-40" ${val} maxlength="${p.max_len || 64}">`;
+  }
+  if (!ctrl) return '';
+  return `${ctrl} <button type="button" class="btn btn-xs btn-primary param-write-btn ml-1"
+    data-port="${portNum}" data-index="${p.index}" data-subindex="${p.subindex}"
+    data-dtype="${p.dtype}" data-scale="${p.scale || 1}" data-input-id="${id}">Write</button>
+    <span class="param-write-status text-xs ml-1"></span>`;
+}
+
+async function loadParamPanel(portNum) {
+  const panel = document.getElementById(`params-panel-${portNum}`);
+  if (!panel) return;
+  panel.querySelector('.params-loading')?.remove();
+  panel.innerHTML = '<div class="text-xs text-base-content/60 italic">Fetching from device…</div>';
+
+  let data;
+  try {
+    const res = await fetch(`${API_BASE}/api/io-link/port/${portNum}/parameters`, { signal: AbortSignal.timeout(15000) });
+    data = await res.json();
+  } catch (e) {
+    panel.innerHTML = `<p class="text-xs text-error">Failed to load: ${e.message}</p>`;
+    return;
+  }
+  if (!data.success) {
+    panel.innerHTML = `<p class="text-xs text-base-content/60 italic">${escapeHtml(data.error || 'No parameters available')}</p>`;
+    return;
+  }
+
+  const groups = { identity: [], config: [], diagnostics: [] };
+  (data.parameters || []).forEach(p => {
+    const g = p.group || 'identity';
+    if (!groups[g]) groups[g] = [];
+    groups[g].push(p);
+  });
+
+  const groupLabels = { identity: 'Identity', config: 'Configuration', diagnostics: 'Diagnostics' };
+  let html = `<p class="text-xs font-bold text-base-content mb-2">${escapeHtml(data.device_label)}</p>`;
+
+  for (const [gKey, gLabel] of Object.entries(groupLabels)) {
+    if (!groups[gKey] || groups[gKey].length === 0) continue;
+    html += `<p class="text-xs font-semibold text-base-content/60 uppercase tracking-wide mt-2 mb-1">${gLabel}</p>`;
+    html += '<div class="overflow-x-auto"><table class="table table-xs w-full"><tbody>';
+    for (const p of groups[gKey]) {
+      const desc = p.desc ? `<span class="text-base-content/40 text-xs block">${escapeHtml(p.desc)}</span>` : '';
+      html += `<tr><td class="font-medium text-xs whitespace-nowrap">${escapeHtml(p.name)}${desc}</td>
+        <td>${renderParamValue(p)}</td>
+        <td>${renderWriteControl(p, portNum)}</td></tr>`;
+    }
+    html += '</tbody></table></div>';
+  }
+
+  // Command buttons
+  const cmds = data.commands || {};
+  if (Object.keys(cmds).length > 0) {
+    html += '<p class="text-xs font-semibold text-base-content/60 uppercase tracking-wide mt-3 mb-1">Commands</p>';
+    html += '<div class="flex flex-wrap gap-2">';
+    for (const [key, cmd] of Object.entries(cmds)) {
+      const danger = key.includes('reset') ? 'btn-error' : 'btn-warning';
+      html += `<button type="button" class="btn btn-xs ${danger} param-cmd-btn"
+        data-port="${portNum}" data-cmd="${key}">${escapeHtml(cmd.label)}</button>`;
+    }
+    html += '</div>';
+  }
+
+  html += `<button type="button" class="btn btn-xs btn-ghost mt-3 params-refresh-btn" data-port="${portNum}">↺ Refresh</button>`;
+  panel.innerHTML = html;
+}
+
+function wireParamPanelEvents(root) {
+  root.addEventListener('click', async e => {
+    const toggleBtn = e.target.closest('.params-toggle-btn');
+    if (toggleBtn) {
+      const portNum = parseInt(toggleBtn.dataset.port);
+      const panel = document.getElementById(`params-panel-${portNum}`);
+      if (!panel) return;
+      const wasHidden = panel.classList.contains('hidden');
+      panel.classList.toggle('hidden');
+      if (wasHidden) loadParamPanel(portNum);
+      return;
+    }
+
+    const refreshBtn = e.target.closest('.params-refresh-btn');
+    if (refreshBtn) { loadParamPanel(parseInt(refreshBtn.dataset.port)); return; }
+
+    const writeBtn = e.target.closest('.param-write-btn');
+    if (writeBtn) {
+      const { port, index, subindex, dtype, scale, inputId } = writeBtn.dataset;
+      const input = document.getElementById(inputId);
+      if (!input) return;
+      const statusEl = writeBtn.nextElementSibling;
+      writeBtn.disabled = true;
+      if (statusEl) statusEl.textContent = '…';
+      try {
+        const res = await fetch(`${API_BASE}/api/io-link/port/${port}/parameter/write`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ index: parseInt(index), subindex: parseInt(subindex),
+            dtype, scale: parseFloat(scale), value: dtype === 'string' ? input.value : parseFloat(input.value) }),
+          signal: AbortSignal.timeout(8000)
+        });
+        const data = await res.json();
+        if (statusEl) {
+          statusEl.textContent = data.success ? '✓' : `✗ ${data.error || ''}`;
+          statusEl.className = `param-write-status text-xs ml-1 ${data.success ? 'text-success' : 'text-error'}`;
+        }
+      } catch (err) {
+        if (statusEl) { statusEl.textContent = '✗ timeout'; statusEl.className = 'param-write-status text-xs ml-1 text-error'; }
+      }
+      writeBtn.disabled = false;
+      return;
+    }
+
+    const cmdBtn = e.target.closest('.param-cmd-btn');
+    if (cmdBtn) {
+      const { port, cmd } = cmdBtn.dataset;
+      cmdBtn.disabled = true;
+      cmdBtn.textContent = '…';
+      try {
+        const res = await fetch(`${API_BASE}/api/io-link/port/${port}/command`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ command: cmd }),
+          signal: AbortSignal.timeout(8000)
+        });
+        const data = await res.json();
+        cmdBtn.textContent = data.success ? '✓ Done' : '✗ Failed';
+        cmdBtn.className = `btn btn-xs ${data.success ? 'btn-success' : 'btn-error'} param-cmd-btn`;
+        setTimeout(() => loadParamPanel(parseInt(port)), 1500);
+      } catch { cmdBtn.textContent = '✗ Error'; }
+      setTimeout(() => { cmdBtn.disabled = false; }, 2000);
+    }
+  });
 }
 
 function updateSupervisionTable(supervision) {
@@ -667,4 +836,6 @@ export function initIOLinkPage() {
   connectWebSocket();
   setupRawDecodedToggle();
   setupSimulateFault();
+  const portDetailsSection = document.getElementById('portDetailsSection');
+  if (portDetailsSection) wireParamPanelEvents(portDetailsSection);
 }

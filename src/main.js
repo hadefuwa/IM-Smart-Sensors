@@ -4,7 +4,8 @@ import 'nouislider/dist/nouislider.css';
 import { renderHomePage, initHomePage, destroyHomePage } from './home-page.js';
 import { renderIOLinkMaster, initIOLinkPage, destroyIOLinkPage } from './io-link-page.js';
 import { renderLearnPage, initLearnPage } from './learn-page.js';
-import { renderWorksheetsPage, initWorksheetsPage } from './worksheets-page.js';
+import { renderWorksheetsPage, initWorksheetsPage, destroyWorksheetsPage } from './worksheets-page.js';
+import { renderCp0002Page, initCp0002Page, destroyCp0002Page } from './cp0002-page.js';
 import { renderSettingsPage, initSettingsPage, applySavedAppSettings } from './settings-page.js';
 import { renderAdminPage, initAdminPage, destroyAdminPage } from './admin-page.js';
 import { renderEdgeDevicePage, initEdgeDevicePage, destroyEdgeDevicePage } from './edge-device-page.js';
@@ -5975,123 +5976,6 @@ function renderDatasheetPage() {
   `;
 }
 
-function render3DModelsPage() {
-  const stpPath = `${import.meta.env.BASE_URL}assets/CAD_STP_ASI_0183.stp`;
-  const satPath = `${import.meta.env.BASE_URL}assets/CAD_SAT_ASI_0183.sat`;
-  return `
-    <div class="space-y-4">
-      <div class="card bg-base-200 shadow-xl">
-        <div class="card-body">
-          <h1 class="text-2xl font-bold text-base-content">3D Models</h1>
-          <p class="text-base-content/70">Interactive CAD viewer for ALI_0183 with STEP and SAT source files.</p>
-        </div>
-      </div>
-
-      <div class="card bg-base-200 shadow-xl">
-        <div class="card-body gap-3">
-          <div class="flex flex-wrap items-center gap-2">
-            <label class="text-sm font-medium text-base-content/80" for="model-file-select">Model:</label>
-            <select id="model-file-select" class="select select-bordered select-sm">
-              <option value="${stpPath}" selected>CAD_STP_ASI_0183.stp</option>
-              <option value="${satPath}">CAD_SAT_ASI_0183.sat</option>
-            </select>
-            <button id="model-reload-btn" type="button" class="btn btn-outline btn-sm">Reload</button>
-            <a id="model-download-link" href="${stpPath}" download class="btn btn-primary btn-sm">Download Source</a>
-          </div>
-          <div class="text-xs text-base-content/60">
-            STEP preview is rendered locally in-browser (works offline on Pi). SAT is provided as a downloadable source file.
-          </div>
-          <div class="w-full h-[70vh] min-h-[460px] rounded-lg border border-base-300 bg-base-100 overflow-hidden">
-            <canvas id="cad-viewer-canvas" class="w-full h-full block"></canvas>
-          </div>
-          <div id="cad-viewer-status" class="text-sm text-base-content/70">Preparing viewer...</div>
-        </div>
-      </div>
-
-      <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <div class="card bg-base-200 shadow-xl">
-          <div class="card-body">
-            <h2 class="card-title text-base-content">CAD_STP_ASI_0183.stp</h2>
-            <p class="text-sm text-base-content/70">STEP format (fully supported by embedded viewer).</p>
-            <div class="card-actions justify-end mt-3">
-              <button type="button" id="model-load-stp-btn" class="btn btn-ghost btn-sm">Load in Viewer</button>
-              <a href="${stpPath}" download class="btn btn-primary btn-sm">Download</a>
-            </div>
-          </div>
-        </div>
-
-        <div class="card bg-base-200 shadow-xl">
-          <div class="card-body">
-            <h2 class="card-title text-base-content">CAD_SAT_ASI_0183.sat</h2>
-            <p class="text-sm text-base-content/70">ACIS SAT source file (download/open raw; browser preview support is limited).</p>
-            <div class="card-actions justify-end mt-3">
-              <button type="button" id="model-load-sat-btn" class="btn btn-ghost btn-sm">Select SAT</button>
-              <a href="${satPath}" download class="btn btn-primary btn-sm">Download</a>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div class="card bg-base-200 shadow-xl">
-        <div class="card-body">
-          <div class="flex justify-end">
-            <a href="#" data-page="home" class="btn btn-outline btn-sm">Back to Dashboard</a>
-          </div>
-        </div>
-      </div>
-    </div>
-  `;
-}
-
-async function init3DModelsPage() {
-  const select = document.getElementById('model-file-select');
-  const reloadBtn = document.getElementById('model-reload-btn');
-  const stpBtn = document.getElementById('model-load-stp-btn');
-  const satBtn = document.getElementById('model-load-sat-btn');
-  const downloadLink = document.getElementById('model-download-link');
-  const statusEl = document.getElementById('cad-viewer-status');
-  if (!select || !downloadLink) return;
-  let cad = null;
-  try {
-    cad = await import('./components/cad-viewer.js');
-  } catch (err) {
-    if (statusEl) {
-      statusEl.className = 'text-sm text-error';
-      statusEl.textContent = `3D viewer runtime failed to initialize: ${err?.message || 'unknown error'}`;
-    }
-    return;
-  }
-
-  const applyModel = async () => {
-    const modelPath = select.value;
-    downloadLink.href = modelPath;
-    try {
-      await cad.loadCadModel('cad-viewer-canvas', 'cad-viewer-status', modelPath);
-    } catch (err) {
-      if (statusEl) {
-        statusEl.className = 'text-sm text-error';
-        statusEl.textContent = `Failed to load model: ${err?.message || 'unknown error'}`;
-      }
-    }
-  };
-
-  select.addEventListener('change', () => void applyModel());
-  if (reloadBtn) reloadBtn.addEventListener('click', () => void applyModel());
-  if (stpBtn) {
-    stpBtn.addEventListener('click', () => {
-      select.value = `${import.meta.env.BASE_URL}assets/CAD_STP_ASI_0183.stp`;
-      void applyModel();
-    });
-  }
-  if (satBtn) {
-    satBtn.addEventListener('click', () => {
-      select.value = `${import.meta.env.BASE_URL}assets/CAD_SAT_ASI_0183.sat`;
-      void applyModel();
-    });
-  }
-  await applyModel();
-}
-
 function renderUserManualPage() {
   const manualPath = `${import.meta.env.BASE_URL}assets/80284128UK.pdf`;
   return `
@@ -6159,10 +6043,10 @@ const PAGES = {
   'about': renderAboutPage,
   'io-link-master': renderIOLinkMaster,
   'datasheet': renderDatasheetPage,
-  'models-3d': render3DModelsPage,
   'user-manual': renderUserManualPage,
   'learn': renderLearnPage,
   'worksheets': renderWorksheetsPage,
+  'cp0002': renderCp0002Page,
   'settings': renderSettingsPage,
   'admin': renderAdminPage,
   'edge-device': renderEdgeDevicePage,
@@ -6239,7 +6123,7 @@ app.innerHTML = `
           <ul class="menu p-4 gap-1" id="sidebar-menu">
 
           <!-- ── Monitor ── -->
-          <li class="menu-title pt-2">
+          <li class="menu-title pt-2 select-none pointer-events-none">
             <span class="flex items-center gap-2 text-primary">
               <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20"><path d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zM3 10a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H4a1 1 0 01-1-1v-6zM14 9a1 1 0 00-1 1v6a1 1 0 001 1h2a1 1 0 001-1v-6a1 1 0 00-1-1h-2z"/></svg>
               Monitor
@@ -6248,8 +6132,29 @@ app.innerHTML = `
           <li><a href="#" data-page="home">HMI Dashboard</a></li>
           <li><a href="#" data-page="io-link-master">IO-Link Master</a></li>
 
+          <!-- ── Study ── -->
+          <li class="menu-title pt-3 select-none pointer-events-none">
+            <span class="flex items-center gap-2 text-primary">
+              <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20"><path d="M10.394 2.08a1 1 0 00-.788 0l-7 3a1 1 0 000 1.84L5.25 8.051a.999.999 0 01.356-.257l4-1.714a1 1 0 11.788 1.838L7.667 9.088l1.94.831a1 1 0 00.787 0l7-3a1 1 0 000-1.838l-7-3zM3.31 9.397L5 10.12v4.102a8.969 8.969 0 00-1.05-.174 1 1 0 01-.89-.89 11.115 11.115 0 01.25-3.762zM9.3 16.573A9.026 9.026 0 007 14.935v-3.957l1.818.78a3 3 0 002.364 0l5.508-2.361a11.026 11.026 0 01.25 3.762 1 1 0 01-.89.89 8.968 8.968 0 00-5.35 2.524 1 1 0 01-1.4 0zM6 18a1 1 0 001-1v-2.065a8.935 8.935 0 00-2-.712V17a1 1 0 001 1z"/></svg>
+              Study
+            </span>
+          </li>
+          <li><a href="#" data-page="worksheets"><span class="font-mono text-xs opacity-60">CP0001</span> Maintenance on Smart Sensors</a></li>
+          <li><a href="#" data-page="cp0002"><span class="font-mono text-xs opacity-60">CP0002</span> Industry 4.0 IO-Link</a></li>
+          <li><a href="#" data-page="learn">Further Study</a></li>
+
+          <!-- ── Resources ── -->
+          <li class="menu-title pt-3 select-none pointer-events-none">
+            <span class="flex items-center gap-2 text-primary">
+              <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20"><path d="M9 4.804A7.968 7.968 0 005.5 4c-1.255 0-2.443.29-3.5.804v10A7.969 7.969 0 015.5 14c1.669 0 3.218.51 4.5 1.385A7.962 7.962 0 0114.5 14c1.255 0 2.443.29 3.5.804v-10A7.968 7.968 0 0014.5 4c-1.255 0-2.443.29-3.5.804V12a1 1 0 11-2 0V4.804z"/></svg>
+              Resources
+            </span>
+          </li>
+          <li><a href="#" data-page="datasheet">Datasheet</a></li>
+          <li><a href="#" data-page="user-manual">User Manual</a></li>
+
           <!-- ── Diagnostics ── -->
-          <li class="menu-title pt-3">
+          <li class="menu-title pt-3 select-none pointer-events-none">
             <span class="flex items-center gap-2 text-primary">
               <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M11.49 3.17c-.38-1.56-2.6-1.56-2.98 0a1.532 1.532 0 01-2.286.948c-1.372-.836-2.942.734-2.106 2.106.54.886.061 2.042-.947 2.287-1.561.379-1.561 2.6 0 2.978a1.532 1.532 0 01.947 2.287c-.836 1.372.734 2.942 2.106 2.106a1.532 1.532 0 012.287.947c.379 1.561 2.6 1.561 2.978 0a1.533 1.533 0 012.287-.947c1.372.836 2.942-.734 2.106-2.106a1.533 1.533 0 01.947-2.287c1.561-.379 1.561-2.6 0-2.978a1.532 1.532 0 01-.947-2.287c.836-1.372-.734-2.942-2.106-2.106a1.532 1.532 0 01-2.287-.947zM10 13a3 3 0 100-6 3 3 0 000 6z" clip-rule="evenodd"/></svg>
               Diagnostics
@@ -6258,29 +6163,8 @@ app.innerHTML = `
           <li><a href="#" data-page="admin">Connection Diagnostics</a></li>
           <li><a href="#" data-page="edge-device">Edge Device</a></li>
 
-          <!-- ── Resources ── -->
-          <li class="menu-title pt-3">
-            <span class="flex items-center gap-2 text-primary">
-              <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20"><path d="M9 4.804A7.968 7.968 0 005.5 4c-1.255 0-2.443.29-3.5.804v10A7.969 7.969 0 015.5 14c1.669 0 3.218.51 4.5 1.385A7.962 7.962 0 0114.5 14c1.255 0 2.443.29 3.5.804v-10A7.968 7.968 0 0014.5 4c-1.255 0-2.443.29-3.5.804V12a1 1 0 11-2 0V4.804z"/></svg>
-              Resources
-            </span>
-          </li>
-          <li><a href="#" data-page="datasheet">Datasheet</a></li>
-          <li><a href="#" data-page="models-3d">3D Models</a></li>
-          <li><a href="#" data-page="user-manual">User Manual</a></li>
-
-          <!-- ── Study ── -->
-          <li class="menu-title pt-3">
-            <span class="flex items-center gap-2 text-primary">
-              <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20"><path d="M10.394 2.08a1 1 0 00-.788 0l-7 3a1 1 0 000 1.84L5.25 8.051a.999.999 0 01.356-.257l4-1.714a1 1 0 11.788 1.838L7.667 9.088l1.94.831a1 1 0 00.787 0l7-3a1 1 0 000-1.838l-7-3zM3.31 9.397L5 10.12v4.102a8.969 8.969 0 00-1.05-.174 1 1 0 01-.89-.89 11.115 11.115 0 01.25-3.762zM9.3 16.573A9.026 9.026 0 007 14.935v-3.957l1.818.78a3 3 0 002.364 0l5.508-2.361a11.026 11.026 0 01.25 3.762 1 1 0 01-.89.89 8.968 8.968 0 00-5.35 2.524 1 1 0 01-1.4 0zM6 18a1 1 0 001-1v-2.065a8.935 8.935 0 00-2-.712V17a1 1 0 001 1z"/></svg>
-              Study
-            </span>
-          </li>
-          <li><a href="#" data-page="worksheets">Worksheets</a></li>
-          <li><a href="#" data-page="learn">Further Study</a></li>
-
           <!-- ── Settings ── -->
-          <li class="menu-title pt-3">
+          <li class="menu-title pt-3 select-none pointer-events-none">
             <span class="flex items-center gap-2 text-primary">
               <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M11.49 3.17c-.38-1.56-2.6-1.56-2.98 0a1.532 1.532 0 01-2.286.948c-1.372-.836-2.942.734-2.106 2.106.54.886.061 2.042-.947 2.287-1.561.379-1.561 2.6 0 2.978a1.532 1.532 0 01.947 2.287c-.836 1.372.734 2.942 2.106 2.106a1.532 1.532 0 012.287.947c.379 1.561 2.6 1.561 2.978 0a1.533 1.533 0 012.287-.947c1.372.836 2.942-.734 2.106-2.106a1.533 1.533 0 01.947-2.287c1.561-.379 1.561-2.6 0-2.978a1.532 1.532 0 01-.947-2.287c.836-1.372-.734-2.942-2.106-2.106a1.532 1.532 0 01-2.287-.947zM10 13a3 3 0 100-6 3 3 0 000 6z" clip-rule="evenodd"/></svg>
               Settings
@@ -6404,6 +6288,8 @@ function renderPage(pageKey) {
   destroyIOLinkPage();
   destroyAdminPage();
   destroyEdgeDevicePage();
+  destroyWorksheetsPage();
+  destroyCp0002Page();
   activeCharts.forEach(chart => chart.destroy());
   activeCharts = [];
 
@@ -6443,10 +6329,10 @@ function renderPage(pageKey) {
     initializeComponentLibraryTabs();
   } else if (pageKey === 'io-link-master') {
     initIOLinkPage();
-  } else if (pageKey === 'models-3d') {
-    init3DModelsPage();
   } else if (pageKey === 'worksheets') {
     initWorksheetsPage();
+  } else if (pageKey === 'cp0002') {
+    initCp0002Page();
   } else if (pageKey === 'settings') {
     initSettingsPage();
   } else if (pageKey === 'learn') {
@@ -7377,7 +7263,9 @@ function setMatrixLogoForTheme(theme) {
 
 function setIOLinkLogoForTheme(theme) {
   const logo = document.querySelector('.io-link-header-logo img');
-  if (logo) logo.src = theme === 'dark' ? baseUrl + 'assets/img/Logo_IO-link_dark.png' : baseUrl + 'assets/img/Logo_IO-link.svg';
+  if (!logo) return;
+  logo.src = baseUrl + 'assets/img/Logo_IO-link.svg';
+  logo.style.filter = theme === 'dark' ? 'invert(1)' : '';
 }
 
 // Simple theme switcher (Light / Dark)

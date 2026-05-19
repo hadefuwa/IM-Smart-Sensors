@@ -1,7 +1,11 @@
 {
   "permissions": {
     "allow": [
-      "Bash(\"C:\\\\Program Files\\\\PuTTY\\\\plink.exe\" -pw ummah123 -batch hamed@iolink.local \"ip addr show && echo '---' && nmcli connection show --active 2>&1\")"
+      "Bash(\"C:\\\\Program Files\\\\PuTTY\\\\plink.exe\" -pw ummah123 -batch hamed@iolink.local \"ip addr show && echo '---' && nmcli connection show --active 2>&1\")",
+      "PowerShell(& \"C:\\\\Program Files\\\\PuTTY\\\\pscp.exe\" -pw ummah123 -hostkey \"SHA256:Gyckco2TVF3FhcbSzy9vVDS6Sg0pS54p+gxLo+tuFNc\" \"C:\\\\Users\\\\Hamed\\\\Documents\\\\IM-Smart-Sensors\\\\dist\\\\index.html\" hamed@iolink.local:/var/www/im-sensors/)",
+      "PowerShell(& \"C:\\\\Program Files\\\\PuTTY\\\\plink.exe\" -pw ummah123 -hostkey \"SHA256:Gyckco2TVF3FhcbSzy9vVDS6Sg0pS54p+gxLo+tuFNc\" -batch hamed@iolink.local \"nohup sudo -u pi DISPLAY=:0 XAUTHORITY=/home/pi/.Xauthority bash /home/pi/kiosk.sh </dev/null >/tmp/kiosk.log 2>&1 &\")",
+      "Bash(git checkout *)",
+      "PowerShell(& \"C:\\\\Program Files\\\\PuTTY\\\\plink.exe\" -pw ummah123 -hostkey \"SHA256:Gyckco2TVF3FhcbSzy9vVDS6Sg0pS54p+gxLo+tuFNc\" -batch hamed@iolink.local \"sudo chown -R hamed:hamed /var/www/im-sensors/\")"
     ]
   }
 }

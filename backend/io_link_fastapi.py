@@ -33,6 +33,11 @@ from decoder import (
     DEVICE_TYPE_CAPACITIVE,
 )
 from al1350_client import AL1350ClientManager, MODE_MAP
+from device_parameters import (
+    get_device_params, decode_isdu_hex, encode_isdu_value,
+    T_UINT8, G_CONFIG, G_DIAGNOSTICS, G_IDENTITY
+)
+from csv_logger import CSVLogger
 
 try:
     import aiomqtt
@@ -187,6 +192,8 @@ app.add_middleware(
 )
 
 _BACKEND_START_TS: float = time.time()
+
+csv_logger = CSVLogger()
 
 # Global state
 system_state = {
@@ -444,6 +451,7 @@ async def poll_io_link_master():
             # When MQTT is connected it broadcasts on every push message instead.
             if not mqtt_connected:
                 await broadcast_to_clients(system_state)
+                csv_logger.log(system_state)
 
         except Exception as e:
             logger.error(
@@ -583,6 +591,7 @@ async def run_mqtt_listener():
                 async for message in client.messages:
                     _parse_mqtt_message(bytes(message.payload))
                     await broadcast_to_clients(system_state)
+                    csv_logger.log(system_state)
 
         except Exception as e:
             mqtt_connected = False
@@ -700,6 +709,22 @@ async def get_io_link_config():
             "use_https": False
         })
     })
+
+
+@app.get("/api/io-link/history")
+async def get_history(minutes: int = 60):
+    """Return downsampled 10-second-bucket time-series for all sensor types."""
+    config = load_config()
+    port_labels = config.get("port_labels", {})
+    series = csv_logger.read_history(minutes=min(minutes, 60), port_labels=port_labels)
+    return JSONResponse(content=series)
+
+
+@app.delete("/api/io-link/history")
+async def clear_history():
+    """Delete all CSV log files and start a fresh log."""
+    csv_logger.clear()
+    return JSONResponse(content={"success": True})
 
 
 @app.put("/api/io-link/config")
@@ -954,6 +979,110 @@ async def io_link_port_detail(port_num: int):
         'port': port_data,
         'timestamp': time.time()
     })
+
+
+@app.get("/api/io-link/port/{port_num}/parameters")
+async def get_port_parameters(port_num: int):
+    """Return the IODD-derived parameter definitions for the device on this port,
+    plus live values read from the device for all parameters."""
+    if port_num < 1 or port_num > 4:
+        raise HTTPException(status_code=400, detail="Port must be 1–4")
+
+    # Resolve vendor/device id from live state
+    ports = system_state.get('ports') or []
+    port = next((p for p in ports if p.get('port') == port_num), {})
+    vendor_id = port.get('vendor_id', '')
+    device_id = port.get('device_id', '')
+
+    # Fallback to config hint for device type if IDs unavailable
+    registry = get_device_params(vendor_id, device_id)
+    if registry is None:
+        return JSONResponse({'success': False, 'error': 'No IODD-derived parameters for this device',
+                             'vendor_id': vendor_id, 'device_id': device_id})
+
+    # Read all parameters from device (in parallel)
+    params_with_values = []
+    for p in registry['parameters']:
+        hex_val = await al1350.read_isdu(port_num, p['index'], p['subindex'])
+        scale = p.get('scale', 1.0)
+        value = decode_isdu_hex(hex_val, p['dtype'], scale) if hex_val else None
+        entry = dict(p)
+        entry['raw_hex'] = hex_val
+        entry['value'] = value
+        if value is not None and 'enum' in p:
+            entry['value_label'] = p['enum'].get(value if isinstance(value, int) else int(value), str(value))
+        params_with_values.append(entry)
+
+    return JSONResponse({
+        'success': True,
+        'port': port_num,
+        'device_label': registry['label'],
+        'commands': registry['commands'],
+        'parameters': params_with_values,
+    })
+
+
+@app.post("/api/io-link/port/{port_num}/parameter/read")
+async def read_port_parameter(port_num: int, request: Request):
+    """Read a single ISDU parameter. Body: {index, subindex, dtype, scale?}"""
+    if port_num < 1 or port_num > 4:
+        raise HTTPException(status_code=400, detail="Port must be 1–4")
+    body = await request.json()
+    index    = int(body['index'])
+    subindex = int(body.get('subindex', 0))
+    dtype    = body.get('dtype', T_UINT8)
+    scale    = float(body.get('scale', 1.0))
+
+    hex_val = await al1350.read_isdu(port_num, index, subindex)
+    if hex_val is None:
+        return JSONResponse({'success': False, 'error': 'ISDU read failed or device not connected'})
+    value = decode_isdu_hex(hex_val, dtype, scale)
+    return JSONResponse({'success': True, 'raw_hex': hex_val, 'value': value})
+
+
+@app.post("/api/io-link/port/{port_num}/parameter/write")
+async def write_port_parameter(port_num: int, request: Request):
+    """Write a single ISDU parameter. Body: {index, subindex, value, dtype, scale?}"""
+    if port_num < 1 or port_num > 4:
+        raise HTTPException(status_code=400, detail="Port must be 1–4")
+    body = await request.json()
+    index    = int(body['index'])
+    subindex = int(body.get('subindex', 0))
+    dtype    = body.get('dtype', T_UINT8)
+    scale    = float(body.get('scale', 1.0))
+    value    = body['value']
+
+    hex_val = encode_isdu_value(value, dtype, scale)
+    ok = await al1350.write_isdu(port_num, index, subindex, hex_val)
+    if not ok:
+        return JSONResponse({'success': False, 'error': 'ISDU write failed'})
+    return JSONResponse({'success': True, 'wrote_hex': hex_val, 'value': value})
+
+
+@app.post("/api/io-link/port/{port_num}/command")
+async def execute_port_command(port_num: int, request: Request):
+    """Execute a named system command on the device. Body: {command} e.g. 'teach_sp1'"""
+    if port_num < 1 or port_num > 4:
+        raise HTTPException(status_code=400, detail="Port must be 1–4")
+    body = await request.json()
+    cmd_key = body.get('command', '')
+
+    ports = system_state.get('ports') or []
+    port  = next((p for p in ports if p.get('port') == port_num), {})
+    registry = get_device_params(port.get('vendor_id', ''), port.get('device_id', ''))
+    if registry is None:
+        return JSONResponse({'success': False, 'error': 'Unknown device on this port'})
+
+    cmd = registry['commands'].get(cmd_key)
+    if cmd is None:
+        return JSONResponse({'success': False, 'error': f'Unknown command: {cmd_key}'})
+
+    # System commands are written to index 2 / subindex 0 as uint8
+    hex_val = encode_isdu_value(cmd['value'], T_UINT8)
+    ok = await al1350.write_isdu(port_num, 2, 0, hex_val)
+    if not ok:
+        return JSONResponse({'success': False, 'error': 'Command write failed'})
+    return JSONResponse({'success': True, 'command': cmd_key, 'label': cmd['label']})
 
 
 @app.get("/learn", response_class=HTMLResponse)
