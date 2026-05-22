@@ -923,8 +923,9 @@ function initLiveIntro(container) {
 
     setPortCard('intro-p1-dot', 'intro-p1-val', p1Active,
       p1Active ? (det1 ? 'Detected ●' : 'No object ○') : 'Inactive', colours.photo);
+    const det2 = p2?.pdin_decoded?.object_detected;
     setPortCard('intro-p2-dot', 'intro-p2-val', p2Active,
-      p2Active ? `Count: ${cnt2}` : 'Inactive', colours.cap);
+      p2Active ? (det2 ? 'Detected ●' : 'No object ○') : 'Inactive', colours.cap);
     setPortCard('intro-p3-dot', 'intro-p3-val', p3Active,
       p3Active && temp3 != null ? `${temp3.toFixed(1)} °C` : 'Inactive', colours.temp);
     setPortCard('intro-p4-dot', 'intro-p4-val', p4Active,
