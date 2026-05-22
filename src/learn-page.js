@@ -410,14 +410,14 @@ function buildMapHtml(completedSet) {
           <svg class="absolute -top-20 -right-20 w-80 h-80 text-primary/20" fill="currentColor" viewBox="0 0 100 100"><circle cx="50" cy="50" r="40" fill="none" stroke="currentColor" stroke-width="0.5"/><circle cx="50" cy="50" r="25" fill="none" stroke="currentColor" stroke-width="0.3"/></svg>
           <svg class="absolute bottom-10 left-0 w-60 h-60 text-secondary/20" fill="currentColor" viewBox="0 0 100 100"><circle cx="20" cy="20" r="3"/><circle cx="50" cy="20" r="3"/><circle cx="80" cy="20" r="3"/><circle cx="20" cy="50" r="3"/><circle cx="50" cy="50" r="3"/><circle cx="80" cy="50" r="3"/></svg>
         </div>
-        <header class="relative pb-6 mb-6 rounded-2xl bg-gradient-to-r from-primary/15 via-secondary/10 to-accent/15 border border-primary/20 px-6 py-6 shadow-lg">
-          <div class="flex items-start gap-4 flex-wrap">
-            <div class="rounded-xl bg-primary/20 p-3 border border-primary/30">
-              <svg xmlns="http://www.w3.org/2000/svg" class="w-10 h-10 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" /></svg>
+        <header class="relative pb-4 mb-4 rounded-2xl bg-gradient-to-r from-primary/15 via-secondary/10 to-accent/15 border border-primary/20 px-4 py-4 shadow-lg">
+          <div class="flex items-center gap-3 flex-wrap">
+            <div class="rounded-lg bg-primary/20 p-2 border border-primary/30">
+              <svg xmlns="http://www.w3.org/2000/svg" class="w-7 h-7 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" /></svg>
             </div>
             <div>
-              <h1 class="text-3xl font-bold text-base-content tracking-tight">Learn: Smart Sensors &amp; Industry 4.0</h1>
-              <p class="mt-2 text-base-content/80 text-lg leading-relaxed">Complete chapters to master IO-Link and industrial maintenance. Choose a chapter below.</p>
+              <h1 class="text-xl font-bold text-base-content tracking-tight">Learn: Smart Sensors &amp; Industry 4.0</h1>
+              <p class="text-base-content/80 text-sm">Complete chapters to master IO-Link and industrial maintenance. Choose a chapter below.</p>
             </div>
           </div>
         </header>

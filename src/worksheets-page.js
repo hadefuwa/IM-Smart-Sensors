@@ -729,15 +729,15 @@ function buildIndexHtml() {
   }).join('');
   return `
     <div class="worksheets-index max-w-5xl mx-auto space-y-6 relative min-h-full py-2 rounded-2xl" style="background:linear-gradient(160deg,hsl(var(--b2)) 0%,hsl(var(--b3)) 40%,hsl(var(--p)/0.06) 100%);">
-      <header class="relative rounded-2xl bg-gradient-to-r from-primary/20 via-secondary/15 to-accent/20 border-2 border-primary/30 px-6 py-6 shadow-xl">
-        <div class="flex items-start gap-4 flex-wrap">
-          <div class="rounded-xl bg-primary/25 p-3 border border-primary/40">
-            <svg xmlns="http://www.w3.org/2000/svg" class="w-10 h-10 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+      <header class="relative rounded-2xl bg-gradient-to-r from-primary/20 via-secondary/15 to-accent/20 border-2 border-primary/30 px-4 py-4 shadow-xl">
+        <div class="flex items-center gap-3 flex-wrap">
+          <div class="rounded-lg bg-primary/25 p-2 border border-primary/40">
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-7 h-7 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
           </div>
           <div>
-            <div class="flex items-center gap-2 mb-1"><span class="badge badge-primary badge-outline font-mono text-xs">CP0001</span></div>
-            <h1 class="text-3xl font-bold text-base-content tracking-tight">Maintenance on Smart Sensors</h1>
-            <p class="mt-2 text-base-content/80 text-lg">${TOTAL} interactive worksheets — live sensor data, charts, and tasks built in.</p>
+            <div class="flex items-center gap-2 mb-0.5"><span class="badge badge-primary badge-outline font-mono text-xs">CP0001</span></div>
+            <h1 class="text-xl font-bold text-base-content tracking-tight">Maintenance on Smart Sensors</h1>
+            <p class="text-base-content/80 text-sm">${TOTAL} interactive worksheets — live sensor data, charts, and tasks built in.</p>
           </div>
         </div>
       </header>
