@@ -40,6 +40,25 @@ function getPort(data, portNum) {
   return data.ports.find(p => p.port === portNum) || null;
 }
 
+function initCp2KitChecklist(container) {
+  container.querySelectorAll('.cp2-kit-item').forEach(function (label) {
+    const cb = label.querySelector('input[type="checkbox"]');
+    if (!cb) return;
+    const apply = function () {
+      if (cb.checked) {
+        label.classList.add('bg-success/20', 'border-success');
+        const txt = label.querySelector('.cp2-kit-text');
+        if (txt) txt.style.opacity = '0.6';
+      } else {
+        label.classList.remove('bg-success/20', 'border-success');
+        const txt = label.querySelector('.cp2-kit-text');
+        if (txt) txt.style.opacity = '';
+      }
+    };
+    cb.addEventListener('change', apply);
+  });
+}
+
 const WORKSHEETS = [
   {
     id: 1,
@@ -50,26 +69,101 @@ const WORKSHEETS = [
     relatedDashboard: 'Edge Device page, Admin / Connection Diagnostics',
     prerequisites: 'CP0001 recommended',
     contentHtml: `
-      <p class="text-base-content/90 leading-relaxed">The system in front of you is a complete Industry 4.0 sensor stack. Read the technical brief below, then complete the questions using the live data panel.</p>
+      <p class="text-base-content/90 leading-relaxed text-base">In front of you is a complete Industry 4.0 sensor stack. Identify each component on the bench, tick it off, then confirm it's live on screen before moving to the questions.</p>
 
-      <!-- Hardware table -->
-      <div class="overflow-x-auto rounded-lg border border-base-300 mt-4">
-        <table class="table table-zebra text-sm">
-          <thead><tr><th>Component</th><th>Model / Role</th><th>IP Address</th><th>Interface</th></tr></thead>
-          <tbody>
-            <tr><td class="font-semibold">IO-Link Master</td><td>IFM AL1350 — reads sensors, publishes MQTT</td><td class="font-mono">192.168.7.4</td><td>HTTP REST + MQTT publish</td></tr>
-            <tr><td class="font-semibold">Edge Gateway</td><td>Raspberry Pi — MQTT broker + FastAPI + WebSocket server</td><td class="font-mono">192.168.7.2</td><td>Ethernet (IO-Link subnet) + Wi-Fi (LAN)</td></tr>
-            <tr><td class="font-semibold">This Dashboard</td><td>Vite SPA — receives WebSocket JSON, renders live UI</td><td class="font-mono">—</td><td>WebSocket /ws</td></tr>
-            <tr><td class="font-semibold">Port 1 Sensor</td><td>Contrinex LTR-M18PA-PMS-603 — diffuse photoelectric, IO-Link 1.0 (identity only via ISDU)</td><td class="font-mono">—</td><td>IO-Link (3-wire, M12)</td></tr>
-            <tr><td class="font-semibold">Port 2 Sensor</td><td>Capacitive — detects material by dielectric change</td><td class="font-mono">—</td><td>IO-Link (3-wire, M12)</td></tr>
-            <tr><td class="font-semibold">Port 3 Sensor</td><td>IFM TV7105 — temperature, ±0.1 °C IO-Link PDin</td><td class="font-mono">—</td><td>IO-Link (3-wire, M12)</td></tr>
-            <tr><td class="font-semibold">Port 4 Sensor</td><td>IFM CL50 — multi-colour status light stack</td><td class="font-mono">—</td><td>IO-Link (3-wire, M12)</td></tr>
-          </tbody>
-        </table>
+      <!-- Hardware checklist -->
+      <div class="rounded-xl border-2 border-secondary/30 bg-secondary/5 p-4 mt-4 space-y-3">
+        <p class="font-bold text-base-content">🔍 Locate each component — tick it when identified:</p>
+        <div class="space-y-2 text-sm" id="cp2-kit-checklist">
+          <label class="cp2-kit-item flex items-center gap-3 cursor-pointer rounded-xl border-2 border-transparent px-3 py-2 transition-all duration-200">
+            <input type="checkbox" class="checkbox checkbox-md checkbox-secondary flex-shrink-0">
+            <span class="cp2-kit-text"><strong>IO-Link Master (IFM AL1350)</strong> — the orange box with numbered M12 ports. IP: 192.168.7.4. All sensors connect here. Publishes MQTT every 500 ms and responds to HTTP service calls (ISDU reads/writes).</span>
+          </label>
+          <label class="cp2-kit-item flex items-center gap-3 cursor-pointer rounded-xl border-2 border-transparent px-3 py-2 transition-all duration-200">
+            <input type="checkbox" class="checkbox checkbox-md checkbox-secondary flex-shrink-0">
+            <span class="cp2-kit-text"><strong>Port 1 — Contrinex LTR-M18PA-PMS-603</strong> — M18 diffuse photoelectric. IO-Link 1.0: PDin carries a switching bit only. ISDU limited to identity (index 0). Sensitivity adjusted via physical potentiometer on the sensor body.</span>
+          </label>
+          <label class="cp2-kit-item flex items-center gap-3 cursor-pointer rounded-xl border-2 border-transparent px-3 py-2 transition-all duration-200">
+            <input type="checkbox" class="checkbox checkbox-md checkbox-secondary flex-shrink-0">
+            <span class="cp2-kit-text"><strong>Port 2 — Capacitive Sensor</strong> — M18 cylinder. IO-Link 1.1: full ISDU access — threshold (SSC1 SP1) and teach commands writable remotely. Detects material by dielectric field change.</span>
+          </label>
+          <label class="cp2-kit-item flex items-center gap-3 cursor-pointer rounded-xl border-2 border-transparent px-3 py-2 transition-all duration-200">
+            <input type="checkbox" class="checkbox checkbox-md checkbox-secondary flex-shrink-0">
+            <span class="cp2-kit-text"><strong>Port 3 — IFM TV7105</strong> — IO-Link temperature sensor, ±0.1 °C. PDin: 4 bytes. Bytes 0–1 = signed int16 (raw ÷ 10 = °C). Bytes 2–3 carry SP1/SP2 switching outputs and alarm flags.</span>
+          </label>
+          <label class="cp2-kit-item flex items-center gap-3 cursor-pointer rounded-xl border-2 border-transparent px-3 py-2 transition-all duration-200">
+            <input type="checkbox" class="checkbox checkbox-md checkbox-secondary flex-shrink-0">
+            <span class="cp2-kit-text"><strong>Port 4 — IFM CL50</strong> — multi-colour status light stack. PDin encodes three colour channels (red, amber, green) each with on/flash/off state across multiple bit fields — more complex than a single switching output.</span>
+          </label>
+          <label class="cp2-kit-item flex items-center gap-3 cursor-pointer rounded-xl border-2 border-transparent px-3 py-2 transition-all duration-200">
+            <input type="checkbox" class="checkbox checkbox-md checkbox-secondary flex-shrink-0">
+            <span class="cp2-kit-text"><strong>Edge Gateway (Raspberry Pi)</strong> — runs FastAPI + uvicorn + Mosquitto. eth0: 192.168.7.2 (IO-Link subnet, static); wlan0: building LAN (DHCP). Bridges the two isolated networks — the classic edge gateway pattern.</span>
+          </label>
+          <label class="cp2-kit-item flex items-center gap-3 cursor-pointer rounded-xl border-2 border-transparent px-3 py-2 transition-all duration-200">
+            <input type="checkbox" class="checkbox checkbox-md checkbox-secondary flex-shrink-0">
+            <span class="cp2-kit-text"><strong>This dashboard</strong> — Vite SPA receiving WebSocket JSON from the Pi's FastAPI backend. Decodes MQTT PDin into live charts. Never communicates directly with the AL1350.</span>
+          </label>
+        </div>
+      </div>
+
+      <!-- Connection diagram -->
+      <div class="rounded-xl border border-base-300 bg-base-200 p-3 mt-3">
+        <p class="text-xs font-semibold text-base-content/60 uppercase tracking-wide mb-2">System architecture — data flow</p>
+        <svg viewBox="0 0 570 205" xmlns="http://www.w3.org/2000/svg" class="w-full" style="font-family:system-ui,sans-serif">
+          <rect x="2"   y="24"  width="124" height="32" rx="5" fill="#3b82f6"/>
+          <text x="64"  y="37"  text-anchor="middle" fill="white" font-size="10" font-weight="600">Photoelectric</text>
+          <text x="64"  y="49"  text-anchor="middle" fill="#bfdbfe" font-size="8">Port 1 · IO-Link 1.0</text>
+          <rect x="2"   y="64"  width="124" height="32" rx="5" fill="#7c3aed"/>
+          <text x="64"  y="77"  text-anchor="middle" fill="white" font-size="10" font-weight="600">Capacitive</text>
+          <text x="64"  y="89"  text-anchor="middle" fill="#ddd6fe" font-size="8">Port 2 · IO-Link 1.1</text>
+          <rect x="2"   y="104" width="124" height="32" rx="5" fill="#d97706"/>
+          <text x="64"  y="117" text-anchor="middle" fill="white" font-size="10" font-weight="600">Temperature TV7105</text>
+          <text x="64"  y="129" text-anchor="middle" fill="#fde68a" font-size="8">Port 3 · IO-Link 1.1</text>
+          <rect x="2"   y="144" width="124" height="32" rx="5" fill="#0d9488"/>
+          <text x="64"  y="157" text-anchor="middle" fill="white" font-size="10" font-weight="600">CL50 Light Stack</text>
+          <text x="64"  y="169" text-anchor="middle" fill="#99f6e4" font-size="8">Port 4 · IO-Link 1.1</text>
+          <line x1="126" y1="40"  x2="152" y2="40"  stroke="#94a3b8" stroke-width="2"/>
+          <line x1="126" y1="80"  x2="152" y2="80"  stroke="#94a3b8" stroke-width="2"/>
+          <line x1="126" y1="120" x2="152" y2="120" stroke="#94a3b8" stroke-width="2"/>
+          <line x1="126" y1="160" x2="152" y2="160" stroke="#94a3b8" stroke-width="2"/>
+          <rect x="150" y="10" width="112" height="182" rx="8" fill="#ea580c"/>
+          <rect x="152" y="33" width="8" height="14" rx="2" fill="#9a3412"/>
+          <rect x="152" y="73" width="8" height="14" rx="2" fill="#9a3412"/>
+          <rect x="152" y="113" width="8" height="14" rx="2" fill="#9a3412"/>
+          <rect x="152" y="153" width="8" height="14" rx="2" fill="#9a3412"/>
+          <text x="216" y="85"  text-anchor="middle" fill="white" font-size="11" font-weight="700">IO-Link</text>
+          <text x="216" y="100" text-anchor="middle" fill="white" font-size="11" font-weight="700">Master</text>
+          <text x="216" y="114" text-anchor="middle" fill="#fed7aa" font-size="8">IFM AL1350</text>
+          <text x="216" y="126" text-anchor="middle" fill="#fed7aa" font-size="7">192.168.7.4</text>
+          <line x1="262" y1="100" x2="320" y2="100" stroke="#64748b" stroke-width="2.5" stroke-dasharray="6,3"/>
+          <polygon points="320,96 320,104 328,100" fill="#64748b"/>
+          <text x="287" y="89" text-anchor="middle" fill="#94a3b8" font-size="8" font-weight="600">MQTT</text>
+          <text x="287" y="99" text-anchor="middle" fill="#94a3b8" font-size="7">500 ms push</text>
+          <rect x="328" y="55" width="100" height="90" rx="8" fill="#15803d"/>
+          <text x="378" y="88"  text-anchor="middle" fill="white" font-size="10" font-weight="700">Raspberry Pi</text>
+          <text x="378" y="102" text-anchor="middle" fill="#bbf7d0" font-size="7">FastAPI · Mosquitto</text>
+          <text x="378" y="114" text-anchor="middle" fill="#bbf7d0" font-size="7">192.168.7.2 / DHCP</text>
+          <text x="378" y="126" text-anchor="middle" fill="#bbf7d0" font-size="7">Edge Gateway</text>
+          <line x1="428" y1="100" x2="462" y2="100" stroke="#64748b" stroke-width="2.5" stroke-dasharray="6,3"/>
+          <polygon points="462,96 462,104 470,100" fill="#64748b"/>
+          <text x="445" y="89" text-anchor="middle" fill="#94a3b8" font-size="8" font-weight="600">WebSocket</text>
+          <text x="445" y="99" text-anchor="middle" fill="#94a3b8" font-size="7">/ws JSON</text>
+          <rect x="470" y="50"  width="96" height="72" rx="5" fill="#334155"/>
+          <rect x="476" y="56"  width="84" height="54" rx="3" fill="#0f172a"/>
+          <rect x="482" y="63" width="32" height="4"  rx="1" fill="#3b82f6" opacity="0.8"/>
+          <rect x="482" y="71" width="56" height="3"  rx="1" fill="#475569"/>
+          <rect x="482" y="78" width="44" height="3"  rx="1" fill="#475569"/>
+          <rect x="482" y="85" width="50" height="3"  rx="1" fill="#10b981" opacity="0.7"/>
+          <rect x="482" y="92" width="38" height="3"  rx="1" fill="#475569"/>
+          <rect x="509" y="122" width="18" height="5" rx="2" fill="#334155"/>
+          <rect x="501" y="127" width="34" height="5" rx="2" fill="#1e293b"/>
+          <text x="518" y="145" text-anchor="middle" fill="#94a3b8" font-size="9">HMI Screen</text>
+          <text x="285" y="198" text-anchor="middle" fill="#64748b" font-size="8">Sensors → IO-Link → MQTT → Edge Gateway → WebSocket → Browser</text>
+        </svg>
       </div>
 
       <!-- Network topology -->
-      <div class="rounded-xl border-2 border-base-300 bg-base-200 p-4 mt-4 font-mono text-xs leading-relaxed overflow-x-auto">
+      <div class="rounded-xl border-2 border-base-300 bg-base-200 p-4 mt-3 font-mono text-xs leading-relaxed overflow-x-auto">
         <p class="text-base-content/50 mb-1">// Network topology</p>
         <p><span class="text-warning font-bold">AL1350</span> <span class="text-base-content/50">192.168.7.4</span></p>
         <p class="ml-2">│  IO-Link subnet: 192.168.7.x</p>
@@ -83,19 +177,19 @@ const WORKSHEETS = [
       </div>
 
       <!-- Live system status -->
-      <div class="rounded-xl border-2 border-secondary/30 bg-secondary/5 p-4 mt-4 space-y-3" id="cp2-sys-panel">
+      <div class="rounded-xl border-2 border-success/30 bg-success/5 p-4 mt-4 space-y-3" id="cp2-sys-panel">
         <div class="flex items-center justify-between flex-wrap gap-2">
-          <span class="font-bold text-base-content text-sm">Live System Status</span>
+          <span class="font-bold text-base-content text-sm">Live — System Status Right Now</span>
           <span id="cp2-sys-badge" class="badge badge-xs badge-ghost font-mono">OFFLINE</span>
         </div>
         <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
           <div class="rounded-lg bg-base-200 border border-base-300 p-3 text-center space-y-1">
-            <p class="text-xs text-base-content/50">AL1350</p>
-            <div id="cp2-master-dot" class="w-5 h-5 rounded-full bg-base-300 mx-auto transition-all"></div>
+            <p class="text-xs text-base-content/50">AL1350 Master</p>
+            <div id="cp2-master-dot" class="w-6 h-6 rounded-full bg-base-300 mx-auto transition-all"></div>
             <p id="cp2-master-label" class="text-xs font-bold text-base-content">—</p>
           </div>
           <div class="rounded-lg bg-base-200 border border-base-300 p-3 text-center space-y-1">
-            <p class="text-xs text-base-content/50">Active IO-Link ports</p>
+            <p class="text-xs text-base-content/50">IO-Link ports active</p>
             <p id="cp2-port-count" class="text-3xl font-black font-mono text-secondary leading-none">—</p>
             <p class="text-xs text-base-content/50">of 8</p>
           </div>
@@ -111,7 +205,7 @@ const WORKSHEETS = [
         </div>
       </div>
 
-      <p class="mt-4 font-medium text-base-content"><strong>Q1.</strong> From the hardware table, what is the IP address of the AL1350 IO-Link Master?</p>
+      <p class="mt-4 font-medium text-base-content"><strong>Q1.</strong> From the checklist above, what is the IP address of the AL1350 IO-Link Master?</p>
       <div class="space-y-2 mt-1">
         <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="cp2-ws0-q1" value="a" class="radio radio-sm radio-secondary"> 192.168.7.2</label>
         <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="cp2-ws0-q1" value="b" class="radio radio-sm radio-secondary"> 192.168.1.1</label>
@@ -139,9 +233,33 @@ const WORKSHEETS = [
         <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="cp2-ws0-q4" value="c" class="radio radio-sm radio-secondary"> 4 — Ports 1 through 4 each have a sensor</label>
       </div>
 
+      <!-- Verification challenge -->
+      <div class="rounded-xl border-2 border-warning/50 bg-warning/5 p-4 mt-4 space-y-3">
+        <p class="font-bold text-base-content text-base">🎯 Verification — confirm the stack is healthy</p>
+        <p class="text-sm text-base-content/80">Open <a href="#" data-page="admin" class="link link-warning">Connection Diagnostics</a> and <a href="#" data-page="edge-device" class="link link-warning">Edge Device</a>. Tick each item when confirmed.</p>
+        <div class="space-y-2 text-sm" id="cp2-verify-checklist">
+          <label class="cp2-kit-item flex items-center gap-3 cursor-pointer rounded-xl border-2 border-transparent px-3 py-2 transition-all duration-200">
+            <input type="checkbox" class="checkbox checkbox-sm checkbox-warning flex-shrink-0">
+            <span class="cp2-kit-text">The circuit breaker on Connection Diagnostics is <strong>closed</strong> (healthy)</span>
+          </label>
+          <label class="cp2-kit-item flex items-center gap-3 cursor-pointer rounded-xl border-2 border-transparent px-3 py-2 transition-all duration-200">
+            <input type="checkbox" class="checkbox checkbox-sm checkbox-warning flex-shrink-0">
+            <span class="cp2-kit-text">The latency graph on Connection Diagnostics is showing live readings (not flat-lined)</span>
+          </label>
+          <label class="cp2-kit-item flex items-center gap-3 cursor-pointer rounded-xl border-2 border-transparent px-3 py-2 transition-all duration-200">
+            <input type="checkbox" class="checkbox checkbox-sm checkbox-warning flex-shrink-0">
+            <span class="cp2-kit-text">The backend service is showing as <strong>active</strong> on the Edge Device page</span>
+          </label>
+          <label class="cp2-kit-item flex items-center gap-3 cursor-pointer rounded-xl border-2 border-transparent px-3 py-2 transition-all duration-200">
+            <input type="checkbox" class="checkbox checkbox-sm checkbox-warning flex-shrink-0">
+            <span class="cp2-kit-text">The WS message counter above is incrementing at approximately 2 messages per second</span>
+          </label>
+        </div>
+      </div>
+
       <div class="divider my-2"></div>
       <button type="button" class="btn btn-ghost btn-sm ws-suggested-btn" data-target="cp2-ws0-suggested">Show answers</button>
-      <div id="cp2-ws0-suggested" class="hidden p-4 rounded-lg border border-base-300 bg-base-300/50 text-base-content/80 text-sm leading-relaxed ws-suggested">Q1: c — 192.168.7.4. Q2: c — 500 ms interval = 2 messages per second. Q3: c — bridges the private 192.168.7.x subnet to the building LAN so browsers do not need to be on the IO-Link subnet. Q4: c — Ports 1–4 are used (photoelectric, capacitive, temperature, light stack).</div>
+      <div id="cp2-ws0-suggested" class="hidden p-4 rounded-lg border border-base-300 bg-base-300/50 text-base-content/80 text-sm leading-relaxed ws-suggested">Q1: c — 192.168.7.4 (listed on the IO-Link Master checklist item). Q2: c — 500 ms interval = 2 messages per second. Q3: c — bridges the private 192.168.7.x subnet to the building LAN so browsers do not need to be on the IO-Link subnet. Q4: c — Ports 1–4 are used (photoelectric, capacitive, temperature, light stack).</div>
     `
   },
   {
@@ -653,6 +771,7 @@ function initWorksheetInteractivity(container) {
       if (el) el.classList.toggle('hidden');
     });
   });
+  if (container.querySelector('#cp2-kit-checklist') || container.querySelector('#cp2-verify-checklist')) initCp2KitChecklist(container);
   if (container.querySelector('#cp2-sys-panel')) initLiveCp2Intro(container);
 
   const ws2Correct = { 'ws2-1': 'events', 'ws2-2': 'params', 'ws2-3': 'events', 'ws2-4': 'events' };
