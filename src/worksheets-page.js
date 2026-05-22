@@ -301,38 +301,37 @@ const WORKSHEETS = [
         </div>
       </div>
 
-      <p class="mt-4 font-medium text-base-content"><strong>Q1.</strong> Look at the live panel above. How many sensors are currently showing as active (coloured dots, not grey)?</p>
+      <p class="mt-4 font-medium text-base-content"><strong>Q1.</strong> What colour is the IO-Link Master, and what is it sometimes called?</p>
       <div class="space-y-2 mt-1">
-        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="ws0-q1" value="a" class="radio radio-sm radio-primary"> 1</label>
-        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="ws0-q1" value="b" class="radio radio-sm radio-primary"> 2</label>
-        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="ws0-q1" value="c" class="radio radio-sm radio-primary"> 3</label>
-        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="ws0-q1" value="d" class="radio radio-sm radio-primary"> 4</label>
+        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="ws0-q1" value="a" class="radio radio-sm radio-primary"> Green — it is called the gateway</label>
+        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="ws0-q1" value="b" class="radio radio-sm radio-primary"> Orange — it is called the hub</label>
+        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="ws0-q1" value="c" class="radio radio-sm radio-primary"> Blue — it is called the controller</label>
       </div>
 
-      <p class="mt-3 font-medium text-base-content"><strong>Q2.</strong> Put your hand in front of the photoelectric sensor. What happens to Port 1 in the panel?</p>
+      <p class="mt-3 font-medium text-base-content"><strong>Q2.</strong> Which sensor detects objects by firing a beam of light?</p>
       <div class="space-y-2 mt-1">
-        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="ws0-q2" value="a" class="radio radio-sm radio-primary"> Nothing changes</label>
-        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="ws0-q2" value="b" class="radio radio-sm radio-primary"> The dot lights up and shows "Detected ●"</label>
-        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="ws0-q2" value="c" class="radio radio-sm radio-primary"> The temperature reading goes up</label>
+        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="ws0-q2" value="a" class="radio radio-sm radio-primary"> The capacitive sensor on Port 2</label>
+        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="ws0-q2" value="b" class="radio radio-sm radio-primary"> The temperature sensor on Port 3</label>
+        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="ws0-q2" value="c" class="radio radio-sm radio-primary"> The photoelectric sensor on Port 1</label>
       </div>
 
-      <p class="mt-3 font-medium text-base-content"><strong>Q3.</strong> Look at the temperature reading in the live panel. What range would you expect for a normal room?</p>
+      <p class="mt-3 font-medium text-base-content"><strong>Q3.</strong> What can the capacitive sensor detect that the photoelectric sensor cannot?</p>
       <div class="space-y-2 mt-1">
-        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="ws0-q3" value="a" class="radio radio-sm radio-primary"> Below 0 °C</label>
-        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="ws0-q3" value="b" class="radio radio-sm radio-primary"> Between 15 °C and 30 °C</label>
-        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="ws0-q3" value="c" class="radio radio-sm radio-primary"> Above 100 °C</label>
+        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="ws0-q3" value="a" class="radio radio-sm radio-primary"> Objects moving faster than 1 m/s</label>
+        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="ws0-q3" value="b" class="radio radio-sm radio-primary"> Materials like liquid or powder — even through a container wall</label>
+        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="ws0-q3" value="c" class="radio radio-sm radio-primary"> The exact temperature of an object</label>
       </div>
 
-      <p class="mt-3 font-medium text-base-content"><strong>Q4.</strong> What is the main difference between an IO-Link smart sensor and a normal on/off sensor?</p>
+      <p class="mt-3 font-medium text-base-content"><strong>Q4.</strong> What is the Raspberry Pi's job in this system?</p>
       <div class="space-y-2 mt-1">
-        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="ws0-q4" value="a" class="radio radio-sm radio-primary"> Smart sensors use a different colour cable</label>
-        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="ws0-q4" value="b" class="radio radio-sm radio-primary"> Smart sensors send back data like temperature, signal quality, and fault codes — not just on or off</label>
-        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="ws0-q4" value="c" class="radio radio-sm radio-primary"> Smart sensors only work in clean rooms</label>
+        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="ws0-q4" value="a" class="radio radio-sm radio-primary"> It powers the IO-Link Master via USB</label>
+        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="ws0-q4" value="b" class="radio radio-sm radio-primary"> It collects the sensor data, runs the comms, and serves up this dashboard</label>
+        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="ws0-q4" value="c" class="radio radio-sm radio-primary"> It directly controls the light stack colours</label>
       </div>
 
       <div class="divider my-2"></div>
       <button type="button" class="btn btn-ghost btn-sm ws-suggested-btn" data-target="ws0-suggested">Show answers</button>
-      <div id="ws0-suggested" class="hidden p-4 rounded-lg border border-base-300 bg-base-300/50 text-base-content/80 text-sm leading-relaxed ws-suggested">Q1: depends on what's connected — all 4 if everything is plugged in. Q2: b — the dot lights up and shows Detected. Q3: b — 15–30 °C is normal room temperature. Q4: b — smart sensors send back rich data, not just a switch signal.</div>
+      <div id="ws0-suggested" class="hidden p-4 rounded-lg border border-base-300 bg-base-300/50 text-base-content/80 text-sm leading-relaxed ws-suggested">Q1: b — orange, the hub. Q2: c — the photoelectric sensor on Port 1. Q3: b — materials like liquid or powder through a container wall. Q4: b — it collects sensor data, runs the comms, and serves the dashboard.</div>
     `
   },
   {
