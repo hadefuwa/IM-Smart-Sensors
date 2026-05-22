@@ -403,6 +403,79 @@ const WORKSHEETS = [
         <p class="text-sm text-base-content/80">IO-Link uses the standard 3-wire sensor cable. The master (AL1350) and the sensor automatically agree to talk IO-Link — you do not need a special cable or extra wiring. Same connector you already know, all the extra data.</p>
       </div>
 
+      <!-- WS2 SVG diagram -->
+      <div class="rounded-xl border border-base-300 bg-base-200 p-3 mt-3">
+        <p class="text-xs font-semibold text-base-content/60 uppercase tracking-wide mb-2">How it works</p>
+        <svg viewBox="0 0 570 185" xmlns="http://www.w3.org/2000/svg" class="w-full" style="font-family:system-ui,sans-serif">
+          <!-- Left: Normal Sensor -->
+          <rect x="2" y="20" width="120" height="40" rx="5" fill="#6b7280"/>
+          <text x="62" y="37" text-anchor="middle" fill="white" font-size="11" font-weight="600">Normal Sensor</text>
+          <text x="62" y="52" text-anchor="middle" fill="#d1d5db" font-size="8">standard output</text>
+          <!-- 3-wire line -->
+          <line x1="122" y1="40" x2="175" y2="40" stroke="#94a3b8" stroke-width="2"/>
+          <text x="148" y="34" text-anchor="middle" fill="#94a3b8" font-size="8">3-wire</text>
+          <!-- Single output box -->
+          <rect x="175" y="20" width="80" height="40" rx="5" fill="#374151"/>
+          <text x="215" y="37" text-anchor="middle" fill="white" font-size="10" font-weight="600">ON / OFF</text>
+          <text x="215" y="51" text-anchor="middle" fill="#9ca3af" font-size="8">one signal only</text>
+
+          <!-- Right: IO-Link Sensor -->
+          <rect x="310" y="20" width="120" height="40" rx="5" fill="#2563eb"/>
+          <text x="370" y="37" text-anchor="middle" fill="white" font-size="11" font-weight="600">IO-Link Sensor</text>
+          <text x="370" y="52" text-anchor="middle" fill="#bfdbfe" font-size="8">smart output</text>
+          <!-- 3-wire line -->
+          <line x1="430" y1="40" x2="475" y2="40" stroke="#94a3b8" stroke-width="2"/>
+          <text x="452" y="34" text-anchor="middle" fill="#94a3b8" font-size="8">3-wire</text>
+          <!-- 4 stacked data boxes -->
+          <rect x="475" y="10" width="90" height="18" rx="3" fill="#16a34a"/>
+          <text x="520" y="23" text-anchor="middle" fill="white" font-size="9">Object: detected</text>
+          <rect x="475" y="31" width="90" height="18" rx="3" fill="#d97706"/>
+          <text x="520" y="44" text-anchor="middle" fill="white" font-size="9">Fault: none</text>
+          <rect x="475" y="52" width="90" height="18" rx="3" fill="#2563eb"/>
+          <text x="520" y="65" text-anchor="middle" fill="white" font-size="9">Model: TV7105</text>
+          <rect x="475" y="73" width="90" height="18" rx="3" fill="#7c3aed"/>
+          <text x="520" y="86" text-anchor="middle" fill="white" font-size="9">SP1: 40°C</text>
+
+          <!-- Centre label -->
+          <text x="285" y="108" text-anchor="middle" fill="#f59e0b" font-size="9" font-weight="700">Same 3-wire cable</text>
+          <line x1="200" y1="112" x2="265" y2="112" stroke="#f59e0b" stroke-width="1.5" stroke-dasharray="4,2"/>
+          <line x1="305" y1="112" x2="370" y2="112" stroke="#f59e0b" stroke-width="1.5" stroke-dasharray="4,2"/>
+
+          <!-- Bottom label -->
+          <text x="285" y="140" text-anchor="middle" fill="#64748b" font-size="8">IO-Link layers live data, fault codes, identity and settings on top of the existing signal</text>
+        </svg>
+      </div>
+
+      <!-- WS2 Live panel -->
+      <div class="rounded-xl border-2 border-success/30 bg-success/5 p-4 mt-4 space-y-3" id="ws2-smart-panel">
+        <div class="flex items-center justify-between flex-wrap gap-2">
+          <span class="font-bold text-base-content">Live — All Ports Right Now</span>
+          <span id="ws2s-badge" class="badge badge-xs badge-ghost font-mono">OFFLINE</span>
+        </div>
+        <div class="grid grid-cols-4 gap-2">
+          <div class="rounded-lg bg-base-200 border border-base-300 p-2 text-center space-y-1">
+            <p class="text-xs text-base-content/50 font-medium">P1</p>
+            <div id="ws2-ch-p1" class="w-5 h-5 rounded-full bg-base-300 mx-auto transition-all"></div>
+            <p id="ws2-ch-p1-val" class="text-xs text-base-content/70">—</p>
+          </div>
+          <div class="rounded-lg bg-base-200 border border-base-300 p-2 text-center space-y-1">
+            <p class="text-xs text-base-content/50 font-medium">P2</p>
+            <div id="ws2-ch-p2" class="w-5 h-5 rounded-full bg-base-300 mx-auto transition-all"></div>
+            <p id="ws2-ch-p2-val" class="text-xs text-base-content/70">—</p>
+          </div>
+          <div class="rounded-lg bg-base-200 border border-base-300 p-2 text-center space-y-1">
+            <p class="text-xs text-base-content/50 font-medium">P3</p>
+            <div id="ws2-ch-p3" class="w-5 h-5 rounded-full bg-base-300 mx-auto transition-all"></div>
+            <p id="ws2-ch-p3-val" class="text-xs text-base-content/70">—</p>
+          </div>
+          <div class="rounded-lg bg-base-200 border border-base-300 p-2 text-center space-y-1">
+            <p class="text-xs text-base-content/50 font-medium">P4</p>
+            <div id="ws2-ch-p4" class="w-5 h-5 rounded-full bg-base-300 mx-auto transition-all"></div>
+            <p id="ws2-ch-p4-val" class="text-xs text-base-content/70">—</p>
+          </div>
+        </div>
+      </div>
+
       <p class="mt-4 font-medium text-base-content"><strong>Q1.</strong> A sensor stops switching and you don't know why. What extra information might an IO-Link sensor show you that a normal sensor can't?</p>
       <div class="space-y-2 mt-1">
         <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="ws1-q1" value="a" class="radio radio-sm radio-primary"> Nothing — IO-Link sensors behave exactly the same as normal sensors when faulty</label>
@@ -423,6 +496,23 @@ const WORKSHEETS = [
         <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="ws1-q3" value="b" class="radio radio-sm radio-primary"> 8 ports</label>
         <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="ws1-q3" value="c" class="radio radio-sm radio-primary"> 16 ports</label>
       </div>
+
+      <div class="divider my-2"></div>
+
+      <div class="rounded-xl border-2 border-warning/50 bg-warning/5 p-4 mt-4 space-y-3" id="ws2-challenge-box">
+        <p class="font-bold text-base-content text-base">🔧 Maintenance Scenario — Pre-Shift Health Check</p>
+        <div class="rounded-lg bg-base-300/50 p-3 text-sm text-base-content/80 border border-base-300">
+          <p><strong>Job ticket:</strong> You are starting your shift. Before anything else, verify that all 4 IO-Link sensors are online and communicating. A trainee says "everything is fine" — but has not checked the dashboard.</p>
+          <p class="mt-1 text-xs text-base-content/60">Use the live panel above. Each dot should be lit when the sensor is in IO-Link mode. The challenge passes when all 4 ports are confirmed active.</p>
+        </div>
+        <div id="ws2-ch-result" class="hidden rounded-lg p-3 text-center font-bold text-sm"></div>
+        <div class="flex justify-center">
+          <button type="button" id="ws2-ch-reset" class="btn btn-warning btn-sm gap-2">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+            Reset Check
+          </button>
+        </div>
+      </div>
     `
   },
   {
@@ -440,6 +530,41 @@ const WORKSHEETS = [
       <div class="rounded-lg border border-base-300 bg-base-200 p-3 mt-3 text-sm">
         <p class="font-bold text-base-content mb-1">📏 What does M18 mean?</p>
         <p class="text-base-content/80">The <strong>M number</strong> is the diameter of the sensor body in millimetres — like a bolt size. <strong>M18</strong> = 18 mm across. You'll see M8, M12, M18, and M30 in industry. Bigger number = bigger sensor. Both the photoelectric and capacitive on this kit are M18 — same diameter, but different shapes.</p>
+      </div>
+
+      <!-- WS3 SVG diagram -->
+      <div class="rounded-xl border border-base-300 bg-base-200 p-3 mt-3">
+        <p class="text-xs font-semibold text-base-content/60 uppercase tracking-wide mb-2">How it works</p>
+        <svg viewBox="0 0 570 175" xmlns="http://www.w3.org/2000/svg" class="w-full" style="font-family:system-ui,sans-serif">
+          <!-- Sensor body -->
+          <rect x="10" y="55" width="90" height="65" rx="8" fill="#1e3a5f"/>
+          <circle cx="100" cy="87" r="8" fill="#ef4444" opacity="0.9"/>
+          <text x="55" y="82" text-anchor="middle" fill="white" font-size="10" font-weight="600">Photoelectric</text>
+          <text x="55" y="96" text-anchor="middle" fill="#93c5fd" font-size="8">M18 sensor</text>
+          <text x="55" y="132" text-anchor="middle" fill="#94a3b8" font-size="8">Emitter / Receiver</text>
+
+          <!-- Light beam (dashed red line) -->
+          <line x1="108" y1="87" x2="330" y2="87" stroke="#ef4444" stroke-width="2" stroke-dasharray="8,4"/>
+          <text x="220" y="78" text-anchor="middle" fill="#ef4444" font-size="9" font-weight="600">light beam</text>
+
+          <!-- Object blocking beam -->
+          <rect x="330" y="55" width="60" height="65" rx="5" fill="#6b7280"/>
+          <text x="360" y="84" text-anchor="middle" fill="white" font-size="10" font-weight="600">Object</text>
+          <text x="360" y="98" text-anchor="middle" fill="#d1d5db" font-size="8">(blocks beam)</text>
+
+          <!-- Arrow showing beam is blocked -->
+          <line x1="295" y1="87" x2="328" y2="87" stroke="#ef4444" stroke-width="2" stroke-dasharray="8,4"/>
+          <line x1="390" y1="87" x2="430" y2="87" stroke="#94a3b8" stroke-width="1.5" stroke-dasharray="4,3" opacity="0.4"/>
+
+          <!-- Output box -->
+          <rect x="450" y="65" width="110" height="45" rx="5" fill="#16a34a"/>
+          <text x="505" y="85" text-anchor="middle" fill="white" font-size="11" font-weight="700">OUTPUT: ON</text>
+          <circle cx="480" cy="96" r="5" fill="#86efac"/>
+          <text x="505" y="102" text-anchor="middle" fill="#bbf7d0" font-size="8">beam blocked</text>
+
+          <!-- Bottom note -->
+          <text x="285" y="155" text-anchor="middle" fill="#64748b" font-size="8">Beam blocked → output switches ON. No beam → output OFF.</text>
+        </svg>
       </div>
 
       <!-- Live section -->
@@ -495,6 +620,41 @@ const WORKSHEETS = [
         <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="ws2-q3" value="b" class="radio radio-sm radio-primary"> Signal quality keeps increasing the further away you go</label>
         <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="ws2-q3" value="c" class="radio radio-sm radio-primary"> Signal quality is highest at the ideal sensing distance — too close or too far reduces it</label>
       </div>
+
+      <div class="divider my-2"></div>
+
+      <div class="rounded-xl border-2 border-warning/50 bg-warning/5 p-4 mt-4 space-y-3" id="ws3-challenge-box">
+        <p class="font-bold text-base-content text-base">🔧 Maintenance Scenario — Signal Quality Audit</p>
+        <div class="rounded-lg bg-base-300/50 p-3 text-sm text-base-content/80 border border-base-300">
+          <p><strong>Job ticket:</strong> Port 1 has been flagged for intermittent misses on the production line. Run a signal quality audit using IO-Link diagnostics to determine whether the sensor is healthy, marginal, or needs repositioning.</p>
+          <p class="mt-2 text-xs text-base-content/60 font-semibold uppercase tracking-wide">IO-Link rule:</p>
+          <div class="flex gap-2 mt-1 flex-wrap">
+            <span class="badge badge-sm bg-success/20 text-success border-success/40">&gt;80% — Healthy</span>
+            <span class="badge badge-sm bg-warning/20 text-warning border-warning/40">50–80% — Marginal</span>
+            <span class="badge badge-sm bg-error/20 text-error border-error/40">&lt;50% — Clean / Reposition</span>
+          </div>
+          <p class="mt-2 text-xs text-base-content/60">Adjust the sensor position or clean the lens until signal quality reaches <strong>&gt;80%</strong>. The audit passes when a healthy reading is confirmed.</p>
+        </div>
+        <div class="space-y-1">
+          <div class="flex items-center justify-between text-xs text-base-content/60">
+            <span class="font-semibold uppercase tracking-wide">Signal Quality</span>
+            <span id="ws3-ch-sq-pct" class="font-mono font-bold">—</span>
+          </div>
+          <div class="w-full bg-base-300 rounded-full h-5 overflow-hidden">
+            <div id="ws3-ch-sq-bar" class="h-5 rounded-full transition-all duration-300 bg-error" style="width:0%"></div>
+          </div>
+          <div class="flex justify-between text-xs text-base-content/40 px-0.5">
+            <span>0%</span><span>50%</span><span>80%</span><span>100%</span>
+          </div>
+        </div>
+        <div id="ws3-ch-result" class="hidden rounded-lg p-3 text-center font-bold text-sm"></div>
+        <div class="flex justify-center">
+          <button type="button" id="ws3-ch-reset" class="btn btn-warning btn-sm gap-2">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+            Reset Audit
+          </button>
+        </div>
+      </div>
     `
   },
   {
@@ -507,6 +667,42 @@ const WORKSHEETS = [
     prerequisites: 'Complete Worksheet 1 first',
     contentHtml: `
       <p class="text-base-content/90 leading-relaxed">A capacitive sensor creates an electric field in front of it. When material enters that field, the sensor detects the change and switches on. It doesn't need to see it — just feel it.</p>
+
+      <!-- WS4 SVG diagram -->
+      <div class="rounded-xl border border-base-300 bg-base-200 p-3 mt-3">
+        <p class="text-xs font-semibold text-base-content/60 uppercase tracking-wide mb-2">How it works</p>
+        <svg viewBox="0 0 570 185" xmlns="http://www.w3.org/2000/svg" class="w-full" style="font-family:system-ui,sans-serif">
+          <!-- Sensor body -->
+          <rect x="10" y="60" width="80" height="65" rx="8" fill="#7c3aed"/>
+          <text x="50" y="88" text-anchor="middle" fill="white" font-size="10" font-weight="600">Capacitive</text>
+          <text x="50" y="102" text-anchor="middle" fill="#ddd6fe" font-size="8">M18 sensor</text>
+
+          <!-- Electric field arcs (partial ellipses) -->
+          <ellipse cx="110" cy="92" rx="30" ry="22" fill="none" stroke="#a78bfa" stroke-width="1.5" opacity="0.9"/>
+          <ellipse cx="110" cy="92" rx="55" ry="40" fill="none" stroke="#a78bfa" stroke-width="1.5" opacity="0.7"/>
+          <ellipse cx="110" cy="92" rx="80" ry="58" fill="none" stroke="#a78bfa" stroke-width="1.5" opacity="0.5"/>
+          <ellipse cx="110" cy="92" rx="105" ry="72" fill="none" stroke="#a78bfa" stroke-width="1.5" opacity="0.3"/>
+          <ellipse cx="110" cy="92" rx="130" ry="85" fill="none" stroke="#a78bfa" stroke-width="1.5" opacity="0.2"/>
+
+          <!-- Water object -->
+          <rect x="220" y="25" width="60" height="28" rx="4" fill="#3b82f6"/>
+          <text x="250" y="43" text-anchor="middle" fill="white" font-size="9" font-weight="600">Water</text>
+          <line x1="220" y1="39" x2="150" y2="75" stroke="#a78bfa" stroke-width="1" stroke-dasharray="3,3"/>
+
+          <!-- Powder object -->
+          <rect x="235" y="78" width="60" height="28" rx="4" fill="#92400e"/>
+          <text x="265" y="96" text-anchor="middle" fill="white" font-size="9" font-weight="600">Powder</text>
+          <line x1="235" y1="92" x2="160" y2="92" stroke="#a78bfa" stroke-width="1" stroke-dasharray="3,3"/>
+
+          <!-- Hand object -->
+          <rect x="220" y="130" width="60" height="28" rx="4" fill="none" stroke="#22c55e" stroke-width="2"/>
+          <text x="250" y="148" text-anchor="middle" fill="#22c55e" font-size="9" font-weight="600">Hand</text>
+          <line x1="220" y1="144" x2="150" y2="110" stroke="#a78bfa" stroke-width="1" stroke-dasharray="3,3"/>
+
+          <!-- Bottom label -->
+          <text x="285" y="172" text-anchor="middle" fill="#64748b" font-size="8">Anything that changes the electric field triggers detection — even through a container wall</text>
+        </svg>
+      </div>
 
       <!-- Live section -->
       <div class="rounded-xl border-2 border-secondary/30 bg-secondary/5 p-4 mt-3 space-y-3" id="ws3-live-panel">
@@ -619,6 +815,44 @@ const WORKSHEETS = [
         <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="ws3-q3" value="b" class="radio radio-sm radio-secondary"> The sensor needs replacing immediately</label>
         <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="ws3-q3" value="c" class="radio radio-sm radio-secondary"> The cable is the wrong colour</label>
       </div>
+
+      <div class="divider my-2"></div>
+
+      <div class="rounded-xl border-2 border-warning/50 bg-warning/5 p-4 mt-4 space-y-3" id="ws4-challenge-box">
+        <p class="font-bold text-base-content text-base">🔧 Maintenance Scenario — Fix the False Triggers</p>
+        <div class="rounded-lg bg-base-300/50 p-3 text-sm text-base-content/80 border border-base-300">
+          <p><strong>Job ticket:</strong> A replacement capacitive sensor on Port 2 is causing false detections — the output fires even with nothing near it. Sensitivity is too high. Use IO-Link to diagnose and correct the SP1 threshold.</p>
+        </div>
+        <div class="space-y-2">
+          <div class="flex items-center gap-2">
+            <div id="ws4-ch-s1" class="w-7 h-7 rounded-full bg-base-300 border-2 border-base-300 flex items-center justify-center text-xs font-bold text-base-content/50 transition-all flex-shrink-0">1</div>
+            <span class="text-sm text-base-content/80">Read the current SP1 from the ISDU panel above — note the value</span>
+          </div>
+          <div class="flex items-center gap-2">
+            <div id="ws4-ch-s2" class="w-7 h-7 rounded-full bg-base-300 border-2 border-base-300 flex items-center justify-center text-xs font-bold text-base-content/50 transition-all flex-shrink-0">2</div>
+            <span class="text-sm text-base-content/80">Reduce SP1 by ~50% using the slider above, then click <strong>Apply to sensor</strong></span>
+          </div>
+          <div class="flex items-center gap-2">
+            <div id="ws4-ch-s3" class="w-7 h-7 rounded-full bg-base-300 border-2 border-base-300 flex items-center justify-center text-xs font-bold text-base-content/50 transition-all flex-shrink-0">3</div>
+            <span class="text-sm text-base-content/80">With nothing near the sensor, click <strong>Confirm Fix</strong> — output must be clear</span>
+          </div>
+        </div>
+        <div class="flex items-center gap-3 rounded-lg bg-base-300/40 p-2">
+          <div id="ws4-ch-dot" class="w-4 h-4 rounded-full bg-base-300 border border-base-300 transition-all flex-shrink-0"></div>
+          <span id="ws4-ch-det-label" class="text-xs font-mono text-base-content/60">waiting for live data…</span>
+        </div>
+        <div id="ws4-ch-result" class="hidden rounded-lg p-3 text-center font-bold text-sm"></div>
+        <div class="flex justify-center gap-2 flex-wrap">
+          <button type="button" id="ws4-ch-confirm" class="btn btn-success btn-sm gap-2" disabled>
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+            Confirm Fix
+          </button>
+          <button type="button" id="ws4-ch-reset" class="btn btn-warning btn-sm gap-2">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+            Reset
+          </button>
+        </div>
+      </div>
     `
   },
   {
@@ -631,6 +865,47 @@ const WORKSHEETS = [
     prerequisites: 'Complete Worksheet 1 first',
     contentHtml: `
       <p class="text-base-content/90 leading-relaxed">The IFM TV7105 sends the actual temperature reading (in °C) back through IO-Link every second — a live number you can graph and trend.</p>
+
+      <!-- WS5 SVG diagram -->
+      <div class="rounded-xl border border-base-300 bg-base-200 p-3 mt-3">
+        <p class="text-xs font-semibold text-base-content/60 uppercase tracking-wide mb-2">How it works</p>
+        <svg viewBox="0 0 570 185" xmlns="http://www.w3.org/2000/svg" class="w-full" style="font-family:system-ui,sans-serif">
+          <!-- Thermometer body -->
+          <rect x="420" y="20" width="32" height="140" rx="12" fill="#1e293b" stroke="#475569" stroke-width="1.5"/>
+          <!-- Temperature fill (gradient orange) -->
+          <rect x="424" y="70" width="24" height="86" rx="8" fill="#f97316"/>
+          <!-- Bulb -->
+          <circle cx="436" cy="155" r="14" fill="#ef4444"/>
+
+          <!-- SP1 line (amber dashed) -->
+          <line x1="80" y1="110" x2="420" y2="110" stroke="#f59e0b" stroke-width="1.5" stroke-dasharray="6,3"/>
+          <text x="85" y="106" fill="#f59e0b" font-size="9" font-weight="600">SP1 — first alarm</text>
+
+          <!-- SP2 line (red dashed) -->
+          <line x1="80" y1="68" x2="420" y2="68" stroke="#ef4444" stroke-width="1.5" stroke-dasharray="6,3"/>
+          <text x="85" y="64" fill="#ef4444" font-size="9" font-weight="600">SP2 — second alarm</text>
+
+          <!-- Current temp pointer -->
+          <polygon points="400,130 412,124 412,136" fill="white"/>
+          <text x="320" y="134" fill="white" font-size="11" font-weight="700" text-anchor="end">23.4 °C</text>
+
+          <!-- Colour zones -->
+          <!-- Green zone (below SP1) -->
+          <rect x="30" y="110" width="45" height="50" rx="3" fill="#16a34a" opacity="0.7"/>
+          <text x="52" y="140" text-anchor="middle" fill="white" font-size="8" font-weight="600">Normal</text>
+
+          <!-- Amber zone (SP1 to SP2) -->
+          <rect x="30" y="68" width="45" height="42" rx="3" fill="#d97706" opacity="0.7"/>
+          <text x="52" y="93" text-anchor="middle" fill="white" font-size="8" font-weight="600">Warning</text>
+
+          <!-- Red zone (above SP2) -->
+          <rect x="30" y="20" width="45" height="48" rx="3" fill="#dc2626" opacity="0.7"/>
+          <text x="52" y="48" text-anchor="middle" fill="white" font-size="8" font-weight="600">Danger</text>
+
+          <!-- Bottom label -->
+          <text x="285" y="175" text-anchor="middle" fill="#64748b" font-size="8">IO-Link sends the actual temperature every second — not just an ON/OFF alarm</text>
+        </svg>
+      </div>
 
       <!-- Live section -->
       <div class="rounded-xl border-2 border-warning/40 bg-warning/5 p-4 mt-3 space-y-3" id="ws4-live-panel">
@@ -726,6 +1001,32 @@ const WORKSHEETS = [
         <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="ws4-q3" value="b" class="radio radio-sm radio-warning"> Broken or disconnected sensor — −40 °C is a common default error value for temperature sensors</label>
         <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="ws4-q3" value="c" class="radio radio-sm radio-warning"> The setpoint has been changed</label>
       </div>
+
+      <div class="divider my-2"></div>
+
+      <div class="rounded-xl border-2 border-warning/50 bg-warning/5 p-4 mt-4 space-y-3" id="ws5-challenge-box">
+        <p class="font-bold text-base-content text-base">🎯 Challenge</p>
+        <p class="text-sm text-base-content/80">Set the SP1 slider to just 1–2°C above the current temperature, write it to the sensor, then hold the sensor in your palms until the SP1 alarm output activates.</p>
+        <div class="grid grid-cols-2 gap-3">
+          <div class="rounded-lg bg-base-200 border border-base-300 p-3 text-center space-y-1">
+            <p class="text-xs text-base-content/50 font-medium uppercase tracking-wide">Current Temp</p>
+            <p id="ws5-ch-temp" class="text-2xl font-black font-mono text-warning">—</p>
+            <p class="text-xs text-base-content/50">°C</p>
+          </div>
+          <div class="rounded-lg bg-base-200 border border-base-300 p-3 text-center space-y-1">
+            <p class="text-xs text-base-content/50 font-medium uppercase tracking-wide">SP1 Output</p>
+            <div id="ws5-ch-out-dot" class="w-8 h-8 rounded-full bg-base-300 mx-auto transition-all duration-150 shadow-md"></div>
+            <p id="ws5-ch-out-label" class="text-xs font-bold text-base-content/60">inactive</p>
+          </div>
+        </div>
+        <div id="ws5-ch-result" class="hidden rounded-lg p-3 text-center font-bold text-sm"></div>
+        <div class="flex justify-center">
+          <button type="button" id="ws5-ch-reset" class="btn btn-warning btn-sm gap-2">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+            Reset Challenge
+          </button>
+        </div>
+      </div>
     `
   },
   {
@@ -738,6 +1039,43 @@ const WORKSHEETS = [
     prerequisites: 'Complete Worksheet 1 first',
     contentHtml: `
       <p class="text-base-content/90 leading-relaxed">The IFM CL50 is a multi-colour status light. Each colour segment can be off, on solid, or flashing. IO-Link tells you exactly which colour is showing and how.</p>
+
+      <!-- WS6 SVG diagram -->
+      <div class="rounded-xl border border-base-300 bg-base-200 p-3 mt-3">
+        <p class="text-xs font-semibold text-base-content/60 uppercase tracking-wide mb-2">How it works</p>
+        <svg viewBox="0 0 570 195" xmlns="http://www.w3.org/2000/svg" class="w-full" style="font-family:system-ui,sans-serif">
+          <!-- CL50 tower -->
+          <rect x="230" y="15" width="70" height="155" rx="8" fill="#1e293b" stroke="#334155" stroke-width="1.5"/>
+          <!-- Red segment (top) -->
+          <rect x="234" y="19" width="62" height="45" rx="5" fill="#dc2626"/>
+          <text x="265" y="38" text-anchor="middle" fill="white" font-size="8" font-weight="600">Red</text>
+          <text x="265" y="50" text-anchor="middle" fill="#fca5a5" font-size="7">Fault / Stopped</text>
+          <!-- Amber segment (middle) -->
+          <rect x="234" y="67" width="62" height="45" rx="5" fill="#f59e0b"/>
+          <text x="265" y="86" text-anchor="middle" fill="white" font-size="8" font-weight="600">Amber</text>
+          <text x="265" y="98" text-anchor="middle" fill="#fde68a" font-size="7">Warning / Attention</text>
+          <!-- Green segment (bottom) -->
+          <rect x="234" y="115" width="62" height="45" rx="5" fill="#16a34a"/>
+          <text x="265" y="134" text-anchor="middle" fill="white" font-size="8" font-weight="600">Green</text>
+          <text x="265" y="146" text-anchor="middle" fill="#bbf7d0" font-size="7">Running OK</text>
+
+          <!-- IO-Link master (right) -->
+          <rect x="390" y="70" width="80" height="50" rx="6" fill="#ea580c"/>
+          <text x="430" y="91" text-anchor="middle" fill="white" font-size="9" font-weight="700">IO-Link</text>
+          <text x="430" y="104" text-anchor="middle" fill="#fed7aa" font-size="8">Master</text>
+
+          <!-- Arrow from tower to master -->
+          <line x1="300" y1="92" x2="388" y2="92" stroke="#94a3b8" stroke-width="2"/>
+          <polygon points="388,88 388,96 396,92" fill="#94a3b8"/>
+          <text x="344" y="85" text-anchor="middle" fill="#94a3b8" font-size="8">IO-Link</text>
+
+          <!-- IO-Link data label -->
+          <text x="430" y="138" text-anchor="middle" fill="#64748b" font-size="8">colour + flash/solid</text>
+
+          <!-- Bottom label -->
+          <text x="285" y="183" text-anchor="middle" fill="#64748b" font-size="8">IO-Link tells you exactly which colour is on, whether it is flashing, and the raw hex value</text>
+        </svg>
+      </div>
 
       <!-- Live section -->
       <div class="rounded-xl border-2 border-accent/30 bg-accent/5 p-4 mt-3 space-y-3" id="ws5-live-panel">
@@ -804,6 +1142,30 @@ const WORKSHEETS = [
         <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="ws5-q3" value="b" class="radio radio-sm radio-accent"> The exact state can be logged — knowing it flashed amber three times before going red is a clue you would miss with a basic alarm</label>
         <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="ws5-q3" value="c" class="radio radio-sm radio-accent"> It looks nicer on the dashboard</label>
       </div>
+
+      <div class="divider my-2"></div>
+
+      <div class="rounded-xl border-2 border-warning/50 bg-warning/5 p-4 mt-4 space-y-3" id="ws6-challenge-box">
+        <p class="font-bold text-base-content text-base">🎯 Challenge</p>
+        <p class="text-sm text-base-content/80">WITHOUT looking at the physical light stack — use only the dashboard data above to predict what colour it is currently showing. Make your guess, then turn around and check.</p>
+        <div class="grid grid-cols-4 gap-2">
+          <button type="button" class="ws6-colour-btn btn btn-sm" data-colour="Green" style="background:#16a34a;color:white;border-color:#16a34a">Green</button>
+          <button type="button" class="ws6-colour-btn btn btn-sm" data-colour="Amber" style="background:#f59e0b;color:white;border-color:#f59e0b">Amber</button>
+          <button type="button" class="ws6-colour-btn btn btn-sm" data-colour="Red" style="background:#dc2626;color:white;border-color:#dc2626">Red</button>
+          <button type="button" class="ws6-colour-btn btn btn-sm" data-colour="Blue" style="background:#2563eb;color:white;border-color:#2563eb">Blue</button>
+        </div>
+        <p id="ws6-ch-selection" class="text-xs text-base-content/60 text-center">No guess selected</p>
+        <div class="flex justify-center">
+          <button type="button" id="ws6-ch-submit" class="btn btn-primary btn-sm">Submit Guess</button>
+        </div>
+        <div id="ws6-ch-result" class="hidden rounded-lg p-3 text-center font-bold text-sm"></div>
+        <div class="flex justify-center">
+          <button type="button" id="ws6-ch-reset" class="btn btn-warning btn-sm gap-2">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+            Reset Challenge
+          </button>
+        </div>
+      </div>
     `
   },
   {
@@ -816,6 +1178,58 @@ const WORKSHEETS = [
     prerequisites: 'Complete Worksheets 1–5',
     contentHtml: `
       <p class="text-base-content/90 leading-relaxed text-base">Read each scenario, then pick the best action. These are real faults you will come across on the job.</p>
+
+      <!-- WS7 SVG diagram -->
+      <div class="rounded-xl border border-base-300 bg-base-200 p-3 mt-3">
+        <p class="text-xs font-semibold text-base-content/60 uppercase tracking-wide mb-2">How it works</p>
+        <svg viewBox="0 0 570 195" xmlns="http://www.w3.org/2000/svg" class="w-full" style="font-family:system-ui,sans-serif">
+          <!-- Box 1: Fault detected -->
+          <rect x="5" y="55" width="98" height="55" rx="5" fill="#dc2626"/>
+          <text x="54" y="75" text-anchor="middle" fill="white" font-size="8" font-weight="600">Fault detected</text>
+          <text x="54" y="88" text-anchor="middle" fill="#fca5a5" font-size="7">port offline or</text>
+          <text x="54" y="100" text-anchor="middle" fill="#fca5a5" font-size="7">wrong value</text>
+          <!-- Arrow 1 -->
+          <line x1="103" y1="82" x2="116" y2="82" stroke="#64748b" stroke-width="2"/>
+          <polygon points="116,78 116,86 124,82" fill="#64748b"/>
+
+          <!-- Box 2: Check dashboard -->
+          <rect x="124" y="55" width="98" height="55" rx="5" fill="#d97706"/>
+          <text x="173" y="75" text-anchor="middle" fill="white" font-size="8" font-weight="600">Check Dashboard</text>
+          <text x="173" y="88" text-anchor="middle" fill="#fde68a" font-size="7">read the</text>
+          <text x="173" y="100" text-anchor="middle" fill="#fde68a" font-size="7">fault code</text>
+          <!-- Arrow 2 -->
+          <line x1="222" y1="82" x2="235" y2="82" stroke="#64748b" stroke-width="2"/>
+          <polygon points="235,78 235,86 243,82" fill="#64748b"/>
+
+          <!-- Box 3: Identify cause -->
+          <rect x="243" y="55" width="98" height="55" rx="5" fill="#2563eb"/>
+          <text x="292" y="75" text-anchor="middle" fill="white" font-size="8" font-weight="600">Identify cause</text>
+          <text x="292" y="88" text-anchor="middle" fill="#bfdbfe" font-size="7">lens / sensitivity</text>
+          <text x="292" y="100" text-anchor="middle" fill="#bfdbfe" font-size="7">cable / probe</text>
+          <!-- Arrow 3 -->
+          <line x1="341" y1="82" x2="354" y2="82" stroke="#64748b" stroke-width="2"/>
+          <polygon points="354,78 354,86 362,82" fill="#64748b"/>
+
+          <!-- Box 4: Fix the issue -->
+          <rect x="362" y="55" width="98" height="55" rx="5" fill="#7c3aed"/>
+          <text x="411" y="75" text-anchor="middle" fill="white" font-size="8" font-weight="600">Fix the issue</text>
+          <text x="411" y="88" text-anchor="middle" fill="#ddd6fe" font-size="7">on the bench</text>
+          <text x="411" y="100" text-anchor="middle" fill="#ddd6fe" font-size="7">or in place</text>
+          <!-- Arrow 4 -->
+          <line x1="460" y1="82" x2="473" y2="82" stroke="#64748b" stroke-width="2"/>
+          <polygon points="473,78 473,86 481,82" fill="#64748b"/>
+
+          <!-- Box 5: Confirm -->
+          <rect x="481" y="55" width="84" height="55" rx="5" fill="#16a34a"/>
+          <text x="523" y="75" text-anchor="middle" fill="white" font-size="8" font-weight="600">Confirm</text>
+          <text x="523" y="88" text-anchor="middle" fill="#bbf7d0" font-size="7">port returns to</text>
+          <text x="523" y="100" text-anchor="middle" fill="#bbf7d0" font-size="7">IO-Link mode</text>
+
+          <!-- Bottom label -->
+          <text x="285" y="178" text-anchor="middle" fill="#64748b" font-size="8">IO-Link gives you the fault code — you don't have to guess</text>
+        </svg>
+      </div>
+
       <div class="space-y-4 mt-3">
 
         <div class="rounded-xl border-2 border-primary/30 bg-primary/5 p-4 space-y-3">
@@ -866,6 +1280,43 @@ const WORKSHEETS = [
       <div class="alert bg-primary/10 border border-primary/30 rounded-lg text-base-content mt-4">
         <strong>Try it live:</strong> Go to the <a href="#" data-page="io-link-master" class="link link-primary">IO-Link Master</a> page. Look at Active Port Details for each connected sensor — what information can you see?
       </div>
+
+      <div class="divider my-2"></div>
+
+      <div class="rounded-xl border-2 border-warning/50 bg-warning/5 p-4 mt-4 space-y-3" id="ws7-challenge-box">
+        <p class="font-bold text-base-content text-base">🎯 Challenge</p>
+        <p class="text-sm text-base-content/80">Disconnect any one sensor cable from the IO-Link Master. Watch the port go offline in the panel below. Then reconnect it. The challenge passes when the port returns to IO-Link mode.</p>
+        <div class="grid grid-cols-4 gap-2">
+          <div class="rounded-lg bg-base-200 border border-base-300 p-2 text-center space-y-1">
+            <p class="text-xs text-base-content/50 font-medium">P1</p>
+            <div id="ws7-ch-p1" class="w-5 h-5 rounded-full bg-base-300 mx-auto transition-all"></div>
+            <p id="ws7-ch-p1-val" class="text-xs text-base-content/70">—</p>
+          </div>
+          <div class="rounded-lg bg-base-200 border border-base-300 p-2 text-center space-y-1">
+            <p class="text-xs text-base-content/50 font-medium">P2</p>
+            <div id="ws7-ch-p2" class="w-5 h-5 rounded-full bg-base-300 mx-auto transition-all"></div>
+            <p id="ws7-ch-p2-val" class="text-xs text-base-content/70">—</p>
+          </div>
+          <div class="rounded-lg bg-base-200 border border-base-300 p-2 text-center space-y-1">
+            <p class="text-xs text-base-content/50 font-medium">P3</p>
+            <div id="ws7-ch-p3" class="w-5 h-5 rounded-full bg-base-300 mx-auto transition-all"></div>
+            <p id="ws7-ch-p3-val" class="text-xs text-base-content/70">—</p>
+          </div>
+          <div class="rounded-lg bg-base-200 border border-base-300 p-2 text-center space-y-1">
+            <p class="text-xs text-base-content/50 font-medium">P4</p>
+            <div id="ws7-ch-p4" class="w-5 h-5 rounded-full bg-base-300 mx-auto transition-all"></div>
+            <p id="ws7-ch-p4-val" class="text-xs text-base-content/70">—</p>
+          </div>
+        </div>
+        <p id="ws7-ch-status-msg" class="text-xs text-base-content/60 text-center">Waiting — disconnect a sensor cable to begin</p>
+        <div id="ws7-ch-result" class="hidden rounded-lg p-3 text-center font-bold text-sm"></div>
+        <div class="flex justify-center">
+          <button type="button" id="ws7-ch-reset" class="btn btn-warning btn-sm gap-2">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+            Reset Challenge
+          </button>
+        </div>
+      </div>
     `
   },
   {
@@ -878,6 +1329,57 @@ const WORKSHEETS = [
     prerequisites: 'Complete Worksheets 1–6',
     contentHtml: `
       <p class="text-base-content/90 leading-relaxed text-base">Work through each section on the real kit. Tick each task when you have done it and answer the check question.</p>
+
+      <!-- WS8 SVG diagram -->
+      <div class="rounded-xl border border-base-300 bg-base-200 p-3 mt-3">
+        <p class="text-xs font-semibold text-base-content/60 uppercase tracking-wide mb-2">How it all connects</p>
+        <svg viewBox="0 0 570 165" xmlns="http://www.w3.org/2000/svg" class="w-full" style="font-family:system-ui,sans-serif">
+          <!-- Sensor boxes -->
+          <rect x="2"   y="18"  width="90" height="22" rx="4" fill="#3b82f6"/>
+          <text x="47"  y="33"  text-anchor="middle" fill="white" font-size="9" font-weight="600">Photoelectric P1</text>
+          <rect x="2"   y="46"  width="90" height="22" rx="4" fill="#7c3aed"/>
+          <text x="47"  y="61"  text-anchor="middle" fill="white" font-size="9" font-weight="600">Capacitive P2</text>
+          <rect x="2"   y="74"  width="90" height="22" rx="4" fill="#d97706"/>
+          <text x="47"  y="89"  text-anchor="middle" fill="white" font-size="9" font-weight="600">Temperature P3</text>
+          <rect x="2"   y="102" width="90" height="22" rx="4" fill="#0d9488"/>
+          <text x="47"  y="117" text-anchor="middle" fill="white" font-size="9" font-weight="600">Light Stack P4</text>
+          <!-- Cables to master -->
+          <line x1="92" y1="29"  x2="112" y2="29"  stroke="#94a3b8" stroke-width="1.5"/>
+          <line x1="92" y1="57"  x2="112" y2="57"  stroke="#94a3b8" stroke-width="1.5"/>
+          <line x1="92" y1="85"  x2="112" y2="85"  stroke="#94a3b8" stroke-width="1.5"/>
+          <line x1="92" y1="113" x2="112" y2="113" stroke="#94a3b8" stroke-width="1.5"/>
+          <!-- IO-Link Master -->
+          <rect x="112" y="10" width="80" height="130" rx="6" fill="#ea580c"/>
+          <text x="152" y="70"  text-anchor="middle" fill="white" font-size="10" font-weight="700">IO-Link</text>
+          <text x="152" y="84"  text-anchor="middle" fill="white" font-size="10" font-weight="700">Master</text>
+          <text x="152" y="98"  text-anchor="middle" fill="#fed7aa" font-size="8">IFM AL1350</text>
+          <!-- Ethernet -->
+          <line x1="192" y1="75" x2="228" y2="75" stroke="#64748b" stroke-width="2" stroke-dasharray="5,3"/>
+          <polygon points="228,71 228,79 236,75" fill="#64748b"/>
+          <text x="210" y="68" text-anchor="middle" fill="#94a3b8" font-size="8">Ethernet</text>
+          <!-- Pi -->
+          <rect x="236" y="50" width="72" height="50" rx="6" fill="#15803d"/>
+          <text x="272" y="72"  text-anchor="middle" fill="white" font-size="9" font-weight="700">Raspberry</text>
+          <text x="272" y="85"  text-anchor="middle" fill="white" font-size="9" font-weight="700">Pi</text>
+          <text x="272" y="96"  text-anchor="middle" fill="#bbf7d0" font-size="7">Edge Device</text>
+          <!-- HDMI -->
+          <line x1="308" y1="75" x2="340" y2="75" stroke="#64748b" stroke-width="2" stroke-dasharray="5,3"/>
+          <polygon points="340,71 340,79 348,75" fill="#64748b"/>
+          <text x="324" y="68" text-anchor="middle" fill="#94a3b8" font-size="8">HDMI</text>
+          <!-- Screen -->
+          <rect x="348" y="42" width="70" height="52" rx="4" fill="#334155"/>
+          <rect x="353" y="47" width="60" height="38" rx="3" fill="#0f172a"/>
+          <rect x="358" y="52" width="22" height="3" rx="1" fill="#3b82f6" opacity="0.8"/>
+          <rect x="358" y="58" width="40" height="2" rx="1" fill="#475569"/>
+          <rect x="358" y="63" width="32" height="2" rx="1" fill="#10b981" opacity="0.7"/>
+          <rect x="358" y="68" width="36" height="2" rx="1" fill="#475569"/>
+          <rect x="358" y="73" width="26" height="2" rx="1" fill="#475569"/>
+          <text x="383" y="106" text-anchor="middle" fill="#94a3b8" font-size="8">HMI Screen</text>
+
+          <!-- Bottom label -->
+          <text x="285" y="152" text-anchor="middle" fill="#64748b" font-size="7.5">You have now worked with all four sensors and understand how they connect and communicate</text>
+        </svg>
+      </div>
 
       <div class="space-y-4 mt-3">
 
@@ -975,6 +1477,34 @@ const WORKSHEETS = [
       <div class="alert bg-success/10 border border-success/30 rounded-lg text-base-content mt-4">
         <strong>Well done!</strong> If you have ticked every box and answered each question, you have completed CP0001. Head to <a href="#" data-page="io-link-master" class="link link-primary">the Dashboard</a> to explore the live data further.
       </div>
+
+      <div class="divider my-2"></div>
+
+      <div class="rounded-xl border-2 border-warning/50 bg-warning/5 p-4 mt-4 space-y-3" id="ws8-challenge-box">
+        <p class="font-bold text-base-content text-base">🎯 Challenge</p>
+        <p class="text-sm text-base-content/80">Complete the sequence <strong>in order</strong>: first trigger the photoelectric sensor, then trigger the capacitive sensor, then check the temperature is above 15°C. All three must happen in order.</p>
+        <div class="flex justify-center gap-6 py-2">
+          <div class="text-center space-y-1">
+            <div id="ws8-ch-s1" class="w-10 h-10 rounded-full bg-base-300 border-2 border-base-300 flex items-center justify-center text-xs font-bold text-base-content/50 transition-all mx-auto">1</div>
+            <p class="text-xs text-base-content/60">Photoelectric<br>triggered</p>
+          </div>
+          <div class="text-center space-y-1">
+            <div id="ws8-ch-s2" class="w-10 h-10 rounded-full bg-base-300 border-2 border-base-300 flex items-center justify-center text-xs font-bold text-base-content/50 transition-all mx-auto">2</div>
+            <p class="text-xs text-base-content/60">Capacitive<br>triggered</p>
+          </div>
+          <div class="text-center space-y-1">
+            <div id="ws8-ch-s3" class="w-10 h-10 rounded-full bg-base-300 border-2 border-base-300 flex items-center justify-center text-xs font-bold text-base-content/50 transition-all mx-auto">3</div>
+            <p class="text-xs text-base-content/60">Temperature<br>&gt; 15°C</p>
+          </div>
+        </div>
+        <div id="ws8-ch-result" class="hidden rounded-lg p-3 text-center font-bold text-sm"></div>
+        <div class="flex justify-center">
+          <button type="button" id="ws8-ch-reset" class="btn btn-warning btn-sm gap-2">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+            Reset Challenge
+          </button>
+        </div>
+      </div>
     `
   }
 ];
@@ -1066,6 +1596,27 @@ let _chSucceeded = false;
 
 let _tempBaseline = null;
 let _alarmThreshold = 40;
+
+// WS2 (smart sensor) challenge
+let _ws2ChDone = false;
+
+// WS3 (photoelectric) challenge — signal quality audit
+let _ws3ChDone = false;
+
+// WS4 (capacitive) challenge — false trigger fix via ISDU
+let _ws4ChDone = false; let _ws4SpWritten = false;
+
+// WS5 (temperature) challenge — trigger alarm
+let _ws5ChDone = false;
+
+// WS6 (light stack) challenge — colour prediction
+let _ws6ChGuess = null; let _ws6ChSubmitted = false; let _ws6ChColor = null;
+
+// WS7 (fault finding) challenge — port recovery
+let _ws7ChPortDropped = false; let _ws7ChRecovered = false; let _ws7ChDroppedPort = null;
+
+// WS8 (assessment) challenge — full sequence
+let _ws8ChStep = 0; let _ws8ChDone = false;
 
 // colour map for CL50
 const CL_COLOUR_MAP = {
@@ -1191,10 +1742,69 @@ function initLiveIntro(container) {
   }
 }
 
+function initLiveWs2Smart(container) {
+  _ws2ChDone = false;
+  const colours = { photo: '#3b82f6', cap: '#8b5cf6', temp: '#f97316', led: '#22c55e' };
+
+  function setSmallDot(dotId, valId, active, value, colour) {
+    const dot = container.querySelector(`#${dotId}`);
+    const val = container.querySelector(`#${valId}`);
+    if (dot) {
+      dot.style.backgroundColor = active ? colour : '';
+      dot.style.boxShadow = active ? `0 0 6px ${colour}80` : '';
+      dot.className = active
+        ? 'w-5 h-5 rounded-full mx-auto transition-all'
+        : 'w-5 h-5 rounded-full bg-base-300 mx-auto transition-all';
+    }
+    if (val) val.textContent = value;
+  }
+
+  startLiveData(data => {
+    setLiveStatus('ws2s-badge', !!data);
+    const p1 = getPort(data, 1);
+    const p2 = getPort(data, 2);
+    const p3 = getPort(data, 3);
+    const p4 = getPort(data, 4);
+
+    const det1  = p1?.pdin_decoded?.object_detected;
+    const det2  = p2?.pdin_decoded?.object_detected;
+    const temp3 = p3?.pdin_decoded?.temperature_c;
+    const c4    = p4?.pdin_decoded?.color1;
+
+    setSmallDot('ws2-ch-p1', 'ws2-ch-p1-val', !!det1, det1 ? 'Detected' : 'Clear', colours.photo);
+    setSmallDot('ws2-ch-p2', 'ws2-ch-p2-val', !!det2, det2 ? 'Detected' : 'Clear', colours.cap);
+    setSmallDot('ws2-ch-p3', 'ws2-ch-p3-val', p3?.mode === 'io-link',
+      temp3 != null ? `${temp3.toFixed(1)}°C` : '—', colours.temp);
+    setSmallDot('ws2-ch-p4', 'ws2-ch-p4-val', p4?.mode === 'io-link',
+      c4 || '—', colours.led);
+
+    // pass when all 4 ports confirmed in io-link mode
+    const allOnline = [p1, p2, p3, p4].every(p => p?.mode === 'io-link');
+    if (!_ws2ChDone && allOnline) {
+      _ws2ChDone = true;
+      const result = container.querySelector('#ws2-ch-result');
+      if (result) {
+        result.className = 'rounded-lg p-3 text-center font-bold text-base bg-success/20 text-success border border-success/40';
+        result.textContent = '✓ Health check passed — all 4 ports confirmed active in IO-Link mode. System ready for production.';
+        result.classList.remove('hidden');
+      }
+    }
+  });
+
+  const resetBtn = container.querySelector('#ws2-ch-reset');
+  if (resetBtn) {
+    resetBtn.addEventListener('click', () => {
+      _ws2ChDone = false;
+      const result = container.querySelector('#ws2-ch-result');
+      if (result) result.classList.add('hidden');
+    });
+  }
+}
+
 function initLiveWs2(container) {
-  // reset task state
   _lastPhotoState = false;
   _photoWaveCount = 0;
+  _ws3ChDone = false;
 
   const chart = makeChart('ws2-chart', 'line',
     [{ data: Array(60).fill(0), borderColor: '#3b82f6', backgroundColor: 'rgba(59,130,246,0.15)',
@@ -1236,14 +1846,49 @@ function initLiveWs2(container) {
     }
     _lastPhotoState = det;
 
+    // ── WS3 challenge: signal quality audit ─────────────────────────────────
+    if (sq !== null) {
+      const sqBar = container.querySelector('#ws3-ch-sq-bar');
+      const sqPct = container.querySelector('#ws3-ch-sq-pct');
+      if (sqPct) sqPct.textContent = `${sq}%`;
+      if (sqBar) {
+        sqBar.style.width = `${sq}%`;
+        sqBar.className = sq >= 80
+          ? 'h-5 rounded-full transition-all duration-300 bg-success'
+          : sq >= 50
+            ? 'h-5 rounded-full transition-all duration-300 bg-warning'
+            : 'h-5 rounded-full transition-all duration-300 bg-error';
+      }
+      if (!_ws3ChDone && sq >= 80) {
+        _ws3ChDone = true;
+        const ws3Result = container.querySelector('#ws3-ch-result');
+        if (ws3Result) {
+          ws3Result.className = 'rounded-lg p-3 text-center font-bold text-base bg-success/20 text-success border border-success/40';
+          ws3Result.textContent = `✓ Audit complete — signal quality ${sq}% (healthy). Sensor confirmed serviceable. Log it and move on.`;
+          ws3Result.classList.remove('hidden');
+        }
+      }
+    }
+
     pushToChart(chart, det ? 1 : 0);
     if (sq !== null) pushToChart(sigChart, sq);
   });
+
+  // WS3 challenge reset
+  const ws3Reset = container.querySelector('#ws3-ch-reset');
+  if (ws3Reset) {
+    ws3Reset.addEventListener('click', () => {
+      _ws3ChDone = false;
+      const r = container.querySelector('#ws3-ch-result');
+      if (r) r.classList.add('hidden');
+    });
+  }
 }
 
 function initLiveWs3(container) {
   _lastCapState = false;
   _capTaskCount = 0;
+  _ws4ChDone = false; _ws4SpWritten = false;
 
   const chart = makeChart('ws3-chart', 'line',
     [{ data: Array(60).fill(0), borderColor: '#8b5cf6', backgroundColor: 'rgba(139,92,246,0.15)',
@@ -1256,6 +1901,7 @@ function initLiveWs3(container) {
 
     const det   = port.pdin_decoded.object_detected || false;
     const count = port.detection_counter ?? 0;
+    const analogueVal = port.pdin_decoded.analogue_value ?? 0;
 
     // dot
     const dot = container.querySelector('#ws3-dot');
@@ -1285,7 +1931,57 @@ function initLiveWs3(container) {
     _lastCapState = det;
 
     pushToChart(chart, det ? 1 : 0);
+
+    // ── WS4 challenge: false trigger fix — update live detection dot ─────────
+    const chDot   = container.querySelector('#ws4-ch-dot');
+    const chLabel = container.querySelector('#ws4-ch-det-label');
+    if (chDot) {
+      chDot.className = det
+        ? 'w-4 h-4 rounded-full bg-error border border-error transition-all flex-shrink-0'
+        : 'w-4 h-4 rounded-full bg-success border border-success transition-all flex-shrink-0';
+    }
+    if (chLabel) chLabel.textContent = det ? 'Output ACTIVE — false trigger present' : 'Output CLEAR — no false trigger';
+
+    // enable confirm button only after SP1 written and output is clear
+    const confirmBtn = container.querySelector('#ws4-ch-confirm');
+    if (confirmBtn) confirmBtn.disabled = !(_ws4SpWritten && !det);
   });
+
+  // WS4 challenge step 3 — confirm fix
+  const ws4Confirm = container.querySelector('#ws4-ch-confirm');
+  if (ws4Confirm) {
+    ws4Confirm.addEventListener('click', () => {
+      if (!_ws4SpWritten) return;
+      _ws4ChDone = true;
+      const r = container.querySelector('#ws4-ch-result');
+      if (r) {
+        r.className = 'rounded-lg p-3 text-center font-bold text-base bg-success/20 text-success border border-success/40';
+        r.textContent = '✓ Fix confirmed — SP1 adjusted via IO-Link, false triggers eliminated. Ready to return to service.';
+        r.classList.remove('hidden');
+      }
+      // mark steps complete
+      ['ws4-ch-s1','ws4-ch-s2','ws4-ch-s3'].forEach(id => {
+        const el = container.querySelector(`#${id}`);
+        if (el) el.className = 'w-7 h-7 rounded-full border-2 flex items-center justify-center text-xs font-bold transition-all bg-success border-success text-white flex-shrink-0';
+      });
+    });
+  }
+
+  // WS4 challenge reset
+  const ws4Reset = container.querySelector('#ws4-ch-reset');
+  if (ws4Reset) {
+    ws4Reset.addEventListener('click', () => {
+      _ws4ChDone = false; _ws4SpWritten = false;
+      const r = container.querySelector('#ws4-ch-result');
+      if (r) r.classList.add('hidden');
+      ['ws4-ch-s1','ws4-ch-s2','ws4-ch-s3'].forEach(id => {
+        const el = container.querySelector(`#${id}`);
+        if (el) el.className = 'w-7 h-7 rounded-full bg-base-300 border-2 border-base-300 flex items-center justify-center text-xs font-bold text-base-content/50 transition-all flex-shrink-0';
+      });
+      const confirmBtn = container.querySelector('#ws4-ch-confirm');
+      if (confirmBtn) confirmBtn.disabled = true;
+    });
+  }
 
   // ── ISDU: load SP1, QoT, QoR from device ─────────────────────────────────
   const badge = container.querySelector('#ws3-isdu-badge');
@@ -1310,6 +2006,9 @@ function initLiveWs3(container) {
     if (qot !== null) { if (qotBar) qotBar.value = qot; if (qotVal) qotVal.textContent = qot; }
     if (qor !== null) { if (qorBar) qorBar.value = qor; if (qorVal) qorVal.textContent = qor; }
     if (badge) { badge.textContent = 'LIVE'; badge.className = 'badge badge-xs badge-success font-mono'; }
+    // mark challenge step 1 complete once ISDU loads
+    const s1 = container.querySelector('#ws4-ch-s1');
+    if (s1) s1.className = 'w-7 h-7 rounded-full border-2 flex items-center justify-center text-xs font-bold transition-all bg-success border-success text-white flex-shrink-0';
   }
   loadCapIsdu();
 
@@ -1318,7 +2017,13 @@ function initLiveWs3(container) {
   }
   container.querySelector('#ws3-sp1-write')?.addEventListener('click', async () => {
     const val = parseInt(sp1Slider?.value ?? 1000);
-    await isduWrite(2, 60, 1, val, 'int16', 1, 'ws3-sp1-status');
+    const ok = await isduWrite(2, 60, 1, val, 'int16', 1, 'ws3-sp1-status');
+    if (ok) {
+      _ws4SpWritten = true;
+      // mark challenge step 2 complete
+      const s2 = container.querySelector('#ws4-ch-s2');
+      if (s2) s2.className = 'w-7 h-7 rounded-full border-2 flex items-center justify-center text-xs font-bold transition-all bg-success border-success text-white flex-shrink-0';
+    }
   });
   container.querySelector('#ws3-qot-refresh')?.addEventListener('click', loadCapIsdu);
   container.querySelector('#ws3-teach-start')?.addEventListener('click',  () => isduCommand(2, 'teach_sp1_start',  'ws3-teach-status'));
@@ -1329,6 +2034,7 @@ function initLiveWs3(container) {
 function initLiveWs4(container) {
   _tempBaseline = null;
   _alarmThreshold = 40;
+  _ws5ChDone = false;
 
   const chart = makeChart('ws4-chart', 'line',
     [{ data: Array(60).fill(null), borderColor: '#f97316', backgroundColor: 'rgba(249,115,22,0.15)',
@@ -1393,7 +2099,42 @@ function initLiveWs4(container) {
     }
 
     pushToChart(chart, temp);
+
+    // ── WS5 challenge: trigger SP1 alarm ─────────────────────────────────────
+    const chTempEl = container.querySelector('#ws5-ch-temp');
+    const chOutDot = container.querySelector('#ws5-ch-out-dot');
+    const chOutLbl = container.querySelector('#ws5-ch-out-label');
+    const ws5Result = container.querySelector('#ws5-ch-result');
+    if (chTempEl) chTempEl.textContent = temp.toFixed(1);
+    if (chOutDot) {
+      chOutDot.className = out1
+        ? 'w-8 h-8 rounded-full mx-auto transition-all duration-150 shadow-md bg-error border-error border-2'
+        : 'w-8 h-8 rounded-full bg-base-300 mx-auto transition-all duration-150 shadow-md';
+    }
+    if (chOutLbl) chOutLbl.textContent = out1 ? 'ACTIVE ●' : 'inactive';
+    if (!_ws5ChDone && out1) {
+      _ws5ChDone = true;
+      if (ws5Result) {
+        ws5Result.className = 'rounded-lg p-3 text-center font-bold text-base bg-success/20 text-success border border-success/40';
+        ws5Result.textContent = '✓ Challenge complete! SP1 alarm activated — temperature exceeded the setpoint.';
+        ws5Result.classList.remove('hidden');
+      }
+    }
   });
+
+  // WS5 challenge reset
+  const ws5Reset = container.querySelector('#ws5-ch-reset');
+  if (ws5Reset) {
+    ws5Reset.addEventListener('click', () => {
+      _ws5ChDone = false;
+      const r = container.querySelector('#ws5-ch-result');
+      if (r) r.classList.add('hidden');
+      const dot = container.querySelector('#ws5-ch-out-dot');
+      if (dot) dot.className = 'w-8 h-8 rounded-full bg-base-300 mx-auto transition-all duration-150 shadow-md';
+      const lbl = container.querySelector('#ws5-ch-out-label');
+      if (lbl) lbl.textContent = 'inactive';
+    });
+  }
 
   // ── ISDU: read current SP1/SP2 from device, wire write buttons ───────────
   const sp1Slider   = container.querySelector('#ws4-alarm-slider');
@@ -1437,6 +2178,8 @@ function initLiveWs4(container) {
 }
 
 function initLiveWs5(container) {
+  _ws6ChGuess = null; _ws6ChSubmitted = false; _ws6ChColor = null;
+
   startLiveData(data => {
     const port = getPort(data, 4);
     setLiveStatus('ws5-live-badge', !!port);
@@ -1447,6 +2190,9 @@ function initLiveWs5(container) {
     const c2 = d.color2 || 'off';
     const anim = d.animation || 'off';
     const hex  = d.raw_hex || '—';
+
+    // Store live colour for challenge
+    _ws6ChColor = c1;
 
     const c1El  = container.querySelector('#ws5-c1-circle');
     const c2El  = container.querySelector('#ws5-c2-circle');
@@ -1478,6 +2224,185 @@ function initLiveWs5(container) {
     const hexEl = container.querySelector('#ws5-raw-hex');
     if (hexEl) hexEl.textContent = hex || '—';
   });
+
+  // ── WS6 challenge: colour prediction ─────────────────────────────────────
+  container.querySelectorAll('.ws6-colour-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      if (_ws6ChSubmitted) return;
+      _ws6ChGuess = btn.getAttribute('data-colour');
+      container.querySelectorAll('.ws6-colour-btn').forEach(b => {
+        b.style.outline = b === btn ? '3px solid white' : 'none';
+        b.style.transform = b === btn ? 'scale(1.1)' : '';
+      });
+      const sel = container.querySelector('#ws6-ch-selection');
+      if (sel) sel.textContent = `Your guess: ${_ws6ChGuess}`;
+    });
+  });
+
+  const submitBtn = container.querySelector('#ws6-ch-submit');
+  if (submitBtn) {
+    submitBtn.addEventListener('click', () => {
+      if (_ws6ChSubmitted) return;
+      if (!_ws6ChGuess) {
+        const sel = container.querySelector('#ws6-ch-selection');
+        if (sel) sel.textContent = 'Please select a colour first!';
+        return;
+      }
+      _ws6ChSubmitted = true;
+      const result = container.querySelector('#ws6-ch-result');
+      if (result) {
+        const live = _ws6ChColor || 'unknown';
+        const guessLower = _ws6ChGuess.toLowerCase();
+        const liveLower  = live.toLowerCase();
+        const pass = guessLower === liveLower || liveLower.includes(guessLower) || guessLower.includes(liveLower);
+        if (pass) {
+          result.className = 'rounded-lg p-3 text-center font-bold text-base bg-success/20 text-success border border-success/40';
+          result.textContent = `✓ Correct! Dashboard showed "${live}" and that matched your guess.`;
+        } else {
+          result.className = 'rounded-lg p-3 text-center font-bold text-sm bg-error/20 text-error border border-error/40';
+          result.textContent = `✗ Not quite — you guessed "${_ws6ChGuess}" but dashboard shows "${live}". Turn around and check, then reset.`;
+        }
+        result.classList.remove('hidden');
+      }
+    });
+  }
+
+  const ws6Reset = container.querySelector('#ws6-ch-reset');
+  if (ws6Reset) {
+    ws6Reset.addEventListener('click', () => {
+      _ws6ChGuess = null; _ws6ChSubmitted = false;
+      const result = container.querySelector('#ws6-ch-result');
+      if (result) result.classList.add('hidden');
+      const sel = container.querySelector('#ws6-ch-selection');
+      if (sel) sel.textContent = 'No guess selected';
+      container.querySelectorAll('.ws6-colour-btn').forEach(b => {
+        b.style.outline = 'none'; b.style.transform = '';
+      });
+    });
+  }
+}
+
+function initLiveWs7(container) {
+  _ws7ChPortDropped = false; _ws7ChRecovered = false; _ws7ChDroppedPort = null;
+  const portModes = { 1: null, 2: null, 3: null, 4: null };
+  const portColours = { 1: '#3b82f6', 2: '#8b5cf6', 3: '#f97316', 4: '#22c55e' };
+
+  function updatePortDots(data) {
+    [1, 2, 3, 4].forEach(n => {
+      const port = getPort(data, n);
+      const mode = port?.mode || 'inactive';
+      const dot  = container.querySelector(`#ws7-ch-p${n}`);
+      const val  = container.querySelector(`#ws7-ch-p${n}-val`);
+      if (dot) {
+        const active = mode === 'io-link';
+        dot.style.backgroundColor = active ? portColours[n] : '';
+        dot.style.boxShadow = active ? `0 0 6px ${portColours[n]}80` : '';
+        dot.className = active
+          ? 'w-5 h-5 rounded-full mx-auto transition-all'
+          : 'w-5 h-5 rounded-full bg-base-300 mx-auto transition-all';
+      }
+      if (val) val.textContent = mode === 'io-link' ? 'IO-Link' : mode === 'inactive' ? 'off' : mode;
+
+      // challenge logic
+      const prevMode = portModes[n];
+      if (prevMode !== null && prevMode === 'io-link' && mode !== 'io-link' && !_ws7ChPortDropped && !_ws7ChRecovered) {
+        _ws7ChPortDropped = true;
+        _ws7ChDroppedPort = n;
+        const msg = container.querySelector('#ws7-ch-status-msg');
+        if (msg) msg.textContent = `Port ${n} went offline — now reconnect it.`;
+      }
+      if (_ws7ChPortDropped && !_ws7ChRecovered && n === _ws7ChDroppedPort && prevMode !== 'io-link' && mode === 'io-link') {
+        _ws7ChRecovered = true;
+        const result = container.querySelector('#ws7-ch-result');
+        if (result) {
+          result.className = 'rounded-lg p-3 text-center font-bold text-base bg-success/20 text-success border border-success/40';
+          result.textContent = `✓ Challenge complete! Port ${_ws7ChDroppedPort} dropped offline and came back to IO-Link mode.`;
+          result.classList.remove('hidden');
+        }
+        const msg = container.querySelector('#ws7-ch-status-msg');
+        if (msg) msg.textContent = `Port ${_ws7ChDroppedPort} recovered successfully.`;
+      }
+      portModes[n] = mode;
+    });
+  }
+
+  startLiveData(data => {
+    updatePortDots(data);
+  });
+
+  const ws7Reset = container.querySelector('#ws7-ch-reset');
+  if (ws7Reset) {
+    ws7Reset.addEventListener('click', () => {
+      _ws7ChPortDropped = false; _ws7ChRecovered = false; _ws7ChDroppedPort = null;
+      Object.keys(portModes).forEach(k => { portModes[k] = null; });
+      const result = container.querySelector('#ws7-ch-result');
+      if (result) result.classList.add('hidden');
+      const msg = container.querySelector('#ws7-ch-status-msg');
+      if (msg) msg.textContent = 'Waiting — disconnect a sensor cable to begin';
+    });
+  }
+}
+
+function initLiveWs8(container) {
+  _ws8ChStep = 0; _ws8ChDone = false;
+  let _ws8LastPhotoState = false;
+  let _ws8LastCapState = false;
+
+  function updateWs8Steps() {
+    [1, 2, 3].forEach(i => {
+      const dot = container.querySelector(`#ws8-ch-s${i}`);
+      if (!dot) return;
+      if (i <= _ws8ChStep) {
+        dot.className = 'w-10 h-10 rounded-full border-2 flex items-center justify-center text-xs font-bold transition-all bg-success border-success text-white mx-auto';
+      } else {
+        dot.className = 'w-10 h-10 rounded-full bg-base-300 border-2 border-base-300 flex items-center justify-center text-xs font-bold text-base-content/50 transition-all mx-auto';
+      }
+    });
+  }
+
+  startLiveData(data => {
+    const p1 = getPort(data, 1);
+    const p2 = getPort(data, 2);
+    const p3 = getPort(data, 3);
+    const det1  = p1?.pdin_decoded?.object_detected || false;
+    const det2  = p2?.pdin_decoded?.object_detected || false;
+    const temp3 = p3?.pdin_decoded?.temperature_c ?? null;
+
+    if (!_ws8ChDone) {
+      if (_ws8ChStep === 0 && det1 && !_ws8LastPhotoState) {
+        _ws8ChStep = 1;
+        updateWs8Steps();
+      }
+      if (_ws8ChStep === 1 && det2 && !_ws8LastCapState) {
+        _ws8ChStep = 2;
+        updateWs8Steps();
+      }
+      if (_ws8ChStep === 2 && temp3 !== null && temp3 > 15) {
+        _ws8ChStep = 3;
+        _ws8ChDone = true;
+        updateWs8Steps();
+        const result = container.querySelector('#ws8-ch-result');
+        if (result) {
+          result.className = 'rounded-lg p-3 text-center font-bold text-base bg-success/20 text-success border border-success/40';
+          result.textContent = '✓ Assessment complete! All three steps completed in order. Well done!';
+          result.classList.remove('hidden');
+        }
+      }
+    }
+    _ws8LastPhotoState = det1;
+    _ws8LastCapState = det2;
+  });
+
+  const ws8Reset = container.querySelector('#ws8-ch-reset');
+  if (ws8Reset) {
+    ws8Reset.addEventListener('click', () => {
+      _ws8ChStep = 0; _ws8ChDone = false;
+      _ws8LastPhotoState = false; _ws8LastCapState = false;
+      updateWs8Steps();
+      const result = container.querySelector('#ws8-ch-result');
+      if (result) result.classList.add('hidden');
+    });
+  }
 }
 
 function initWorksheetInteractivity(container) {
@@ -1502,11 +2427,14 @@ function initWorksheetInteractivity(container) {
   });
 
   // start live data for the relevant worksheet
-  if (container.querySelector('#ws-intro-panel'))  initLiveIntro(container);
-  else if (container.querySelector('#ws2-chart'))    initLiveWs2(container);
-  else if (container.querySelector('#ws3-chart')) initLiveWs3(container);
-  else if (container.querySelector('#ws4-chart')) initLiveWs4(container);
-  else if (container.querySelector('#ws5-live-panel')) initLiveWs5(container);
+  if (container.querySelector('#ws-intro-panel'))        initLiveIntro(container);
+  else if (container.querySelector('#ws2-smart-panel'))   initLiveWs2Smart(container);  // WS2 — smart sensor
+  else if (container.querySelector('#ws2-chart'))         initLiveWs2(container);        // WS3 — photoelectric
+  else if (container.querySelector('#ws3-chart'))         initLiveWs3(container);        // WS4 — capacitive
+  else if (container.querySelector('#ws4-chart'))         initLiveWs4(container);        // WS5 — temperature
+  else if (container.querySelector('#ws5-live-panel'))    initLiveWs5(container);        // WS6 — light stack
+  else if (container.querySelector('#ws7-ch-p1'))         initLiveWs7(container);        // WS7 — fault finding
+  else if (container.querySelector('#ws8-ch-s1'))         initLiveWs8(container);        // WS8 — assessment
   else stopLiveData();
 }
 
