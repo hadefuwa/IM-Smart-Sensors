@@ -274,6 +274,45 @@ const WORKSHEETS = [
     contentHtml: `
       <p class="text-base-content/90 leading-relaxed">This app is a real Industry 4.0 system running on a Raspberry Pi edge device. Three layers talk to each other in real time:</p>
 
+      <!-- Data flow diagram -->
+      <div class="rounded-xl border border-base-300 bg-base-200 p-3 mt-3">
+        <p class="text-xs font-semibold text-base-content/60 uppercase tracking-wide mb-2">Data flow — sensor to browser</p>
+        <svg viewBox="0 0 570 175" xmlns="http://www.w3.org/2000/svg" class="w-full" style="font-family:system-ui,sans-serif">
+          <defs>
+            <marker id="ws2-arr-g" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#22c55e"/></marker>
+            <marker id="ws2-arr-b" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#3b82f6"/></marker>
+            <marker id="ws2-arr-a" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#f59e0b"/></marker>
+          </defs>
+          <rect x="10" y="55" width="130" height="65" rx="8" fill="#ea580c"/>
+          <text x="75" y="80" text-anchor="middle" fill="white" font-size="11" font-weight="700">IO-Link Master</text>
+          <text x="75" y="94" text-anchor="middle" fill="#fed7aa" font-size="8">IFM AL1350</text>
+          <text x="75" y="107" text-anchor="middle" fill="#fed7aa" font-size="7">192.168.7.4</text>
+          <line x1="140" y1="74" x2="213" y2="74" stroke="#22c55e" stroke-width="2" marker-end="url(#ws2-arr-g)"/>
+          <text x="177" y="68" text-anchor="middle" fill="#22c55e" font-size="8" font-weight="600">MQTT push</text>
+          <text x="177" y="78" text-anchor="middle" fill="#22c55e" font-size="7">500 ms</text>
+          <line x1="213" y1="100" x2="140" y2="100" stroke="#3b82f6" stroke-width="1.5" stroke-dasharray="5,3" marker-end="url(#ws2-arr-b)"/>
+          <text x="177" y="114" text-anchor="middle" fill="#3b82f6" font-size="7">HTTP poll (fallback + ISDU)</text>
+          <rect x="215" y="42" width="140" height="91" rx="8" fill="#15803d"/>
+          <text x="285" y="72" text-anchor="middle" fill="white" font-size="11" font-weight="700">Raspberry Pi</text>
+          <text x="285" y="86" text-anchor="middle" fill="#bbf7d0" font-size="8">FastAPI · Mosquitto</text>
+          <text x="285" y="99" text-anchor="middle" fill="#bbf7d0" font-size="8">decoder.py</text>
+          <text x="285" y="112" text-anchor="middle" fill="#bbf7d0" font-size="7">192.168.7.2 (eth0)</text>
+          <text x="285" y="124" text-anchor="middle" fill="#bbf7d0" font-size="7">Edge Gateway</text>
+          <line x1="355" y1="88" x2="418" y2="88" stroke="#f59e0b" stroke-width="2" marker-end="url(#ws2-arr-a)"/>
+          <text x="387" y="81" text-anchor="middle" fill="#f59e0b" font-size="8" font-weight="600">WebSocket /ws</text>
+          <text x="387" y="92" text-anchor="middle" fill="#f59e0b" font-size="7">JSON push</text>
+          <rect x="420" y="55" width="130" height="65" rx="8" fill="#334155"/>
+          <rect x="426" y="61" width="118" height="47" rx="4" fill="#0f172a"/>
+          <rect x="432" y="67" width="40" height="4" rx="1" fill="#3b82f6" opacity="0.9"/>
+          <rect x="432" y="75" width="80" height="3" rx="1" fill="#475569"/>
+          <rect x="432" y="82" width="65" height="3" rx="1" fill="#475569"/>
+          <rect x="432" y="89" width="75" height="3" rx="1" fill="#10b981" opacity="0.7"/>
+          <rect x="432" y="96" width="55" height="3" rx="1" fill="#475569"/>
+          <text x="485" y="137" text-anchor="middle" fill="#94a3b8" font-size="9">HMI Dashboard</text>
+          <text x="285" y="165" text-anchor="middle" fill="#64748b" font-size="8">AL1350 → MQTT → Pi (FastAPI/Mosquitto) → WebSocket → Browser</text>
+        </svg>
+      </div>
+
       <div class="rounded-xl border-2 border-base-300 bg-base-200 p-4 mt-3 font-mono text-sm space-y-0 leading-relaxed overflow-x-auto">
         <p class="text-base-content/60 text-xs mb-2">// System architecture</p>
         <p><span class="text-primary font-bold">[AL1350 IO-Link Master]</span></p>
@@ -340,6 +379,30 @@ const WORKSHEETS = [
         <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="cp2-ws1-q4" value="c" class="radio radio-sm radio-secondary"> The AL1350 is under load or there is congestion on the IO-Link subnet</label>
       </div>
 
+      <!-- Challenge -->
+      <div class="rounded-xl border-2 border-warning/50 bg-warning/5 p-4 mt-4 space-y-3">
+        <p class="font-bold text-base-content text-base">🎯 Challenge — verify the data path is live</p>
+        <p class="text-sm text-base-content/80">Open <a href="#" data-page="edge-device" class="link link-warning">Edge Device</a> and <a href="#" data-page="admin" class="link link-warning">Connection Diagnostics</a>. Tick each item when confirmed.</p>
+        <div class="space-y-2 text-sm">
+          <label class="cp2-kit-item flex items-center gap-3 cursor-pointer rounded-xl border-2 border-transparent px-3 py-2 transition-all duration-200">
+            <input type="checkbox" class="checkbox checkbox-sm checkbox-warning flex-shrink-0">
+            <span class="cp2-kit-text">The WS message counter on Worksheet 1 increments at approximately <strong>2 messages per second</strong></span>
+          </label>
+          <label class="cp2-kit-item flex items-center gap-3 cursor-pointer rounded-xl border-2 border-transparent px-3 py-2 transition-all duration-200">
+            <input type="checkbox" class="checkbox checkbox-sm checkbox-warning flex-shrink-0">
+            <span class="cp2-kit-text"><strong>Mosquitto</strong> is shown as active on the Edge Device page</span>
+          </label>
+          <label class="cp2-kit-item flex items-center gap-3 cursor-pointer rounded-xl border-2 border-transparent px-3 py-2 transition-all duration-200">
+            <input type="checkbox" class="checkbox checkbox-sm checkbox-warning flex-shrink-0">
+            <span class="cp2-kit-text">The circuit breaker on Connection Diagnostics is <strong>closed</strong> (green)</span>
+          </label>
+          <label class="cp2-kit-item flex items-center gap-3 cursor-pointer rounded-xl border-2 border-transparent px-3 py-2 transition-all duration-200">
+            <input type="checkbox" class="checkbox checkbox-sm checkbox-warning flex-shrink-0">
+            <span class="cp2-kit-text">Round-trip latency is below <strong>200 ms</strong> on the Connection Diagnostics latency graph</span>
+          </label>
+        </div>
+      </div>
+
       <div class="divider my-2"></div>
       <button type="button" class="btn btn-ghost btn-sm ws-suggested-btn" data-target="cp2-ws1-suggested">Show suggested answers</button>
       <div id="cp2-ws1-suggested" class="hidden p-4 rounded-lg border border-base-300 bg-base-300/50 text-base-content/80 text-sm leading-relaxed ws-suggested">Q1: b — MQTT push/subscribe means the AL1350 sends data immediately without the Pi polling each cycle; HTTP adds per-request overhead. Q2: b — ensure_mqtt_subscription() registers the push subscription on every backend startup. Q3: c — live data stops when the backend crashes and the WebSocket disconnects. Q4: c — high latency points to AL1350 load or subnet congestion.</div>
@@ -356,6 +419,67 @@ const WORKSHEETS = [
     prerequisites: 'Complete CP0002 Worksheet 1',
     contentHtml: `
       <p class="text-base-content/90 leading-relaxed">Process data (PDin) arrives as a raw byte string from the AL1350. The backend's <code class="font-mono text-xs bg-base-300 px-1 rounded">decoder.py</code> parses each device type differently based on its IODD specification.</p>
+
+      <!-- PDin decode pipeline diagram -->
+      <div class="rounded-xl border border-base-300 bg-base-200 p-3 mt-3">
+        <p class="text-xs font-semibold text-base-content/60 uppercase tracking-wide mb-2">PDin decode pipeline — raw hex → human value</p>
+        <svg viewBox="0 0 570 210" xmlns="http://www.w3.org/2000/svg" class="w-full" style="font-family:system-ui,sans-serif">
+          <defs>
+            <marker id="ws3-arr" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#94a3b8"/></marker>
+          </defs>
+          <text x="70" y="18" text-anchor="middle" fill="#94a3b8" font-size="9" font-weight="600">RAW PDin (hex)</text>
+          <text x="285" y="18" text-anchor="middle" fill="#94a3b8" font-size="9" font-weight="600">decoder.py</text>
+          <text x="490" y="18" text-anchor="middle" fill="#94a3b8" font-size="9" font-weight="600">DECODED VALUE</text>
+          <!-- Row 1: Photoelectric -->
+          <rect x="5" y="26" width="130" height="34" rx="5" fill="#1e3a5f"/>
+          <text x="70" y="40" text-anchor="middle" fill="#93c5fd" font-size="9" font-weight="600">Photoelectric Port 1</text>
+          <text x="70" y="52" text-anchor="middle" fill="#bfdbfe" font-size="8" font-style="italic">0x01 (2 bytes, bit 0)</text>
+          <line x1="135" y1="43" x2="200" y2="43" stroke="#94a3b8" stroke-width="1.5" marker-end="url(#ws3-arr)"/>
+          <rect x="200" y="26" width="170" height="34" rx="5" fill="#1e293b"/>
+          <text x="285" y="40" text-anchor="middle" fill="#e2e8f0" font-size="8">parse bit 0 → switching state</text>
+          <text x="285" y="52" text-anchor="middle" fill="#64748b" font-size="7">IO-Link 1.0 — identity ISDU only</text>
+          <line x1="370" y1="43" x2="425" y2="43" stroke="#94a3b8" stroke-width="1.5" marker-end="url(#ws3-arr)"/>
+          <rect x="425" y="26" width="138" height="34" rx="5" fill="#1e3a5f"/>
+          <text x="494" y="40" text-anchor="middle" fill="#93c5fd" font-size="9" font-weight="600">detected: true/false</text>
+          <text x="494" y="52" text-anchor="middle" fill="#bfdbfe" font-size="8">switching output bit</text>
+          <!-- Row 2: Capacitive -->
+          <rect x="5" y="70" width="130" height="34" rx="5" fill="#3b1f6b"/>
+          <text x="70" y="84" text-anchor="middle" fill="#ddd6fe" font-size="9" font-weight="600">Capacitive Port 2</text>
+          <text x="70" y="96" text-anchor="middle" fill="#c4b5fd" font-size="8" font-style="italic">bit 0 + count bytes</text>
+          <line x1="135" y1="87" x2="200" y2="87" stroke="#94a3b8" stroke-width="1.5" marker-end="url(#ws3-arr)"/>
+          <rect x="200" y="70" width="170" height="34" rx="5" fill="#1e293b"/>
+          <text x="285" y="84" text-anchor="middle" fill="#e2e8f0" font-size="8">bit 0 → state; count → session total</text>
+          <text x="285" y="96" text-anchor="middle" fill="#64748b" font-size="7">IO-Link 1.1 — ISDU writable</text>
+          <line x1="370" y1="87" x2="425" y2="87" stroke="#94a3b8" stroke-width="1.5" marker-end="url(#ws3-arr)"/>
+          <rect x="425" y="70" width="138" height="34" rx="5" fill="#3b1f6b"/>
+          <text x="494" y="84" text-anchor="middle" fill="#ddd6fe" font-size="9" font-weight="600">state + detections: 42</text>
+          <text x="494" y="96" text-anchor="middle" fill="#c4b5fd" font-size="8">running count</text>
+          <!-- Row 3: Temperature -->
+          <rect x="5" y="114" width="130" height="34" rx="5" fill="#78350f"/>
+          <text x="70" y="128" text-anchor="middle" fill="#fde68a" font-size="9" font-weight="600">TV7105 Port 3</text>
+          <text x="70" y="140" text-anchor="middle" fill="#fcd34d" font-size="8" font-style="italic">0x00F5 … (4 bytes)</text>
+          <line x1="135" y1="131" x2="200" y2="131" stroke="#94a3b8" stroke-width="1.5" marker-end="url(#ws3-arr)"/>
+          <rect x="200" y="114" width="170" height="34" rx="5" fill="#1e293b"/>
+          <text x="285" y="128" text-anchor="middle" fill="#e2e8f0" font-size="8">bytes 0-1 = int16 ÷ 10 → °C</text>
+          <text x="285" y="140" text-anchor="middle" fill="#64748b" font-size="7">bytes 2-3 = SP1/SP2 flags</text>
+          <line x1="370" y1="131" x2="425" y2="131" stroke="#94a3b8" stroke-width="1.5" marker-end="url(#ws3-arr)"/>
+          <rect x="425" y="114" width="138" height="34" rx="5" fill="#78350f"/>
+          <text x="494" y="128" text-anchor="middle" fill="#fde68a" font-size="9" font-weight="600">temperature: 24.5 °C</text>
+          <text x="494" y="140" text-anchor="middle" fill="#fcd34d" font-size="8">± 0.1 °C resolution</text>
+          <!-- Row 4: CL50 -->
+          <rect x="5" y="158" width="130" height="34" rx="5" fill="#134e4a"/>
+          <text x="70" y="172" text-anchor="middle" fill="#99f6e4" font-size="9" font-weight="600">CL50 Port 4</text>
+          <text x="70" y="184" text-anchor="middle" fill="#6ee7b7" font-size="8" font-style="italic">multi-bit colour fields</text>
+          <line x1="135" y1="175" x2="200" y2="175" stroke="#94a3b8" stroke-width="1.5" marker-end="url(#ws3-arr)"/>
+          <rect x="200" y="158" width="170" height="34" rx="5" fill="#1e293b"/>
+          <text x="285" y="172" text-anchor="middle" fill="#e2e8f0" font-size="8">bit fields → R/A/G × on/flash/off</text>
+          <text x="285" y="184" text-anchor="middle" fill="#64748b" font-size="7">complex multi-channel decode</text>
+          <line x1="370" y1="175" x2="425" y2="175" stroke="#94a3b8" stroke-width="1.5" marker-end="url(#ws3-arr)"/>
+          <rect x="425" y="158" width="138" height="34" rx="5" fill="#134e4a"/>
+          <text x="494" y="172" text-anchor="middle" fill="#99f6e4" font-size="9" font-weight="600">&#123;red:'flash',green:'on'&#125;</text>
+          <text x="494" y="184" text-anchor="middle" fill="#6ee7b7" font-size="8">state per colour channel</text>
+        </svg>
+      </div>
 
       <div class="space-y-4 mt-3">
 
@@ -407,6 +531,30 @@ const WORKSHEETS = [
         </div>
       </div>
 
+      <!-- Challenge -->
+      <div class="rounded-xl border-2 border-warning/50 bg-warning/5 p-4 mt-4 space-y-3">
+        <p class="font-bold text-base-content text-base">🎯 Challenge — read live PDin from the Dashboard</p>
+        <p class="text-sm text-base-content/80">Open the <a href="#" data-page="home" class="link link-warning">Dashboard</a> and expand the Active Port Details for each sensor. Tick each item when confirmed.</p>
+        <div class="space-y-2 text-sm">
+          <label class="cp2-kit-item flex items-center gap-3 cursor-pointer rounded-xl border-2 border-transparent px-3 py-2 transition-all duration-200">
+            <input type="checkbox" class="checkbox checkbox-sm checkbox-warning flex-shrink-0">
+            <span class="cp2-kit-text">Note the live temperature on Port 3 and manually calculate the equivalent raw hex (temp × 10 → decimal → hex)</span>
+          </label>
+          <label class="cp2-kit-item flex items-center gap-3 cursor-pointer rounded-xl border-2 border-transparent px-3 py-2 transition-all duration-200">
+            <input type="checkbox" class="checkbox checkbox-sm checkbox-warning flex-shrink-0">
+            <span class="cp2-kit-text">Wave your hand at the <strong>photoelectric sensor</strong> (Port 1) and confirm the switching state flips on the Dashboard</span>
+          </label>
+          <label class="cp2-kit-item flex items-center gap-3 cursor-pointer rounded-xl border-2 border-transparent px-3 py-2 transition-all duration-200">
+            <input type="checkbox" class="checkbox checkbox-sm checkbox-warning flex-shrink-0">
+            <span class="cp2-kit-text">Trigger the <strong>capacitive sensor</strong> (Port 2) and confirm the detection count increments in the Dashboard</span>
+          </label>
+          <label class="cp2-kit-item flex items-center gap-3 cursor-pointer rounded-xl border-2 border-transparent px-3 py-2 transition-all duration-200">
+            <input type="checkbox" class="checkbox checkbox-sm checkbox-warning flex-shrink-0">
+            <span class="cp2-kit-text">Identify the current <strong>CL50 colour state</strong> (Port 4) from the Dashboard and match it to what you can physically see on the light stack</span>
+          </label>
+        </div>
+      </div>
+
       <div class="divider my-2"></div>
       <button type="button" class="btn btn-ghost btn-sm ws-suggested-btn" data-target="cp2-ws2-suggested">Show suggested answers</button>
       <div id="cp2-ws2-suggested" class="hidden p-4 rounded-lg border border-base-300 bg-base-300/50 text-base-content/80 text-sm leading-relaxed ws-suggested">Q1 (photoelectric): b — bit 0 = 1 means object detected. Q2 (capacitive): b — a running count tracks how many containers have been filled. Q3 (temperature): c — 0x02EE = 750 → 750/10 = 75.0 °C. Q4 (CL50): b — multiple colour channels each with on/flash/off states require separate bit fields.</div>
@@ -423,6 +571,52 @@ const WORKSHEETS = [
     prerequisites: 'Complete CP0002 Worksheets 1–2',
     contentHtml: `
       <p class="text-base-content/90 leading-relaxed">Match the maintenance problem to the IO-Link feature that addresses it.</p>
+
+      <!-- Standard vs IO-Link comparison diagram -->
+      <div class="rounded-xl border border-base-300 bg-base-200 p-3 mt-3">
+        <p class="text-xs font-semibold text-base-content/60 uppercase tracking-wide mb-2">Maintenance response — Standard vs IO-Link</p>
+        <svg viewBox="0 0 570 240" xmlns="http://www.w3.org/2000/svg" class="w-full" style="font-family:system-ui,sans-serif">
+          <!-- Standard column -->
+          <rect x="10" y="10" width="230" height="210" rx="10" fill="#7f1d1d" opacity="0.15" stroke="#ef4444" stroke-width="1.5"/>
+          <text x="125" y="32" text-anchor="middle" fill="#ef4444" font-size="12" font-weight="700">Standard Sensor</text>
+          <rect x="20" y="42" width="210" height="32" rx="5" fill="#7f1d1d" opacity="0.6"/>
+          <text x="125" y="57" text-anchor="middle" fill="#fca5a5" font-size="9" font-weight="600">1. Walk to machine &amp; inspect</text>
+          <text x="125" y="68" text-anchor="middle" fill="#fca5a5" font-size="8">~10 min</text>
+          <rect x="20" y="82" width="210" height="32" rx="5" fill="#7f1d1d" opacity="0.6"/>
+          <text x="125" y="97" text-anchor="middle" fill="#fca5a5" font-size="9" font-weight="600">2. Identify failed sensor</text>
+          <text x="125" y="108" text-anchor="middle" fill="#fca5a5" font-size="8">~8 min</text>
+          <rect x="20" y="122" width="210" height="32" rx="5" fill="#7f1d1d" opacity="0.6"/>
+          <text x="125" y="137" text-anchor="middle" fill="#fca5a5" font-size="9" font-weight="600">3. Replace &amp; manually reconfigure</text>
+          <text x="125" y="148" text-anchor="middle" fill="#fca5a5" font-size="8">~12 min</text>
+          <rect x="20" y="162" width="210" height="32" rx="5" fill="#7f1d1d" opacity="0.6"/>
+          <text x="125" y="177" text-anchor="middle" fill="#fca5a5" font-size="9" font-weight="600">4. Verify &amp; sign off</text>
+          <text x="125" y="188" text-anchor="middle" fill="#fca5a5" font-size="8">~5 min</text>
+          <rect x="20" y="200" width="210" height="16" rx="4" fill="#dc2626"/>
+          <text x="125" y="212" text-anchor="middle" fill="white" font-size="9" font-weight="700">Total: ~35 minutes</text>
+          <!-- IO-Link column -->
+          <rect x="330" y="10" width="230" height="210" rx="10" fill="#14532d" opacity="0.15" stroke="#22c55e" stroke-width="1.5"/>
+          <text x="445" y="32" text-anchor="middle" fill="#22c55e" font-size="12" font-weight="700">IO-Link Sensor</text>
+          <rect x="340" y="42" width="210" height="32" rx="5" fill="#14532d" opacity="0.6"/>
+          <text x="445" y="57" text-anchor="middle" fill="#86efac" font-size="9" font-weight="600">1. HMI alerts: port + fault code</text>
+          <text x="445" y="68" text-anchor="middle" fill="#86efac" font-size="8">~1 min</text>
+          <rect x="340" y="82" width="210" height="32" rx="5" fill="#14532d" opacity="0.6"/>
+          <text x="445" y="97" text-anchor="middle" fill="#86efac" font-size="9" font-weight="600">2. Order part (identity known)</text>
+          <text x="445" y="108" text-anchor="middle" fill="#86efac" font-size="8">~2 min</text>
+          <rect x="340" y="122" width="210" height="32" rx="5" fill="#14532d" opacity="0.6"/>
+          <text x="445" y="137" text-anchor="middle" fill="#86efac" font-size="9" font-weight="600">3. Swap sensor — params auto-restore</text>
+          <text x="445" y="148" text-anchor="middle" fill="#86efac" font-size="8">~4 min</text>
+          <rect x="340" y="162" width="210" height="32" rx="5" fill="#14532d" opacity="0.6"/>
+          <text x="445" y="177" text-anchor="middle" fill="#86efac" font-size="9" font-weight="600">4. HMI confirms port healthy</text>
+          <text x="445" y="188" text-anchor="middle" fill="#86efac" font-size="8">~1 min</text>
+          <rect x="340" y="200" width="210" height="16" rx="4" fill="#16a34a"/>
+          <text x="445" y="212" text-anchor="middle" fill="white" font-size="9" font-weight="700">Total: ~8 minutes</text>
+          <!-- Saves badge -->
+          <rect x="238" y="105" width="94" height="28" rx="14" fill="#854d0e"/>
+          <text x="285" y="116" text-anchor="middle" fill="#fde68a" font-size="9" font-weight="700">Saves ~27 min</text>
+          <text x="285" y="127" text-anchor="middle" fill="#fcd34d" font-size="8">per fault event</text>
+        </svg>
+      </div>
+
       <div class="overflow-x-auto rounded-lg border border-base-300">
         <table class="table table-zebra">
           <thead><tr><th>Maintenance problem</th><th>IO-Link feature</th><th>Check</th></tr></thead>
@@ -479,6 +673,34 @@ const WORKSHEETS = [
         </table>
       </div>
       <button type="button" class="btn btn-primary btn-sm mt-2" id="ws2-check-btn">Check answers</button>
+
+      <!-- Challenge -->
+      <div class="rounded-xl border-2 border-warning/50 bg-warning/5 p-4 mt-4 space-y-3">
+        <p class="font-bold text-base-content text-base">🎯 Challenge — spot IO-Link features on the live system</p>
+        <p class="text-sm text-base-content/80">Use the <a href="#" data-page="home" class="link link-warning">Dashboard</a> and <a href="#" data-page="io-link-master" class="link link-warning">IO-Link page</a>. Tick each item when confirmed.</p>
+        <div class="space-y-2 text-sm">
+          <label class="cp2-kit-item flex items-center gap-3 cursor-pointer rounded-xl border-2 border-transparent px-3 py-2 transition-all duration-200">
+            <input type="checkbox" class="checkbox checkbox-sm checkbox-warning flex-shrink-0">
+            <span class="cp2-kit-text">Find the <strong>device identity</strong> (vendor, product name) for Port 3 on the IO-Link page</span>
+          </label>
+          <label class="cp2-kit-item flex items-center gap-3 cursor-pointer rounded-xl border-2 border-transparent px-3 py-2 transition-all duration-200">
+            <input type="checkbox" class="checkbox checkbox-sm checkbox-warning flex-shrink-0">
+            <span class="cp2-kit-text">Locate where <strong>process data</strong> (live sensor values) appears on the Dashboard</span>
+          </label>
+          <label class="cp2-kit-item flex items-center gap-3 cursor-pointer rounded-xl border-2 border-transparent px-3 py-2 transition-all duration-200">
+            <input type="checkbox" class="checkbox checkbox-sm checkbox-warning flex-shrink-0">
+            <span class="cp2-kit-text">Find where <strong>event / diagnostic data</strong> would appear on the IO-Link page if a fault occurred</span>
+          </label>
+          <label class="cp2-kit-item flex items-center gap-3 cursor-pointer rounded-xl border-2 border-transparent px-3 py-2 transition-all duration-200">
+            <input type="checkbox" class="checkbox checkbox-sm checkbox-warning flex-shrink-0">
+            <span class="cp2-kit-text">Navigate to the <strong>parameter read/write panel</strong> for a Port 1.1 sensor and identify a writable parameter</span>
+          </label>
+        </div>
+      </div>
+
+      <div class="divider my-2"></div>
+      <button type="button" class="btn btn-ghost btn-sm ws-suggested-btn" data-target="cp2-ws3-suggested">Show suggested answers</button>
+      <div id="cp2-ws3-suggested" class="hidden p-4 rounded-lg border border-base-300 bg-base-300/50 text-base-content/80 text-sm leading-relaxed ws-suggested">Q1: events — diagnostic events (lens dirty, wire break) warn before complete failure. Q2: params — parameter storage allows automatic re-configuration after sensor swap. Q3: events — device identity and per-port event codes pinpoint which sensor failed. Q4: events — cycle count and diagnostic trends enable predictive maintenance planning.</div>
     `
   },
   {
@@ -492,6 +714,47 @@ const WORKSHEETS = [
     prerequisites: 'Complete CP0002 Worksheets 1–3',
     contentHtml: `
       <p class="text-base-content/90 leading-relaxed">Classify each item below, then answer the routing question.</p>
+
+      <!-- IO-Link data types and routing diagram -->
+      <div class="rounded-xl border border-base-300 bg-base-200 p-3 mt-3">
+        <p class="text-xs font-semibold text-base-content/60 uppercase tracking-wide mb-2">IO-Link data types — where each goes</p>
+        <svg viewBox="0 0 570 180" xmlns="http://www.w3.org/2000/svg" class="w-full" style="font-family:system-ui,sans-serif">
+          <defs>
+            <marker id="ws5-arr-b" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#3b82f6"/></marker>
+            <marker id="ws5-arr-p" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#8b5cf6"/></marker>
+            <marker id="ws5-arr-r" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#ef4444"/></marker>
+          </defs>
+          <!-- Master node -->
+          <rect x="185" y="65" width="130" height="50" rx="8" fill="#ea580c"/>
+          <text x="250" y="85" text-anchor="middle" fill="white" font-size="10" font-weight="700">IO-Link Master</text>
+          <text x="250" y="100" text-anchor="middle" fill="#fed7aa" font-size="8">AL1350 + FastAPI</text>
+          <!-- Process data arrow -->
+          <line x1="185" y1="80" x2="118" y2="55" stroke="#3b82f6" stroke-width="2" marker-end="url(#ws5-arr-b)"/>
+          <text x="142" y="62" text-anchor="middle" fill="#3b82f6" font-size="8" font-weight="600">Process</text>
+          <rect x="5" y="25" width="110" height="38" rx="6" fill="#1e3a5f"/>
+          <text x="60" y="40" text-anchor="middle" fill="#93c5fd" font-size="9" font-weight="600">PLC / HMI</text>
+          <text x="60" y="54" text-anchor="middle" fill="#bfdbfe" font-size="8">live sensor values</text>
+          <!-- Service data arrow -->
+          <line x1="185" y1="90" x2="118" y2="115" stroke="#8b5cf6" stroke-width="2" marker-end="url(#ws5-arr-p)"/>
+          <text x="142" y="110" text-anchor="middle" fill="#8b5cf6" font-size="8" font-weight="600">Service</text>
+          <rect x="5" y="98" width="110" height="38" rx="6" fill="#2e1065"/>
+          <text x="60" y="113" text-anchor="middle" fill="#ddd6fe" font-size="9" font-weight="600">Commissioning</text>
+          <text x="60" y="127" text-anchor="middle" fill="#c4b5fd" font-size="8">param read / write</text>
+          <!-- Event data arrow -->
+          <line x1="315" y1="80" x2="390" y2="55" stroke="#ef4444" stroke-width="2" marker-end="url(#ws5-arr-r)"/>
+          <text x="357" y="62" text-anchor="middle" fill="#ef4444" font-size="8" font-weight="600">Event</text>
+          <rect x="392" y="25" width="170" height="38" rx="6" fill="#450a0a"/>
+          <text x="477" y="40" text-anchor="middle" fill="#fca5a5" font-size="9" font-weight="600">CMMS / Alarm System</text>
+          <text x="477" y="54" text-anchor="middle" fill="#fca5a5" font-size="8">faults, warnings, work orders</text>
+          <!-- WebSocket note -->
+          <line x1="315" y1="95" x2="390" y2="120" stroke="#f59e0b" stroke-width="1.5" stroke-dasharray="4,3"/>
+          <rect x="392" y="105" width="170" height="38" rx="6" fill="#451a03"/>
+          <text x="477" y="120" text-anchor="middle" fill="#fde68a" font-size="9" font-weight="600">WebSocket /ws (this app)</text>
+          <text x="477" y="134" text-anchor="middle" fill="#fcd34d" font-size="8">process + events merged JSON</text>
+          <text x="285" y="170" text-anchor="middle" fill="#64748b" font-size="8">Process data → PLC every scan · Service data → on-demand · Events → CMMS on trigger</text>
+        </svg>
+      </div>
+
       <div class="overflow-x-auto rounded-lg border border-base-300">
         <table class="table table-zebra">
           <thead><tr><th>Data item</th><th>Classification</th><th>Check</th></tr></thead>
@@ -512,6 +775,34 @@ const WORKSHEETS = [
         <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="cp2-ws4-q2" value="b" class="radio radio-sm radio-secondary"> Process data (sensor values) + event data (faults/warnings) merged into a single JSON payload</label>
         <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="cp2-ws4-q2" value="c" class="radio radio-sm radio-secondary"> Raw binary PDin only</label>
       </div>
+
+      <!-- Challenge -->
+      <div class="rounded-xl border-2 border-warning/50 bg-warning/5 p-4 mt-4 space-y-3">
+        <p class="font-bold text-base-content text-base">🎯 Challenge — classify live data from the system</p>
+        <p class="text-sm text-base-content/80">Explore the <a href="#" data-page="home" class="link link-warning">Dashboard</a> and <a href="#" data-page="io-link-master" class="link link-warning">IO-Link page</a>. Tick each item when confirmed.</p>
+        <div class="space-y-2 text-sm">
+          <label class="cp2-kit-item flex items-center gap-3 cursor-pointer rounded-xl border-2 border-transparent px-3 py-2 transition-all duration-200">
+            <input type="checkbox" class="checkbox checkbox-sm checkbox-warning flex-shrink-0">
+            <span class="cp2-kit-text">Name <strong>three process data values</strong> visible on the Dashboard (e.g. temperature, detected state, detection count)</span>
+          </label>
+          <label class="cp2-kit-item flex items-center gap-3 cursor-pointer rounded-xl border-2 border-transparent px-3 py-2 transition-all duration-200">
+            <input type="checkbox" class="checkbox checkbox-sm checkbox-warning flex-shrink-0">
+            <span class="cp2-kit-text">Identify which page in this app provides access to <strong>service data</strong> (parameter read/write)</span>
+          </label>
+          <label class="cp2-kit-item flex items-center gap-3 cursor-pointer rounded-xl border-2 border-transparent px-3 py-2 transition-all duration-200">
+            <input type="checkbox" class="checkbox checkbox-sm checkbox-warning flex-shrink-0">
+            <span class="cp2-kit-text">Locate where <strong>event data</strong> (faults and warnings) would appear in the IO-Link page</span>
+          </label>
+          <label class="cp2-kit-item flex items-center gap-3 cursor-pointer rounded-xl border-2 border-transparent px-3 py-2 transition-all duration-200">
+            <input type="checkbox" class="checkbox checkbox-sm checkbox-warning flex-shrink-0">
+            <span class="cp2-kit-text">Confirm the WebSocket stream on Worksheet 1 is delivering <strong>merged process + event data</strong> (not service data) on every tick</span>
+          </label>
+        </div>
+      </div>
+
+      <div class="divider my-2"></div>
+      <button type="button" class="btn btn-ghost btn-sm ws-suggested-btn" data-target="cp2-ws4-suggested">Show suggested answers</button>
+      <div id="cp2-ws4-suggested" class="hidden p-4 rounded-lg border border-base-300 bg-base-300/50 text-base-content/80 text-sm leading-relaxed ws-suggested">Classification: Temperature 23.5°C = Process; Device replacement = Event; Filter time parameter = Service; Object present flag = Process; Short circuit fault = Event. Q2: b — WebSocket delivers process data + event data merged into one JSON payload each tick; service data is only read on demand via separate ISDU calls.</div>
     `
   },
   {
@@ -524,6 +815,64 @@ const WORKSHEETS = [
     relatedDashboard: 'Dashboard: Port Status, Simulate Fault',
     prerequisites: 'Complete CP0002 Worksheets 1–4',
     contentHtml: `
+      <!-- PLC vs app architecture comparison diagram -->
+      <div class="rounded-xl border border-base-300 bg-base-200 p-3 mb-4">
+        <p class="text-xs font-semibold text-base-content/60 uppercase tracking-wide mb-2">Traditional PLC path vs this app — equivalent layers</p>
+        <svg viewBox="0 0 570 200" xmlns="http://www.w3.org/2000/svg" class="w-full" style="font-family:system-ui,sans-serif">
+          <defs>
+            <marker id="ws6-arr" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#94a3b8"/></marker>
+          </defs>
+          <!-- Labels -->
+          <text x="5" y="18" fill="#94a3b8" font-size="9" font-weight="600">TRADITIONAL PLC PATH</text>
+          <text x="5" y="118" fill="#94a3b8" font-size="9" font-weight="600">THIS APP (EQUIVALENT)</text>
+          <!-- Traditional path -->
+          <rect x="5" y="25" width="90" height="36" rx="5" fill="#1e3a5f"/>
+          <text x="50" y="40" text-anchor="middle" fill="#93c5fd" font-size="8" font-weight="600">IO-Link Sensor</text>
+          <text x="50" y="52" text-anchor="middle" fill="#bfdbfe" font-size="7">PDin every cycle</text>
+          <line x1="95" y1="43" x2="128" y2="43" stroke="#94a3b8" stroke-width="1.5" marker-end="url(#ws6-arr)"/>
+          <rect x="130" y="25" width="90" height="36" rx="5" fill="#ea580c"/>
+          <text x="175" y="40" text-anchor="middle" fill="white" font-size="8" font-weight="600">IO-Link Master</text>
+          <text x="175" y="52" text-anchor="middle" fill="#fed7aa" font-size="7">process image</text>
+          <line x1="220" y1="43" x2="253" y2="43" stroke="#94a3b8" stroke-width="1.5" marker-end="url(#ws6-arr)"/>
+          <rect x="255" y="25" width="90" height="36" rx="5" fill="#312e81"/>
+          <text x="300" y="40" text-anchor="middle" fill="#a5b4fc" font-size="8" font-weight="600">Fieldbus</text>
+          <text x="300" y="52" text-anchor="middle" fill="#c7d2fe" font-size="7">PROFINET / EtherNet/IP</text>
+          <line x1="345" y1="43" x2="378" y2="43" stroke="#94a3b8" stroke-width="1.5" marker-end="url(#ws6-arr)"/>
+          <rect x="380" y="25" width="90" height="36" rx="5" fill="#134e4a"/>
+          <text x="425" y="40" text-anchor="middle" fill="#99f6e4" font-size="8" font-weight="600">PLC</text>
+          <text x="425" y="52" text-anchor="middle" fill="#6ee7b7" font-size="7">scan cycle reads I/O</text>
+          <line x1="470" y1="43" x2="503" y2="43" stroke="#94a3b8" stroke-width="1.5" marker-end="url(#ws6-arr)"/>
+          <rect x="505" y="25" width="58" height="36" rx="5" fill="#1e293b"/>
+          <text x="534" y="40" text-anchor="middle" fill="#e2e8f0" font-size="8" font-weight="600">HMI</text>
+          <text x="534" y="52" text-anchor="middle" fill="#94a3b8" font-size="7">display</text>
+          <!-- This app path -->
+          <rect x="5" y="125" width="90" height="36" rx="5" fill="#1e3a5f"/>
+          <text x="50" y="140" text-anchor="middle" fill="#93c5fd" font-size="8" font-weight="600">IO-Link Sensor</text>
+          <text x="50" y="152" text-anchor="middle" fill="#bfdbfe" font-size="7">PDin via MQTT</text>
+          <line x1="95" y1="143" x2="128" y2="143" stroke="#94a3b8" stroke-width="1.5" marker-end="url(#ws6-arr)"/>
+          <rect x="130" y="125" width="90" height="36" rx="5" fill="#ea580c"/>
+          <text x="175" y="140" text-anchor="middle" fill="white" font-size="8" font-weight="600">AL1350</text>
+          <text x="175" y="152" text-anchor="middle" fill="#fed7aa" font-size="7">MQTT 500 ms push</text>
+          <line x1="220" y1="143" x2="253" y2="143" stroke="#94a3b8" stroke-width="1.5" marker-end="url(#ws6-arr)"/>
+          <rect x="255" y="125" width="90" height="36" rx="5" fill="#15803d"/>
+          <text x="300" y="140" text-anchor="middle" fill="#bbf7d0" font-size="8" font-weight="600">FastAPI / Mosquitto</text>
+          <text x="300" y="152" text-anchor="middle" fill="#86efac" font-size="7">WebSocket /ws</text>
+          <line x1="345" y1="143" x2="378" y2="143" stroke="#94a3b8" stroke-width="1.5" marker-end="url(#ws6-arr)"/>
+          <rect x="380" y="125" width="90" height="36" rx="5" fill="#451a03"/>
+          <text x="425" y="140" text-anchor="middle" fill="#fde68a" font-size="8" font-weight="600">decoder.py</text>
+          <text x="425" y="152" text-anchor="middle" fill="#fcd34d" font-size="7">PDin → values</text>
+          <line x1="470" y1="143" x2="503" y2="143" stroke="#94a3b8" stroke-width="1.5" marker-end="url(#ws6-arr)"/>
+          <rect x="505" y="125" width="58" height="36" rx="5" fill="#1e293b"/>
+          <text x="534" y="140" text-anchor="middle" fill="#e2e8f0" font-size="8" font-weight="600">Browser</text>
+          <text x="534" y="152" text-anchor="middle" fill="#94a3b8" font-size="7">this HMI</text>
+          <!-- Equivalence annotations -->
+          <text x="175" y="108" text-anchor="middle" fill="#f59e0b" font-size="7">≡ master maps PDin</text>
+          <text x="300" y="108" text-anchor="middle" fill="#f59e0b" font-size="7">≡ fieldbus transport</text>
+          <text x="425" y="108" text-anchor="middle" fill="#f59e0b" font-size="7">≡ PLC scan / decode</text>
+          <text x="534" y="108" text-anchor="middle" fill="#f59e0b" font-size="7">≡ HMI display</text>
+        </svg>
+      </div>
+
       <p class="text-base-content/90 leading-relaxed"><strong>1.</strong> How does IO-Link process data from a sensor reach a PLC I/O scan cycle?</p>
       <div class="space-y-2 mt-1">
         <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="cp2-ws5-q1" value="a" class="radio radio-sm radio-secondary"> The sensor connects directly to a PLC input card using its IO-Link cable, with the master acting only as a power supply and forwarding no data to the fieldbus network</label>
@@ -560,6 +909,30 @@ const WORKSHEETS = [
         <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="cp2-ws5-q4" value="c" class="radio radio-sm radio-secondary"> The Pi's MQTT broker has stopped forwarding messages and is queueing them internally until the buffer limit is reached</label>
       </div>
 
+      <!-- Challenge -->
+      <div class="rounded-xl border-2 border-warning/50 bg-warning/5 p-4 mt-4 space-y-3">
+        <p class="font-bold text-base-content text-base">🎯 Challenge — trace the data path end to end</p>
+        <p class="text-sm text-base-content/80">Use the <a href="#" data-page="home" class="link link-warning">Dashboard</a>, <a href="#" data-page="admin" class="link link-warning">Connection Diagnostics</a> and <a href="#" data-page="edge-device" class="link link-warning">Edge Device</a> pages. Tick each item when confirmed.</p>
+        <div class="space-y-2 text-sm">
+          <label class="cp2-kit-item flex items-center gap-3 cursor-pointer rounded-xl border-2 border-transparent px-3 py-2 transition-all duration-200">
+            <input type="checkbox" class="checkbox checkbox-sm checkbox-warning flex-shrink-0">
+            <span class="cp2-kit-text">Note the current <strong>temperature reading</strong> on Port 3 from the Dashboard</span>
+          </label>
+          <label class="cp2-kit-item flex items-center gap-3 cursor-pointer rounded-xl border-2 border-transparent px-3 py-2 transition-all duration-200">
+            <input type="checkbox" class="checkbox checkbox-sm checkbox-warning flex-shrink-0">
+            <span class="cp2-kit-text">Confirm the data path: <strong>AL1350 → Mosquitto → FastAPI → decoder.py → WebSocket → Browser</strong> — each layer is visible in this app</span>
+          </label>
+          <label class="cp2-kit-item flex items-center gap-3 cursor-pointer rounded-xl border-2 border-transparent px-3 py-2 transition-all duration-200">
+            <input type="checkbox" class="checkbox checkbox-sm checkbox-warning flex-shrink-0">
+            <span class="cp2-kit-text">Confirm the <strong>HTTP fallback path</strong> is also visible on the Connection Diagnostics latency graph</span>
+          </label>
+          <label class="cp2-kit-item flex items-center gap-3 cursor-pointer rounded-xl border-2 border-transparent px-3 py-2 transition-all duration-200">
+            <input type="checkbox" class="checkbox checkbox-sm checkbox-warning flex-shrink-0">
+            <span class="cp2-kit-text">On the Edge Device page, confirm <strong>FastAPI</strong> and <strong>Mosquitto</strong> are both shown as active services</span>
+          </label>
+        </div>
+      </div>
+
       <div class="divider my-2"></div>
       <button type="button" class="btn btn-ghost btn-sm ws-suggested-btn" data-target="cp2-ws5-suggested">Show suggested answers</button>
       <div id="cp2-ws5-suggested" class="hidden p-4 rounded-lg border border-base-300 bg-base-300/50 text-base-content/80 text-sm leading-relaxed ws-suggested">Q1: b — the IO-Link master maps PDin into its process image; the PLC reads this via fieldbus each scan cycle. Q2: io_link_fastapi.py (MQTT subscription, rows 1 and 3); decoder.py (PDin decode, row 2). Q3: c — faster fault identification, multi-machine monitoring, and trend history. Latency spike: b — points to IO-Link subnet congestion or AL1350 load.</div>
@@ -576,6 +949,37 @@ const WORKSHEETS = [
     prerequisites: 'Complete CP0002 Worksheets 1–5',
     contentHtml: `
       <p class="text-base-content/90 leading-relaxed"><strong class="text-base-content">Scenario:</strong> A production line has 40 sensors. On average, each sensor causes one fault per year. With standard sensors, locating and reconfiguring after a fault takes 35 minutes. With IO-Link, the HMI identifies the port and fault type instantly, and parameters are restored automatically — total time: 8 minutes.</p>
+
+      <!-- Downtime comparison bar chart -->
+      <div class="rounded-xl border border-base-300 bg-base-200 p-3 mt-3">
+        <p class="text-xs font-semibold text-base-content/60 uppercase tracking-wide mb-2">Annual downtime comparison — 40 sensors, 1 fault/sensor/year</p>
+        <svg viewBox="0 0 570 200" xmlns="http://www.w3.org/2000/svg" class="w-full" style="font-family:system-ui,sans-serif">
+          <!-- Per-fault bars (left group) -->
+          <text x="140" y="18" text-anchor="middle" fill="#94a3b8" font-size="9" font-weight="600">Per-fault MTTR</text>
+          <rect x="60" y="25" width="60" height="105" rx="4" fill="#dc2626"/>
+          <text x="90" y="145" text-anchor="middle" fill="#ef4444" font-size="10" font-weight="700">35 min</text>
+          <text x="90" y="158" text-anchor="middle" fill="#94a3b8" font-size="8">Standard</text>
+          <rect x="160" y="89" width="60" height="41" rx="4" fill="#16a34a"/>
+          <text x="190" y="145" text-anchor="middle" fill="#22c55e" font-size="10" font-weight="700">8 min</text>
+          <text x="190" y="158" text-anchor="middle" fill="#94a3b8" font-size="8">IO-Link</text>
+          <!-- Annual bars (right group) -->
+          <text x="420" y="18" text-anchor="middle" fill="#94a3b8" font-size="9" font-weight="600">Annual downtime (hours)</text>
+          <rect x="340" y="25" width="60" height="105" rx="4" fill="#dc2626"/>
+          <text x="370" y="145" text-anchor="middle" fill="#ef4444" font-size="10" font-weight="700">23.3 h</text>
+          <text x="370" y="158" text-anchor="middle" fill="#94a3b8" font-size="8">Standard</text>
+          <rect x="440" y="82" width="60" height="48" rx="4" fill="#16a34a"/>
+          <text x="470" y="145" text-anchor="middle" fill="#22c55e" font-size="10" font-weight="700">5.3 h</text>
+          <text x="470" y="158" text-anchor="middle" fill="#94a3b8" font-size="8">IO-Link</text>
+          <!-- Saving annotations -->
+          <rect x="238" y="68" width="84" height="24" rx="12" fill="#854d0e"/>
+          <text x="280" y="80" text-anchor="middle" fill="#fde68a" font-size="8" font-weight="700">Saves 27 min/fault</text>
+          <text x="280" y="91" text-anchor="middle" fill="#fcd34d" font-size="7">= 18 h/year saved</text>
+          <rect x="238" y="100" width="84" height="24" rx="12" fill="#14532d"/>
+          <text x="280" y="112" text-anchor="middle" fill="#86efac" font-size="8" font-weight="700">£90,000/year</text>
+          <text x="280" y="123" text-anchor="middle" fill="#6ee7b7" font-size="7">at £5,000/hour</text>
+          <text x="285" y="185" text-anchor="middle" fill="#64748b" font-size="8">Standard: 40 × 35 min = 1,400 min = 23.3 h · IO-Link: 40 × 8 min = 320 min = 5.3 h · Saving: 18 h/year</text>
+        </svg>
+      </div>
 
       <div class="overflow-x-auto rounded-lg border border-base-300 mt-3">
         <table class="table table-zebra max-w-3xl">
@@ -615,6 +1019,30 @@ const WORKSHEETS = [
         <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="cp2-ws6-q4" value="a" class="radio radio-sm radio-secondary"> Only process data (sensor values)</label>
         <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="cp2-ws6-q4" value="b" class="radio radio-sm radio-secondary"> Event data (faults and warnings) — these are the triggers for maintenance actions</label>
         <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="cp2-ws6-q4" value="c" class="radio radio-sm radio-secondary"> Service data only (parameters)</label>
+      </div>
+
+      <!-- Challenge -->
+      <div class="rounded-xl border-2 border-warning/50 bg-warning/5 p-4 mt-4 space-y-3">
+        <p class="font-bold text-base-content text-base">🎯 Challenge — complete the business case calculation</p>
+        <p class="text-sm text-base-content/80">Use the calculation table above and the scenario figures. Tick each item when you have verified the answer.</p>
+        <div class="space-y-2 text-sm">
+          <label class="cp2-kit-item flex items-center gap-3 cursor-pointer rounded-xl border-2 border-transparent px-3 py-2 transition-all duration-200">
+            <input type="checkbox" class="checkbox checkbox-sm checkbox-warning flex-shrink-0">
+            <span class="cp2-kit-text">Fill in the calculation table above — verify: <strong>Standard = 23.3 h/year</strong>, IO-Link = 5.3 h/year</span>
+          </label>
+          <label class="cp2-kit-item flex items-center gap-3 cursor-pointer rounded-xl border-2 border-transparent px-3 py-2 transition-all duration-200">
+            <input type="checkbox" class="checkbox checkbox-sm checkbox-warning flex-shrink-0">
+            <span class="cp2-kit-text">Confirm the annual saving is <strong>18 hours</strong> (23.3 h − 5.3 h = 18 h) and that this matches the bar chart above</span>
+          </label>
+          <label class="cp2-kit-item flex items-center gap-3 cursor-pointer rounded-xl border-2 border-transparent px-3 py-2 transition-all duration-200">
+            <input type="checkbox" class="checkbox checkbox-sm checkbox-warning flex-shrink-0">
+            <span class="cp2-kit-text">Scale to 200 sensors: calculate annual downtime hours saved (200 sensors × 1 fault × 27 min saving ÷ 60 = <strong>90 h/year</strong>)</span>
+          </label>
+          <label class="cp2-kit-item flex items-center gap-3 cursor-pointer rounded-xl border-2 border-transparent px-3 py-2 transition-all duration-200">
+            <input type="checkbox" class="checkbox checkbox-sm checkbox-warning flex-shrink-0">
+            <span class="cp2-kit-text">Calculate the financial saving for 200 sensors at £5,000/hour production value: 90 h × £5,000 = <strong>£450,000/year</strong></span>
+          </label>
+        </div>
       </div>
 
       <div class="divider my-2"></div>
@@ -771,7 +1199,7 @@ function initWorksheetInteractivity(container) {
       if (el) el.classList.toggle('hidden');
     });
   });
-  if (container.querySelector('#cp2-kit-checklist') || container.querySelector('#cp2-verify-checklist')) initCp2KitChecklist(container);
+  if (container.querySelector('.cp2-kit-item')) initCp2KitChecklist(container);
   if (container.querySelector('#cp2-sys-panel')) initLiveCp2Intro(container);
 
   const ws2Correct = { 'ws2-1': 'events', 'ws2-2': 'params', 'ws2-3': 'events', 'ws2-4': 'events' };
