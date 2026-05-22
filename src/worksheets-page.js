@@ -185,6 +185,80 @@ const WORKSHEETS = [
         </div>
       </div>
 
+      <!-- Kit diagram -->
+      <div class="rounded-xl border border-base-300 bg-base-200 p-3 mt-3">
+        <p class="text-xs font-semibold text-base-content/60 uppercase tracking-wide mb-2">How it all connects</p>
+        <svg viewBox="0 0 570 205" xmlns="http://www.w3.org/2000/svg" class="w-full" style="font-family:system-ui,sans-serif">
+
+          <!-- Sensor boxes -->
+          <rect x="2"   y="24"  width="124" height="32" rx="5" fill="#3b82f6"/>
+          <text x="64"  y="37"  text-anchor="middle" fill="white" font-size="10" font-weight="600">Photoelectric</text>
+          <text x="64"  y="49"  text-anchor="middle" fill="#bfdbfe" font-size="8">Port 1 · IO-Link</text>
+
+          <rect x="2"   y="64"  width="124" height="32" rx="5" fill="#7c3aed"/>
+          <text x="64"  y="77"  text-anchor="middle" fill="white" font-size="10" font-weight="600">Capacitive</text>
+          <text x="64"  y="89"  text-anchor="middle" fill="#ddd6fe" font-size="8">Port 2 · IO-Link</text>
+
+          <rect x="2"   y="104" width="124" height="32" rx="5" fill="#d97706"/>
+          <text x="64"  y="117" text-anchor="middle" fill="white" font-size="10" font-weight="600">Temperature</text>
+          <text x="64"  y="129" text-anchor="middle" fill="#fde68a" font-size="8">Port 3 · IO-Link</text>
+
+          <rect x="2"   y="144" width="124" height="32" rx="5" fill="#0d9488"/>
+          <text x="64"  y="157" text-anchor="middle" fill="white" font-size="10" font-weight="600">Light Stack</text>
+          <text x="64"  y="169" text-anchor="middle" fill="#99f6e4" font-size="8">Port 4 · IO-Link</text>
+
+          <!-- IO-Link cables to master -->
+          <line x1="126" y1="40"  x2="152" y2="40"  stroke="#94a3b8" stroke-width="2"/>
+          <line x1="126" y1="80"  x2="152" y2="80"  stroke="#94a3b8" stroke-width="2"/>
+          <line x1="126" y1="120" x2="152" y2="120" stroke="#94a3b8" stroke-width="2"/>
+          <line x1="126" y1="160" x2="152" y2="160" stroke="#94a3b8" stroke-width="2"/>
+
+          <!-- IO-Link Master -->
+          <rect x="150" y="10" width="112" height="182" rx="8" fill="#ea580c"/>
+          <!-- Port sockets on left edge -->
+          <rect x="152" y="33" width="8" height="14" rx="2" fill="#9a3412"/>
+          <rect x="152" y="73" width="8" height="14" rx="2" fill="#9a3412"/>
+          <rect x="152" y="113" width="8" height="14" rx="2" fill="#9a3412"/>
+          <rect x="152" y="153" width="8" height="14" rx="2" fill="#9a3412"/>
+          <text x="216" y="90"  text-anchor="middle" fill="white" font-size="12" font-weight="700">IO-Link</text>
+          <text x="216" y="106" text-anchor="middle" fill="white" font-size="12" font-weight="700">Master</text>
+          <text x="216" y="122" text-anchor="middle" fill="#fed7aa" font-size="8">IFM AL1350</text>
+
+          <!-- Ethernet -->
+          <line x1="262" y1="100" x2="320" y2="100" stroke="#64748b" stroke-width="2.5" stroke-dasharray="6,3"/>
+          <polygon points="320,96 320,104 328,100" fill="#64748b"/>
+          <text x="291" y="92" text-anchor="middle" fill="#94a3b8" font-size="9" font-weight="600">Ethernet</text>
+
+          <!-- Raspberry Pi -->
+          <rect x="328" y="62" width="100" height="76" rx="8" fill="#15803d"/>
+          <text x="378" y="95"  text-anchor="middle" fill="white" font-size="11" font-weight="700">Raspberry</text>
+          <text x="378" y="110" text-anchor="middle" fill="white" font-size="11" font-weight="700">Pi</text>
+          <text x="378" y="126" text-anchor="middle" fill="#bbf7d0" font-size="8">Edge Device</text>
+
+          <!-- HDMI -->
+          <line x1="428" y1="100" x2="462" y2="100" stroke="#64748b" stroke-width="2.5" stroke-dasharray="6,3"/>
+          <polygon points="462,96 462,104 470,100" fill="#64748b"/>
+          <text x="445" y="92" text-anchor="middle" fill="#94a3b8" font-size="9" font-weight="600">HDMI</text>
+
+          <!-- Monitor -->
+          <rect x="470" y="50"  width="96" height="72" rx="5" fill="#334155"/>
+          <rect x="476" y="56"  width="84" height="54" rx="3" fill="#0f172a"/>
+          <!-- Mock dashboard lines -->
+          <rect x="482" y="63" width="32" height="4"  rx="1" fill="#3b82f6" opacity="0.8"/>
+          <rect x="482" y="71" width="56" height="3"  rx="1" fill="#475569"/>
+          <rect x="482" y="78" width="44" height="3"  rx="1" fill="#475569"/>
+          <rect x="482" y="85" width="50" height="3"  rx="1" fill="#10b981" opacity="0.7"/>
+          <rect x="482" y="92" width="38" height="3"  rx="1" fill="#475569"/>
+          <!-- Stand -->
+          <rect x="509" y="122" width="18" height="5" rx="2" fill="#334155"/>
+          <rect x="501" y="127" width="34" height="5" rx="2" fill="#1e293b"/>
+          <text x="518" y="145" text-anchor="middle" fill="#94a3b8" font-size="9">HMI Screen</text>
+
+          <!-- Flow label -->
+          <text x="285" y="198" text-anchor="middle" fill="#64748b" font-size="8">Data flows left → right: sensors send to master, master sends to Pi, Pi sends to screen</text>
+        </svg>
+      </div>
+
       <!-- M-size explainer -->
       <div class="rounded-lg border border-base-300 bg-base-200 p-3 mt-3 text-sm">
         <p class="font-bold text-base-content mb-1">📏 What does M18 mean?</p>
