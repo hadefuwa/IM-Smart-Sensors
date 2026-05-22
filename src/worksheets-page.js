@@ -377,27 +377,52 @@ const WORKSHEETS = [
     relatedDashboard: 'Dashboard: Port Status overview',
     prerequisites: '',
     contentHtml: `
-      <p class="text-base-content/90 leading-relaxed">A normal sensor gives you one signal: <strong>on</strong> or <strong>off</strong>. That's it. If it stops working, you have no idea why.</p>
-      <p class="text-base-content/90 leading-relaxed mt-2">A <strong class="text-base-content">smart sensor</strong> (IO-Link sensor) uses the same 3-wire cable but it can also send back:</p>
-      <ul class="list-disc list-inside space-y-1 text-base-content/90 ml-2 mt-1">
-        <li>What it's measuring right now (temperature, distance, object detected, etc.)</li>
-        <li>Whether it has a fault — and what kind</li>
-        <li>Its own serial number and model</li>
-        <li>Settings you can change remotely</li>
-      </ul>
-      <p class="mt-4 font-medium text-base-content"><strong>Q1.</strong> A normal sensor stops switching. You can't tell why. With an IO-Link sensor in the same situation, what extra information might you see?</p>
-      <textarea class="textarea textarea-bordered w-full" rows="3" placeholder="Your answer..."></textarea>
+      <p class="text-base-content/90 leading-relaxed text-base">A normal sensor gives you one thing — on or off. A smart sensor uses the same cable but tells you a lot more. Here's the difference.</p>
+
+      <div class="rounded-xl border-2 border-base-300 bg-base-200 p-4 mt-4 space-y-2">
+        <p class="font-bold text-base-content">🔌 Normal Sensor</p>
+        <ul class="list-disc list-inside space-y-1 text-sm text-base-content/80 ml-2">
+          <li>Output: ON or OFF — that's it</li>
+          <li>If it stops working, you have no idea why</li>
+          <li>You have to test it manually to find the fault</li>
+        </ul>
+      </div>
+
+      <div class="rounded-xl border-2 border-primary/30 bg-primary/5 p-4 mt-3 space-y-2">
+        <p class="font-bold text-base-content">💡 IO-Link Smart Sensor — same cable, more information</p>
+        <ul class="list-disc list-inside space-y-1 text-sm text-base-content/80 ml-2">
+          <li>What it is measuring right now — temperature in °C, object detected yes/no, distance</li>
+          <li>Fault codes — for example "lens dirty" or "wire break"</li>
+          <li>Its own model number and serial number</li>
+          <li>Settings you can change remotely without touching the sensor</li>
+        </ul>
+      </div>
+
+      <div class="rounded-xl border-2 border-info/30 bg-info/5 p-4 mt-3">
+        <p class="font-bold text-base-content mb-1">📦 Same Cable — No Extra Wiring</p>
+        <p class="text-sm text-base-content/80">IO-Link uses the standard 3-wire sensor cable. The master (AL1350) and the sensor automatically agree to talk IO-Link — you do not need a special cable or extra wiring. Same connector you already know, all the extra data.</p>
+      </div>
+
+      <p class="mt-4 font-medium text-base-content"><strong>Q1.</strong> A sensor stops switching and you don't know why. What extra information might an IO-Link sensor show you that a normal sensor can't?</p>
+      <div class="space-y-2 mt-1">
+        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="ws1-q1" value="a" class="radio radio-sm radio-primary"> Nothing — IO-Link sensors behave exactly the same as normal sensors when faulty</label>
+        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="ws1-q1" value="b" class="radio radio-sm radio-primary"> A fault code such as "lens dirty" or "wire break" — telling you exactly what to fix</label>
+        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="ws1-q1" value="c" class="radio radio-sm radio-primary"> The name of the person who installed it</label>
+      </div>
+
       <p class="mt-3 font-medium text-base-content"><strong>Q2.</strong> IO-Link uses:</p>
-      <div class="space-y-2">
+      <div class="space-y-2 mt-1">
         <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="ws1-q2" value="a" class="radio radio-sm radio-primary"> A completely different cable and connector from a standard sensor</label>
         <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="ws1-q2" value="b" class="radio radio-sm radio-primary"> The same 3-wire cable — the master and sensor agree to talk IO-Link automatically</label>
-        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="ws1-q2" value="c" class="radio radio-sm radio-primary"> An ethernet cable</label>
+        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="ws1-q2" value="c" class="radio radio-sm radio-primary"> An ethernet cable with a special connector</label>
       </div>
-      <p class="mt-3 font-medium text-base-content"><strong>Q3.</strong> Look at the Dashboard. How many ports does the IO-Link master have, and what colour are the port cards?</p>
-      <textarea class="textarea textarea-bordered w-full" rows="2" placeholder="Your answer..."></textarea>
-      <div class="divider my-2"></div>
-      <button type="button" class="btn btn-ghost btn-sm ws-suggested-btn" data-target="ws1-suggested">Show suggested answers</button>
-      <div id="ws1-suggested" class="hidden p-4 rounded-lg border border-base-300 bg-base-300/50 text-base-content/80 text-sm leading-relaxed ws-suggested">Q1: You might see a fault code like "wire break" or "lens dirty" — telling you exactly what to fix instead of guessing. Q2: b — same cable, auto-negotiation. Q3: The AL1350 has 8 ports; connected ports show green, disconnected show grey/red depending on state.</div>
+
+      <p class="mt-3 font-medium text-base-content"><strong>Q3.</strong> Go to the Dashboard. How many ports does the IO-Link Master have?</p>
+      <div class="space-y-2 mt-1">
+        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="ws1-q3" value="a" class="radio radio-sm radio-primary"> 4 ports</label>
+        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="ws1-q3" value="b" class="radio radio-sm radio-primary"> 8 ports</label>
+        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="ws1-q3" value="c" class="radio radio-sm radio-primary"> 16 ports</label>
+      </div>
     `
   },
   {
@@ -450,22 +475,26 @@ const WORKSHEETS = [
         <p id="ws2-task-done" class="hidden text-success text-sm font-bold mt-1">✓ Task complete!</p>
       </div>
 
-      <p class="mt-4 font-medium text-base-content"><strong>Q1.</strong> Watch the waveform above. Wave your hand in front of the sensor — describe what the chart does when an object is detected.</p>
-      <textarea class="textarea textarea-bordered w-full" rows="2" placeholder="Your answer..."></textarea>
+      <p class="mt-4 font-medium text-base-content"><strong>Q1.</strong> Wave your hand in front of the sensor and watch the waveform above. What does the chart do when an object is detected?</p>
+      <div class="space-y-2 mt-1">
+        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="ws2-q1" value="a" class="radio radio-sm radio-primary"> The line jumps from 0 to 1, then drops back to 0 when your hand moves away</label>
+        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="ws2-q1" value="b" class="radio radio-sm radio-primary"> The line stays flat at 0 the whole time</label>
+        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="ws2-q1" value="c" class="radio radio-sm radio-primary"> The line drops below zero when something is detected</label>
+      </div>
 
-      <p class="mt-3 font-medium text-base-content"><strong>Q2.</strong> What does it mean if the sensor's output is always ON, even when nothing is in front of it?</p>
-      <div class="space-y-2">
+      <p class="mt-3 font-medium text-base-content"><strong>Q2.</strong> The sensor output is always ON even when nothing is in front of it. What is the most likely cause?</p>
+      <div class="space-y-2 mt-1">
         <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="ws2-q2" value="a" class="radio radio-sm radio-primary"> The sensor is working perfectly</label>
-        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="ws2-q2" value="b" class="radio radio-sm radio-primary"> The lens may be dirty, or there's a background object reflecting the beam</label>
+        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="ws2-q2" value="b" class="radio radio-sm radio-primary"> The lens may be dirty, or a background object is reflecting the beam</label>
         <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="ws2-q2" value="c" class="radio radio-sm radio-primary"> The cable is broken</label>
       </div>
 
-      <p class="mt-3 font-medium text-base-content"><strong>Q3.</strong> Look at the signal quality chart above. What happens to signal quality when you hold your hand very close versus 30 cm away? Write your observation.</p>
-      <textarea class="textarea textarea-bordered w-full" rows="2" placeholder="What you see..."></textarea>
-
-      <div class="divider my-2"></div>
-      <button type="button" class="btn btn-ghost btn-sm ws-suggested-btn" data-target="ws2-suggested">Show suggested answers</button>
-      <div id="ws2-suggested" class="hidden p-4 rounded-lg border border-base-300 bg-base-300/50 text-base-content/80 text-sm leading-relaxed ws-suggested">Q1: The waveform jumps from 0 to 1 when detected, then back to 0 — like a square pulse. Q2: b — dirty lens or background reflection. Q3: Signal quality is highest at the optimal sensing distance; too close or too far reduces it.</div>
+      <p class="mt-3 font-medium text-base-content"><strong>Q3.</strong> Hold your hand very close to the sensor face, then slowly move it 30 cm away. What happens to the signal quality reading?</p>
+      <div class="space-y-2 mt-1">
+        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="ws2-q3" value="a" class="radio radio-sm radio-primary"> Signal quality stays constant regardless of distance</label>
+        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="ws2-q3" value="b" class="radio radio-sm radio-primary"> Signal quality keeps increasing the further away you go</label>
+        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="ws2-q3" value="c" class="radio radio-sm radio-primary"> Signal quality is highest at the ideal sensing distance — too close or too far reduces it</label>
+      </div>
     `
   },
   {
@@ -570,22 +599,26 @@ const WORKSHEETS = [
         <p id="ws3-task-done" class="hidden text-success text-sm font-bold mt-1">✓ Task complete!</p>
       </div>
 
-      <p class="mt-4 font-medium text-base-content"><strong>Q1.</strong> Watch the counter above as you touch the sensor. What triggers a new count — the moment you touch, or continuously while touching?</p>
-      <textarea class="textarea textarea-bordered w-full" rows="2" placeholder="Your answer..."></textarea>
+      <p class="mt-4 font-medium text-base-content"><strong>Q1.</strong> Watch the detection counter as you touch the sensor. What triggers a new count?</p>
+      <div class="space-y-2 mt-1">
+        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="ws3-q1" value="a" class="radio radio-sm radio-secondary"> Every second while your hand is touching</label>
+        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="ws3-q1" value="b" class="radio radio-sm radio-secondary"> The moment detection goes from off to on — one touch = one count, no matter how long you hold it</label>
+        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="ws3-q1" value="c" class="radio radio-sm radio-secondary"> Only when you pull your hand away</label>
+      </div>
 
-      <p class="mt-3 font-medium text-base-content"><strong>Q2.</strong> Name two materials a capacitive sensor can detect that a photoelectric sensor cannot.</p>
-      <textarea class="textarea textarea-bordered w-full" rows="2" placeholder="Your answer..."></textarea>
+      <p class="mt-3 font-medium text-base-content"><strong>Q2.</strong> Which pair of materials can a capacitive sensor detect that a photoelectric sensor cannot?</p>
+      <div class="space-y-2 mt-1">
+        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="ws3-q2" value="a" class="radio radio-sm radio-secondary"> Sound and light</label>
+        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="ws3-q2" value="b" class="radio radio-sm radio-secondary"> Water and powder — even through a container wall</label>
+        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="ws3-q2" value="c" class="radio radio-sm radio-secondary"> Heat and pressure</label>
+      </div>
 
-      <p class="mt-3 font-medium text-base-content"><strong>Q3.</strong> The capacitive sensor output is always ON even when nothing is near it. What's the most likely cause?</p>
-      <div class="space-y-2">
-        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="ws3-q3" value="a" class="radio radio-sm radio-secondary"> Sensitivity too high — detecting the container wall or nearby objects</label>
+      <p class="mt-3 font-medium text-base-content"><strong>Q3.</strong> The capacitive sensor output is always ON even when nothing is near it. What is the most likely cause?</p>
+      <div class="space-y-2 mt-1">
+        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="ws3-q3" value="a" class="radio radio-sm radio-secondary"> Sensitivity too high — it is detecting the container wall or nearby objects</label>
         <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="ws3-q3" value="b" class="radio radio-sm radio-secondary"> The sensor needs replacing immediately</label>
         <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="ws3-q3" value="c" class="radio radio-sm radio-secondary"> The cable is the wrong colour</label>
       </div>
-
-      <div class="divider my-2"></div>
-      <button type="button" class="btn btn-ghost btn-sm ws-suggested-btn" data-target="ws3-suggested">Show suggested answers</button>
-      <div id="ws3-suggested" class="hidden p-4 rounded-lg border border-base-300 bg-base-300/50 text-base-content/80 text-sm leading-relaxed ws-suggested">Q1: A new count triggers on the rising edge — the moment detection goes from 0→1. Holding your hand on it counts as one detection, not continuous. Q2: Water/liquid, powder, granules, plastic, cardboard — anything with a different dielectric constant from air. Q3: a — reduce sensitivity so it only reacts to the material, not the vessel wall.</div>
     `
   },
   {
@@ -673,22 +706,26 @@ const WORKSHEETS = [
         <p id="ws4-warm-done" class="hidden text-success text-sm font-bold mt-1">✓ Task complete — you warmed it by 2°C!</p>
       </div>
 
-      <p class="mt-4 font-medium text-base-content"><strong>Q1.</strong> A standard temperature switch gives you one output — too hot = trip. What can you do with an IO-Link temperature sensor that you can't do with a switch?</p>
-      <textarea class="textarea textarea-bordered w-full" rows="2" placeholder="Your answer..."></textarea>
-
-      <p class="mt-3 font-medium text-base-content"><strong>Q2.</strong> Move the threshold slider so it's just above the current temperature, then hold the sensor for 30 seconds. Describe what happens to the alarm state indicator.</p>
-      <textarea class="textarea textarea-bordered w-full" rows="2" placeholder="What you see..."></textarea>
-
-      <p class="mt-3 font-medium text-base-content"><strong>Q3.</strong> The temperature reading suddenly drops to −40 °C in a room-temperature lab. What's the most likely cause?</p>
-      <div class="space-y-2">
-        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="ws4-q3" value="a" class="radio radio-sm radio-warning"> The lab is very cold</label>
-        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="ws4-q3" value="b" class="radio radio-sm radio-warning"> Broken or disconnected sensor — −40 °C is a common default/error value for temperature sensors</label>
-        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="ws4-q3" value="c" class="radio radio-sm radio-warning"> The setpoint has been changed</label>
+      <p class="mt-4 font-medium text-base-content"><strong>Q1.</strong> A basic temperature switch gives you one output — too hot = trip. What extra can you do with an IO-Link temperature sensor?</p>
+      <div class="space-y-2 mt-1">
+        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="ws4-q1" value="a" class="radio radio-sm radio-warning"> Nothing extra — it works exactly the same as a switch</label>
+        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="ws4-q1" value="b" class="radio radio-sm radio-warning"> See the actual live temperature in °C, trend it over time, and get early warning before the trip point is reached</label>
+        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="ws4-q1" value="c" class="radio radio-sm radio-warning"> It only works at high temperatures above 100 °C</label>
       </div>
 
-      <div class="divider my-2"></div>
-      <button type="button" class="btn btn-ghost btn-sm ws-suggested-btn" data-target="ws4-suggested">Show suggested answers</button>
-      <div id="ws4-suggested" class="hidden p-4 rounded-lg border border-base-300 bg-base-300/50 text-base-content/80 text-sm leading-relaxed ws-suggested">Q1: See the actual live temperature, trend it over time, get early warning before the trip point is reached. Q2: Once the live temperature crosses your slider threshold, the alarm state should turn red and say "ABOVE THRESHOLD". Q3: b — sudden jump to −40 °C usually means a disconnected or failed probe.</div>
+      <p class="mt-3 font-medium text-base-content"><strong>Q2.</strong> Move the SP1 slider just above the current temperature, then hold the sensor in your hands for 30 seconds. What should happen to the alarm state?</p>
+      <div class="space-y-2 mt-1">
+        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="ws4-q2" value="a" class="radio radio-sm radio-warning"> Nothing changes — the alarm only activates from the main dashboard</label>
+        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="ws4-q2" value="b" class="radio radio-sm radio-warning"> The alarm state turns red and shows "ABOVE THRESHOLD" once the temperature crosses your slider value</label>
+        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="ws4-q2" value="c" class="radio radio-sm radio-warning"> The sensor turns itself off to prevent overheating</label>
+      </div>
+
+      <p class="mt-3 font-medium text-base-content"><strong>Q3.</strong> The temperature reading suddenly drops to −40 °C in a room-temperature lab. What is the most likely cause?</p>
+      <div class="space-y-2 mt-1">
+        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="ws4-q3" value="a" class="radio radio-sm radio-warning"> The lab is very cold</label>
+        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="ws4-q3" value="b" class="radio radio-sm radio-warning"> Broken or disconnected sensor — −40 °C is a common default error value for temperature sensors</label>
+        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="ws4-q3" value="c" class="radio radio-sm radio-warning"> The setpoint has been changed</label>
+      </div>
     `
   },
   {
@@ -747,18 +784,26 @@ const WORKSHEETS = [
         </table>
       </div>
 
-      <p class="mt-4 font-medium text-base-content"><strong>Q1.</strong> Look at the live display above. What colour(s) and animation state is the CL50 currently showing? What would that mean on a real machine?</p>
-      <textarea class="textarea textarea-bordered w-full" rows="2" placeholder="Your answer..."></textarea>
+      <p class="mt-4 font-medium text-base-content"><strong>Q1.</strong> Look at the live display above. The CL50 is showing solid green. What would that mean on a real factory machine?</p>
+      <div class="space-y-2 mt-1">
+        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="ws5-q1" value="a" class="radio radio-sm radio-accent"> Machine has a fault and has stopped</label>
+        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="ws5-q1" value="b" class="radio radio-sm radio-accent"> Machine is running normally — all good</label>
+        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="ws5-q1" value="c" class="radio radio-sm radio-accent"> Machine is in standby waiting for an operator</label>
+      </div>
 
       <p class="mt-3 font-medium text-base-content"><strong>Q2.</strong> The light stack shows flashing red. What should a maintenance technician do first?</p>
-      <textarea class="textarea textarea-bordered w-full" rows="2" placeholder="Your answer..."></textarea>
+      <div class="space-y-2 mt-1">
+        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="ws5-q2" value="a" class="radio radio-sm radio-accent"> Immediately restart the machine and see if it goes away</label>
+        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="ws5-q2" value="b" class="radio radio-sm radio-accent"> Check the fault log or HMI for the cause — do not reset without knowing why</label>
+        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="ws5-q2" value="c" class="radio radio-sm radio-accent"> Replace the light stack — a flashing light means the unit is faulty</label>
+      </div>
 
-      <p class="mt-3 font-medium text-base-content"><strong>Q3.</strong> Why is it useful that IO-Link tells you which segment is on and whether it's flashing or solid — rather than just triggering a "light is on" alarm?</p>
-      <textarea class="textarea textarea-bordered w-full" rows="2" placeholder="Your answer..."></textarea>
-
-      <div class="divider my-2"></div>
-      <button type="button" class="btn btn-ghost btn-sm ws-suggested-btn" data-target="ws5-suggested">Show suggested answers</button>
-      <div id="ws5-suggested" class="hidden p-4 rounded-lg border border-base-300 bg-base-300/50 text-base-content/80 text-sm leading-relaxed ws-suggested">Q1: Depends on current machine state — describe what you see. Q2: Check the machine's fault log or HMI for the cause — don't just reset without knowing why. Q3: Precise state information can be logged and used to diagnose intermittent faults — e.g. knowing it flashed amber 3 times before going red is a clue you'd miss with a simple alarm.</div>
+      <p class="mt-3 font-medium text-base-content"><strong>Q3.</strong> Why is it useful that IO-Link tells you the exact colour and whether it is flashing or solid — rather than just a "light is on" alarm?</p>
+      <div class="space-y-2 mt-1">
+        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="ws5-q3" value="a" class="radio radio-sm radio-accent"> It is not useful — a simple alarm is all you need</label>
+        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="ws5-q3" value="b" class="radio radio-sm radio-accent"> The exact state can be logged — knowing it flashed amber three times before going red is a clue you would miss with a basic alarm</label>
+        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="ws5-q3" value="c" class="radio radio-sm radio-accent"> It looks nicer on the dashboard</label>
+      </div>
     `
   },
   {
@@ -770,40 +815,57 @@ const WORKSHEETS = [
     relatedDashboard: 'Dashboard: Simulate Fault, Active Port Details',
     prerequisites: 'Complete Worksheets 1–5',
     contentHtml: `
-      <p class="text-base-content/90 leading-relaxed">For each scenario, write what you would do — then check your answer.</p>
-      <div class="space-y-4 mt-2">
-        <div class="rounded-lg border border-base-300 bg-base-200 p-4">
-          <p class="font-semibold text-base-content">Scenario A — Port 1 (Photoelectric)</p>
-          <p class="text-base-content/80 text-sm mt-1">Dashboard shows <strong>Lens contamination warning</strong>. Output stuck ON even when the conveyor is empty.</p>
-          <textarea class="textarea textarea-bordered w-full textarea-sm mt-2" rows="2" placeholder="What do you do?"></textarea>
-        </div>
-        <div class="rounded-lg border border-base-300 bg-base-200 p-4">
-          <p class="font-semibold text-base-content">Scenario B — Port 2 (Capacitive)</p>
-          <p class="text-base-content/80 text-sm mt-1">Sensor replaced. Output permanently ON even though the tank is empty.</p>
-          <textarea class="textarea textarea-bordered w-full textarea-sm mt-2" rows="2" placeholder="What do you do?"></textarea>
-        </div>
-        <div class="rounded-lg border border-base-300 bg-base-200 p-4">
-          <p class="font-semibold text-base-content">Scenario C — Port 3 (Temperature)</p>
-          <p class="text-base-content/80 text-sm mt-1">Temperature reading suddenly shows −40 °C in a room-temperature lab.</p>
-          <p class="mt-2 font-medium text-sm">Most likely fault?</p>
-          <div class="space-y-2 mt-1">
-            <label class="flex items-center gap-2 cursor-pointer text-sm"><input type="radio" name="ws6-c" value="a" class="radio radio-xs radio-primary"> The lab is too cold</label>
-            <label class="flex items-center gap-2 cursor-pointer text-sm"><input type="radio" name="ws6-c" value="b" class="radio radio-xs radio-primary"> Broken/disconnected sensor — −40 °C is a common error default value</label>
-            <label class="flex items-center gap-2 cursor-pointer text-sm"><input type="radio" name="ws6-c" value="c" class="radio radio-xs radio-primary"> Setpoint changed</label>
+      <p class="text-base-content/90 leading-relaxed text-base">Read each scenario, then pick the best action. These are real faults you will come across on the job.</p>
+      <div class="space-y-4 mt-3">
+
+        <div class="rounded-xl border-2 border-primary/30 bg-primary/5 p-4 space-y-3">
+          <p class="font-bold text-base-content">🔦 Scenario A — Port 1 (Photoelectric)</p>
+          <p class="text-sm text-base-content/80">Dashboard shows <strong>Lens contamination warning</strong>. Output is stuck ON even when the conveyor is empty.</p>
+          <p class="font-medium text-sm text-base-content mt-2">What do you do first?</p>
+          <div class="space-y-2">
+            <label class="flex items-center gap-2 cursor-pointer text-sm"><input type="radio" name="ws6-a" value="a" class="radio radio-xs radio-primary"> Replace the sensor immediately</label>
+            <label class="flex items-center gap-2 cursor-pointer text-sm"><input type="radio" name="ws6-a" value="b" class="radio radio-xs radio-primary"> Clean the lens — if it keeps happening, check for reflective surfaces behind the detection zone</label>
+            <label class="flex items-center gap-2 cursor-pointer text-sm"><input type="radio" name="ws6-a" value="c" class="radio radio-xs radio-primary"> Adjust the setpoint higher</label>
           </div>
         </div>
-        <div class="rounded-lg border border-base-300 bg-base-200 p-4">
-          <p class="font-semibold text-base-content">Scenario D — Port 4 (Light Stack)</p>
-          <p class="text-base-content/80 text-sm mt-1">Red segment won't turn off even after operator says the fault was cleared. Two possible causes?</p>
-          <textarea class="textarea textarea-bordered w-full textarea-sm mt-2" rows="2" placeholder="Your answer..."></textarea>
+
+        <div class="rounded-xl border-2 border-secondary/30 bg-secondary/5 p-4 space-y-3">
+          <p class="font-bold text-base-content">🫙 Scenario B — Port 2 (Capacitive)</p>
+          <p class="text-sm text-base-content/80">Sensor was just replaced. Output is permanently ON even though the tank is empty.</p>
+          <p class="font-medium text-sm text-base-content mt-2">Most likely cause and action?</p>
+          <div class="space-y-2">
+            <label class="flex items-center gap-2 cursor-pointer text-sm"><input type="radio" name="ws6-b" value="a" class="radio radio-xs radio-secondary"> The replacement sensor is faulty — send it back</label>
+            <label class="flex items-center gap-2 cursor-pointer text-sm"><input type="radio" name="ws6-b" value="b" class="radio radio-xs radio-secondary"> Sensitivity is set too high — the sensor is detecting the container wall. Reduce sensitivity or re-teach</label>
+            <label class="flex items-center gap-2 cursor-pointer text-sm"><input type="radio" name="ws6-b" value="c" class="radio radio-xs radio-secondary"> The cable polarity is reversed</label>
+          </div>
+        </div>
+
+        <div class="rounded-xl border-2 border-warning/30 bg-warning/5 p-4 space-y-3">
+          <p class="font-bold text-base-content">🌡️ Scenario C — Port 3 (Temperature)</p>
+          <p class="text-sm text-base-content/80">Temperature reading suddenly shows −40 °C in a room-temperature lab.</p>
+          <p class="font-medium text-sm text-base-content mt-2">Most likely fault?</p>
+          <div class="space-y-2">
+            <label class="flex items-center gap-2 cursor-pointer text-sm"><input type="radio" name="ws6-c" value="a" class="radio radio-xs radio-warning"> The lab is too cold</label>
+            <label class="flex items-center gap-2 cursor-pointer text-sm"><input type="radio" name="ws6-c" value="b" class="radio radio-xs radio-warning"> Broken or disconnected sensor — −40 °C is a common default error value for temperature sensors</label>
+            <label class="flex items-center gap-2 cursor-pointer text-sm"><input type="radio" name="ws6-c" value="c" class="radio radio-xs radio-warning"> The setpoint was changed</label>
+          </div>
+        </div>
+
+        <div class="rounded-xl border-2 border-accent/30 bg-accent/5 p-4 space-y-3">
+          <p class="font-bold text-base-content">🚦 Scenario D — Port 4 (Light Stack)</p>
+          <p class="text-sm text-base-content/80">The red segment will not turn off even after the operator says the fault was cleared.</p>
+          <p class="font-medium text-sm text-base-content mt-2">Which is the most likely explanation?</p>
+          <div class="space-y-2">
+            <label class="flex items-center gap-2 cursor-pointer text-sm"><input type="radio" name="ws6-d" value="a" class="radio radio-xs radio-accent"> The light stack hardware is broken</label>
+            <label class="flex items-center gap-2 cursor-pointer text-sm"><input type="radio" name="ws6-d" value="b" class="radio radio-xs radio-accent"> The fault was not actually cleared in the controller — the PLC is still sending a "red on" command</label>
+            <label class="flex items-center gap-2 cursor-pointer text-sm"><input type="radio" name="ws6-d" value="c" class="radio radio-xs radio-accent"> IO-Link has lost connection to the light stack</label>
+          </div>
         </div>
       </div>
+
       <div class="alert bg-primary/10 border border-primary/30 rounded-lg text-base-content mt-4">
-        <strong>Try it:</strong> Go to <a href="#" data-page="io-link-master" data-scroll="simulate-fault" class="link link-primary">Simulate Fault</a>. Inject a fault on each port. Look at Active Port Details — what does the fault look like for each sensor type?
+        <strong>Try it live:</strong> Go to the <a href="#" data-page="io-link-master" class="link link-primary">IO-Link Master</a> page. Look at Active Port Details for each connected sensor — what information can you see?
       </div>
-      <div class="divider my-2"></div>
-      <button type="button" class="btn btn-ghost btn-sm ws-suggested-btn" data-target="ws6-suggested">Show suggested answers</button>
-      <div id="ws6-suggested" class="hidden p-4 rounded-lg border border-base-300 bg-base-300/50 text-base-content/80 text-sm leading-relaxed ws-suggested">A: Clean the lens. If it recurs, check for reflective surfaces behind the detection zone. B: Reduce sensitivity — the new sensor is detecting the container wall. C: b — sudden −40 °C jump = disconnected/failed probe. D: (1) Fault not actually cleared in the controller; (2) PLC still sending "red on" command because it hasn't received a clear signal.</div>
     `
   },
   {
@@ -815,40 +877,103 @@ const WORKSHEETS = [
     relatedDashboard: 'Dashboard: all ports, Simulate Fault',
     prerequisites: 'Complete Worksheets 1–6',
     contentHtml: `
-      <p class="text-base-content/90 leading-relaxed font-medium">Tick each task when complete. Write your observations in the boxes.</p>
+      <p class="text-base-content/90 leading-relaxed text-base">Work through each section on the real kit. Tick each task when you have done it and answer the check question.</p>
+
       <div class="space-y-4 mt-3">
-        <div class="rounded-lg border-2 border-primary/20 bg-base-200 p-4 space-y-2">
-          <p class="font-bold text-base-content">Section 1 — Photoelectric Sensor (Port 1)</p>
-          <label class="flex items-start gap-2 cursor-pointer"><input type="checkbox" class="checkbox checkbox-sm mt-0.5"> Trigger the sensor. Confirm output changes on the Dashboard.</label>
-          <label class="flex items-start gap-2 cursor-pointer"><input type="checkbox" class="checkbox checkbox-sm mt-0.5"> Describe the current output:</label>
-          <textarea class="textarea textarea-bordered textarea-sm w-full" rows="1" placeholder="Your observation..."></textarea>
+
+        <div class="rounded-xl border-2 border-primary/30 bg-primary/5 p-4 space-y-3">
+          <p class="font-bold text-base-content">🔦 Section 1 — Photoelectric Sensor (Port 1)</p>
+          <label class="kit-item flex items-start gap-3 cursor-pointer rounded-xl border-2 border-transparent px-3 py-2 transition-all duration-200">
+            <input type="checkbox" class="checkbox checkbox-md checkbox-success flex-shrink-0 mt-0.5">
+            <span>Wave your hand in front of the sensor and confirm the output dot changes on the Dashboard.</span>
+          </label>
+          <label class="kit-item flex items-start gap-3 cursor-pointer rounded-xl border-2 border-transparent px-3 py-2 transition-all duration-200">
+            <input type="checkbox" class="checkbox checkbox-md checkbox-success flex-shrink-0 mt-0.5">
+            <span>The waveform on the Photoelectric worksheet jumped from 0 to 1 when you triggered it.</span>
+          </label>
+          <p class="text-sm font-medium text-base-content mt-1">What is the sensor's current output state on the dashboard?</p>
+          <div class="space-y-1">
+            <label class="flex items-center gap-2 cursor-pointer text-sm"><input type="radio" name="ws7-s1" value="a" class="radio radio-xs radio-primary"> Detected (output ON, dot lit)</label>
+            <label class="flex items-center gap-2 cursor-pointer text-sm"><input type="radio" name="ws7-s1" value="b" class="radio radio-xs radio-primary"> No object (output OFF, dot grey)</label>
+            <label class="flex items-center gap-2 cursor-pointer text-sm"><input type="radio" name="ws7-s1" value="c" class="radio radio-xs radio-primary"> Port not connected</label>
+          </div>
         </div>
-        <div class="rounded-lg border-2 border-secondary/20 bg-base-200 p-4 space-y-2">
-          <p class="font-bold text-base-content">Section 2 — Capacitive Sensor (Port 2)</p>
-          <label class="flex items-start gap-2 cursor-pointer"><input type="checkbox" class="checkbox checkbox-sm mt-0.5"> Touch the sensor face and confirm the detection count increments.</label>
-          <label class="flex items-start gap-2 cursor-pointer"><input type="checkbox" class="checkbox checkbox-sm mt-0.5"> Current detection count:</label>
-          <textarea class="textarea textarea-bordered textarea-sm w-full" rows="1" placeholder="Your observation..."></textarea>
+
+        <div class="rounded-xl border-2 border-secondary/30 bg-secondary/5 p-4 space-y-3">
+          <p class="font-bold text-base-content">🫙 Section 2 — Capacitive Sensor (Port 2)</p>
+          <label class="kit-item flex items-start gap-3 cursor-pointer rounded-xl border-2 border-transparent px-3 py-2 transition-all duration-200">
+            <input type="checkbox" class="checkbox checkbox-md checkbox-success flex-shrink-0 mt-0.5">
+            <span>Touch the sensor face 5 times and confirm the detection count increments on the Capacitive worksheet.</span>
+          </label>
+          <label class="kit-item flex items-start gap-3 cursor-pointer rounded-xl border-2 border-transparent px-3 py-2 transition-all duration-200">
+            <input type="checkbox" class="checkbox checkbox-md checkbox-success flex-shrink-0 mt-0.5">
+            <span>The analogue level bar moves before the output fully switches on.</span>
+          </label>
+          <p class="text-sm font-medium text-base-content mt-1">What triggers a new count on the capacitive sensor?</p>
+          <div class="space-y-1">
+            <label class="flex items-center gap-2 cursor-pointer text-sm"><input type="radio" name="ws7-s2" value="a" class="radio radio-xs radio-secondary"> Every second while touching</label>
+            <label class="flex items-center gap-2 cursor-pointer text-sm"><input type="radio" name="ws7-s2" value="b" class="radio radio-xs radio-secondary"> The moment detection goes from off to on — rising edge</label>
+            <label class="flex items-center gap-2 cursor-pointer text-sm"><input type="radio" name="ws7-s2" value="c" class="radio radio-xs radio-secondary"> Only when you pull your hand away</label>
+          </div>
         </div>
-        <div class="rounded-lg border-2 border-warning/20 bg-base-200 p-4 space-y-2">
-          <p class="font-bold text-base-content">Section 3 — Temperature Sensor (Port 3)</p>
-          <label class="flex items-start gap-2 cursor-pointer"><input type="checkbox" class="checkbox checkbox-sm mt-0.5"> Read the current temperature.</label>
-          <textarea class="textarea textarea-bordered textarea-sm w-full" rows="1" placeholder="Temperature reading..."></textarea>
-          <label class="flex items-start gap-2 cursor-pointer"><input type="checkbox" class="checkbox checkbox-sm mt-0.5"> Hold the sensor for 30 s. Confirm value rises on the chart.</label>
+
+        <div class="rounded-xl border-2 border-warning/30 bg-warning/5 p-4 space-y-3">
+          <p class="font-bold text-base-content">🌡️ Section 3 — Temperature Sensor (Port 3)</p>
+          <label class="kit-item flex items-start gap-3 cursor-pointer rounded-xl border-2 border-transparent px-3 py-2 transition-all duration-200">
+            <input type="checkbox" class="checkbox checkbox-md checkbox-success flex-shrink-0 mt-0.5">
+            <span>Note the current temperature reading from the Temperature worksheet live panel.</span>
+          </label>
+          <label class="kit-item flex items-start gap-3 cursor-pointer rounded-xl border-2 border-transparent px-3 py-2 transition-all duration-200">
+            <input type="checkbox" class="checkbox checkbox-md checkbox-success flex-shrink-0 mt-0.5">
+            <span>Hold the sensor between your palms for 30 seconds and confirm the chart rises on screen.</span>
+          </label>
+          <p class="text-sm font-medium text-base-content mt-1">What would a reading of −40 °C at room temperature most likely mean?</p>
+          <div class="space-y-1">
+            <label class="flex items-center gap-2 cursor-pointer text-sm"><input type="radio" name="ws7-s3" value="a" class="radio radio-xs radio-warning"> The room is very cold</label>
+            <label class="flex items-center gap-2 cursor-pointer text-sm"><input type="radio" name="ws7-s3" value="b" class="radio radio-xs radio-warning"> Broken or disconnected sensor — −40 °C is a common error default</label>
+            <label class="flex items-center gap-2 cursor-pointer text-sm"><input type="radio" name="ws7-s3" value="c" class="radio radio-xs radio-warning"> SP1 setpoint was changed</label>
+          </div>
         </div>
-        <div class="rounded-lg border-2 border-accent/20 bg-base-200 p-4 space-y-2">
-          <p class="font-bold text-base-content">Section 4 — Light Stack (Port 4)</p>
-          <label class="flex items-start gap-2 cursor-pointer"><input type="checkbox" class="checkbox checkbox-sm mt-0.5"> Read current CL50 state. Which segments are active?</label>
-          <textarea class="textarea textarea-bordered textarea-sm w-full" rows="1" placeholder="Your observation..."></textarea>
+
+        <div class="rounded-xl border-2 border-accent/30 bg-accent/5 p-4 space-y-3">
+          <p class="font-bold text-base-content">🚦 Section 4 — Light Stack (Port 4)</p>
+          <label class="kit-item flex items-start gap-3 cursor-pointer rounded-xl border-2 border-transparent px-3 py-2 transition-all duration-200">
+            <input type="checkbox" class="checkbox checkbox-md checkbox-success flex-shrink-0 mt-0.5">
+            <span>Open the Light Stack worksheet and read the current CL50 colour and animation state.</span>
+          </label>
+          <p class="text-sm font-medium text-base-content mt-1">What does a flashing red segment typically mean on a production machine?</p>
+          <div class="space-y-1">
+            <label class="flex items-center gap-2 cursor-pointer text-sm"><input type="radio" name="ws7-s4" value="a" class="radio radio-xs radio-accent"> Machine is running normally</label>
+            <label class="flex items-center gap-2 cursor-pointer text-sm"><input type="radio" name="ws7-s4" value="b" class="radio radio-xs radio-accent"> Active fault — machine stopped or needs attention</label>
+            <label class="flex items-center gap-2 cursor-pointer text-sm"><input type="radio" name="ws7-s4" value="c" class="radio radio-xs radio-accent"> The light stack is in standby mode</label>
+          </div>
         </div>
-        <div class="rounded-lg border-2 border-error/20 bg-base-200 p-4 space-y-2">
-          <p class="font-bold text-base-content">Section 5 — Fault Finding</p>
-          <label class="flex items-start gap-2 cursor-pointer"><input type="checkbox" class="checkbox checkbox-sm mt-0.5"> Simulate a fault. Write the fault code and your action.</label>
-          <textarea class="textarea textarea-bordered textarea-sm w-full" rows="2" placeholder="Port, fault code, action..."></textarea>
-          <label class="flex items-start gap-2 cursor-pointer"><input type="checkbox" class="checkbox checkbox-sm mt-0.5"> Clear the fault. Confirm port returns to normal.</label>
+
+        <div class="rounded-xl border-2 border-error/30 bg-error/5 p-4 space-y-3">
+          <p class="font-bold text-base-content">🔧 Section 5 — Pulling It All Together</p>
+          <label class="kit-item flex items-start gap-3 cursor-pointer rounded-xl border-2 border-transparent px-3 py-2 transition-all duration-200">
+            <input type="checkbox" class="checkbox checkbox-md checkbox-success flex-shrink-0 mt-0.5">
+            <span>You can name all four sensors on the bench without looking at any labels.</span>
+          </label>
+          <label class="kit-item flex items-start gap-3 cursor-pointer rounded-xl border-2 border-transparent px-3 py-2 transition-all duration-200">
+            <input type="checkbox" class="checkbox checkbox-md checkbox-success flex-shrink-0 mt-0.5">
+            <span>You have triggered each sensor and seen it respond live on the dashboard.</span>
+          </label>
+          <label class="kit-item flex items-start gap-3 cursor-pointer rounded-xl border-2 border-transparent px-3 py-2 transition-all duration-200">
+            <input type="checkbox" class="checkbox checkbox-md checkbox-success flex-shrink-0 mt-0.5">
+            <span>You know what IO-Link gives you that a standard sensor does not.</span>
+          </label>
+          <p class="text-sm font-medium text-base-content mt-1">If a sensor stops working and you cannot tell why from the outside, what is the first advantage IO-Link gives you?</p>
+          <div class="space-y-1">
+            <label class="flex items-center gap-2 cursor-pointer text-sm"><input type="radio" name="ws7-s5" value="a" class="radio radio-xs radio-error"> You have to unplug it and test it on a bench</label>
+            <label class="flex items-center gap-2 cursor-pointer text-sm"><input type="radio" name="ws7-s5" value="b" class="radio radio-xs radio-error"> The dashboard shows a fault code telling you exactly what is wrong — no guesswork</label>
+            <label class="flex items-center gap-2 cursor-pointer text-sm"><input type="radio" name="ws7-s5" value="c" class="radio radio-xs radio-error"> You need to call the manufacturer</label>
+          </div>
         </div>
       </div>
-      <div class="alert bg-primary/10 border border-primary/30 rounded-lg text-base-content mt-4">
-        <a href="#" data-page="io-link-master" class="link link-primary font-bold">IO-Link Master Dashboard</a> — Simulate Fault and Active Port Details.
+
+      <div class="alert bg-success/10 border border-success/30 rounded-lg text-base-content mt-4">
+        <strong>Well done!</strong> If you have ticked every box and answered each question, you have completed CP0001. Head to <a href="#" data-page="io-link-master" class="link link-primary">the Dashboard</a> to explore the live data further.
       </div>
     `
   }
@@ -950,27 +1075,9 @@ const CL_COLOUR_MAP = {
   'Magenta':'#ec4899','Rose':'#f43f5e','White':'#f8fafc'
 };
 
-function initKitChecklist(container) {
-  container.querySelectorAll('#kit-checklist .kit-item').forEach(label => {
-    const cb = label.querySelector('input[type="checkbox"]');
-    if (!cb) return;
-    const apply = () => {
-      if (cb.checked) {
-        label.classList.add('bg-success/20', 'border-success');
-        label.querySelector('.kit-text').style.opacity = '0.6';
-      } else {
-        label.classList.remove('bg-success/20', 'border-success');
-        label.querySelector('.kit-text').style.opacity = '';
-      }
-    };
-    cb.addEventListener('change', apply);
-  });
-}
-
 function initLiveIntro(container) {
   _chFailed = false;
   _chSucceeded = false;
-  initKitChecklist(container);
   const colours = { photo: '#3b82f6', cap: '#8b5cf6', temp: '#f97316', led: '#22c55e' };
 
   function setPortCard(dotId, valId, active, value, colour) {
@@ -1377,12 +1484,21 @@ function initWorksheetInteractivity(container) {
   if (!container) container = document.getElementById('worksheets-root');
   if (!container) return;
 
-  // suggested answer toggles
-  container.querySelectorAll('.ws-suggested-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
-      const el = document.getElementById(btn.getAttribute('data-target'));
-      if (el) el.classList.toggle('hidden');
-    });
+  // green completion styling for any .kit-item checkboxes on the page
+  container.querySelectorAll('.kit-item').forEach(label => {
+    const cb = label.querySelector('input[type="checkbox"]');
+    if (!cb) return;
+    const apply = () => {
+      const kt = label.querySelector('.kit-text') || label.querySelector('span');
+      if (cb.checked) {
+        label.classList.add('bg-success/20', 'border-success');
+        if (kt) kt.style.opacity = '0.6';
+      } else {
+        label.classList.remove('bg-success/20', 'border-success');
+        if (kt) kt.style.opacity = '';
+      }
+    };
+    cb.addEventListener('change', apply);
   });
 
   // start live data for the relevant worksheet

@@ -175,9 +175,9 @@ export function renderHomePage() {
 
       <!-- Live Sensor Mimics -->
       <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
-        <div id="mimic-temperature" class="mimic-component"></div>
-        <div id="mimic-capacitive" class="mimic-component"></div>
         <div id="mimic-photoelectric" class="mimic-component"></div>
+        <div id="mimic-capacitive" class="mimic-component"></div>
+        <div id="mimic-temperature" class="mimic-component"></div>
         <div id="mimic-led" class="mimic-component"></div>
       </div>
 
