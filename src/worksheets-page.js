@@ -1044,10 +1044,10 @@ function initLiveIntro(container) {
       chP2dot.className = (det2 || capPct > 5) ? 'w-8 h-8 rounded-full mx-auto transition-all' : 'w-8 h-8 rounded-full bg-base-300 mx-auto transition-all';
       chP2val.textContent = det2 ? 'Detected ●' : capPct > 0.5 ? `Level: ${capPct.toFixed(0)}%` : 'No object ○';
 
-      if (det2) {
+      if (capRaw > 0) {
         _chFailed = true;
         chResult.className = 'rounded-lg p-3 text-center font-bold text-sm bg-error/20 text-error border border-error/40';
-        chResult.textContent = '✗ Failed — the capacitive sensor triggered. Reset and try again.';
+        chResult.textContent = `✗ Failed — capacitive level hit ${capRaw}. Reset and try again.`;
         chResult.classList.remove('hidden');
       } else if (det1) {
         _chSucceeded = true;
