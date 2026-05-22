@@ -173,16 +173,22 @@ const WORKSHEETS = [
           <label class="flex items-start gap-3 cursor-pointer"><input type="checkbox" class="checkbox checkbox-sm checkbox-primary mt-0.5 flex-shrink-0">
             <span><strong class="text-base-content">Port 1 — Photoelectric Sensor</strong> — the blue barrel sensor with a red light on the face. It fires a beam of light and detects when something breaks it.</span></label>
           <label class="flex items-start gap-3 cursor-pointer"><input type="checkbox" class="checkbox checkbox-sm checkbox-primary mt-0.5 flex-shrink-0">
-            <span><strong class="text-base-content">Port 2 — Capacitive Sensor</strong> — the white M18 cylinder with an M12 connector on the back. Detects materials like liquid, powder, or plastic — even through a container wall.</span></label>
+            <span><strong class="text-base-content">Port 2 — Capacitive Sensor</strong> — the larger white M18 cylinder. Detects materials like liquid, powder, or plastic — even through a container wall.</span></label>
           <label class="flex items-start gap-3 cursor-pointer"><input type="checkbox" class="checkbox checkbox-sm checkbox-primary mt-0.5 flex-shrink-0">
             <span><strong class="text-base-content">Port 3 — Temperature Sensor</strong> — reads the temperature and sends back a live number in °C.</span></label>
           <label class="flex items-start gap-3 cursor-pointer"><input type="checkbox" class="checkbox checkbox-sm checkbox-primary mt-0.5 flex-shrink-0">
             <span><strong class="text-base-content">Port 4 — Light Stack</strong> — the tall tower with coloured lights. Shows machine status at a glance from across the factory.</span></label>
           <label class="flex items-start gap-3 cursor-pointer"><input type="checkbox" class="checkbox checkbox-sm checkbox-primary mt-0.5 flex-shrink-0">
-            <span><strong class="text-base-content">Raspberry Pi</strong> — small green circuit board, usually in a case nearby. Runs the software that talks to the IO-Link master and shows this screen.</span></label>
+            <span><strong class="text-base-content">Edge Device (Raspberry Pi)</strong> — small green circuit board in a case, usually mounted nearby. It sits between the IO-Link master and this screen — collecting all the sensor data, running the comms, and serving up the dashboard. Without it, the sensors have nowhere to send their data.</span></label>
           <label class="flex items-start gap-3 cursor-pointer"><input type="checkbox" class="checkbox checkbox-sm checkbox-primary mt-0.5 flex-shrink-0">
             <span><strong class="text-base-content">This screen</strong> — the live dashboard. Everything the sensors say ends up here.</span></label>
         </div>
+      </div>
+
+      <!-- M-size explainer -->
+      <div class="rounded-lg border border-base-300 bg-base-200 p-3 mt-3 text-sm">
+        <p class="font-bold text-base-content mb-1">📏 What does M18 mean?</p>
+        <p class="text-base-content/80">The <strong>M number</strong> is just the diameter of the sensor body in millimetres — like a bolt size. <strong>M18</strong> = 18 mm across. You'll see M8, M12, M18, and M30 in industry. Bigger number = bigger sensor. Both the photoelectric and capacitive on this kit are M18 — same diameter, but the capacitive is shorter and stubbier in shape.</p>
       </div>
 
       <!-- Live all-port overview -->
