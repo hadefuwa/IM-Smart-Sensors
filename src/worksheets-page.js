@@ -259,11 +259,6 @@ const WORKSHEETS = [
         </svg>
       </div>
 
-      <!-- M-size explainer -->
-      <div class="rounded-lg border border-base-300 bg-base-200 p-3 mt-3 text-sm">
-        <p class="font-bold text-base-content mb-1">📏 What does M18 mean?</p>
-        <p class="text-base-content/80">The <strong>M number</strong> is just the diameter of the sensor body in millimetres — like a bolt size. <strong>M18</strong> = 18 mm across. You'll see M8, M12, M18, and M30 in industry. Bigger number = bigger sensor. Both the photoelectric and capacitive on this kit are M18 — same diameter, but the capacitive is shorter and stubbier in shape.</p>
-      </div>
 
       <!-- Live all-port overview -->
       <div class="rounded-xl border-2 border-success/30 bg-success/5 p-4 mt-4 space-y-3" id="ws-intro-panel">
@@ -354,6 +349,12 @@ const WORKSHEETS = [
     prerequisites: 'Complete Worksheet 1 first',
     contentHtml: `
       <p class="text-base-content/90 leading-relaxed">A photoelectric sensor fires a beam of light and checks whether it bounces back. If something is in the way, the output switches on.</p>
+
+      <!-- M-size explainer -->
+      <div class="rounded-lg border border-base-300 bg-base-200 p-3 mt-3 text-sm">
+        <p class="font-bold text-base-content mb-1">📏 What does M18 mean?</p>
+        <p class="text-base-content/80">The <strong>M number</strong> is the diameter of the sensor body in millimetres — like a bolt size. <strong>M18</strong> = 18 mm across. You'll see M8, M12, M18, and M30 in industry. Bigger number = bigger sensor. Both the photoelectric and capacitive on this kit are M18 — same diameter, but different shapes.</p>
+      </div>
 
       <!-- Live section -->
       <div class="rounded-xl border-2 border-primary/30 bg-primary/5 p-4 mt-3 space-y-3" id="ws2-live-panel">
