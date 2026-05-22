@@ -112,16 +112,36 @@ const WORKSHEETS = [
       </div>
 
       <p class="mt-4 font-medium text-base-content"><strong>Q1.</strong> From the hardware table, what is the IP address of the AL1350 IO-Link Master?</p>
-      <textarea class="textarea textarea-bordered w-full" rows="1" placeholder="Your answer..."></textarea>
+      <div class="space-y-2 mt-1">
+        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="cp2-ws0-q1" value="a" class="radio radio-sm radio-secondary"> 192.168.7.2</label>
+        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="cp2-ws0-q1" value="b" class="radio radio-sm radio-secondary"> 192.168.1.1</label>
+        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="cp2-ws0-q1" value="c" class="radio radio-sm radio-secondary"> 192.168.7.4</label>
+      </div>
 
-      <p class="mt-3 font-medium text-base-content"><strong>Q2.</strong> The live panel shows a WebSocket message counter. Watch it for 10 seconds — roughly how many messages arrive per second? What does this tell you about the MQTT publish rate?</p>
-      <textarea class="textarea textarea-bordered w-full" rows="2" placeholder="Your answer..."></textarea>
+      <p class="mt-3 font-medium text-base-content"><strong>Q2.</strong> The AL1350 pushes data to Mosquitto every 500 ms. Approximately how many WebSocket messages should arrive at the browser each second?</p>
+      <div class="space-y-2 mt-1">
+        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="cp2-ws0-q2" value="a" class="radio radio-sm radio-secondary"> 20 messages per second</label>
+        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="cp2-ws0-q2" value="b" class="radio radio-sm radio-secondary"> 0.1 messages per second</label>
+        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="cp2-ws0-q2" value="c" class="radio radio-sm radio-secondary"> 2 messages per second</label>
+      </div>
 
       <p class="mt-3 font-medium text-base-content"><strong>Q3.</strong> The Raspberry Pi has two network interfaces (eth0 and wlan0). Why does this matter for the system architecture?</p>
-      <textarea class="textarea textarea-bordered w-full" rows="2" placeholder="Your answer..."></textarea>
+      <div class="space-y-2 mt-1">
+        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="cp2-ws0-q3" value="a" class="radio radio-sm radio-secondary"> It allows two IO-Link masters to be connected simultaneously</label>
+        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="cp2-ws0-q3" value="b" class="radio radio-sm radio-secondary"> It doubles bandwidth by bonding eth0 and wlan0 together for MQTT traffic</label>
+        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="cp2-ws0-q3" value="c" class="radio radio-sm radio-secondary"> It bridges the isolated IO-Link subnet to the building LAN</label>
+      </div>
 
-      <p class="mt-3 font-medium text-base-content"><strong>Q4.</strong> How many IO-Link ports are currently showing as active? Open the <a href="#" data-page="admin" class="link link-secondary">Connection Diagnostics</a> page. Is the circuit breaker closed (healthy)?</p>
-      <textarea class="textarea textarea-bordered w-full" rows="2" placeholder="Your answer..."></textarea>
+      <p class="mt-3 font-medium text-base-content"><strong>Q4.</strong> According to the hardware table, how many IO-Link ports have a sensor connected in this system?</p>
+      <div class="space-y-2 mt-1">
+        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="cp2-ws0-q4" value="a" class="radio radio-sm radio-secondary"> 8 — every port on the AL1350 is populated</label>
+        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="cp2-ws0-q4" value="b" class="radio radio-sm radio-secondary"> 2 — only the photoelectric and capacitive sensors</label>
+        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="cp2-ws0-q4" value="c" class="radio radio-sm radio-secondary"> 4 — Ports 1 through 4 each have a sensor</label>
+      </div>
+
+      <div class="divider my-2"></div>
+      <button type="button" class="btn btn-ghost btn-sm ws-suggested-btn" data-target="cp2-ws0-suggested">Show answers</button>
+      <div id="cp2-ws0-suggested" class="hidden p-4 rounded-lg border border-base-300 bg-base-300/50 text-base-content/80 text-sm leading-relaxed ws-suggested">Q1: c — 192.168.7.4. Q2: c — 500 ms interval = 2 messages per second. Q3: c — bridges the private 192.168.7.x subnet to the building LAN so browsers do not need to be on the IO-Link subnet. Q4: c — Ports 1–4 are used (photoelectric, capacitive, temperature, light stack).</div>
     `
   },
   {
@@ -175,7 +195,11 @@ const WORKSHEETS = [
       </div>
 
       <p class="mt-4 font-medium text-base-content"><strong>Q1.</strong> Why is MQTT better suited than HTTP polling for delivering sensor data every 500 ms?</p>
-      <textarea class="textarea textarea-bordered w-full" rows="3" placeholder="Your answer..."></textarea>
+      <div class="space-y-2 mt-1">
+        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="cp2-ws1-q1" value="a" class="radio radio-sm radio-secondary"> HTTP is push-based and uses persistent connections that the broker manages, while MQTT requires a new TCP request each cycle and cannot handle high-frequency data without overloading both devices</label>
+        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="cp2-ws1-q1" value="b" class="radio radio-sm radio-secondary"> MQTT uses publish/subscribe so the AL1350 pushes data the moment it is ready, without the Pi having to request each cycle</label>
+        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="cp2-ws1-q1" value="c" class="radio radio-sm radio-secondary"> MQTT guarantees delivery of every message in all network conditions by queuing messages until the subscriber acknowledges receipt</label>
+      </div>
 
       <p class="mt-3 font-medium text-base-content"><strong>Q2.</strong> The AL1350 loses its MQTT subscriptions when it power-cycles. How does the backend handle this?</p>
       <div class="space-y-2">
@@ -184,15 +208,23 @@ const WORKSHEETS = [
         <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="cp2-ws1-q2" value="c" class="radio radio-sm radio-secondary"> It switches permanently to HTTP polling</label>
       </div>
 
-      <p class="mt-3 font-medium text-base-content"><strong>Q3.</strong> Look at the <a href="#" data-page="edge-device" class="link link-secondary">Edge Device page</a>. What is the current CPU usage of the Pi, and is the backend service showing as active?</p>
-      <textarea class="textarea textarea-bordered w-full" rows="2" placeholder="Your observation..."></textarea>
+      <p class="mt-3 font-medium text-base-content"><strong>Q3.</strong> If the FastAPI backend service on the Pi crashed, what would you expect to observe?</p>
+      <div class="space-y-2 mt-1">
+        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="cp2-ws1-q3" value="a" class="radio radio-sm radio-secondary"> The WebSocket message counter on this page would continue to increment at the normal rate</label>
+        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="cp2-ws1-q3" value="b" class="radio radio-sm radio-secondary"> The AL1350 would automatically restart the backend service via its own built-in watchdog</label>
+        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="cp2-ws1-q3" value="c" class="radio radio-sm radio-secondary"> Live data would stop and the WebSocket would disconnect</label>
+      </div>
 
-      <p class="mt-3 font-medium text-base-content"><strong>Q4.</strong> Open <a href="#" data-page="admin" class="link link-secondary">Connection Diagnostics</a>. What is the current round-trip latency to the AL1350, and what does the circuit breaker status show?</p>
-      <textarea class="textarea textarea-bordered w-full" rows="2" placeholder="Your observation..."></textarea>
+      <p class="mt-3 font-medium text-base-content"><strong>Q4.</strong> What does a consistently high round-trip latency value on the Connection Diagnostics page indicate?</p>
+      <div class="space-y-2 mt-1">
+        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="cp2-ws1-q4" value="a" class="radio radio-sm radio-secondary"> The browser's chart rendering pipeline cannot keep up with the WebSocket update rate</label>
+        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="cp2-ws1-q4" value="b" class="radio radio-sm radio-secondary"> The Pi's Wi-Fi interface is saturated by other traffic on the building network</label>
+        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="cp2-ws1-q4" value="c" class="radio radio-sm radio-secondary"> The AL1350 is under load or there is congestion on the IO-Link subnet</label>
+      </div>
 
       <div class="divider my-2"></div>
       <button type="button" class="btn btn-ghost btn-sm ws-suggested-btn" data-target="cp2-ws1-suggested">Show suggested answers</button>
-      <div id="cp2-ws1-suggested" class="hidden p-4 rounded-lg border border-base-300 bg-base-300/50 text-base-content/80 text-sm leading-relaxed ws-suggested">Q1: MQTT is publish/subscribe — the AL1350 pushes data as soon as it's ready without the client polling. HTTP polling adds overhead (one request per cycle), introduces latency, and can overload a constrained device like the AL1350 if poll rates are too high. Q2: b — ensure_mqtt_subscription() registers the subscription on every backend startup. Q3/Q4: live values depend on your hardware.</div>
+      <div id="cp2-ws1-suggested" class="hidden p-4 rounded-lg border border-base-300 bg-base-300/50 text-base-content/80 text-sm leading-relaxed ws-suggested">Q1: b — MQTT push/subscribe means the AL1350 sends data immediately without the Pi polling each cycle; HTTP adds per-request overhead. Q2: b — ensure_mqtt_subscription() registers the push subscription on every backend startup. Q3: c — live data stops when the backend crashes and the WebSocket disconnects. Q4: c — high latency points to AL1350 load or subnet congestion.</div>
     `
   },
   {
@@ -224,7 +256,11 @@ const WORKSHEETS = [
           <p class="font-semibold text-base-content">Port 2 — Capacitive Sensor</p>
           <p class="text-base-content/80 text-sm mt-1">PDin carries the switching output (bit 0) and optionally a detection count (increments on each rising edge). The backend accumulates the count in a session counter displayed on the Dashboard.</p>
           <p class="mt-2 font-medium text-base-content text-sm"><strong>Q:</strong> Why is a detection count more useful than just the current switching state for a capacitive level sensor on a filling line?</p>
-          <textarea class="textarea textarea-bordered w-full textarea-sm" rows="2" placeholder="Your answer..."></textarea>
+          <div class="space-y-1 mt-1">
+            <label class="flex items-center gap-2 cursor-pointer text-sm"><input type="radio" name="cp2-ws2-q2" value="a" class="radio radio-xs radio-secondary"> It gives a continuous analogue level reading rather than a binary on/off output</label>
+            <label class="flex items-center gap-2 cursor-pointer text-sm"><input type="radio" name="cp2-ws2-q2" value="b" class="radio radio-xs radio-secondary"> A running count tracks how many containers have been filled without a separate counter sensor</label>
+            <label class="flex items-center gap-2 cursor-pointer text-sm"><input type="radio" name="cp2-ws2-q2" value="c" class="radio radio-xs radio-secondary"> It prevents false positives caused by water or foam near the sensor face</label>
+          </div>
         </div>
 
         <div class="rounded-lg border border-base-300 bg-base-200 p-4">
@@ -233,21 +269,29 @@ const WORKSHEETS = [
           <div class="font-mono text-xs bg-base-300 rounded p-2 mt-2">
             raw = 0x00F5  → 245 → 245 / 10 = <strong>24.5 °C</strong>
           </div>
-          <p class="mt-2 font-medium text-base-content text-sm"><strong>Q:</strong> A raw PDin of <code class="font-mono bg-base-300 px-1 rounded">0x02EE</code> decodes to what temperature in °C?</p>
-          <textarea class="textarea textarea-bordered w-full textarea-sm" rows="1" placeholder="Show your working..."></textarea>
+          <p class="mt-2 font-medium text-base-content text-sm"><strong>Q:</strong> A raw PDin of <code class="font-mono bg-base-300 px-1 rounded">0x02EE</code> decodes to what temperature in °C? (0x02EE = 750 decimal; temperature = raw ÷ 10)</p>
+          <div class="space-y-1 mt-1">
+            <label class="flex items-center gap-2 cursor-pointer text-sm"><input type="radio" name="cp2-ws2-q3" value="a" class="radio radio-xs radio-secondary"> 7.5 °C</label>
+            <label class="flex items-center gap-2 cursor-pointer text-sm"><input type="radio" name="cp2-ws2-q3" value="b" class="radio radio-xs radio-secondary"> 750.0 °C</label>
+            <label class="flex items-center gap-2 cursor-pointer text-sm"><input type="radio" name="cp2-ws2-q3" value="c" class="radio radio-xs radio-secondary"> 75.0 °C</label>
+          </div>
         </div>
 
         <div class="rounded-lg border border-base-300 bg-base-200 p-4">
           <p class="font-semibold text-base-content">Port 4 — CL50 Light Stack</p>
           <p class="text-base-content/80 text-sm mt-1">The CL50 PDin encodes each colour segment's state (off / on / flash) across multiple bits. The backend's CL50 decoder maps bit fields to a human-readable state object: <code class="font-mono text-xs bg-base-300 px-1 rounded">&#123; red: 'flash', amber: 'off', green: 'on' &#125;</code>.</p>
           <p class="mt-2 font-medium text-base-content text-sm"><strong>Q:</strong> Why does the CL50 need a more complex decode than the photoelectric sensor?</p>
-          <textarea class="textarea textarea-bordered w-full textarea-sm" rows="2" placeholder="Your answer..."></textarea>
+          <div class="space-y-1 mt-1">
+            <label class="flex items-center gap-2 cursor-pointer text-sm"><input type="radio" name="cp2-ws2-q4" value="a" class="radio radio-xs radio-secondary"> It uses a completely different IO-Link variant that the standard binary decoder cannot process</label>
+            <label class="flex items-center gap-2 cursor-pointer text-sm"><input type="radio" name="cp2-ws2-q4" value="b" class="radio radio-xs radio-secondary"> Each colour channel (red, amber, green) has three states (on/flash/off) encoded in separate bit fields</label>
+            <label class="flex items-center gap-2 cursor-pointer text-sm"><input type="radio" name="cp2-ws2-q4" value="c" class="radio radio-xs radio-secondary"> The CL50 PDin arrives as a plain text string rather than binary bytes</label>
+          </div>
         </div>
       </div>
 
       <div class="divider my-2"></div>
       <button type="button" class="btn btn-ghost btn-sm ws-suggested-btn" data-target="cp2-ws2-suggested">Show suggested answers</button>
-      <div id="cp2-ws2-suggested" class="hidden p-4 rounded-lg border border-base-300 bg-base-300/50 text-base-content/80 text-sm leading-relaxed ws-suggested">Q1: b — bit 0 = 1 means object detected. Capacitive count: you can track how many containers have been filled without a separate counter sensor. TV7105: 0x02EE = 750 decimal → 750/10 = 75.0 °C. CL50: it has multiple independent output channels (red, amber, green, each with on/flash/off states) so the PDin must encode several independent values rather than a single bit.</div>
+      <div id="cp2-ws2-suggested" class="hidden p-4 rounded-lg border border-base-300 bg-base-300/50 text-base-content/80 text-sm leading-relaxed ws-suggested">Q1 (photoelectric): b — bit 0 = 1 means object detected. Q2 (capacitive): b — a running count tracks how many containers have been filled. Q3 (temperature): c — 0x02EE = 750 → 750/10 = 75.0 °C. Q4 (CL50): b — multiple colour channels each with on/flash/off states require separate bit fields.</div>
     `
   },
   {
@@ -362,32 +406,45 @@ const WORKSHEETS = [
     relatedDashboard: 'Dashboard: Port Status, Simulate Fault',
     prerequisites: 'Complete CP0002 Worksheets 1–4',
     contentHtml: `
-      <p class="text-base-content/90 leading-relaxed"><strong>1.</strong> Describe how IO-Link process data from a sensor reaches a PLC I/O scan cycle.</p>
-      <textarea class="textarea textarea-bordered w-full" rows="3" placeholder="Your answer..."></textarea>
+      <p class="text-base-content/90 leading-relaxed"><strong>1.</strong> How does IO-Link process data from a sensor reach a PLC I/O scan cycle?</p>
+      <div class="space-y-2 mt-1">
+        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="cp2-ws5-q1" value="a" class="radio radio-sm radio-secondary"> The sensor connects directly to a PLC input card using its IO-Link cable, with the master acting only as a power supply and forwarding no data to the fieldbus network</label>
+        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="cp2-ws5-q1" value="b" class="radio radio-sm radio-secondary"> The IO-Link master maps each port's PDin into its process image; the PLC reads this via a fieldbus on every scan cycle</label>
+        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="cp2-ws5-q1" value="c" class="radio radio-sm radio-secondary"> The sensor transmits binary frames over Wi-Fi directly to the PLC's memory address</label>
+      </div>
 
       <p class="mt-3 font-medium text-base-content"><strong>2.</strong> In this app, the backend acts as the "PLC equivalent" — it receives IO-Link data and exposes it to the browser. Which backend component is responsible for:</p>
       <div class="overflow-x-auto rounded-lg border border-base-300 mt-2">
         <table class="table table-sm">
-          <thead><tr><th>Function</th><th>Backend component</th></tr></thead>
+          <thead><tr><th>Function</th><th>Backend component</th><th>Check</th></tr></thead>
           <tbody>
-            <tr><td>Subscribing to AL1350 MQTT topics</td><td><input class="input input-bordered input-sm w-full" placeholder="filename or function name..."></td></tr>
-            <tr><td>Decoding raw PDin into °C / object state / CL50 colour</td><td><input class="input input-bordered input-sm w-full" placeholder="filename or function name..."></td></tr>
-            <tr><td>Pushing decoded data to the browser</td><td><input class="input input-bordered input-sm w-full" placeholder="filename or function name..."></td></tr>
+            <tr><td>Subscribing to AL1350 MQTT topics</td><td><select id="ws5-comp-1" class="select select-bordered select-sm w-full"><option value="">-- Select --</option><option value="fastapi">io_link_fastapi.py</option><option value="decoder">decoder.py</option><option value="client">al1350_client.py</option></select></td><td><span id="ws5-comp-result-1" class="ws-check-result text-sm"></span></td></tr>
+            <tr><td>Decoding raw PDin into °C / object state / CL50 colour</td><td><select id="ws5-comp-2" class="select select-bordered select-sm w-full"><option value="">-- Select --</option><option value="fastapi">io_link_fastapi.py</option><option value="decoder">decoder.py</option><option value="client">al1350_client.py</option></select></td><td><span id="ws5-comp-result-2" class="ws-check-result text-sm"></span></td></tr>
+            <tr><td>Pushing decoded data to the browser</td><td><select id="ws5-comp-3" class="select select-bordered select-sm w-full"><option value="">-- Select --</option><option value="fastapi">io_link_fastapi.py</option><option value="decoder">decoder.py</option><option value="client">al1350_client.py</option></select></td><td><span id="ws5-comp-result-3" class="ws-check-result text-sm"></span></td></tr>
           </tbody>
         </table>
       </div>
+      <button type="button" class="btn btn-primary btn-sm mt-2" id="ws5-comp-check-btn">Check answers</button>
 
-      <p class="mt-3 font-medium text-base-content"><strong>3.</strong> What is the value of remote monitoring via a web HMI (like this app) compared to walking to the machine?</p>
-      <textarea class="textarea textarea-bordered w-full" rows="2" placeholder="Your answer..."></textarea>
+      <p class="mt-3 font-medium text-base-content"><strong>3.</strong> What is the key advantage of a web HMI like this app over walking to the machine?</p>
+      <div class="space-y-2 mt-1">
+        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="cp2-ws5-q3" value="a" class="radio radio-sm radio-secondary"> Walking to the machine is always preferred because it provides a physical inspection opportunity that remote tools cannot replicate</label>
+        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="cp2-ws5-q3" value="b" class="radio radio-sm radio-secondary"> A web HMI only functions when the machine has a stable internet connection</label>
+        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="cp2-ws5-q3" value="c" class="radio radio-sm radio-secondary"> Faster fault identification, multi-machine monitoring, and historical trends without a site visit</label>
+      </div>
 
       <div class="alert bg-secondary/10 border border-secondary/30 rounded-lg text-base-content mt-3">
         <strong>Do this:</strong> Open <a href="#" data-page="admin" class="link link-secondary">Connection Diagnostics</a>. The latency graph shows round-trip time to the AL1350 over HTTP. What does a spike in this graph tell you about the health of the IO-Link network?
       </div>
-      <textarea class="textarea textarea-bordered w-full mt-2" rows="2" placeholder="Your observation..."></textarea>
+      <div class="space-y-2 mt-2">
+        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="cp2-ws5-q4" value="a" class="radio radio-sm radio-secondary"> The dashboard browser tab is consuming too much memory and slowing the chart rendering</label>
+        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="cp2-ws5-q4" value="b" class="radio radio-sm radio-secondary"> High latency on the IO-Link subnet or the AL1350 being overloaded</label>
+        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="cp2-ws5-q4" value="c" class="radio radio-sm radio-secondary"> The Pi's MQTT broker has stopped forwarding messages and is queueing them internally until the buffer limit is reached</label>
+      </div>
 
       <div class="divider my-2"></div>
       <button type="button" class="btn btn-ghost btn-sm ws-suggested-btn" data-target="cp2-ws5-suggested">Show suggested answers</button>
-      <div id="cp2-ws5-suggested" class="hidden p-4 rounded-lg border border-base-300 bg-base-300/50 text-base-content/80 text-sm leading-relaxed ws-suggested">Q1: The IO-Link master maps each port's PDin into its process data image, which is then read by the PLC on each scan cycle (typically via PROFINET, EtherNet/IP, or EtherCAT). Q2: io_link_fastapi.py (MQTT subscription + WebSocket push); decoder.py (PDin decode). Q3: Faster fault identification, no need to travel to the machine, historical trend data, and the ability to monitor multiple machines from one screen.</div>
+      <div id="cp2-ws5-suggested" class="hidden p-4 rounded-lg border border-base-300 bg-base-300/50 text-base-content/80 text-sm leading-relaxed ws-suggested">Q1: b — the IO-Link master maps PDin into its process image; the PLC reads this via fieldbus each scan cycle. Q2: io_link_fastapi.py (MQTT subscription, rows 1 and 3); decoder.py (PDin decode, row 2). Q3: c — faster fault identification, multi-machine monitoring, and trend history. Latency spike: b — points to IO-Link subnet congestion or AL1350 load.</div>
     `
   },
   {
@@ -414,14 +471,26 @@ const WORKSHEETS = [
         </table>
       </div>
 
-      <p class="mt-4 font-medium text-base-content"><strong>Q1.</strong> Complete the table above. What is the annual downtime saving in hours?</p>
-      <textarea class="textarea textarea-bordered w-full" rows="2" placeholder="Your working and answer..."></textarea>
+      <p class="mt-4 font-medium text-base-content"><strong>Q1.</strong> Using the scenario figures, what is the annual downtime saving when switching to IO-Link? (Standard: 40 × 35 min = 1,400 min = 23.3 h; IO-Link: 40 × 8 min = 320 min = 5.3 h)</p>
+      <div class="space-y-2 mt-1">
+        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="cp2-ws6-q1" value="a" class="radio radio-sm radio-secondary"> 5.3 hours per year</label>
+        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="cp2-ws6-q1" value="b" class="radio radio-sm radio-secondary"> 23.3 hours per year</label>
+        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="cp2-ws6-q1" value="c" class="radio radio-sm radio-secondary"> 18 hours per year</label>
+      </div>
 
-      <p class="mt-3 font-medium text-base-content"><strong>Q2.</strong> If the production line generates £5,000 of value per hour, what is the annual financial saving from IO-Link?</p>
-      <textarea class="textarea textarea-bordered w-full" rows="2" placeholder="Your answer..."></textarea>
+      <p class="mt-3 font-medium text-base-content"><strong>Q2.</strong> If the production line generates £5,000 of value per hour, what is the annual financial saving from IO-Link? (Saving = 18 hours × £5,000)</p>
+      <div class="space-y-2 mt-1">
+        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="cp2-ws6-q2" value="a" class="radio radio-sm radio-secondary"> £175,000</label>
+        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="cp2-ws6-q2" value="b" class="radio radio-sm radio-secondary"> £90,000</label>
+        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="cp2-ws6-q2" value="c" class="radio radio-sm radio-secondary"> £26,500</label>
+      </div>
 
-      <p class="mt-3 font-medium text-base-content"><strong>Q3.</strong> Beyond MTTR, name two other benefits of IO-Link that contribute to lower total cost of ownership (TCO).</p>
-      <textarea class="textarea textarea-bordered w-full" rows="2" placeholder="Your answer..."></textarea>
+      <p class="mt-3 font-medium text-base-content"><strong>Q3.</strong> Beyond MTTR, which pair of benefits contributes most to lower total cost of ownership for IO-Link sensors?</p>
+      <div class="space-y-2 mt-1">
+        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="cp2-ws6-q3" value="a" class="radio radio-sm radio-secondary"> Built-in wireless backup channel that activates on master power loss, and automatic IP address provisioning for all sensors</label>
+        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="cp2-ws6-q3" value="b" class="radio radio-sm radio-secondary"> Lower per-unit sensor cost due to IO-Link certification subsidising manufacturing overheads across the supply chain</label>
+        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="cp2-ws6-q3" value="c" class="radio radio-sm radio-secondary"> Automatic parameter restore on sensor swap and remote diagnostics via the HMI</label>
+      </div>
 
       <p class="mt-3 font-medium text-base-content"><strong>Q4.</strong> In this app's architecture, which data would you export to a CMMS (Computerised Maintenance Management System) to automate maintenance work orders?</p>
       <div class="space-y-2">
@@ -432,7 +501,7 @@ const WORKSHEETS = [
 
       <div class="divider my-2"></div>
       <button type="button" class="btn btn-ghost btn-sm ws-suggested-btn" data-target="cp2-ws6-suggested">Show suggested answers</button>
-      <div id="cp2-ws6-suggested" class="hidden p-4 rounded-lg border border-base-300 bg-base-300/50 text-base-content/80 text-sm leading-relaxed ws-suggested">Q1: Standard: 40×35 = 1,400 min = 23.3 h. IO-Link: 40×8 = 320 min = 5.3 h. Saving: 18 hours/year. Q2: 18 × £5,000 = £90,000/year. Q3: Automatic parameter restore (no re-commissioning cost), predictive maintenance from trend data (avoids catastrophic failure), standardised wiring (reduced stock of cable types), remote diagnostics (no site visit needed). Q4: b — event data triggers work orders; process data trends support predictive scheduling.</div>
+      <div id="cp2-ws6-suggested" class="hidden p-4 rounded-lg border border-base-300 bg-base-300/50 text-base-content/80 text-sm leading-relaxed ws-suggested">Q1: c — Standard: 40×35=1,400 min=23.3 h. IO-Link: 40×8=320 min=5.3 h. Saving = 18 h/year. Q2: b — 18 × £5,000 = £90,000/year. Q3: c — automatic parameter restore (no re-commissioning cost) and remote diagnostics (no site visit needed). Q4: b — event data (faults and warnings) triggers maintenance work orders.</div>
     `
   }
 ];
@@ -470,10 +539,6 @@ function buildIndexHtml() {
           <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>
           Back to Dashboard
         </a>
-        <button type="button" class="btn btn-ghost btn-sm gap-2 cp2-print-btn">
-          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" /></svg>
-          Print
-        </button>
       </footer>
     </div>
   `;
@@ -500,7 +565,6 @@ function buildWorksheetViewHtml(worksheetIndex) {
         </div>
         <div class="flex items-center gap-2">
           <button type="button" class="btn btn-secondary btn-sm cp2-next-btn">Next (${nextNum})</button>
-          <button type="button" class="btn btn-ghost btn-sm cp2-print-btn">Print</button>
         </div>
       </nav>
       <div class="relative card bg-base-200 shadow-xl border-2 border-secondary/20 rounded-2xl overflow-hidden">
@@ -616,6 +680,21 @@ function initWorksheetInteractivity(container) {
         if (!sel || !res) continue;
         const val = (sel.value || '').trim();
         const correct = ws6Correct['ws6-' + i];
+        res.textContent = val ? (val === correct ? 'Correct' : 'Incorrect') : '';
+        res.className = 'ws-check-result text-sm ' + (val === correct ? 'text-success' : (val ? 'text-error' : ''));
+      }
+    });
+  }
+  const ws5CompCorrect = { 'ws5-comp-1': 'fastapi', 'ws5-comp-2': 'decoder', 'ws5-comp-3': 'fastapi' };
+  const ws5CompBtn = container.querySelector('#ws5-comp-check-btn');
+  if (ws5CompBtn) {
+    ws5CompBtn.addEventListener('click', function () {
+      for (let i = 1; i <= 3; i++) {
+        const sel = container.querySelector('#ws5-comp-' + i);
+        const res = container.querySelector('#ws5-comp-result-' + i);
+        if (!sel || !res) continue;
+        const val = (sel.value || '').trim();
+        const correct = ws5CompCorrect['ws5-comp-' + i];
         res.textContent = val ? (val === correct ? 'Correct' : 'Incorrect') : '';
         res.className = 'ws-check-result text-sm ' + (val === correct ? 'text-success' : (val ? 'text-error' : ''));
       }
