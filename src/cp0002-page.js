@@ -60,7 +60,7 @@ const WORKSHEETS = [
             <tr><td class="font-semibold">IO-Link Master</td><td>IFM AL1350 — reads sensors, publishes MQTT</td><td class="font-mono">192.168.7.4</td><td>HTTP REST + MQTT publish</td></tr>
             <tr><td class="font-semibold">Edge Gateway</td><td>Raspberry Pi — MQTT broker + FastAPI + WebSocket server</td><td class="font-mono">192.168.7.2</td><td>Ethernet (IO-Link subnet) + Wi-Fi (LAN)</td></tr>
             <tr><td class="font-semibold">This Dashboard</td><td>Vite SPA — receives WebSocket JSON, renders live UI</td><td class="font-mono">—</td><td>WebSocket /ws</td></tr>
-            <tr><td class="font-semibold">Port 1 Sensor</td><td>Photoelectric — diffuse reflection, detects objects</td><td class="font-mono">—</td><td>IO-Link (3-wire, M12)</td></tr>
+            <tr><td class="font-semibold">Port 1 Sensor</td><td>Contrinex LTR-M18PA-PMS-603 — diffuse photoelectric, IO-Link 1.0 (identity only via ISDU)</td><td class="font-mono">—</td><td>IO-Link (3-wire, M12)</td></tr>
             <tr><td class="font-semibold">Port 2 Sensor</td><td>Capacitive — detects material by dielectric change</td><td class="font-mono">—</td><td>IO-Link (3-wire, M12)</td></tr>
             <tr><td class="font-semibold">Port 3 Sensor</td><td>IFM TV7105 — temperature, ±0.1 °C IO-Link PDin</td><td class="font-mono">—</td><td>IO-Link (3-wire, M12)</td></tr>
             <tr><td class="font-semibold">Port 4 Sensor</td><td>IFM CL50 — multi-colour status light stack</td><td class="font-mono">—</td><td>IO-Link (3-wire, M12)</td></tr>
@@ -210,8 +210,8 @@ const WORKSHEETS = [
       <div class="space-y-4 mt-3">
 
         <div class="rounded-lg border border-base-300 bg-base-200 p-4">
-          <p class="font-semibold text-base-content">Port 1 — Photoelectric Sensor (IFM O5D / OGD)</p>
-          <p class="text-base-content/80 text-sm mt-1">PDin is typically 2 bytes. Bit 0 of byte 0 = switching output (object detected: 1, not detected: 0). Additional bits carry signal quality and alarm flags.</p>
+          <p class="font-semibold text-base-content">Port 1 — Photoelectric Sensor (Contrinex LTR-M18PA-PMS-603)</p>
+          <p class="text-base-content/80 text-sm mt-1">PDin is 2 bytes. Bit 0 of byte 0 = switching output (object detected: 1, not detected: 0). Additional bits carry signal quality. Note: this sensor uses IO-Link 1.0 — only identity data (index 0) is accessible via ISDU; sensitivity is adjusted via the physical potentiometer on the sensor body.</p>
           <p class="mt-2 font-medium text-base-content text-sm"><strong>Q:</strong> If the raw PDin hex is <code class="font-mono bg-base-300 px-1 rounded">0x01</code>, what is the switching output state?</p>
           <div class="space-y-1 mt-1">
             <label class="flex items-center gap-2 cursor-pointer text-sm"><input type="radio" name="cp2-ws2-q1" value="a" class="radio radio-xs radio-secondary"> No object detected</label>
