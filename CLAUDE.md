@@ -128,7 +128,7 @@ Touch events on X11 (WaveShare on Debian/Openbox) are emulated as mouse events â
   "port_labels": {
     "1": {"label": "Temperature Sensor",                 "device_type_hint": "temperature"},
     "2": {"label": "Capacitive Sensor (RS PRO 2377240)", "device_type_hint": "capacitive"},
-    "3": {"label": "Photoelectric Sensor (RS PRO)",      "device_type_hint": "photo_electric"},
+    "3": {"label": "Photoelectric Sensor (Contrinex LTR-M18PA-PMx-603)", "device_type_hint": "photo_electric"},
     "4": {"label": "Light Stack",                        "device_type_hint": "status_led"}
   }
 }

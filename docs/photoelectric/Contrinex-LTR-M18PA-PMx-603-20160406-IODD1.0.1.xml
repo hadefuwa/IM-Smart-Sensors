@@ -1,0 +1,462 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<IODevice xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://www.io-link.com/IODD/2009/11" xsi:schemaLocation="http://www.io-link.com/IODD/2009/11 IODD1.0.1.xsd">
+	<DocumentInfo version="V1.0.1" releaseDate="2016-04-06" copyright="Copyright 2016, CONTRINEX AG."/>
+	<ProfileHeader>
+		<ProfileIdentification>IO-Link Device Profile</ProfileIdentification>
+		<ProfileRevision>1.00</ProfileRevision>
+		<ProfileName>Device Profile for IO-Link Devices</ProfileName>
+		<ProfileSource>IO-Link Consortium</ProfileSource>
+		<ProfileClassID>Device</ProfileClassID>
+		<ISO15745Reference>
+			<ISO15745Part>1</ISO15745Part>
+			<ISO15745Edition>1</ISO15745Edition>
+			<ProfileTechnology>IODD</ProfileTechnology>
+		</ISO15745Reference>
+	</ProfileHeader>
+	<ProfileBody>
+		<DeviceIdentity vendorId="342" vendorName="Contrinex AG" deviceId="131842">
+			<VendorText textId="TI_VendorText"/>
+			<VendorUrl textId="TI_VendorUrl"/>
+			<VendorLogo name="Contrinex-logo.png"/>
+			<DeviceFamily textId="TI_DeviceFamily"/>
+			<DeviceVariantCollection>
+				<DeviceVariant productId="LTR-M18PA-PMx-603" hardwareRevision="1.0" firmwareRevision="1.0" deviceSymbol="Contrinex-LTR-M18PA-PMx-603-pic.png" deviceIcon="Contrinex-LTR-M18PA-PMx-603-icon.png">
+					<ProductName textId="TI_Device_Name1"/>
+					<ProductText textId="TI_Device_Text1"/>
+				</DeviceVariant>
+			</DeviceVariantCollection>
+		</DeviceIdentity>
+		<DeviceFunction>
+			<DatatypeCollection>
+				<Datatype xsi:type="RecordT" id="DT_ProcessDataIn" subindexAccessSupported="false" bitLength="2">
+					<RecordItem subindex="1" bitOffset="1">
+						<SimpleDatatype xsi:type="BooleanT">
+						</SimpleDatatype>
+						<Name textId="TI_ProcessDataIn_Signal2"/>
+					</RecordItem>
+					<RecordItem subindex="2" bitOffset="0">
+						<SimpleDatatype xsi:type="BooleanT">
+						</SimpleDatatype>
+						<Name textId="TI_ProcessDataIn_Signal1"/>
+					</RecordItem>
+				</Datatype>
+			</DatatypeCollection>
+			<VariableCollection>
+			<StdVariableRef id="V_DirectParameters_1"/>
+				<StdVariableRef id="V_DirectParameters_2"/>
+				<StdDirectParameterRef id="V_DirectParams" accessRights="rw">
+					<Datatype xsi:type="RecordT" bitLength="128">
+						<RecordItem subindex="1" bitOffset="126">
+							<SimpleDatatype xsi:type="UIntegerT" bitLength="2">
+								<SingleValue value="0">
+									<Name textId="TI_Val_Timer_Tb_0"></Name>
+								</SingleValue>
+								<SingleValue value="1">
+									<Name textId="TI_Val_Timer_Tb_1"></Name>
+								</SingleValue>
+								<SingleValue value="2">
+									<Name textId="TI_Val_Timer_Tb_2"></Name>
+								</SingleValue>
+								<SingleValue value="3">
+								  <Name textId="TI_Val_Timer_Tb_3"></Name>
+								</SingleValue>
+  							</SimpleDatatype>
+  							<Name textId="TI_Delay_Tb"/>
+  						</RecordItem>
+						<RecordItem subindex="2" bitOffset="124">
+							<SimpleDatatype xsi:type="UIntegerT" bitLength="2">
+								<SingleValue value="0">
+									<Name textId="TI_Val_Timer_Tb_0"></Name>
+								</SingleValue>
+								<SingleValue value="1">
+									<Name textId="TI_Val_Timer_Tb_1"></Name>
+								</SingleValue>
+								<SingleValue value="2">
+									<Name textId="TI_Val_Timer_Tb_2"></Name>
+								</SingleValue>
+								<SingleValue value="3">
+								  <Name textId="TI_Val_Timer_Tb_3"></Name>
+								</SingleValue>								
+  							</SimpleDatatype>
+  							<Name textId="TI_Stretch_Tb"/> 
+  						</RecordItem>						
+						<RecordItem subindex="3" bitOffset="122">
+							<SimpleDatatype xsi:type="UIntegerT" bitLength="2">
+  								<SingleValue value="0">
+									<Name textId="TI_Val_Out_Cfg_0"></Name>
+								</SingleValue>
+								<SingleValue value="1">
+									<Name textId="TI_Val_Out_Cfg_1"></Name>
+								</SingleValue>
+								<SingleValue value="2">
+									<Name textId="TI_Val_Out_Cfg_2"></Name>
+								</SingleValue>
+								<SingleValue value="3">
+								  <Name textId="TI_Val_Out_Cfg_3"></Name>
+								</SingleValue> 
+  							</SimpleDatatype>
+  							<Name textId="TI_Out1_Cfg"/> 
+  						</RecordItem>
+						<RecordItem subindex="4" bitOffset="120">
+							<SimpleDatatype xsi:type="UIntegerT" bitLength="2">
+  								<SingleValue value="0">
+									<Name textId="TI_Val_Out_Cfg_0"></Name>
+								</SingleValue>
+								<SingleValue value="1">
+									<Name textId="TI_Val_Out_Cfg_1"></Name>
+								</SingleValue>
+								<SingleValue value="2">
+									<Name textId="TI_Val_Out_Cfg_2"></Name>
+								</SingleValue>
+								<SingleValue value="3">
+								  <Name textId="TI_Val_Out_Cfg_3"></Name>
+								</SingleValue> 
+  							</SimpleDatatype>
+  							<Name textId="TI_Out2_Cfg"/> 
+  						</RecordItem>						
+						<RecordItem subindex="5" bitOffset="112">
+							<SimpleDatatype xsi:type="UIntegerT" bitLength="8">
+  								<ValueRange lowerValue="0" upperValue="255"/> 
+  							</SimpleDatatype>
+  							<Name textId="TI_Delay"/> 
+  						</RecordItem>
+						<RecordItem subindex="6" bitOffset="104">
+							<SimpleDatatype xsi:type="UIntegerT" bitLength="8">
+  								<ValueRange lowerValue="0" upperValue="255"/> 
+  							</SimpleDatatype>
+  							<Name textId="TI_Stretch"/> 
+  						</RecordItem>
+						<RecordItem subindex="7" bitOffset="88">
+							<SimpleDatatype xsi:type="UIntegerT" bitLength="10">
+  								<ValueRange lowerValue="0" upperValue="1023"/> 
+  							</SimpleDatatype>
+  							<Name textId="TI_Teach_Val"/> 
+  						</RecordItem>
+						<RecordItem subindex="8" bitOffset="84">
+							<SimpleDatatype xsi:type="UIntegerT" bitLength="4">
+  								<ValueRange lowerValue="0" upperValue="9"/> 
+  							</SimpleDatatype>
+  							<Name textId="TI_Sequence_Choice"/> 
+  						</RecordItem>
+						<RecordItem subindex="9" bitOffset="80">
+							<SimpleDatatype xsi:type="UIntegerT" bitLength="4">
+  								<SingleValue value="1">
+									<Name textId="TI_Val_Sensor_Mode_1"></Name>
+								</SingleValue>
+								<SingleValue value="2">
+									<Name textId="TI_Val_Sensor_Mode_2"></Name>
+								</SingleValue>
+								<SingleValue value="3">
+									<Name textId="TI_Val_Sensor_Mode_3"></Name>
+								</SingleValue> 
+  							</SimpleDatatype>
+  							<Name textId="TI_Sensor_Mode"/> 
+  						</RecordItem>
+						<RecordItem subindex="10" accessRightRestriction="wo" bitOffset="72">
+							<SimpleDatatype xsi:type="UIntegerT" bitLength="2">
+								<SingleValue value="0">
+									<Name textId="TI_Val_Teach_Command_0"></Name>
+								</SingleValue>
+  								<SingleValue value="1">
+									<Name textId="TI_Val_Teach_Command_1"></Name>
+								</SingleValue>
+								<SingleValue value="2">
+									<Name textId="TI_Val_Teach_Command_2"></Name>
+								</SingleValue>
+								<SingleValue value="3">
+									<Name textId="TI_Val_Teach_Command_3"></Name>
+								</SingleValue> 
+  							</SimpleDatatype>
+  							<Name textId="TI_Teach_Command"/> 
+  						</RecordItem>
+						<RecordItem subindex="11" bitOffset="56">
+							<SimpleDatatype xsi:type="UIntegerT" bitLength="16">
+  								<ValueRange lowerValue="0" upperValue="65535"/> 
+  							</SimpleDatatype>
+  							<Name textId="TI_Det_Cnt"/> 
+  						</RecordItem>
+						<RecordItem subindex="12" bitOffset="54">
+							<SimpleDatatype xsi:type="BooleanT">
+  							</SimpleDatatype>
+							<Name textId="TI_Event_Flags_6"/>
+  						</RecordItem>
+						<RecordItem subindex="13" bitOffset="53">
+							<SimpleDatatype xsi:type="BooleanT">
+  							</SimpleDatatype>
+							<Name textId="TI_Event_Flags_5"/>
+  						</RecordItem>
+						<RecordItem subindex="14" bitOffset="52">
+							<SimpleDatatype xsi:type="BooleanT">
+  							</SimpleDatatype>
+							<Name textId="TI_Event_Flags_4"/>
+  						</RecordItem>
+						<RecordItem subindex="15" bitOffset="51">
+							<SimpleDatatype xsi:type="BooleanT">
+  							</SimpleDatatype>
+							<Name textId="TI_Event_Flags_3"/>
+  						</RecordItem>
+						<RecordItem subindex="16" bitOffset="50">
+							<SimpleDatatype xsi:type="BooleanT">
+  							</SimpleDatatype>
+							<Name textId="TI_Event_Flags_2"/>
+  						</RecordItem>
+						<RecordItem subindex="17" bitOffset="49">
+							<SimpleDatatype xsi:type="BooleanT">
+  							</SimpleDatatype>
+							<Name textId="TI_Event_Flags_1"/>
+  						</RecordItem>
+						<RecordItem subindex="18" bitOffset="48">
+							<SimpleDatatype xsi:type="BooleanT">
+  							</SimpleDatatype>
+							<Name textId="TI_Event_Flags_0"/>
+  						</RecordItem>
+						<RecordItem subindex="19" accessRightRestriction="ro" bitOffset="40">
+							<SimpleDatatype xsi:type="UIntegerT" bitLength="8"> 
+  							</SimpleDatatype>
+  							<Name textId="TI_Max_Temp"/> 
+  						</RecordItem>
+						<RecordItem subindex="20" accessRightRestriction="ro" bitOffset="32">
+							<SimpleDatatype xsi:type="UIntegerT" bitLength="8"> 
+  							</SimpleDatatype>
+  							<Name textId="TI_Current_Temp"/> 
+  						</RecordItem>
+						
+					</Datatype>
+					<RecordItemInfo subindex="1" defaultValue="0"/>
+					<RecordItemInfo subindex="2" defaultValue="0"/>
+					<RecordItemInfo subindex="3" defaultValue="0"/>
+					<RecordItemInfo subindex="4" defaultValue="1"/>
+					<RecordItemInfo subindex="5" defaultValue="0"/>
+					<RecordItemInfo subindex="6" defaultValue="0"/>
+					<RecordItemInfo subindex="7" defaultValue="512"/>
+					<RecordItemInfo subindex="8" defaultValue="1"/>
+					<RecordItemInfo subindex="9" defaultValue="2"/>
+					<RecordItemInfo subindex="10" defaultValue="0"/>
+					<RecordItemInfo subindex="11" defaultValue="0"/>
+					<RecordItemInfo subindex="12" defaultValue="0"/>
+					<RecordItemInfo subindex="13" defaultValue="0"/>
+					<RecordItemInfo subindex="14" defaultValue="0"/>
+					<RecordItemInfo subindex="15" defaultValue="0"/>
+					<RecordItemInfo subindex="16" defaultValue="0"/>
+					<RecordItemInfo subindex="17" defaultValue="0"/>
+					<RecordItemInfo subindex="18" defaultValue="0"/>
+					<Name textId="TI_V_DirectParams"/>
+				</StdDirectParameterRef>
+			</VariableCollection>
+			<ProcessDataCollection>
+				<ProcessData id="PD_ProcessData">
+					<ProcessDataIn id="PD_ProcessDataIn" bitLength="2">
+						<DatatypeRef datatypeId="DT_ProcessDataIn"/>
+						<Name textId="TI_PD_ProcessDataIn"/>
+					</ProcessDataIn>
+				</ProcessData>
+			</ProcessDataCollection>
+			<UserInterface>
+				<MenuCollection>
+					<Menu id="ME_Ident">
+						<VariableRef variableId="V_DirectParameters_1"/>
+					</Menu>
+					<Menu id="ME_OR_Param">
+						<MenuRef menuId="ME_OR_SUB_DET">
+						</MenuRef>
+						<MenuRef menuId="ME_OR_SUB_OUT_CFG">
+						</MenuRef>
+						<MenuRef menuId="ME_SUB_TEMP">
+						</MenuRef>
+						<MenuRef menuId="ME_OR_SUB_EVENT">
+						</MenuRef>
+					</Menu>
+					<Menu id="ME_MSR_Param">
+						<MenuRef menuId="ME_MSR_SUB_DET">
+						</MenuRef>
+						<MenuRef menuId="ME_MSR_SUB_OUT_CFG">
+						</MenuRef>
+						<MenuRef menuId="ME_SUB_TEMP">
+						</MenuRef>
+						<MenuRef menuId="ME_MSR_SUB_EVENT">
+						</MenuRef>
+					</Menu>
+					<Menu id="ME_OR_SUB_DET">
+					<Name textId="TI_ME_SUB_DET" />
+						<!-- <RecordItemRef variableId="V_DirectParams" subindex="7" accessRightRestriction="ro"/> -->
+						<RecordItemRef variableId="V_DirectParams" subindex="9" accessRightRestriction="ro"/>
+						<!-- <RecordItemRef variableId="V_DirectParams" subindex="8" accessRightRestriction="ro"/>						 -->
+						<RecordItemRef variableId="V_DirectParams" subindex="11" accessRightRestriction="ro"/>
+					</Menu>					
+					<Menu id="ME_MSR_SUB_DET">
+					<Name textId="TI_ME_SUB_DET" />
+						<!-- <RecordItemRef variableId="V_DirectParams" subindex="7"/> -->
+						<!-- <RecordItemRef variableId="V_DirectParams" subindex="10"/>						 -->
+						<RecordItemRef variableId="V_DirectParams" subindex="9"/>
+						<!-- <RecordItemRef variableId="V_DirectParams" subindex="8"/> -->
+						<RecordItemRef variableId="V_DirectParams" subindex="11"/>
+					</Menu>
+					<Menu id="ME_OR_SUB_OUT_CFG">
+					<Name textId="TI_ME_SUB_OUT_CFG" />
+						<RecordItemRef variableId="V_DirectParams" subindex="3" accessRightRestriction="ro"/>
+						<RecordItemRef variableId="V_DirectParams" subindex="4" accessRightRestriction="ro"/>
+						<RecordItemRef variableId="V_DirectParams" subindex="1" accessRightRestriction="ro"/>
+						<RecordItemRef variableId="V_DirectParams" subindex="5" accessRightRestriction="ro"/>
+						<RecordItemRef variableId="V_DirectParams" subindex="2" accessRightRestriction="ro"/>
+						<RecordItemRef variableId="V_DirectParams" subindex="6" accessRightRestriction="ro"/>
+					</Menu>
+					<Menu id="ME_MSR_SUB_OUT_CFG">
+					<Name textId="TI_ME_SUB_OUT_CFG" />
+						<RecordItemRef variableId="V_DirectParams" subindex="3"/>
+						<RecordItemRef variableId="V_DirectParams" subindex="4"/>
+						<RecordItemRef variableId="V_DirectParams" subindex="1"/>
+						<RecordItemRef variableId="V_DirectParams" subindex="5"/>
+						<RecordItemRef variableId="V_DirectParams" subindex="2"/>
+						<RecordItemRef variableId="V_DirectParams" subindex="6"/>
+					</Menu>
+					<Menu id="ME_OR_SUB_EVENT">
+					<Name textId="TI_ME_SUB_EVENT" />
+						<RecordItemRef variableId="V_DirectParams" subindex="12" accessRightRestriction="ro"/>
+						<RecordItemRef variableId="V_DirectParams" subindex="13" accessRightRestriction="ro"/>
+						<RecordItemRef variableId="V_DirectParams" subindex="14" accessRightRestriction="ro"/>
+						<RecordItemRef variableId="V_DirectParams" subindex="15" accessRightRestriction="ro"/>
+						<RecordItemRef variableId="V_DirectParams" subindex="16" accessRightRestriction="ro"/>
+						<RecordItemRef variableId="V_DirectParams" subindex="17" accessRightRestriction="ro"/>
+						<RecordItemRef variableId="V_DirectParams" subindex="18" accessRightRestriction="ro"/>
+					</Menu>					
+					<Menu id="ME_MSR_SUB_EVENT">
+					<Name textId="TI_ME_SUB_EVENT" />
+						<RecordItemRef variableId="V_DirectParams" subindex="12"/>
+						<RecordItemRef variableId="V_DirectParams" subindex="13"/>
+						<RecordItemRef variableId="V_DirectParams" subindex="14"/>
+						<RecordItemRef variableId="V_DirectParams" subindex="15"/>
+						<RecordItemRef variableId="V_DirectParams" subindex="16"/>
+						<RecordItemRef variableId="V_DirectParams" subindex="17"/>
+						<RecordItemRef variableId="V_DirectParams" subindex="18"/>
+					</Menu>
+					<Menu id="ME_SUB_TEMP">
+					<Name textId="TI_ME_SUB_TEMP" />
+						<RecordItemRef variableId="V_DirectParams" subindex="19" gradient="0.8915" offset="-54.125" unitCode="1001" displayFormat="Dec"/>
+						<RecordItemRef variableId="V_DirectParams" subindex="20" gradient="0.8915" offset="-54.125" unitCode="1001" displayFormat="Dec"/>
+					</Menu>
+				</MenuCollection>
+				<ObserverRoleMenuSet>
+					<IdentificationMenu menuId="ME_Ident"/>
+					<ParameterMenu menuId="ME_OR_Param"/>
+				</ObserverRoleMenuSet>
+				<MaintenanceRoleMenuSet>
+					<IdentificationMenu menuId="ME_Ident"/>
+					<ParameterMenu menuId="ME_MSR_Param"/>
+				</MaintenanceRoleMenuSet>
+				<SpecialistRoleMenuSet>
+					<IdentificationMenu menuId="ME_Ident"/>
+					<ParameterMenu menuId="ME_MSR_Param"/>
+				</SpecialistRoleMenuSet>
+			</UserInterface>
+		</DeviceFunction>
+	</ProfileBody>
+	<CommNetworkProfile xsi:type="IOLinkCommNetworkProfileT" iolinkRevision="V1.0">
+		<TransportLayers>
+			<PhysicalLayer physics="2" minCycleTime="10000" sioSupported="true" baudrate="COM2"/>
+		</TransportLayers>
+	</CommNetworkProfile>
+	<ExternalTextCollection>
+		<PrimaryLanguage xml:lang="en">
+			<Text id="TI_VendorText" value="CONTRINEX AG"/>
+			<Text id="TI_VendorUrl" value="http://www.contrinex.com"/>
+			<Text id="TI_DeviceFamily" value="Photoelectric sensors M18"/>
+			<Text id="TI_Device_Name1" value="LTR-M18PA-PMx-603"/>
+			<Text id="TI_Device_Text1" value="Diffuse"/>
+			<Text id="TI_PD_ProcessDataIn" value="Detection and stability state"/>
+			<Text id="TI_ProcessDataIn_Signal1" value="Detection state"/>
+			<Text id="TI_ProcessDataIn_Signal2" value="Stability alarm"/>
+			<Text id="TI_Out1_Cfg" value="Output 1 configuration"/>
+			<Text id="TI_Out2_Cfg" value="Output 2 configuration"/>
+			<Text id="TI_Delay_Tb" value="Switching delay time base"/>
+			<Text id="TI_Stretch_Tb" value="Output stretch time base"/>
+			<Text id="TI_Delay" value="Switching delay multiplier"/>
+			<Text id="TI_Stretch" value="Output stretch multiplier"/>
+			<Text id="TI_Teach_Val" value="Sensitivity"/>
+			<Text id="TI_Sequence_Choice" value="Sequence choice"/>
+			<Text id="TI_Sensor_Mode" value="Sensor mode"/>
+			<Text id="TI_Teach_Command" value="Teach command"/>
+			<Text id="TI_Det_Cnt" value="Detection counter"/>
+			<Text id="TI_Max_Temp" value="Maximum temperature"/>
+			<Text id="TI_Current_Temp" value="Actual temperature"/>
+			<Text id="TI_V_DirectParams" value="Direct parameters"/>
+			<Text id="TI_Val_Timer_Tb_0" value="0.1 ms"/>
+			<Text id="TI_Val_Timer_Tb_1" value="0.4 ms"/>
+			<Text id="TI_Val_Timer_Tb_2" value="1.6 ms"/>
+			<Text id="TI_Val_Timer_Tb_3" value="6.4 ms"/>
+			<Text id="TI_Val_Out_Cfg_0" value="Detection light-on"/>
+			<Text id="TI_Val_Out_Cfg_1" value="Detection dark-on"/>
+			<Text id="TI_Val_Out_Cfg_2" value="Stability alarm"/>
+			<Text id="TI_Val_Out_Cfg_3" value="Stability alarm inverted"/>
+			<Text id="TI_Val_Sensor_Mode_1" value="Fine"/>
+			<Text id="TI_Val_Sensor_Mode_2" value="Normal"/>
+			<Text id="TI_Val_Sensor_Mode_3" value="Fast"/>
+			<Text id="TI_Val_Teach_Command_0" value="Idle"/>
+			<Text id="TI_Val_Teach_Command_1" value="Teach 1-point, on target"/>
+			<Text id="TI_Val_Teach_Command_2" value="Teach 2-point (step 1), on target"/>
+			<Text id="TI_Val_Teach_Command_3" value="Teach 2-point (step 2), without target (validates teach 2-point)"/>
+			<Text id="TI_Event_Flags_6" value="Event flag: LED regulation limit"/>
+			<Text id="TI_Event_Flags_5" value="Event flag: Disturbance on receiver"/>
+			<Text id="TI_Event_Flags_4" value="Event flag: Under-voltage for IO-Link"/>
+			<Text id="TI_Event_Flags_3" value="Event flag: Under-voltage on sensor"/>
+			<Text id="TI_Event_Flags_2" value="Event flag: Maximum temperature"/>
+			<Text id="TI_Event_Flags_1" value="Event flag: EMC detected"/>
+			<Text id="TI_Event_Flags_0" value="Event flag: Short-circuit detection"/>
+			<Text id="TI_ME_SUB_OUT_CFG" value="Output configuration" />	
+			<Text id="TI_ME_SUB_DET" value="Detection" />
+			<Text id="TI_ME_SUB_EVENT" value="Event flags" />
+			<Text id="TI_ME_SUB_TEMP" value="Temperature" />
+		</PrimaryLanguage>
+
+		<Language xml:lang="de">
+			<Text id="TI_VendorText" value="CONTRINEX AG"/>
+			<Text id="TI_VendorUrl" value="http://www.contrinex.com"/>
+			<Text id="TI_DeviceFamily" value="Photoelektrische Sensoren M18"/>
+			<Text id="TI_Device_Name1" value="LTR-M18PA-PMx-603"/>
+			<Text id="TI_Device_Text1" value="Lichttaster"/>
+			<Text id="TI_PD_ProcessDataIn" value="Erfassungs- und Stabilitätsstatus"/>
+			<Text id="TI_ProcessDataIn_Signal1" value="Erfassungsstatus"/>
+			<Text id="TI_ProcessDataIn_Signal2" value="Stabilitätsalarm"/>
+			<Text id="TI_Out1_Cfg" value="Ausgang 1 Konfiguration"/>
+			<Text id="TI_Out2_Cfg" value="Ausgang 2 Konfiguration"/>
+			<Text id="TI_Delay_Tb" value="Schaltverzögerung Zeitbasis"/>
+			<Text id="TI_Stretch_Tb" value="Schaltverlängerung Zeitbasis"/>
+			<Text id="TI_Delay" value="Schaltverzögerungs-Multiplikator"/>
+			<Text id="TI_Stretch" value="Schaltverlängerungs-Multiplikator"/>
+			<Text id="TI_Teach_Val" value="Empfindlichkeit"/>
+			<Text id="TI_Sequence_Choice" value="Sequenzauswahl"/>
+			<Text id="TI_Sensor_Mode" value="Sensormodus"/>
+			<Text id="TI_Teach_Command" value="Teach Befehl"/>
+			<Text id="TI_Det_Cnt" value="Erfassungscounter"/>
+			<Text id="TI_Max_Temp" value="Maximale Temperatur"/>
+			<Text id="TI_Current_Temp" value="Aktuelle Temperatur"/>
+			<Text id="TI_V_DirectParams" value="Direkte Parameter"/>
+			<Text id="TI_Val_Timer_Tb_0" value="0.1 ms"/>
+			<Text id="TI_Val_Timer_Tb_1" value="0.4 ms"/>
+			<Text id="TI_Val_Timer_Tb_2" value="1.6 ms"/>
+			<Text id="TI_Val_Timer_Tb_3" value="6.4 ms"/>
+			<Text id="TI_Val_Out_Cfg_0" value="Detection light-on"/>
+			<Text id="TI_Val_Out_Cfg_1" value="Detection dark-on"/>
+			<Text id="TI_Val_Out_Cfg_2" value="Stability alarm"/>
+			<Text id="TI_Val_Out_Cfg_3" value="Stability alarm inverted"/>
+			<Text id="TI_Val_Sensor_Mode_1" value="Fine"/>
+			<Text id="TI_Val_Sensor_Mode_2" value="Normal"/>
+			<Text id="TI_Val_Sensor_Mode_3" value="Fast"/>
+			<Text id="TI_Val_Teach_Command_0" value="Idle"/>
+			<Text id="TI_Val_Teach_Command_1" value="Teach 1-point, on target"/>
+			<Text id="TI_Val_Teach_Command_2" value="Teach 2-point (step 1), on target"/>
+			<Text id="TI_Val_Teach_Command_3" value="Teach 2-point (step 2), without target (validates teach 2-point)"/>
+			<Text id="TI_Event_Flags_6" value="Event flag: LED-Einstellgrenze"/>
+			<Text id="TI_Event_Flags_5" value="Event flag: Störung am Empfänger"/>
+			<Text id="TI_Event_Flags_4" value="Event flag: Unterspannung für IO-Link"/>
+			<Text id="TI_Event_Flags_3" value="Event flag: Unterspannung am Sensor"/>
+			<Text id="TI_Event_Flags_2" value="Event flag: Maximale Temperatur"/>
+			<Text id="TI_Event_Flags_1" value="Event flag: EMV erkannt"/>
+			<Text id="TI_Event_Flags_0" value="Event flag: Kurzschlusserkennung"/>
+			<Text id="TI_ME_SUB_OUT_CFG" value="Ausgang Konfiguration" />
+			<Text id="TI_ME_SUB_DET" value="Erfassung" />
+			<Text id="TI_ME_SUB_EVENT" value="Event-flags" />
+			<Text id="TI_ME_SUB_TEMP" value="Temperatur" />			
+		</Language>
+	</ExternalTextCollection>
+	<Stamp crc="1354325534"><Checker name="IODD-Checker V1.0.9" version="V1.0.9.0"/></Stamp>
+</IODevice>

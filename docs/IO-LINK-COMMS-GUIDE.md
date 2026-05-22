@@ -541,7 +541,7 @@ Byte 3:  0x01  → bit 0 = 1 → Switching output 1 active → Object detected
 
 The analogue value represents the strength of the dielectric effect — higher means more material detected. The switching output bit is the simple yes/no answer. The analogue value is useful for level sensing (e.g., gradually rising liquid) because it gives a continuous reading, not just a threshold.
 
-### Photoelectric Sensor (RS PRO) — Port 3
+### Photoelectric Sensor (Contrinex LTR-M18PA-PMx-603, sold as RS PRO 0360240) — Port 3
 
 PDin: **1–2 bytes**
 

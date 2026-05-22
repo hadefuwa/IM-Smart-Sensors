@@ -1,0 +1,152 @@
+Communication Characteristic
+IO-Link Revision
+V1.0
+Transmission Rate
+COM2 (38.4 kbit/s)
+Min. Cycle Time
+10.0 ms
+Process Data Input
+2 bit
+Process Data Output
+n/a
+SIO Mode Support
+Yes
+ISDU Support
+Yes
+Supported Product Variants
+LTR-M18PA-PMx-603
+LTR-M18PA-PMx-603
+
+Name
+Value
+Direct Parameters - Page 1 : Reserved
+
+0 .. 255
+Direct Parameters - Page 1 : Master Cycle Time
+
+0 .. 255
+Direct Parameters - Page 1 : Min Cycle Time
+
+0 .. 255
+Direct Parameters - Page 1 : Frame Capability
+
+0 .. 255
+Direct Parameters - Page 1 : IO-Link Revision ID
+
+0 .. 255
+Direct Parameters - Page 1 : Process Data Input Length
+
+0 .. 255
+Direct Parameters - Page 1 : Process Data Output Length
+
+0 .. 255
+Direct Parameters - Page 1 : Vendor ID 1
+
+0 .. 255
+Direct Parameters - Page 1 : Vendor ID 2
+
+0 .. 255
+Direct Parameters - Page 1 : Device ID 1
+
+0 .. 255
+Direct Parameters - Page 1 : Device ID 2
+
+0 .. 255
+Direct Parameters - Page 1 : Device ID 3
+
+0 .. 255
+Direct Parameters - Page 1 : Reserved
+
+0 .. 255
+Direct Parameters - Page 1 : Reserved
+
+0 .. 255
+Direct Parameters - Page 1 : Reserved
+
+0 .. 255
+Direct Parameters - Page 1 : Reserved
+
+0 .. 255
+
+Name
+Value
+Detection
+Direct parameters : Sensor mode
+
+Fine [1]
+Normal [2] (default)
+Fast [3]
+Direct parameters : Detection counter
+
+0 .. 65535 (default: 0)
+Output configuration
+Direct parameters : Output 1 configuration
+
+Detection light-on [0] (default)
+Detection dark-on [1]
+Stability alarm [2]
+Stability alarm inverted [3]
+Direct parameters : Output 2 configuration
+
+Detection light-on [0]
+Detection dark-on [1] (default)
+Stability alarm [2]
+Stability alarm inverted [3]
+Direct parameters : Switching delay time base
+
+0.1 ms [0] (default)
+0.4 ms [1]
+1.6 ms [2]
+6.4 ms [3]
+Direct parameters : Switching delay multiplier
+
+0 .. 255 (default: 0)
+Direct parameters : Output stretch time base
+
+0.1 ms [0] (default)
+0.4 ms [1]
+1.6 ms [2]
+6.4 ms [3]
+Direct parameters : Output stretch multiplier
+
+0 .. 255 (default: 0)
+Temperature
+Direct parameters : Maximum temperature
+
+0 .. 255
+Direct parameters : Actual temperature
+
+0 .. 255
+Event flags
+Direct parameters : Event flag: LED regulation limit
+
+0 (default)
+Direct parameters : Event flag: Disturbance on receiver
+
+0 (default)
+Direct parameters : Event flag: Under-voltage for IO-Link
+
+0 (default)
+Direct parameters : Event flag: Under-voltage on sensor
+
+0 (default)
+Direct parameters : Event flag: Maximum temperature
+
+0 (default)
+Direct parameters : Event flag: EMC detected
+
+0 (default)
+Direct parameters : Event flag: Short-circuit detection
+
+0 (default)
+
+Name
+Value
+ProcessData
+Detection and stability state
+Stability alarm
+
+true | false
+Detection state
+
+true | false
