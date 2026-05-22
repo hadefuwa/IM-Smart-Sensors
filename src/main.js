@@ -40,6 +40,22 @@ Chart.register(
 );
 
 // ================================================================
+// KIOSK TOUCH MODE
+// Hides the cursor permanently once a touch event is detected.
+// Persists across page loads via localStorage so the Pi never shows
+// a cursor even if the touchscreen driver reports pointer:fine.
+// ================================================================
+(function () {
+  if (localStorage.getItem('matrix-kiosk-touch') === 'true') {
+    document.documentElement.classList.add('kiosk-touch');
+  }
+  document.addEventListener('touchstart', () => {
+    localStorage.setItem('matrix-kiosk-touch', 'true');
+    document.documentElement.classList.add('kiosk-touch');
+  }, { once: true, passive: true });
+}());
+
+// ================================================================
 // SIMPLE TEMPLATE SYSTEM (PHASE 1)
 // ================================================================
 // - All "pages" are plain functions that return HTML strings.
@@ -7476,10 +7492,62 @@ setTimeout(() => {
         }
       }, { passive: false });
       
-      // Prevent touchmove events from propagating on mobile
-      sidebarScrollContainer.addEventListener('touchmove', (e) => {
-        e.stopPropagation();
-      }, { passive: false });
+      // ── Telemetry: report sidebar events to backend for remote diagnosis ──
+      const dbg = (data) => fetch('/api/debug/event', {
+        method: 'POST', headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({
+          ...data,
+          scrollTop: sidebarScrollContainer.scrollTop,
+          scrollHeight: sidebarScrollContainer.scrollHeight,
+          clientHeight: sidebarScrollContainer.clientHeight
+        })
+      }).catch(() => {});
+
+      ['mousedown','mousemove','mouseup','touchstart','touchmove','touchend','scroll','click','pointerdown','pointermove','pointerup'].forEach(evt => {
+        const passive = !['mousedown','touchmove'].includes(evt);
+        sidebarScrollContainer.addEventListener(evt, (e) => {
+          if (evt === 'mousemove' && !window._sdbg) return;
+          if (evt === 'mousedown') window._sdbg = true;
+          if (evt === 'mouseup') window._sdbg = false;
+          const touch = e.touches?.[0] || e.changedTouches?.[0];
+          dbg({ evt, tag: e.target?.tagName, clientY: e.clientY ?? touch?.clientY, pointerType: e.pointerType });
+        }, { passive });
+      });
+
+      // ── Drag-to-scroll for the sidebar.
+      // X11 touch emulation produces mouse events, not touch events, so CSS
+      // touch-action and overflow scroll do not respond to finger swipes.
+      // We implement scroll manually using mousedown/mousemove/mouseup.
+      let dragActive = false;
+      let dragStartY = 0;
+      let dragStartScrollTop = 0;
+      let dragMoved = false;
+
+      sidebarScrollContainer.addEventListener('mousedown', (e) => {
+        dragActive = true;
+        dragMoved = false;
+        dragStartY = e.clientY;
+        dragStartScrollTop = sidebarScrollContainer.scrollTop;
+        e.preventDefault(); // stop text selection while dragging
+      });
+
+      window.addEventListener('mousemove', (e) => {
+        if (!dragActive) return;
+        const dy = dragStartY - e.clientY;
+        if (!dragMoved && Math.abs(dy) > 5) {
+          dragMoved = true;
+          sidebar.classList.add('sidebar-scrolling');
+        }
+        if (dragMoved) {
+          sidebarScrollContainer.scrollTop = dragStartScrollTop + dy;
+        }
+      });
+
+      window.addEventListener('mouseup', () => {
+        if (!dragActive) return;
+        dragActive = false;
+        sidebar.classList.remove('sidebar-scrolling');
+      });
     }
   }
   

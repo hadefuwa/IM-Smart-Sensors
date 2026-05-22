@@ -97,6 +97,10 @@ class AL1350ClientManager:
         self.last_error: Optional[str] = None
         self.port_freshness_ts: Dict[int, Optional[float]] = {1: None, 2: None, 3: None, 4: None}
 
+        # Adaptive polling: per-port cache and next-due timestamps
+        self._port_last_data: Dict[int, Dict[str, Any]] = {}
+        self._port_next_poll_ts: Dict[int, float] = {i: 0.0 for i in range(1, 5)}
+
         self.request_latencies_ms: deque = deque(maxlen=500)
         self.request_successes: int = 0
         self.request_failures: int = 0
@@ -176,15 +180,33 @@ class AL1350ClientManager:
                 latency_ms = (time.perf_counter() - started) * 1000.0
                 self.request_latencies_ms.append(latency_ms)
                 self.request_successes += 1
+                _state_before = self._breaker.state
                 self._breaker.record_success()
+                if _state_before in ("open", "half-open"):
+                    self._logger.info(
+                        f"CIRCUIT BREAKER CLOSED (recovered from {_state_before}) — "
+                        f"url={url} latency={latency_ms:.0f}ms"
+                    )
                 return payload if isinstance(payload, dict) else {"value": payload}
             except Exception as exc:  # noqa: BLE001
                 latency_ms = (time.perf_counter() - started) * 1000.0
                 self.request_latencies_ms.append(latency_ms)
                 self.request_failures += 1
+                _state_before = self._breaker.state
                 self._breaker.record_failure()
+                _state_after = self._breaker.state
                 self.last_error = str(exc)
                 last_exc = exc
+                self._logger.debug(
+                    f"Request failed attempt={attempt}/{retries} url={url} "
+                    f"latency={latency_ms:.0f}ms error={exc!r} "
+                    f"circuit={_state_after} breaker_failures={self._breaker.failures}"
+                )
+                if _state_after == "open" and _state_before != "open":
+                    self._logger.error(
+                        f"CIRCUIT BREAKER OPENED — {self._breaker.failures} consecutive failures — "
+                        f"url={url} last_error={exc!r}"
+                    )
                 if attempt < retries:
                     # jittered exponential backoff, capped
                     await asyncio.sleep(min(1.5, (2 ** (attempt - 1)) * 0.2 + random.uniform(0.0, 0.15)))
@@ -206,6 +228,25 @@ class AL1350ClientManager:
                 continue
         return None
 
+    async def read_isdu(self, port: int, index: int, subindex: int) -> Optional[str]:
+        """Read an acyclic ISDU parameter from an IO-Link device. Returns raw hex string."""
+        result = await self._service_request(
+            f"/iolinkmaster/port[{port}]/iolinkdevice/iolreadacyclic",
+            data={"index": index, "subindex": subindex}
+        )
+        if result and result.get("code") == 200:
+            data = result.get("data", {})
+            return data.get("value") if isinstance(data, dict) else None
+        return None
+
+    async def write_isdu(self, port: int, index: int, subindex: int, value_hex: str) -> bool:
+        """Write an acyclic ISDU parameter to an IO-Link device. value_hex is a hex string."""
+        result = await self._service_request(
+            f"/iolinkmaster/port[{port}]/iolinkdevice/iolwriteacyclic",
+            data={"index": index, "subindex": subindex, "value": value_hex}
+        )
+        return result is not None and result.get("code") == 200
+
     async def refresh_gettree(self, force: bool = False) -> Optional[Dict[str, Any]]:
         now = time.time()
         if not force and self.tree_cache and (now - self.tree_last_refresh_ts) < self.tree_refresh_interval_sec:
@@ -222,57 +263,113 @@ class AL1350ClientManager:
         now = time.time()
         if self._multi_supported is False and now < self._next_multi_probe_ts:
             return None
-        # Different AL1350 firmware variants expose slightly different payload shapes.
-        payload_candidates = [
-            {"datatosend": paths},
-            {"items": [{"adr": p} for p in paths]},
-            {"adr": paths},
+
+        # getdatamulti expects data-point paths without the /getdata service suffix.
+        # Manual §9.2.9: datatosend contains data-point paths, not service paths.
+        def _strip_service(p: str) -> str:
+            return p[: -len("/getdata")] if p.endswith("/getdata") else p
+
+        datapoints = [_strip_service(p) for p in paths]
+
+        res = await self._service_request("getdatamulti", data={"datatosend": datapoints})
+        if not isinstance(res, dict) or res.get("code") != 200:
+            self._multi_supported = False
+            self._next_multi_probe_ts = now + 120.0
+            self.degraded_mode = True
+            self.degraded_reason = "getdatamulti unavailable"
+            return None
+
+        raw = res.get("data", {})
+        if not isinstance(raw, dict):
+            self._multi_supported = False
+            self._next_multi_probe_ts = now + 120.0
+            self.degraded_mode = True
+            self.degraded_reason = "getdatamulti bad response shape"
+            return None
+
+        # Manual response: {"data": {"path/without/leading/slash": {"code": 200, "data": value}}}
+        # Build result keyed by the ORIGINAL path (including /getdata) so callers can look up by
+        # the same path they passed in.
+        out: Dict[str, Any] = {}
+        for orig_path, datapoint in zip(paths, datapoints):
+            key_no_slash = datapoint.lstrip("/")
+            entry = raw.get(key_no_slash) or raw.get(datapoint)
+            if isinstance(entry, dict) and entry.get("code") == 200:
+                out[orig_path] = entry.get("data")
+
+        if not out:
+            self._multi_supported = False
+            self._next_multi_probe_ts = now + 120.0
+            self.degraded_mode = True
+            self.degraded_reason = "getdatamulti returned no valid data"
+            return None
+
+        self._multi_supported = True
+        self.degraded_mode = False
+        self.degraded_reason = ""
+        return out
+
+    async def read_isdu_int32(self, port: int, index: int, subindex: int = 0) -> Optional[int]:
+        """Read an acyclic ISDU parameter from an IO-Link device and return it as a signed 32-bit int.
+        Returns None on failure. The hex value from the device is decoded as big-endian."""
+        try:
+            res = await self._service_request(
+                f"/iolinkmaster/port[{port}]/iolinkdevice/iolreadacyclic",
+                data={"index": index, "subindex": subindex},
+            )
+            if not isinstance(res, dict) or res.get("code") != 200:
+                return None
+            hex_str = (res.get("data") or {}).get("value", "")
+            if not hex_str:
+                return None
+            raw = int(hex_str, 16)
+            # Treat as signed 32-bit
+            if raw >= 0x80000000:
+                raw -= 0x100000000
+            return raw
+        except Exception:
+            return None
+
+    async def ensure_mqtt_subscription(self, broker_host: str, broker_port: int = 1883, interval_ms: int = 500) -> bool:
+        """Register the AL1350 MQTT push subscription. Called at startup and on reconnect.
+        The AL1350 will publish all subscribed data points to mqtt://broker_host:broker_port/iolink
+        at the given interval. Returns True on success."""
+        datatosend = [
+            "/iolinkmaster/port[1]/iolinkdevice/pdin",
+            "/iolinkmaster/port[2]/iolinkdevice/pdin",
+            "/iolinkmaster/port[3]/iolinkdevice/pdin",
+            "/iolinkmaster/port[4]/iolinkdevice/pdin",
+            "/iolinkmaster/port[1]/mode",
+            "/iolinkmaster/port[2]/mode",
+            "/iolinkmaster/port[3]/mode",
+            "/iolinkmaster/port[4]/mode",
+            "/processdatamaster/temperature",
+            "/processdatamaster/voltage",
+            "/processdatamaster/current",
+            "/processdatamaster/supervisionstatus",
         ]
-        for data in payload_candidates:
-            res = await self._service_request("getdatamulti", data=data)
-            if not isinstance(res, dict):
-                continue
-            out: Dict[str, Any] = {}
-            if isinstance(res.get("data"), dict):
-                maybe = res["data"]
-                if isinstance(maybe.get("items"), list):
-                    for item in maybe["items"]:
-                        if isinstance(item, dict) and item.get("adr") is not None:
-                            out[str(item["adr"])] = item.get("value")
-                elif isinstance(maybe.get("values"), dict):
-                    out = {str(k): v for k, v in maybe["values"].items()}
-            if out:
-                self._multi_supported = True
-                self.degraded_mode = False
-                self.degraded_reason = ""
-                return out
-        self._multi_supported = False
-        self._next_multi_probe_ts = now + 120.0
-        self.degraded_mode = True
-        self.degraded_reason = "getdatamulti unavailable"
-        return None
+        callback = f"mqtt://{broker_host}:{broker_port}/iolink"
+        sub_res = await self._service_request(
+            "/timer[1]/counter/datachanged/subscribe",
+            data={"callback": callback, "datatosend": datatosend},
+        )
+        if not sub_res or sub_res.get("code") not in (200, 204):
+            self._logger.warning(f"MQTT subscribe failed: {sub_res}")
+            return False
+        interval_res = await self._service_request(
+            "/timer[1]/interval/setdata",
+            data={"newvalue": interval_ms},
+        )
+        if not interval_res or interval_res.get("code") not in (200, 204):
+            self._logger.warning(f"MQTT interval set failed: {interval_res}")
+            return False
+        self.subscription_enabled = True
+        self._logger.info(f"MQTT subscription active — callback={callback} interval={interval_ms}ms")
+        return True
 
     async def ensure_subscription(self) -> None:
-        # Best-effort subscription heartbeat. If unsupported, remain in fallback mode.
-        now = time.time()
-        if self.subscription_enabled and (now - self.subscription_last_ok_ts) < 15:
-            return
-        if now - self.subscription_last_ok_ts < 1:
-            return
-        res = await self._service_request("subscribe", data={"interval": 1000})
-        if res:
-            if not self.subscription_enabled:
-                self.subscription_reconnect_count += 1
-            self.subscription_enabled = True
-            self.subscription_last_ok_ts = now
-            self.subscription_failures = 0
-            if self.degraded_reason in ("subscription unavailable", "boot"):
-                self.degraded_reason = ""
-        else:
-            self.subscription_enabled = False
-            self.subscription_failures += 1
-            self.degraded_mode = True
-            self.degraded_reason = "subscription unavailable"
+        # Legacy no-op kept for compatibility. Use ensure_mqtt_subscription() instead.
+        self.subscription_enabled = False
 
     async def get_port_info(self, port_number: int, include_static: bool = True) -> Dict[str, Any]:
         port_data: Dict[str, Any] = {
@@ -334,15 +431,54 @@ class AL1350ClientManager:
         self.port_freshness_ts[port_number] = time.time()
         return port_data
 
-    async def poll_ports(self, include_static: bool = True) -> List[Dict[str, Any]]:
-        tasks = [self.get_port_info(i, include_static=include_static) for i in range(1, 5)]
-        results = await asyncio.gather(*tasks, return_exceptions=True)
-        ports: List[Dict[str, Any]] = []
-        for idx, result in enumerate(results, start=1):
-            if isinstance(result, Exception):
-                ports.append(
-                    {
-                        "port": idx,
+    async def get_supervision(self) -> Dict[str, Any]:
+        """Read AL1350 diagnostic data from processdatamaster (manual §9.2.9).
+
+        Returns a dict with keys: temperature (°C), voltage (V), current (A),
+        supervisionstatus.  Any key absent means the device did not return a value.
+        """
+        supervision_paths = [
+            ("/processdatamaster/temperature/getdata", "temperature"),
+            ("/processdatamaster/voltage/getdata", "voltage"),
+            ("/processdatamaster/current/getdata", "current"),
+            ("/processdatamaster/supervisionstatus/getdata", "supervisionstatus"),
+        ]
+        result: Dict[str, Any] = {}
+
+        multi = await self._try_getdatamulti([p for p, _ in supervision_paths])
+        if multi:
+            for path, key in supervision_paths:
+                val = multi.get(path)
+                if val is not None:
+                    result[key] = val
+            return result
+
+        # Fallback: individual GETs
+        tasks = [self._request_json("GET", path, retries=2) for path, _ in supervision_paths]
+        responses = await asyncio.gather(*tasks, return_exceptions=True)
+        for idx, response in enumerate(responses):
+            if isinstance(response, Exception):
+                continue
+            if response.get("code") == 200:
+                result[supervision_paths[idx][1]] = response.get("data", {}).get("value")
+        return result
+
+    async def poll_ports(
+        self,
+        include_static: bool = True,
+        connected_interval: float = 1.0,
+        disconnected_interval: float = 5.0,
+    ) -> List[Dict[str, Any]]:
+        now = time.time()
+        ports_due = [i for i in range(1, 5) if now >= self._port_next_poll_ts[i]]
+
+        if ports_due:
+            tasks = [self.get_port_info(i, include_static=include_static) for i in ports_due]
+            results = await asyncio.gather(*tasks, return_exceptions=True)
+            for port_num, result in zip(ports_due, results):
+                if isinstance(result, Exception):
+                    port_data: Dict[str, Any] = {
+                        "port": port_num,
                         "mode": "error",
                         "comm_mode": "",
                         "master_cycle_time": "",
@@ -354,9 +490,27 @@ class AL1350ClientManager:
                         "pdout": "",
                         "source": "error",
                     }
-                )
+                else:
+                    port_data = result
+                self._port_last_data[port_num] = port_data
+                mode = port_data.get("mode", "inactive")
+                is_active = mode in ("io-link", "digital_in", "digital_out")
+                next_interval = connected_interval if is_active else disconnected_interval
+                self._port_next_poll_ts[port_num] = now + next_interval
+
+        # Return all 4 ports — cached data for any skipped this cycle
+        ports: List[Dict[str, Any]] = []
+        for i in range(1, 5):
+            if i in self._port_last_data:
+                ports.append(self._port_last_data[i])
             else:
-                ports.append(result)
+                # Not yet fetched (first boot); schedule immediate retry
+                self._port_next_poll_ts[i] = 0.0
+                ports.append({
+                    "port": i, "mode": "inactive", "comm_mode": "",
+                    "master_cycle_time": "", "vendor_id": "", "device_id": "",
+                    "name": "", "serial": "", "pdin": "", "pdout": "", "source": "pending",
+                })
         return ports
 
     async def get_device_info(self) -> Dict[str, Any]:
@@ -395,14 +549,32 @@ class AL1350ClientManager:
             pass
         return info
 
-    async def poll_snapshot(self, include_static: bool = True) -> Tuple[List[Dict[str, Any]], Dict[str, Any]]:
+    async def poll_snapshot(
+        self,
+        include_static: bool = True,
+        connected_interval: float = 1.0,
+        disconnected_interval: float = 5.0,
+    ) -> Tuple[List[Dict[str, Any]], Dict[str, Any], Dict[str, Any]]:
         await self.refresh_gettree(force=False)
-        await self.ensure_subscription()
-        ports = await self.poll_ports(include_static=include_static)
-        device_info = await self.get_device_info() if include_static else {"device_name": "", "software": {}, "device_icon_url": None}
-        self.last_good_data_ts = time.time()
-        self.degraded_mode = self.degraded_mode or (not self.subscription_enabled)
-        return ports, device_info
+        ports, supervision = await asyncio.gather(
+            self.poll_ports(
+                include_static=include_static,
+                connected_interval=connected_interval,
+                disconnected_interval=disconnected_interval,
+            ),
+            self.get_supervision(),
+        )
+        device_info = (
+            await self.get_device_info()
+            if include_static
+            else {"device_name": "", "software": {}, "device_icon_url": None}
+        )
+        if self._breaker.state != "open":
+            self.last_good_data_ts = time.time()
+        # degraded = falling back to per-request GETs because getdatamulti is not working
+        self.degraded_mode = self._multi_supported is False
+        self.degraded_reason = "getdatamulti unavailable" if self.degraded_mode else ""
+        return ports, device_info, supervision
 
     async def write_iot_network_setblock(
         self,
@@ -478,7 +650,7 @@ class AL1350ClientManager:
         except Exception:
             return None
 
-    def _read_linux_cpu_usage_pct(self) -> Optional[float]:
+    async def _read_linux_cpu_usage_pct(self) -> Optional[float]:
         stat_path = "/proc/stat"
         try:
             with open(stat_path, "r", encoding="utf-8") as f:
@@ -486,7 +658,7 @@ class AL1350ClientManager:
             fields = [float(x) for x in first.split()[1:8]]
             idle = fields[3] + fields[4]
             total = sum(fields)
-            time.sleep(0.08)
+            await asyncio.sleep(0.08)
             with open(stat_path, "r", encoding="utf-8") as f:
                 first2 = f.readline()
             fields2 = [float(x) for x in first2.split()[1:8]]
@@ -540,7 +712,18 @@ class AL1350ClientManager:
         except Exception:
             return False
 
-    def diagnostics_snapshot(self) -> Dict[str, Any]:
+    def _count_chromium_processes(self) -> int:
+        if os.name != "posix":
+            return 0
+        try:
+            out = subprocess.check_output(["pgrep", "-f", "chromium"], timeout=1.5)
+            return len(out.strip().splitlines())
+        except subprocess.CalledProcessError:
+            return 0
+        except Exception:
+            return 0
+
+    async def diagnostics_snapshot(self) -> Dict[str, Any]:
         lats = sorted(self.request_latencies_ms)
         success_total = self.request_successes + self.request_failures
         success_rate = round((self.request_successes / success_total) * 100.0, 1) if success_total else None
@@ -549,7 +732,7 @@ class AL1350ClientManager:
         for port, ts in self.port_freshness_ts.items():
             freshness_age[str(port)] = None if ts is None else round(max(0.0, now - ts), 1)
 
-        cpu_pct = self._read_linux_cpu_usage_pct()
+        cpu_pct = await self._read_linux_cpu_usage_pct()
         mem_pct, mem_used_mb = self._read_linux_mem()
         payload = {
             "request_success_rate_pct": success_rate,
@@ -580,6 +763,7 @@ class AL1350ClientManager:
                 "load_1m": self._read_linux_load(),
                 "cpu_temp_c": self._read_linux_cpu_temp_c(),
                 "unclutter_running": self._is_unclutter_running(),
+                "chromium_proc_count": self._count_chromium_processes(),
             },
         }
         return payload

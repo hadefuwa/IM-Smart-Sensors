@@ -691,6 +691,39 @@ body {
 }
 
 /* ================================================================
+   KIOSK TOUCH MODE
+   Applied by JS on first touchstart — works regardless of what
+   pointer media feature the touchscreen driver reports.
+   ================================================================ */
+html.kiosk-touch *,
+html.kiosk-touch *::before,
+html.kiosk-touch *::after {
+  cursor: none !important;
+}
+
+html.kiosk-touch body {
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+
+/* Suppress hover lift effects on touch — they stick after tap */
+html.kiosk-touch .card:hover {
+  transform: none;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+html.kiosk-touch .btn:hover {
+  transform: none;
+  box-shadow: none;
+}
+
+html.kiosk-touch .mimic-component:hover {
+  border-color: rgba(255, 255, 255, 0.1);
+  box-shadow: none;
+  transform: none;
+}
+
+/* ================================================================
    7" TOUCHSCREEN PROFILE
    Targets common kiosk/tablet sizes (e.g. 1024x600) in landscape.
    ================================================================ */
@@ -972,6 +1005,23 @@ body {
 #sidebar .overflow-y-auto {
   scrollbar-width: none;
   -ms-overflow-style: none;
+  touch-action: pan-y;
+  -webkit-overflow-scrolling: touch;
+  /* Cap height to the sidebar so overflow-y actually activates */
+  max-height: 100%;
+  min-height: 0;
+}
+
+/* Allow vertical swipes on menu items to scroll the sidebar instead of triggering hover/click */
+#sidebar .menu li > a,
+#sidebar .btn {
+  touch-action: pan-y;
+}
+
+/* While scrolling, disable pointer events on items so hover state doesn't get stuck */
+#sidebar.sidebar-scrolling .menu li > a,
+#sidebar.sidebar-scrolling .btn {
+  pointer-events: none;
 }
 
 #sidebar .overflow-y-auto::-webkit-scrollbar {

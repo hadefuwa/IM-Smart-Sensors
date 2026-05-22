@@ -8,12 +8,11 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, FileResponse, HTMLResponse, RedirectResponse, Response
 from fastapi.staticfiles import StaticFiles
 import asyncio
+import httpx
 import json
 import os
 import time
 import logging
-import logging.handlers
-from collections import deque
 from typing import Dict, List, Optional, Set
 from datetime import datetime
 import socket
@@ -32,95 +31,14 @@ from decoder import (
     DEVICE_TYPE_PROXIMITY,
     DEVICE_TYPE_CAPACITIVE,
 )
-from al1350_client import AL1350ClientManager, MODE_MAP
-from device_parameters import (
-    get_device_params, decode_isdu_hex, encode_isdu_value,
-    T_UINT8, G_CONFIG, G_DIAGNOSTICS, G_IDENTITY
+from al1350_client import AL1350ClientManager
+
+# Configure logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
 )
-from csv_logger import CSVLogger
-
-try:
-    import aiomqtt
-    _AIOMQTT_AVAILABLE = True
-except ImportError:
-    _AIOMQTT_AVAILABLE = False
-
-
-def _enrich_port(port_data: dict, port_labels: dict = None) -> dict:
-    """Add device_type, label, pdin_hex, pdout_hex, pdin_decoded, pdout_decoded to a port dict."""
-    vendor_id = port_data.get('vendor_id', '')
-    device_id = port_data.get('device_id', '')
-    name = port_data.get('name', '')
-
-    dtype = get_device_type(vendor_id, device_id, name)
-
-    # Apply port_labels config: label overrides the raw device name for display;
-    # device_type_hint fills in when auto-detection returns unknown.
-    port_cfg = (port_labels or {}).get(str(port_data.get('port', '')), {})
-    if port_cfg.get('label'):
-        port_data['label'] = port_cfg['label']
-    if dtype == 'unknown' and port_cfg.get('device_type_hint'):
-        dtype = port_cfg['device_type_hint']
-
-    port_data['device_type'] = dtype
-
-    pdin_raw = port_data.get('pdin', '')
-    pdin_bytes = parse_hex_to_bytes(pdin_raw) if pdin_raw else []
-    port_data['pdin_hex'] = pdin_raw
-    port_data['pdin_decoded'] = {}
-    if pdin_bytes:
-        if dtype == DEVICE_TYPE_PHOTO_ELECTRIC:
-            port_data['pdin_decoded'] = decode_photo_electric_pdin(pdin_bytes)
-        elif dtype == DEVICE_TYPE_TEMPERATURE:
-            port_data['pdin_decoded'] = decode_temperature_pdin(pdin_bytes)
-        elif dtype == DEVICE_TYPE_PROXIMITY:
-            port_data['pdin_decoded'] = decode_proximity_pdin(pdin_bytes)
-        elif dtype == DEVICE_TYPE_CAPACITIVE:
-            port_data['pdin_decoded'] = decode_capacitive_pdin(pdin_bytes)
-
-    pdout_raw = port_data.get('pdout', '')
-    pdout_bytes = parse_hex_to_bytes(pdout_raw) if pdout_raw else []
-    port_data['pdout_hex'] = pdout_raw
-    port_data['pdout_decoded'] = {}
-    if dtype == DEVICE_TYPE_STATUS_LED and len(pdout_bytes) >= 3:
-        port_data['pdout_decoded'] = decode_cl50_led(pdout_bytes)
-
-    return port_data
-
-
-# ── Logging setup ────────────────────────────────────────────────────────────
-_LOG_FORMAT = '%(asctime)s %(levelname)s [%(name)s] %(message)s'
-_LOG_DATE_FMT = '%Y-%m-%d %H:%M:%S'
-
-logging.basicConfig(level=logging.INFO, format=_LOG_FORMAT, datefmt=_LOG_DATE_FMT)
 logger = logging.getLogger(__name__)
-
-# File handler: rotate at 10 MB, keep 5 files
-_LOGS_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'logs')
-os.makedirs(_LOGS_DIR, exist_ok=True)
-_file_handler = logging.handlers.RotatingFileHandler(
-    os.path.join(_LOGS_DIR, 'app.log'),
-    maxBytes=10 * 1024 * 1024,
-    backupCount=5,
-    encoding='utf-8',
-)
-_file_handler.setFormatter(logging.Formatter(_LOG_FORMAT, datefmt=_LOG_DATE_FMT))
-logging.getLogger().addHandler(_file_handler)
-
-# In-memory ring buffer for the Diagnostics log viewer (last 500 records)
-_app_log_buffer: deque = deque(maxlen=500)
-
-class _MemHandler(logging.Handler):
-    def emit(self, record: logging.LogRecord) -> None:
-        _app_log_buffer.append({
-            'ts': record.created,
-            'level': record.levelname,
-            'msg': record.getMessage(),
-            'name': record.name,
-        })
-
-_mem_handler = _MemHandler(level=logging.DEBUG)
-logging.getLogger().addHandler(_mem_handler)
 
 # Get directory paths
 _BACKEND_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -191,10 +109,6 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-_BACKEND_START_TS: float = time.time()
-
-csv_logger = CSVLogger()
-
 # Global state
 system_state = {
     'device_name': '',
@@ -214,12 +128,9 @@ MAX_HISTORY_SIZE = 100
 
 # Connected WebSocket clients
 connected_clients: Set[WebSocket] = set()
-_broadcast_in_progress: bool = False
 
 # Background polling task handle
 polling_task: Optional[asyncio.Task] = None
-mqtt_task: Optional[asyncio.Task] = None
-mqtt_connected: bool = False
 
 # Simulated fault overlay per port (for training: show fault without touching hardware)
 # Keys: port number (1-4), Values: list of {"code": "0x02", "label": "Short circuit"} or None to clear
@@ -233,13 +144,12 @@ MAX_LATENCIES = 200
 _prev_success: Optional[bool] = None
 _transition_ts: Optional[float] = None
 consecutive_failures: int = 0
-_prev_circuit_state: Optional[str] = None
-_prev_degraded_mode: Optional[bool] = None
-# Detection counter tracking per port (capacitive sensor ISDU index 210)
-_cap_counter_prev: dict = {}  # port -> last raw counter value
 
 # Configuration
-POLL_INTERVAL = 1.0
+IFM_MASTER_IP = "192.168.7.4"
+IFM_MASTER_PORT = 80
+IFM_TIMEOUT = 4.0  # 4 seconds timeout for better link resilience
+POLL_INTERVAL = 1.0  # Poll every 1 second
 STATIC_REFRESH_EVERY_CYCLES = 6  # refresh static metadata every N polls
 
 
@@ -281,35 +191,278 @@ def save_config(io_link_updates: dict):
 al1350 = AL1350ClientManager(config_loader=load_config, logger=logger)
 
 
-def append_supervision_history(supervision_dict):
-    """Append processdatamaster supervision snapshot to the history buffer.
+def parse_supervision_number(val, default=0):
+    """Parse supervision value to number. E.g. '251mA'->251, '23758mV'->23.758, '39°C'->39"""
+    if val is None or val == '':
+        return default
+    import re
+    s = str(val).strip()
+    m = re.match(r'^([-\d.]+)', s)
+    if m:
+        num = float(m.group(1))
+        if 'mV' in s.lower():
+            return round(num / 1000, 2)
+        if 'mA' in s.lower() or '°c' in s.lower() or 'c' in s.lower():
+            return num
+        return num
+    try:
+        return float(s)
+    except ValueError:
+        return default
 
-    Keys expected (from AL1350 processdatamaster, manual §9.2.9):
-      temperature (°C), voltage (V), current (A), supervisionstatus
-    """
+
+def append_supervision_history(supervision_dict):
+    """Append parsed supervision to history buffer"""
     if not supervision_dict:
         return
     entry = {
         'ts': time.time(),
-        'current': supervision_dict.get('current'),
-        'voltage': supervision_dict.get('voltage'),
-        'temperature': supervision_dict.get('temperature'),
-        'status': supervision_dict.get('supervisionstatus'),
-        'sw_version': None,
+        'current': None,
+        'voltage': None,
+        'temperature': None,
+        'status': None,
+        'sw_version': None
     }
+    for k, v in supervision_dict.items():
+        low = k.lower().replace('-', '').replace(' ', '')
+        if 'current' in low:
+            entry['current'] = parse_supervision_number(v, None)
+        elif 'voltage' in low:
+            entry['voltage'] = parse_supervision_number(v, None)
+        elif 'temp' in low:
+            entry['temperature'] = parse_supervision_number(v, None)
+        elif 'status' in low and 'version' not in low:
+            entry['status'] = parse_supervision_number(v, None)
+        elif 'swversion' in low or ('sw' in low and 'version' in low):
+            entry['sw_version'] = parse_supervision_number(v, None)
+    
     supervision_history.append(entry)
     while len(supervision_history) > MAX_HISTORY_SIZE:
         supervision_history.pop(0)
 
 
+async def get_ifm_port_data(client: httpx.AsyncClient, base_url: str, port_number: int) -> Optional[str]:
+    """
+    Fetches Process Data from an ifm IO-Link Master via IoT Core API.
+    
+    Args:
+        client: httpx async client
+        base_url: Base URL of the IO-Link Master
+        port_number: Port number (1-4)
+        
+    Returns:
+        Hex string value or None if error
+    """
+    url = f"{base_url}/iolinkmaster/port[{port_number}]/iolinkdevice/pdin/getdata"
+    
+    try:
+        response = await client.get(url, timeout=IFM_TIMEOUT)
+        response.raise_for_status()
+        
+        data = response.json()
+        if data.get('code') == 200:
+            return data.get('data', {}).get('value')
+        return None
+    except Exception as e:
+        logger.debug(f"Error fetching port {port_number} data: {e}")
+        return None
+
+
+async def get_ifm_port_pdout(client: httpx.AsyncClient, base_url: str, port_number: int) -> Optional[str]:
+    """Get Process Data Out for a port"""
+    url = f"{base_url}/iolinkmaster/port[{port_number}]/iolinkdevice/pdout/getdata"
+    
+    try:
+        response = await client.get(url, timeout=IFM_TIMEOUT)
+        response.raise_for_status()
+        
+        data = response.json()
+        if data.get('code') == 200:
+            return data.get('data', {}).get('value')
+        return None
+    except Exception as e:
+        logger.debug(f"Error fetching port {port_number} PDout: {e}")
+        return None
+
+
+async def get_ifm_port_info(
+    client: httpx.AsyncClient,
+    base_url: str,
+    port_number: int,
+    include_static: bool = True
+) -> Dict:
+    """Get all information for a single port"""
+    port_data = {
+        'port': port_number,
+        'mode': 'inactive',
+        'comm_mode': '',
+        'master_cycle_time': '',
+        'vendor_id': '',
+        'device_id': '',
+        'name': '',
+        'serial': '',
+        'pdin': '',
+        'pdout': ''
+    }
+    
+    # List of endpoints to fetch
+    endpoints = [
+        (f'/iolinkmaster/port[{port_number}]/mode/getdata', 'mode'),
+        (f'/iolinkmaster/port[{port_number}]/comcode/getdata', 'comm_mode'),
+        (f'/iolinkmaster/port[{port_number}]/mastercycle/getdata', 'master_cycle_time'),
+        (f'/iolinkmaster/port[{port_number}]/iolinkdevice/pdin/getdata', 'pdin'),
+        (f'/iolinkmaster/port[{port_number}]/iolinkdevice/pdout/getdata', 'pdout'),
+    ]
+
+    if include_static:
+        endpoints.extend([
+            (f'/iolinkmaster/port[{port_number}]/iolinkdevice/vendorid/getdata', 'vendor_id'),
+            (f'/iolinkmaster/port[{port_number}]/iolinkdevice/deviceid/getdata', 'device_id'),
+            (f'/iolinkmaster/port[{port_number}]/iolinkdevice/productname/getdata', 'name'),
+            (f'/iolinkmaster/port[{port_number}]/iolinkdevice/serialnumber/getdata', 'serial'),
+        ])
+    
+    # Fetch all endpoints in parallel
+    tasks = []
+    for endpoint, key in endpoints:
+        url = f"{base_url}{endpoint}"
+        tasks.append(client.get(url, timeout=IFM_TIMEOUT))
+    
+    responses = await asyncio.gather(*tasks, return_exceptions=True)
+    
+    # AL1350 mode integer -> human-readable string (frontend uses .toLowerCase().includes())
+    _MODE_MAP = {0: 'inactive', 1: 'digital_in', 2: 'digital_out', 3: 'io-link'}
+
+    # Process responses
+    for i, response in enumerate(responses):
+        if isinstance(response, Exception):
+            continue
+
+        try:
+            if response.status_code == 200:
+                data = response.json()
+                if data.get('code') == 200:
+                    value = data.get('data', {}).get('value', '')
+                    key = endpoints[i][1]
+                    if key == 'mode' and isinstance(value, int):
+                        value = _MODE_MAP.get(value, str(value))
+                    port_data[key] = value
+        except Exception:
+            pass
+    
+    return port_data
+
+
+async def poll_all_ports(base_url: str, include_static: bool = True) -> List[Dict]:
+    """Fetch data from all ports. AL1350 uses HTTP/1.0 (close per request) and only
+    accepts ~3 concurrent TCP connections, so we cap httpx connections accordingly."""
+    limits = httpx.Limits(max_connections=3, max_keepalive_connections=0)
+    async with httpx.AsyncClient(limits=limits) as client:
+        # Create tasks for all ports — httpx will queue them within the connection cap
+        tasks = [get_ifm_port_info(client, base_url, i, include_static=include_static) for i in range(1, 5)]
+
+        # Run all tasks; httpx serialises excess connections automatically
+        ports = await asyncio.gather(*tasks, return_exceptions=True)
+        
+        # Convert exceptions to empty port data
+        result = []
+        for i, port in enumerate(ports):
+            if isinstance(port, Exception):
+                logger.error(f"Error fetching port {i+1}: {port}")
+                result.append({
+                    'port': i + 1,
+                    'mode': 'error',
+                    'comm_mode': '',
+                    'master_cycle_time': '',
+                    'vendor_id': '',
+                    'device_id': '',
+                    'name': '',
+                    'serial': '',
+                    'pdin': '',
+                    'pdout': ''
+                })
+            else:
+                result.append(port)
+        
+        return result
+
+
+async def get_device_info(base_url: str) -> Dict:
+    """Get device name and software info"""
+    device_info = {
+        'device_name': 'IO-Link Master',
+        'software': {},
+        'device_icon_url': None
+    }
+    
+    async with httpx.AsyncClient() as client:
+        # Get device name
+        try:
+            response = await client.get(
+                f"{base_url}/devicetag/applicationtag/getdata",
+                timeout=IFM_TIMEOUT
+            )
+            if response.status_code == 200:
+                data = response.json()
+                if data.get('code') == 200:
+                    device_info['device_name'] = data.get('data', {}).get('value', 'IO-Link Master')
+        except Exception:
+            pass
+        
+        # Get software versions
+        software_paths = [
+            ('deviceinfo/software/getdata', 'Firmware'),
+            ('deviceinfo/bootloaderrevision/getdata', 'Bootloader'),
+            ('software/firmware/getdata', 'Firmware'),
+            ('software/container/getdata', 'Container'),
+            ('software/bootloader/getdata', 'Bootloader'),
+            ('software/fieldbusfirmware/getdata', 'Fieldbus Firmware'),
+        ]
+        
+        tasks = []
+        for path, key in software_paths:
+            url = f"{base_url}/{path}"
+            tasks.append(client.get(url, timeout=IFM_TIMEOUT))
+        
+        responses = await asyncio.gather(*tasks, return_exceptions=True)
+        
+        for i, response in enumerate(responses):
+            if isinstance(response, Exception):
+                continue
+            try:
+                if response.status_code == 200:
+                    data = response.json()
+                    if data.get('code') == 200:
+                        val = data.get('data', {}).get('value', '')
+                        if val:
+                            key = software_paths[i][1]
+                            if key not in device_info['software']:
+                                device_info['software'][key] = val
+            except Exception:
+                pass
+        
+        # Get device icon
+        try:
+            response = await client.get(
+                f"{base_url}/deviceinfo/deviceicon/getdata",
+                timeout=IFM_TIMEOUT
+            )
+            if response.status_code == 200:
+                data = response.json()
+                if data.get('code') == 200:
+                    device_info['device_icon_url'] = data.get('data', {}).get('value')
+        except Exception:
+            pass
+    
+    return device_info
 
 
 async def poll_io_link_master():
     """Background task that continuously polls the IO-Link Master. Reloads config each loop so IP changes take effect."""
-    global system_state, _prev_circuit_state, _prev_degraded_mode
-
+    global system_state
+    
     logger.info("Starting IO-Link Master polling loop")
-
+    
     cycle_count = 0
     while True:
         config = load_config()
@@ -317,58 +470,15 @@ async def poll_io_link_master():
         include_static = (cycle_count % STATIC_REFRESH_EVERY_CYCLES == 0)
         cycle_count += 1
 
-        poll_start = time.time()
-        poll_interval = max(0.5, float(io_config.get('poll_interval_sec', POLL_INTERVAL)))
-
         try:
             await al1350.on_config_changed()
-            circuit_before = al1350._breaker.state
-            disconnected_interval = max(poll_interval, float(io_config.get('disconnected_poll_interval_sec', 5.0)))
-            ports, device_info, supervision = await al1350.poll_snapshot(
-                include_static=include_static,
-                connected_interval=poll_interval,
-                disconnected_interval=disconnected_interval,
-            )
+            poll_start = time.time()
+            ports, device_info = await al1350.poll_snapshot(include_static=include_static)
 
             poll_ms = round((time.time() - poll_start) * 1000)
             poll_latencies.append({'ts': time.time(), 'latency_ms': poll_ms})
             while len(poll_latencies) > MAX_LATENCIES:
                 poll_latencies.pop(0)
-
-            circuit_after = al1350._breaker.state
-
-            # Log circuit breaker transitions
-            if _prev_circuit_state is not None and circuit_after != _prev_circuit_state:
-                if circuit_after == 'open':
-                    logger.error(
-                        f"CIRCUIT BREAKER OPENED — failures={al1350._breaker.failures} "
-                        f"threshold={al1350._breaker.failure_threshold} "
-                        f"last_error={al1350.last_error!r} "
-                        f"master={al1350._master_ip}:{al1350._master_port} "
-                        f"poll_ms={poll_ms}"
-                    )
-                elif circuit_after == 'closed' and _prev_circuit_state in ('open', 'half-open'):
-                    logger.info(
-                        f"CIRCUIT BREAKER CLOSED (recovered) — "
-                        f"was={_prev_circuit_state} poll_ms={poll_ms}"
-                    )
-                elif circuit_after == 'half-open':
-                    logger.info(
-                        f"CIRCUIT BREAKER HALF-OPEN — probing recovery after 15 s "
-                        f"master={al1350._master_ip}:{al1350._master_port}"
-                    )
-            _prev_circuit_state = circuit_after
-
-            # Log degraded mode transitions
-            if _prev_degraded_mode is not None and al1350.degraded_mode != _prev_degraded_mode:
-                if al1350.degraded_mode:
-                    logger.warning(
-                        f"DEGRADED MODE: falling back to per-request GETs "
-                        f"reason={al1350.degraded_reason!r}"
-                    )
-                else:
-                    logger.info("DEGRADED MODE cleared — getdatamulti working again")
-            _prev_degraded_mode = al1350.degraded_mode
 
             # Preserve static metadata between lightweight poll cycles.
             prev_ports = {p.get('port'): p for p in (system_state.get('ports') or []) if isinstance(p, dict)}
@@ -381,85 +491,37 @@ async def poll_io_link_master():
                         if not port_data.get(key):
                             port_data[key] = prev.get(key, '')
 
-            # Enrich each port with decoded pdin/pdout and device_type
-            port_labels = config.get('port_labels', {})
-            if isinstance(ports, list):
-                for port_data in ports:
-                    _enrich_port(port_data, port_labels=port_labels)
+            # Extract supervision data from ports if available
+            supervision = {}
+            # Note: Supervision data might come from device info endpoints
+            # This is a placeholder - adjust based on your actual IO-Link Master API
 
-            # Read detection counters for all capacitive ports in parallel
-            if isinstance(ports, list):
-                cap_ports = [p for p in ports if p.get('device_type') == 'capacitive' and p.get('mode') == 'io-link']
-                if cap_ports:
-                    counter_tasks = [al1350.read_isdu_int32(p['port'], 210, 0) for p in cap_ports]
-                    counter_values = await asyncio.gather(*counter_tasks, return_exceptions=True)
-                    for port_data, val in zip(cap_ports, counter_values):
-                        if isinstance(val, int):
-                            pn = port_data['port']
-                            prev = _cap_counter_prev.get(pn)
-                            delta = (val - prev) if prev is not None else 0
-                            _cap_counter_prev[pn] = val
-                            port_data['detection_counter'] = val
-                            port_data['detection_counter_delta'] = max(0, delta)
+            # Update global state
+            system_state = {
+                'device_name': (device_info.get('device_name') or system_state.get('device_name') or 'IO-Link Master'),
+                'ports': ports if isinstance(ports, list) else [],
+                'supervision': supervision,
+                'software': device_info.get('software') or system_state.get('software', {}),
+                'device_icon_url': device_info.get('device_icon_url') or system_state.get('device_icon_url'),
+                'product_image_url': '/api/io-link/product-image',
+                'timestamp': time.time(),
+                'source': 'subscription' if al1350.subscription_enabled and not al1350.degraded_mode else 'fallback',
+                'degraded_mode': al1350.degraded_mode,
+                'degraded_reason': al1350.degraded_reason,
+                'last_good_data_ts': al1350.last_good_data_ts or None,
+                'error': None,
+                'success': True
+            }
 
-            # Update global state.
-            # When MQTT is active it owns real-time pdin/mode updates and broadcasts.
-            # The HTTP poll still runs to keep static metadata, supervision history,
-            # and ISDU counters fresh — but we only merge those fields rather than
-            # overwriting the whole state, and we skip broadcasting so the UI source
-            # label doesn't flicker between "mqtt" and "getdatamulti".
-            is_connected = al1350._breaker.state != "open"
-            if mqtt_connected:
-                # Merge only the fields HTTP poll is authoritative for
-                system_state['device_name'] = (device_info.get('device_name') or system_state.get('device_name') or 'IO-Link Master')
-                system_state['software'] = device_info.get('software') or system_state.get('software', {})
-                system_state['device_icon_url'] = device_info.get('device_icon_url') or system_state.get('device_icon_url')
-                system_state['degraded_mode'] = al1350.degraded_mode
-                system_state['degraded_reason'] = al1350.degraded_reason
-                system_state['last_good_data_ts'] = al1350.last_good_data_ts or None
-                system_state['success'] = is_connected
-                # Merge ISDU counter values into the MQTT-sourced port list
-                if isinstance(ports, list):
-                    port_map = {p['port']: p for p in ports}
-                    for port in system_state.get('ports') or []:
-                        pn = port.get('port')
-                        if pn in port_map:
-                            for key in ('detection_counter', 'detection_counter_delta'):
-                                if key in port_map[pn]:
-                                    port[key] = port_map[pn][key]
-            else:
-                system_state = {
-                    'device_name': (device_info.get('device_name') or system_state.get('device_name') or 'IO-Link Master'),
-                    'ports': ports if isinstance(ports, list) else [],
-                    'supervision': supervision,
-                    'software': device_info.get('software') or system_state.get('software', {}),
-                    'device_icon_url': device_info.get('device_icon_url') or system_state.get('device_icon_url'),
-                    'product_image_url': '/api/io-link/product-image',
-                    'timestamp': time.time(),
-                    'source': 'getdatamulti' if not al1350.degraded_mode else 'fallback',
-                    'degraded_mode': al1350.degraded_mode,
-                    'degraded_reason': al1350.degraded_reason,
-                    'last_good_data_ts': al1350.last_good_data_ts or None,
-                    'error': None,
-                    'success': is_connected
-                }
-
+            # Append supervision history if available
             if supervision:
                 append_supervision_history(supervision)
 
-            # Only broadcast from the HTTP poll when MQTT is not active.
-            # When MQTT is connected it broadcasts on every push message instead.
-            if not mqtt_connected:
-                await broadcast_to_clients(system_state)
-                csv_logger.log(system_state)
+            # Broadcast to all connected WebSocket clients
+            await broadcast_to_clients(system_state)
 
         except Exception as e:
-            logger.error(
-                f"Poll loop exception: {e!r} "
-                f"circuit={al1350._breaker.state} "
-                f"failures={al1350._breaker.failures} "
-                f"master={al1350._master_ip}:{al1350._master_port}"
-            )
+            logger.error(f"Error in polling loop: {e}")
             system_state['success'] = False
             system_state['error'] = str(e)
             al1350.last_error = str(e)
@@ -473,150 +535,34 @@ async def poll_io_link_master():
             _transition_ts = _now
         elif _current != _prev_success:
             _dur = round(_now - (_transition_ts or _now), 1)
-            _err = None if _current else (system_state.get('error') or al1350.last_error)
             connection_events.append({
                 'ts': _now,
                 'status': 'connected' if _current else 'disconnected',
                 'duration_sec': _dur,
-                'error': _err,
-                'circuit': al1350._breaker.state,
+                'error': None if _current else system_state.get('error')
             })
             while len(connection_events) > MAX_CONN_EVENTS:
                 connection_events.pop(0)
             _transition_ts = _now
-            if _current:
-                logger.info(f"AL1350 STATUS → CONNECTED (was down {_dur}s)")
-            else:
-                logger.warning(
-                    f"AL1350 STATUS → DISCONNECTED (was up {_dur}s) "
-                    f"error={_err!r} circuit={al1350._breaker.state}"
-                )
         consecutive_failures = 0 if _current else consecutive_failures + 1
         _prev_success = _current
-
-        # Deadline-based sleep: target a fixed cycle time regardless of how long the poll took
-        await asyncio.sleep(max(0, poll_interval - (time.time() - poll_start)))
-
-
-def _parse_mqtt_message(raw: bytes) -> None:
-    """Parse an AL1350 MQTT push message and merge pdin/mode/supervision into system_state."""
-    global system_state, mqtt_connected, _cap_counter_prev
-    try:
-        msg = json.loads(raw)
-        payload = msg.get("data", {}).get("payload", {})
-        if not payload:
-            return
-
-        config = load_config()
-        port_labels = config.get("port_labels", {})
-
-        # Update each port's pdin and mode from the MQTT payload
-        ports = {p["port"]: p for p in (system_state.get("ports") or []) if isinstance(p, dict)}
-        for port_num in range(1, 5):
-            pdin_val = (payload.get(f"/iolinkmaster/port[{port_num}]/iolinkdevice/pdin") or {})
-            mode_val = (payload.get(f"/iolinkmaster/port[{port_num}]/mode") or {})
-
-            port = ports.get(port_num, {"port": port_num, "mode": "inactive", "pdin": "", "pdout": "",
-                                        "comm_mode": "", "master_cycle_time": "", "vendor_id": "",
-                                        "device_id": "", "name": "", "serial": "", "source": "mqtt"})
-            if isinstance(pdin_val, dict) and pdin_val.get("code") == 200:
-                port["pdin"] = pdin_val.get("data", "")
-                port["source"] = "mqtt"
-            if isinstance(mode_val, dict) and mode_val.get("code") == 200:
-                raw_mode = mode_val.get("data")
-                port["mode"] = MODE_MAP.get(raw_mode, str(raw_mode)) if isinstance(raw_mode, int) else (raw_mode or "inactive")
-            _enrich_port(port, port_labels=port_labels)
-            ports[port_num] = port
-
-        # Update supervision from MQTT payload
-        supervision = dict(system_state.get("supervision") or {})
-        for key, path in (("temperature", "/processdatamaster/temperature"),
-                          ("voltage", "/processdatamaster/voltage"),
-                          ("current", "/processdatamaster/current"),
-                          ("supervisionstatus", "/processdatamaster/supervisionstatus")):
-            entry = payload.get(path)
-            if isinstance(entry, dict) and entry.get("code") == 200:
-                supervision[key] = entry.get("data")
-        if supervision:
-            append_supervision_history(supervision)
-
-        # Detection counter reads for capacitive ports (still via HTTP; updated by poll loop)
-        # Merge any existing detection_counter fields from the poll loop cache
-        for port_num, port in ports.items():
-            if port.get("device_type") == "capacitive" and port_num in _cap_counter_prev:
-                port["detection_counter"] = _cap_counter_prev[port_num]
-
-        system_state = {
-            **system_state,
-            "ports": [ports[i] for i in sorted(ports)],
-            "supervision": supervision,
-            "timestamp": time.time(),
-            "source": "mqtt",
-            "success": True,
-            "error": None,
-        }
-        mqtt_connected = True
-    except Exception as e:
-        logger.debug(f"MQTT message parse error: {e!r}")
-
-
-async def run_mqtt_listener():
-    """Subscribe to the Mosquitto broker and update system_state from AL1350 push messages."""
-    global mqtt_connected
-    if not _AIOMQTT_AVAILABLE:
-        logger.warning("aiomqtt not installed — MQTT listener disabled, falling back to HTTP polling only")
-        return
-
-    cfg = load_config().get("mqtt", {})
-    broker_host = cfg.get("broker_host", "127.0.0.1")
-    broker_port = int(cfg.get("broker_port", 1883))
-    interval_ms = int(cfg.get("publish_interval_ms", 500))
-
-    reconnect_delay = 5.0
-    while True:
-        try:
-            logger.info(f"MQTT connecting to {broker_host}:{broker_port}")
-            # Register the subscription with the AL1350 (idempotent)
-            ok = await al1350.ensure_mqtt_subscription(broker_host, broker_port, interval_ms)
-            if not ok:
-                logger.warning("MQTT subscription registration failed — retrying in 15s")
-                await asyncio.sleep(15)
-                continue
-
-            async with aiomqtt.Client(broker_host, port=broker_port) as client:
-                await client.subscribe("iolink")
-                mqtt_connected = True
-                reconnect_delay = 5.0
-                logger.info("MQTT listener active — receiving AL1350 push data")
-                async for message in client.messages:
-                    _parse_mqtt_message(bytes(message.payload))
-                    await broadcast_to_clients(system_state)
-                    csv_logger.log(system_state)
-
-        except Exception as e:
-            mqtt_connected = False
-            logger.warning(f"MQTT listener error: {e!r} — reconnecting in {reconnect_delay:.0f}s")
-            await asyncio.sleep(reconnect_delay)
-            reconnect_delay = min(reconnect_delay * 2, 60.0)
+        
+        # Wait before next poll (re-reads config each loop so interval changes take effect)
+        poll_interval = max(0.5, float(io_config.get('poll_interval_sec', POLL_INTERVAL)))
+        await asyncio.sleep(poll_interval)
 
 
 @app.on_event("startup")
 async def start_background_polling():
-    """Start IO-Link polling loop and MQTT listener when API starts."""
-    global polling_task, mqtt_task
+    """Start IO-Link polling loop when API starts."""
+    global polling_task
     try:
         await al1350.refresh_gettree(force=True)
     except Exception as e:
         logger.warning(f"Initial gettree warmup failed: {e}")
     if polling_task is None or polling_task.done():
         polling_task = asyncio.create_task(poll_io_link_master())
-        logger.info("IO-Link HTTP polling task started")
-
-    cfg = load_config().get("mqtt", {})
-    if cfg.get("enabled", True) and _AIOMQTT_AVAILABLE:
-        if mqtt_task is None or mqtt_task.done():
-            mqtt_task = asyncio.create_task(run_mqtt_listener())
-            logger.info("MQTT listener task started")
+        logger.info("IO-Link background polling task started")
 
 
 @app.on_event("shutdown")
@@ -634,40 +580,23 @@ async def stop_background_polling():
 
 
 async def broadcast_to_clients(data: Dict):
-    """Send data to all connected WebSocket clients.
-
-    Serialises once, then fans out to all clients in parallel.
-    If a previous broadcast is still in flight (slow client or event-loop
-    back-pressure), the call returns immediately so the event loop is not
-    allowed to build up a queue of stale frames.
-    """
-    global _broadcast_in_progress
+    """Send data to all connected WebSocket clients"""
     if not connected_clients:
         return
-    if _broadcast_in_progress:
-        return
-
-    _broadcast_in_progress = True
-    try:
+    
+    # Create a list of disconnected clients to remove
+    disconnected = []
+    
+    for client in connected_clients:
         try:
-            message = json.dumps(data, default=str)
+            await client.send_json(data)
         except Exception as e:
-            logger.debug(f"Broadcast serialisation error: {e}")
-            return
-
-        async def _send_one(client: WebSocket) -> Optional[WebSocket]:
-            try:
-                await client.send_text(message)
-                return None
-            except Exception:
-                return client
-
-        results = await asyncio.gather(*[_send_one(c) for c in list(connected_clients)], return_exceptions=True)
-        for result in results:
-            if isinstance(result, WebSocket):
-                connected_clients.discard(result)
-    finally:
-        _broadcast_in_progress = False
+            logger.debug(f"Error sending to client: {e}")
+            disconnected.append(client)
+    
+    # Remove disconnected clients
+    for client in disconnected:
+        connected_clients.discard(client)
 
 
 @app.websocket("/ws")
@@ -675,25 +604,31 @@ async def websocket_endpoint(websocket: WebSocket):
     """WebSocket endpoint for real-time data push"""
     await websocket.accept()
     connected_clients.add(websocket)
-    client_host = websocket.client.host if websocket.client else 'unknown'
-    logger.info(f"WS CONNECT from {client_host} — total clients: {len(connected_clients)}")
+    logger.info(f"WebSocket client connected. Total clients: {len(connected_clients)}")
     
     try:
         # Send current state immediately
         await websocket.send_json(system_state)
-
-        # Hold the connection open — broadcast_to_clients() pushes data every poll cycle
-        # (typically 1 s), which is sufficient keepalive.  We must NOT send anything here
-        # concurrently with broadcast_to_clients; concurrent sends on the same WebSocket
-        # corrupt its state and close the connection.
-        await websocket.receive_text()  # blocks until client closes or sends something
+        
+        # Keep connection alive and handle incoming messages
+        while True:
+            try:
+                # Wait for any message (or timeout)
+                data = await asyncio.wait_for(websocket.receive_text(), timeout=30.0)
+                # Echo back or handle commands if needed
+                logger.debug(f"Received WebSocket message: {data}")
+            except asyncio.TimeoutError:
+                # Send heartbeat/ping to keep connection alive
+                await websocket.send_json({'type': 'ping', 'timestamp': time.time()})
+            except WebSocketDisconnect:
+                break
     except WebSocketDisconnect:
         pass
     except Exception as e:
-        logger.debug(f"WS closed: {e}")
+        logger.error(f"WebSocket error: {e}")
     finally:
         connected_clients.discard(websocket)
-        logger.info(f"WS DISCONNECT from {client_host} — total clients: {len(connected_clients)}")
+        logger.info(f"WebSocket client disconnected. Total clients: {len(connected_clients)}")
 
 
 @app.get("/api/io-link/config")
@@ -703,28 +638,12 @@ async def get_io_link_config():
     return JSONResponse(content={
         "success": True,
         "io_link": config.get("io_link", {
-            "master_ip": "192.168.7.4",
-            "port": 80,
-            "timeout_sec": 4.0,
+            "master_ip": IFM_MASTER_IP,
+            "port": IFM_MASTER_PORT,
+            "timeout_sec": IFM_TIMEOUT,
             "use_https": False
         })
     })
-
-
-@app.get("/api/io-link/history")
-async def get_history(minutes: int = 60):
-    """Return downsampled 10-second-bucket time-series for all sensor types."""
-    config = load_config()
-    port_labels = config.get("port_labels", {})
-    series = csv_logger.read_history(minutes=min(minutes, 60), port_labels=port_labels)
-    return JSONResponse(content=series)
-
-
-@app.delete("/api/io-link/history")
-async def clear_history():
-    """Delete all CSV log files and start a fresh log."""
-    csv_logger.clear()
-    return JSONResponse(content={"success": True})
 
 
 @app.put("/api/io-link/config")
@@ -843,14 +762,12 @@ async def io_link_diagnostics():
     one_h = _now - 3600
     recent = [e for e in connection_events if e['ts'] >= one_h]
     drops_1h = sum(1 for e in recent if e['status'] == 'disconnected')
-    # 'connected' events carry the duration of the preceding disconnected period
-    disc_secs = sum(e['duration_sec'] for e in recent if e['status'] == 'connected')
+    disc_secs = sum(e['duration_sec'] for e in recent if e['status'] == 'disconnected')
     uptime_pct = round(max(0.0, (3600 - disc_secs) / 3600 * 100), 1)
     avg_lat = round(sum(p['latency_ms'] for p in poll_latencies) / len(poll_latencies)) if poll_latencies else None
-    extra = await al1350.diagnostics_snapshot()
+    extra = al1350.diagnostics_snapshot()
     return JSONResponse({
         'success': True,
-        'start_ts': _BACKEND_START_TS,
         'events': connection_events[-200:],
         'latencies': poll_latencies[-100:],
         'stats': {
@@ -870,19 +787,10 @@ async def io_link_diagnostics():
             'last_good_data_ts': extra.get('last_good_data_ts'),
             'port_freshness_age_sec': extra.get('port_freshness_age_sec'),
             'link': extra.get('link'),
-            'mqtt_connected': mqtt_connected,
-            'mqtt_enabled': _AIOMQTT_AVAILABLE and load_config().get('mqtt', {}).get('enabled', True),
             'system': extra.get('system'),
             'master_target': extra.get('master_target'),
         }
     })
-
-
-@app.get("/api/logs")
-async def get_app_logs(n: int = 200):
-    """Return last N in-memory log entries for the Diagnostics log viewer."""
-    entries = list(_app_log_buffer)[-n:]
-    return JSONResponse({'success': True, 'count': len(entries), 'logs': entries})
 
 
 @app.get("/api/io-link/port/{port_num}")
@@ -917,15 +825,12 @@ async def io_link_port_detail(port_num: int):
         'serial': port_info.get('serial', '')
     })
 
-    # Device type (name-based first, then fallback table, then port_labels hint)
-    _pl = load_config().get('port_labels', {})
-    _pcfg = _pl.get(str(port_num), {})
-    dtype = get_device_type(port_data['vendor_id'], port_data['device_id'], port_data['name'])
-    if dtype == 'unknown' and _pcfg.get('device_type_hint'):
-        dtype = _pcfg['device_type_hint']
-    port_data['device_type'] = dtype
-    if _pcfg.get('label'):
-        port_data['label'] = _pcfg['label']
+    # Device type (name-based first, then fallback table)
+    port_data['device_type'] = get_device_type(
+        port_data['vendor_id'],
+        port_data['device_id'],
+        port_data['name']
+    )
 
     # Get PDin
     pdin_raw = port_info.get('pdin', '')
@@ -949,14 +854,6 @@ async def io_link_port_detail(port_num: int):
         elif dtype == DEVICE_TYPE_CAPACITIVE and pdin_bytes:
             port_data['pdin']['decoded'] = decode_capacitive_pdin(pdin_bytes)
 
-    # For capacitive sensors, read the onboard detection counter (ISDU index 210)
-    if dtype == DEVICE_TYPE_CAPACITIVE and port_info.get('mode') == 'io-link':
-        counter_val = await al1350.read_isdu_int32(port_num, 210, 0)
-        if counter_val is not None:
-            port_data['detection_counter'] = counter_val
-            prev = _cap_counter_prev.get(port_num)
-            port_data['detection_counter_delta'] = max(0, counter_val - prev) if prev is not None else 0
-
     # Get PDout and decode
     pdout_raw = port_info.get('pdout', '')
     if pdout_raw:
@@ -979,110 +876,6 @@ async def io_link_port_detail(port_num: int):
         'port': port_data,
         'timestamp': time.time()
     })
-
-
-@app.get("/api/io-link/port/{port_num}/parameters")
-async def get_port_parameters(port_num: int):
-    """Return the IODD-derived parameter definitions for the device on this port,
-    plus live values read from the device for all parameters."""
-    if port_num < 1 or port_num > 4:
-        raise HTTPException(status_code=400, detail="Port must be 1–4")
-
-    # Resolve vendor/device id from live state
-    ports = system_state.get('ports') or []
-    port = next((p for p in ports if p.get('port') == port_num), {})
-    vendor_id = port.get('vendor_id', '')
-    device_id = port.get('device_id', '')
-
-    # Fallback to config hint for device type if IDs unavailable
-    registry = get_device_params(vendor_id, device_id)
-    if registry is None:
-        return JSONResponse({'success': False, 'error': 'No IODD-derived parameters for this device',
-                             'vendor_id': vendor_id, 'device_id': device_id})
-
-    # Read all parameters from device (in parallel)
-    params_with_values = []
-    for p in registry['parameters']:
-        hex_val = await al1350.read_isdu(port_num, p['index'], p['subindex'])
-        scale = p.get('scale', 1.0)
-        value = decode_isdu_hex(hex_val, p['dtype'], scale) if hex_val else None
-        entry = dict(p)
-        entry['raw_hex'] = hex_val
-        entry['value'] = value
-        if value is not None and 'enum' in p:
-            entry['value_label'] = p['enum'].get(value if isinstance(value, int) else int(value), str(value))
-        params_with_values.append(entry)
-
-    return JSONResponse({
-        'success': True,
-        'port': port_num,
-        'device_label': registry['label'],
-        'commands': registry['commands'],
-        'parameters': params_with_values,
-    })
-
-
-@app.post("/api/io-link/port/{port_num}/parameter/read")
-async def read_port_parameter(port_num: int, request: Request):
-    """Read a single ISDU parameter. Body: {index, subindex, dtype, scale?}"""
-    if port_num < 1 or port_num > 4:
-        raise HTTPException(status_code=400, detail="Port must be 1–4")
-    body = await request.json()
-    index    = int(body['index'])
-    subindex = int(body.get('subindex', 0))
-    dtype    = body.get('dtype', T_UINT8)
-    scale    = float(body.get('scale', 1.0))
-
-    hex_val = await al1350.read_isdu(port_num, index, subindex)
-    if hex_val is None:
-        return JSONResponse({'success': False, 'error': 'ISDU read failed or device not connected'})
-    value = decode_isdu_hex(hex_val, dtype, scale)
-    return JSONResponse({'success': True, 'raw_hex': hex_val, 'value': value})
-
-
-@app.post("/api/io-link/port/{port_num}/parameter/write")
-async def write_port_parameter(port_num: int, request: Request):
-    """Write a single ISDU parameter. Body: {index, subindex, value, dtype, scale?}"""
-    if port_num < 1 or port_num > 4:
-        raise HTTPException(status_code=400, detail="Port must be 1–4")
-    body = await request.json()
-    index    = int(body['index'])
-    subindex = int(body.get('subindex', 0))
-    dtype    = body.get('dtype', T_UINT8)
-    scale    = float(body.get('scale', 1.0))
-    value    = body['value']
-
-    hex_val = encode_isdu_value(value, dtype, scale)
-    ok = await al1350.write_isdu(port_num, index, subindex, hex_val)
-    if not ok:
-        return JSONResponse({'success': False, 'error': 'ISDU write failed'})
-    return JSONResponse({'success': True, 'wrote_hex': hex_val, 'value': value})
-
-
-@app.post("/api/io-link/port/{port_num}/command")
-async def execute_port_command(port_num: int, request: Request):
-    """Execute a named system command on the device. Body: {command} e.g. 'teach_sp1'"""
-    if port_num < 1 or port_num > 4:
-        raise HTTPException(status_code=400, detail="Port must be 1–4")
-    body = await request.json()
-    cmd_key = body.get('command', '')
-
-    ports = system_state.get('ports') or []
-    port  = next((p for p in ports if p.get('port') == port_num), {})
-    registry = get_device_params(port.get('vendor_id', ''), port.get('device_id', ''))
-    if registry is None:
-        return JSONResponse({'success': False, 'error': 'Unknown device on this port'})
-
-    cmd = registry['commands'].get(cmd_key)
-    if cmd is None:
-        return JSONResponse({'success': False, 'error': f'Unknown command: {cmd_key}'})
-
-    # System commands are written to index 2 / subindex 0 as uint8
-    hex_val = encode_isdu_value(cmd['value'], T_UINT8)
-    ok = await al1350.write_isdu(port_num, 2, 0, hex_val)
-    if not ok:
-        return JSONResponse({'success': False, 'error': 'Command write failed'})
-    return JSONResponse({'success': True, 'command': cmd_key, 'label': cmd['label']})
 
 
 @app.get("/learn", response_class=HTMLResponse)
@@ -1171,47 +964,15 @@ async def health_check():
     return {"status": "healthy", "clients": len(connected_clients)}
 
 
-def _get_local_ip() -> Optional[str]:
-    """Return all non-loopback IPs on this host, comma-separated.
-    Uses 'hostname -I' (Linux) as the primary method — works without internet access.
-    Falls back to UDP connect probes against known local targets."""
-    import subprocess as _sp
-    # hostname -I lists all interface IPs space-separated, no DNS needed
-    try:
-        result = _sp.run(["hostname", "-I"], capture_output=True, text=True, timeout=2)
-        ips = [ip for ip in result.stdout.strip().split() if not ip.startswith("127.")]
-        if ips:
-            return ", ".join(ips)
-    except Exception:
-        pass
-    # Fallback: UDP connect trick against known local targets (no packets sent)
-    for target in ("192.168.7.4", "192.168.0.1", "10.0.0.1"):
-        try:
-            s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-            s.settimeout(0.1)
-            s.connect((target, 80))
-            ip = s.getsockname()[0]
-            s.close()
-            if ip and not ip.startswith("127."):
-                return ip
-        except Exception:
-            continue
-    try:
-        return socket.gethostbyname(socket.gethostname())
-    except Exception:
-        return None
-
-
 @app.get("/api/system/health")
 async def system_health():
     """System health for admin observability."""
-    diag = await al1350.diagnostics_snapshot()
+    diag = al1350.diagnostics_snapshot()
     return JSONResponse(
         {
             "success": True,
             "timestamp": time.time(),
             "hostname": socket.gethostname(),
-            "ip_address": _get_local_ip(),
             "io_link_connected": bool(system_state.get("success")),
             "degraded_mode": bool(diag.get("degraded_mode")),
             "system": diag.get("system", {}),
@@ -1225,6 +986,7 @@ async def system_health():
 # Debug telemetry — collects frontend events so we can diagnose
 # touch/scroll behaviour without needing physical screen access.
 # ================================================================
+from collections import deque
 
 _debug_log: deque = deque(maxlen=200)
 
