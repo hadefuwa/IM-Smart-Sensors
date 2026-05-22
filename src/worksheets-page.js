@@ -329,6 +329,8 @@ const WORKSHEETS = [
         <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="ws0-q4" value="c" class="radio radio-sm radio-primary"> It directly controls the light stack colours</label>
       </div>
 
+      <div class="divider my-2"></div>
+
       <!-- Challenge -->
       <div class="rounded-xl border-2 border-warning/50 bg-warning/5 p-4 mt-4 space-y-3" id="ws-challenge-box">
         <p class="font-bold text-base-content text-base">🎯 Challenge</p>
@@ -339,10 +341,14 @@ const WORKSHEETS = [
             <div id="ch-p1-dot" class="w-8 h-8 rounded-full bg-base-300 mx-auto transition-all duration-100"></div>
             <p id="ch-p1-val" class="text-xs font-bold text-base-content">—</p>
           </div>
-          <div class="rounded-lg bg-base-200 border border-base-300 p-3 text-center space-y-1">
+          <div class="rounded-lg bg-base-200 border border-base-300 p-3 text-center space-y-2">
             <p class="text-xs text-base-content/50 font-medium uppercase tracking-wide">Port 2 · Capacitive</p>
             <div id="ch-p2-dot" class="w-8 h-8 rounded-full bg-base-300 mx-auto transition-all duration-100"></div>
             <p id="ch-p2-val" class="text-xs font-bold text-base-content">—</p>
+            <div class="w-full bg-base-300 rounded-full h-3 overflow-hidden">
+              <div id="ch-p2-bar" class="h-3 rounded-full bg-purple-500 transition-all duration-100" style="width:0%"></div>
+            </div>
+            <p id="ch-p2-raw" class="text-xs font-mono text-base-content/50">0 / 65535</p>
           </div>
         </div>
         <div id="ch-result" class="hidden rounded-lg p-3 text-center font-bold text-sm"></div>
@@ -352,6 +358,13 @@ const WORKSHEETS = [
             Reset Challenge
           </button>
         </div>
+      </div>
+
+      <p class="mt-4 font-medium text-base-content"><strong>Q5.</strong> During the challenge, what did you notice about the capacitive sensor that a normal on/off sensor wouldn't show you?</p>
+      <div class="space-y-2 mt-1">
+        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="ws0-q5" value="a" class="radio radio-sm radio-primary"> It only ever shows two states — on or off — same as a normal sensor</label>
+        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="ws0-q5" value="b" class="radio radio-sm radio-primary"> It showed a live level rising as your hand got close, before it fully triggered</label>
+        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="ws0-q5" value="c" class="radio radio-sm radio-primary"> It measured the exact distance between your hand and the sensor in millimetres</label>
       </div>
     `
   },
@@ -1008,20 +1021,28 @@ function initLiveIntro(container) {
     const chP1val = container.querySelector('#ch-p1-val');
     const chP2dot = container.querySelector('#ch-p2-dot');
     const chP2val = container.querySelector('#ch-p2-val');
+    const chP2bar = container.querySelector('#ch-p2-bar');
+    const chP2raw = container.querySelector('#ch-p2-raw');
     const chResult = container.querySelector('#ch-result');
     if (!chP1dot) return;
 
-    // Always update live dots in challenge panel
+    // Always update capacitive level bar (even after pass/fail)
+    const capRaw = p2?.pdin_decoded?.analogue_value ?? 0;
+    const capPct = Math.min(100, (capRaw / 65535) * 100);
+    if (chP2bar) chP2bar.style.width = `${capPct.toFixed(1)}%`;
+    if (chP2raw) chP2raw.textContent = `${capRaw} / 65535`;
+    if (chP2bar) chP2bar.style.backgroundColor = det2 ? '#ef4444' : capPct > 5 ? '#f59e0b' : '#a855f7';
+
     if (!_chFailed && !_chSucceeded) {
       chP1dot.style.backgroundColor = det1 ? '#3b82f6' : '';
       chP1dot.style.boxShadow = det1 ? '0 0 10px #3b82f680' : '';
       chP1dot.className = det1 ? 'w-8 h-8 rounded-full mx-auto transition-all' : 'w-8 h-8 rounded-full bg-base-300 mx-auto transition-all';
       chP1val.textContent = det1 ? 'Detected ●' : 'No object ○';
 
-      chP2dot.style.backgroundColor = det2 ? '#ef4444' : '';
+      chP2dot.style.backgroundColor = det2 ? '#ef4444' : capPct > 5 ? '#f59e0b' : '';
       chP2dot.style.boxShadow = det2 ? '0 0 10px #ef444480' : '';
-      chP2dot.className = det2 ? 'w-8 h-8 rounded-full mx-auto transition-all' : 'w-8 h-8 rounded-full bg-base-300 mx-auto transition-all';
-      chP2val.textContent = det2 ? 'Detected ●' : 'No object ○';
+      chP2dot.className = (det2 || capPct > 5) ? 'w-8 h-8 rounded-full mx-auto transition-all' : 'w-8 h-8 rounded-full bg-base-300 mx-auto transition-all';
+      chP2val.textContent = det2 ? 'Detected ●' : capPct > 0.5 ? `Level: ${capPct.toFixed(0)}%` : 'No object ○';
 
       if (det2) {
         _chFailed = true;
@@ -1055,6 +1076,10 @@ function initLiveIntro(container) {
         const el = container.querySelector(id);
         if (el) el.textContent = '—';
       });
+      const bar = container.querySelector('#ch-p2-bar');
+      if (bar) { bar.style.width = '0%'; bar.style.backgroundColor = '#a855f7'; }
+      const raw = container.querySelector('#ch-p2-raw');
+      if (raw) raw.textContent = '0 / 65535';
     });
   }
 }
