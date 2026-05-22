@@ -457,19 +457,10 @@ function buildIndexHtml() {
       <div class="absolute top-0 right-0 w-64 h-64 opacity-20 pointer-events-none" aria-hidden="true">
         <svg viewBox="0 0 100 100" fill="none" class="text-secondary"><circle cx="50" cy="50" r="35" stroke="currentColor" stroke-width="1.5"/><path d="M50 15v70M15 50h70M26 26l48 48M74 26L26 74" stroke="currentColor" stroke-width="0.8"/></svg>
       </div>
-      <header class="relative rounded-2xl bg-gradient-to-r from-secondary/20 via-accent/15 to-primary/20 border-2 border-secondary/30 px-4 py-4 shadow-xl">
-        <div class="flex items-center gap-3 flex-wrap">
-          <div class="rounded-lg bg-secondary/25 p-2 border border-secondary/40">
-            <svg xmlns="http://www.w3.org/2000/svg" class="w-7 h-7 text-secondary" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 3H5a2 2 0 00-2 2v4m6-6h10a2 2 0 012 2v4M9 3v18m0 0h10a2 2 0 002-2V9M9 21H5a2 2 0 01-2-2V9m0 0h18" /></svg>
-          </div>
-          <div>
-            <div class="flex items-center gap-2 mb-0.5">
-              <span class="badge badge-secondary badge-outline font-mono text-xs">CP0002</span>
-            </div>
-            <h1 class="text-xl font-bold text-base-content tracking-tight">Industry 4.0 IO-Link</h1>
-            <p class="text-base-content/80 text-sm">${TOTAL} engineering-level worksheets — architecture, protocol decoding, system integration, and business case.</p>
-          </div>
-        </div>
+      <header class="flex items-center gap-3 px-4 py-2 rounded-xl bg-secondary/10 border border-secondary/30">
+        <span class="badge badge-secondary badge-outline font-mono text-xs shrink-0">CP0002</span>
+        <h1 class="text-base font-bold text-base-content tracking-tight truncate">Industry 4.0 IO-Link</h1>
+        <span class="text-xs text-base-content/50 ml-auto shrink-0 hidden sm:inline">${TOTAL} worksheets</span>
       </header>
       <div class="relative grid grid-cols-1 sm:grid-cols-2 gap-5">
         ${cards}
