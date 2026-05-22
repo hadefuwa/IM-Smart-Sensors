@@ -163,7 +163,7 @@ const WORKSHEETS = [
     relatedDashboard: 'Dashboard: all ports',
     prerequisites: '',
     contentHtml: `
-      <p class="text-base-content/90 leading-relaxed text-base">Welcome to <strong class="text-base-content">CP0001 — Maintenance on Smart Sensors</strong>. In front of you is a real industrial sensor kit used in factories to monitor machines and spot faults automatically. Your job is to learn how to use it, read it, and fix it.</p>
+      <p class="text-base-content/90 leading-relaxed text-base">In front of you is a real sensor kit used in factories. Your job today is simple — find each part, tick it off, and see it working live on screen.</p>
 
       <div class="rounded-xl border-2 border-primary/30 bg-primary/5 p-4 mt-4 space-y-3">
         <p class="font-bold text-base-content">🔍 Find each item on the bench — tick it when you can see it:</p>
@@ -171,17 +171,17 @@ const WORKSHEETS = [
           <label class="flex items-start gap-3 cursor-pointer"><input type="checkbox" class="checkbox checkbox-sm checkbox-primary mt-0.5 flex-shrink-0">
             <span><strong class="text-base-content">IO-Link Master (IFM AL1350)</strong> — the orange box with numbered ports along the side. This is the hub. Everything else plugs into it.</span></label>
           <label class="flex items-start gap-3 cursor-pointer"><input type="checkbox" class="checkbox checkbox-sm checkbox-primary mt-0.5 flex-shrink-0">
-            <span><strong class="text-base-content">Port 1 — Photoelectric Sensor (Contrinex LTR-M18PA-PMS-603, M18)</strong> — blue barrel sensor pointing outward, red LED on the face. It detects objects between 3 mm and 1200 mm away by bouncing its own light beam off the target — no reflector needed. IP67 rated (dust-tight and waterproof), so it survives a factory floor. This sensor uses IO-Link 1.0, which means it sends live detection data over IO-Link but sensitivity must be adjusted using the physical potentiometer on the sensor body — remote parameter configuration is not supported by this device.</span></label>
+            <span><strong class="text-base-content">Port 1 — Photoelectric Sensor</strong> — the blue barrel sensor with a red light on the face. It fires a beam of light and detects when something breaks it.</span></label>
           <label class="flex items-start gap-3 cursor-pointer"><input type="checkbox" class="checkbox checkbox-sm checkbox-primary mt-0.5 flex-shrink-0">
-            <span><strong class="text-base-content">Port 2 — Capacitive Sensor</strong> — usually a short cylinder. Detects materials (liquid, powder, plastic) without needing to touch them.</span></label>
+            <span><strong class="text-base-content">Port 2 — Capacitive Sensor</strong> — the short cylinder. Detects materials like liquid, powder, or plastic — even through a container wall.</span></label>
           <label class="flex items-start gap-3 cursor-pointer"><input type="checkbox" class="checkbox checkbox-sm checkbox-primary mt-0.5 flex-shrink-0">
-            <span><strong class="text-base-content">Port 3 — Temperature Sensor (IFM TV7105)</strong> — sends back a live temperature in °C. Not just an alarm — an actual number.</span></label>
+            <span><strong class="text-base-content">Port 3 — Temperature Sensor</strong> — reads the temperature and sends back a live number in °C.</span></label>
           <label class="flex items-start gap-3 cursor-pointer"><input type="checkbox" class="checkbox checkbox-sm checkbox-primary mt-0.5 flex-shrink-0">
-            <span><strong class="text-base-content">Port 4 — Light Stack (IFM CL50)</strong> — the tall tower with coloured segments. Shows machine status at a glance from across the factory.</span></label>
+            <span><strong class="text-base-content">Port 4 — Light Stack</strong> — the tall tower with coloured lights. Shows machine status at a glance from across the factory.</span></label>
           <label class="flex items-start gap-3 cursor-pointer"><input type="checkbox" class="checkbox checkbox-sm checkbox-primary mt-0.5 flex-shrink-0">
-            <span><strong class="text-base-content">Raspberry Pi</strong> — small green circuit board, usually in a case nearby. Runs the software that talks to the IO-Link master and shows this dashboard.</span></label>
+            <span><strong class="text-base-content">Raspberry Pi</strong> — small green circuit board, usually in a case nearby. Runs the software that talks to the IO-Link master and shows this screen.</span></label>
           <label class="flex items-start gap-3 cursor-pointer"><input type="checkbox" class="checkbox checkbox-sm checkbox-primary mt-0.5 flex-shrink-0">
-            <span><strong class="text-base-content">This screen</strong> — showing the live HMI dashboard. Everything the sensors say ends up here.</span></label>
+            <span><strong class="text-base-content">This screen</strong> — the live dashboard. Everything the sensors say ends up here.</span></label>
         </div>
       </div>
 
