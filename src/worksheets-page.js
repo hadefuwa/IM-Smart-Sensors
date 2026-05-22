@@ -171,7 +171,7 @@ const WORKSHEETS = [
           <label class="flex items-start gap-3 cursor-pointer"><input type="checkbox" class="checkbox checkbox-sm checkbox-primary mt-0.5 flex-shrink-0">
             <span><strong class="text-base-content">IO-Link Master (IFM AL1350)</strong> — the orange box with numbered ports along the side. This is the hub. Everything else plugs into it.</span></label>
           <label class="flex items-start gap-3 cursor-pointer"><input type="checkbox" class="checkbox checkbox-sm checkbox-primary mt-0.5 flex-shrink-0">
-            <span><strong class="text-base-content">Port 1 — Photoelectric Sensor</strong> — the blue barrel sensor with a red light on the face. It fires a beam of light and detects when something breaks it.</span></label>
+            <span><strong class="text-base-content">Port 1 — Photoelectric Sensor</strong> — the blue M18 barrel with a red LED on the face. Fires a light beam and detects when something gets in the way.</span></label>
           <label class="flex items-start gap-3 cursor-pointer"><input type="checkbox" class="checkbox checkbox-sm checkbox-primary mt-0.5 flex-shrink-0">
             <span><strong class="text-base-content">Port 2 — Capacitive Sensor</strong> — the larger white M18 cylinder. Detects materials like liquid, powder, or plastic — even through a container wall.</span></label>
           <label class="flex items-start gap-3 cursor-pointer"><input type="checkbox" class="checkbox checkbox-sm checkbox-primary mt-0.5 flex-shrink-0">
