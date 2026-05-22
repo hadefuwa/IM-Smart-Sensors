@@ -167,21 +167,28 @@ const WORKSHEETS = [
 
       <div class="rounded-xl border-2 border-primary/30 bg-primary/5 p-4 mt-4 space-y-3">
         <p class="font-bold text-base-content">🔍 Find each item on the bench — tick it when you can see it:</p>
-        <div class="space-y-2 text-sm">
-          <label class="flex items-start gap-3 cursor-pointer"><input type="checkbox" class="checkbox checkbox-sm checkbox-primary mt-0.5 flex-shrink-0">
-            <span><strong class="text-base-content">IO-Link Master (IFM AL1350)</strong> — the orange box with numbered ports along the side. This is the hub. Everything else plugs into it.</span></label>
-          <label class="flex items-start gap-3 cursor-pointer"><input type="checkbox" class="checkbox checkbox-sm checkbox-primary mt-0.5 flex-shrink-0">
-            <span><strong class="text-base-content">Port 1 — Photoelectric Sensor</strong> — the blue M18 barrel with a red LED on the face. Fires a light beam and detects when something gets in the way.</span></label>
-          <label class="flex items-start gap-3 cursor-pointer"><input type="checkbox" class="checkbox checkbox-sm checkbox-primary mt-0.5 flex-shrink-0">
-            <span><strong class="text-base-content">Port 2 — Capacitive Sensor</strong> — the larger white M18 cylinder. Detects materials like liquid, powder, or plastic — even through a container wall.</span></label>
-          <label class="flex items-start gap-3 cursor-pointer"><input type="checkbox" class="checkbox checkbox-sm checkbox-primary mt-0.5 flex-shrink-0">
-            <span><strong class="text-base-content">Port 3 — Temperature Sensor</strong> — reads the temperature and sends back a live number in °C.</span></label>
-          <label class="flex items-start gap-3 cursor-pointer"><input type="checkbox" class="checkbox checkbox-sm checkbox-primary mt-0.5 flex-shrink-0">
-            <span><strong class="text-base-content">Port 4 — Light Stack</strong> — the tall tower with coloured lights. Shows machine status at a glance from across the factory.</span></label>
-          <label class="flex items-start gap-3 cursor-pointer"><input type="checkbox" class="checkbox checkbox-sm checkbox-primary mt-0.5 flex-shrink-0">
-            <span><strong class="text-base-content">Edge Device (Raspberry Pi)</strong> — small green circuit board in a case, usually mounted nearby. It sits between the IO-Link master and this screen — collecting all the sensor data, running the comms, and serving up the dashboard. Without it, the sensors have nowhere to send their data.</span></label>
-          <label class="flex items-start gap-3 cursor-pointer"><input type="checkbox" class="checkbox checkbox-sm checkbox-primary mt-0.5 flex-shrink-0">
-            <span><strong class="text-base-content">This screen</strong> — the live dashboard. Everything the sensors say ends up here.</span></label>
+        <div class="space-y-2 text-sm" id="kit-checklist">
+          <label class="kit-item flex items-center gap-3 cursor-pointer rounded-xl border-2 border-transparent px-3 py-2 transition-all duration-200">
+            <input type="checkbox" class="checkbox checkbox-md checkbox-success flex-shrink-0">
+            <span class="kit-text"><strong>IO-Link Master (IFM AL1350)</strong> — the orange box with numbered ports along the side. This is the hub. Everything else plugs into it.</span></label>
+          <label class="kit-item flex items-center gap-3 cursor-pointer rounded-xl border-2 border-transparent px-3 py-2 transition-all duration-200">
+            <input type="checkbox" class="checkbox checkbox-md checkbox-success flex-shrink-0">
+            <span class="kit-text"><strong>Port 1 — Photoelectric Sensor</strong> — the blue M18 barrel with a red LED on the face. Fires a light beam and detects when something gets in the way.</span></label>
+          <label class="kit-item flex items-center gap-3 cursor-pointer rounded-xl border-2 border-transparent px-3 py-2 transition-all duration-200">
+            <input type="checkbox" class="checkbox checkbox-md checkbox-success flex-shrink-0">
+            <span class="kit-text"><strong>Port 2 — Capacitive Sensor</strong> — the larger white M18 cylinder. Detects materials like liquid, powder, or plastic — even through a container wall.</span></label>
+          <label class="kit-item flex items-center gap-3 cursor-pointer rounded-xl border-2 border-transparent px-3 py-2 transition-all duration-200">
+            <input type="checkbox" class="checkbox checkbox-md checkbox-success flex-shrink-0">
+            <span class="kit-text"><strong>Port 3 — Temperature Sensor</strong> — reads the temperature and sends back a live number in °C.</span></label>
+          <label class="kit-item flex items-center gap-3 cursor-pointer rounded-xl border-2 border-transparent px-3 py-2 transition-all duration-200">
+            <input type="checkbox" class="checkbox checkbox-md checkbox-success flex-shrink-0">
+            <span class="kit-text"><strong>Port 4 — Light Stack</strong> — the tall tower with coloured lights. Shows machine status at a glance from across the factory.</span></label>
+          <label class="kit-item flex items-center gap-3 cursor-pointer rounded-xl border-2 border-transparent px-3 py-2 transition-all duration-200">
+            <input type="checkbox" class="checkbox checkbox-md checkbox-success flex-shrink-0">
+            <span class="kit-text"><strong>Edge Device (Raspberry Pi)</strong> — small green circuit board in a case, usually mounted nearby. Collects sensor data, runs the comms, and serves up this dashboard.</span></label>
+          <label class="kit-item flex items-center gap-3 cursor-pointer rounded-xl border-2 border-transparent px-3 py-2 transition-all duration-200">
+            <input type="checkbox" class="checkbox checkbox-md checkbox-success flex-shrink-0">
+            <span class="kit-text"><strong>This screen</strong> — the live dashboard. Everything the sensors say ends up here.</span></label>
         </div>
       </div>
 
@@ -886,7 +893,25 @@ const CL_COLOUR_MAP = {
   'Magenta':'#ec4899','Rose':'#f43f5e','White':'#f8fafc'
 };
 
+function initKitChecklist(container) {
+  container.querySelectorAll('#kit-checklist .kit-item').forEach(label => {
+    const cb = label.querySelector('input[type="checkbox"]');
+    if (!cb) return;
+    const apply = () => {
+      if (cb.checked) {
+        label.classList.add('bg-success/20', 'border-success');
+        label.querySelector('.kit-text').style.opacity = '0.6';
+      } else {
+        label.classList.remove('bg-success/20', 'border-success');
+        label.querySelector('.kit-text').style.opacity = '';
+      }
+    };
+    cb.addEventListener('change', apply);
+  });
+}
+
 function initLiveIntro(container) {
+  initKitChecklist(container);
   const colours = { photo: '#3b82f6', cap: '#8b5cf6', temp: '#f97316', led: '#22c55e' };
 
   function setPortCard(dotId, valId, active, value, colour) {
