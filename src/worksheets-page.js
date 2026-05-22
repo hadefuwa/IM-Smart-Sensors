@@ -329,9 +329,30 @@ const WORKSHEETS = [
         <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="ws0-q4" value="c" class="radio radio-sm radio-primary"> It directly controls the light stack colours</label>
       </div>
 
-      <div class="divider my-2"></div>
-      <button type="button" class="btn btn-ghost btn-sm ws-suggested-btn" data-target="ws0-suggested">Show answers</button>
-      <div id="ws0-suggested" class="hidden p-4 rounded-lg border border-base-300 bg-base-300/50 text-base-content/80 text-sm leading-relaxed ws-suggested">Q1: b — orange, the hub. Q2: c — the photoelectric sensor on Port 1. Q3: b — materials like liquid or powder through a container wall. Q4: b — it collects sensor data, runs the comms, and serves the dashboard.</div>
+      <!-- Challenge -->
+      <div class="rounded-xl border-2 border-warning/50 bg-warning/5 p-4 mt-4 space-y-3" id="ws-challenge-box">
+        <p class="font-bold text-base-content text-base">🎯 Challenge</p>
+        <p class="text-sm text-base-content/80">Trigger the photoelectric sensor with your hand — but <strong>do not</strong> trigger the capacitive sensor. If the capacitive detects anything at all, you fail and must reset.</p>
+        <div class="grid grid-cols-2 gap-3">
+          <div class="rounded-lg bg-base-200 border border-base-300 p-3 text-center space-y-1">
+            <p class="text-xs text-base-content/50 font-medium uppercase tracking-wide">Port 1 · Photoelectric</p>
+            <div id="ch-p1-dot" class="w-8 h-8 rounded-full bg-base-300 mx-auto transition-all duration-100"></div>
+            <p id="ch-p1-val" class="text-xs font-bold text-base-content">—</p>
+          </div>
+          <div class="rounded-lg bg-base-200 border border-base-300 p-3 text-center space-y-1">
+            <p class="text-xs text-base-content/50 font-medium uppercase tracking-wide">Port 2 · Capacitive</p>
+            <div id="ch-p2-dot" class="w-8 h-8 rounded-full bg-base-300 mx-auto transition-all duration-100"></div>
+            <p id="ch-p2-val" class="text-xs font-bold text-base-content">—</p>
+          </div>
+        </div>
+        <div id="ch-result" class="hidden rounded-lg p-3 text-center font-bold text-sm"></div>
+        <div class="flex justify-center">
+          <button type="button" id="ch-reset-btn" class="btn btn-warning btn-sm gap-2">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+            Reset Challenge
+          </button>
+        </div>
+      </div>
     `
   },
   {
@@ -902,6 +923,9 @@ let _photoWaveCount = 0;
 let _lastCapState = false;
 let _capTaskCount = 0;
 
+let _chFailed = false;
+let _chSucceeded = false;
+
 let _tempBaseline = null;
 let _alarmThreshold = 40;
 
@@ -931,6 +955,8 @@ function initKitChecklist(container) {
 }
 
 function initLiveIntro(container) {
+  _chFailed = false;
+  _chSucceeded = false;
   initKitChecklist(container);
   const colours = { photo: '#3b82f6', cap: '#8b5cf6', temp: '#f97316', led: '#22c55e' };
 
@@ -966,16 +992,71 @@ function initLiveIntro(container) {
     const c4    = p4?.pdin_decoded?.color1;
     const cnt2  = p2?.detection_counter ?? 0;
 
+    const det2 = p2?.pdin_decoded?.object_detected;
+
     setPortCard('intro-p1-dot', 'intro-p1-val', p1Active,
       p1Active ? (det1 ? 'Detected ●' : 'No object ○') : 'Inactive', colours.photo);
-    const det2 = p2?.pdin_decoded?.object_detected;
     setPortCard('intro-p2-dot', 'intro-p2-val', p2Active,
       p2Active ? (det2 ? 'Detected ●' : 'No object ○') : 'Inactive', colours.cap);
     setPortCard('intro-p3-dot', 'intro-p3-val', p3Active,
       p3Active && temp3 != null ? `${temp3.toFixed(1)} °C` : 'Inactive', colours.temp);
     setPortCard('intro-p4-dot', 'intro-p4-val', p4Active,
       p4Active && c4 ? c4 : 'Inactive', colours.led);
+
+    // ── Challenge logic ──────────────────────────────────────────────────────
+    const chP1dot = container.querySelector('#ch-p1-dot');
+    const chP1val = container.querySelector('#ch-p1-val');
+    const chP2dot = container.querySelector('#ch-p2-dot');
+    const chP2val = container.querySelector('#ch-p2-val');
+    const chResult = container.querySelector('#ch-result');
+    if (!chP1dot) return;
+
+    // Always update live dots in challenge panel
+    if (!_chFailed && !_chSucceeded) {
+      chP1dot.style.backgroundColor = det1 ? '#3b82f6' : '';
+      chP1dot.style.boxShadow = det1 ? '0 0 10px #3b82f680' : '';
+      chP1dot.className = det1 ? 'w-8 h-8 rounded-full mx-auto transition-all' : 'w-8 h-8 rounded-full bg-base-300 mx-auto transition-all';
+      chP1val.textContent = det1 ? 'Detected ●' : 'No object ○';
+
+      chP2dot.style.backgroundColor = det2 ? '#ef4444' : '';
+      chP2dot.style.boxShadow = det2 ? '0 0 10px #ef444480' : '';
+      chP2dot.className = det2 ? 'w-8 h-8 rounded-full mx-auto transition-all' : 'w-8 h-8 rounded-full bg-base-300 mx-auto transition-all';
+      chP2val.textContent = det2 ? 'Detected ●' : 'No object ○';
+
+      if (det2) {
+        _chFailed = true;
+        chResult.className = 'rounded-lg p-3 text-center font-bold text-sm bg-error/20 text-error border border-error/40';
+        chResult.textContent = '✗ Failed — the capacitive sensor triggered. Reset and try again.';
+        chResult.classList.remove('hidden');
+      } else if (det1) {
+        _chSucceeded = true;
+        chResult.className = 'rounded-lg p-3 text-center font-bold text-base bg-success/20 text-success border border-success/40';
+        chResult.textContent = '✓ Challenge complete! Photoelectric triggered, capacitive clean.';
+        chResult.classList.remove('hidden');
+        chP1dot.style.backgroundColor = '#22c55e';
+        chP1dot.style.boxShadow = '0 0 12px #22c55e80';
+      }
+    }
   });
+
+  // Reset button
+  const resetBtn = container.querySelector('#ch-reset-btn');
+  if (resetBtn) {
+    resetBtn.addEventListener('click', () => {
+      _chFailed = false;
+      _chSucceeded = false;
+      const chResult = container.querySelector('#ch-result');
+      if (chResult) chResult.classList.add('hidden');
+      ['#ch-p1-dot','#ch-p2-dot'].forEach(id => {
+        const el = container.querySelector(id);
+        if (el) { el.style.backgroundColor = ''; el.style.boxShadow = ''; el.className = 'w-8 h-8 rounded-full bg-base-300 mx-auto transition-all'; }
+      });
+      ['#ch-p1-val','#ch-p2-val'].forEach(id => {
+        const el = container.querySelector(id);
+        if (el) el.textContent = '—';
+      });
+    });
+  }
 }
 
 function initLiveWs2(container) {
