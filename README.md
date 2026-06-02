@@ -11,17 +11,20 @@ Industrial HMI dashboard for monitoring **IFM IO-Link Master** devices (AL1100/A
 - **Industrial HMI Dashboard** – Mimic-style homepage with real-time sensor status (Temperature, Capacitive, Photoelectric, Status LED), condition monitoring charts, and IODD parameter panels for every sensor
 - **Full IODD parameter access** – Reads and writes device parameters via IO-Link ISDU (acyclic service). All three sensors are fully configurable from the browser: sensitivity thresholds, output logic, switching modes, teach sequences, and factory reset
 - **Real-time updates** via WebSocket — no browser polling; MQTT push from AL1350 at 500 ms; HTTP fallback in parallel
-- **IO-Link page** – Compact port table with per-port parameter panels (Identity / Configuration / Diagnostics groups, write controls, command buttons)
+- **IO-Link Master page** – Port status cards showing live mode, Vendor ID (resolved to company name), Device ID (resolved to model), and PDin hex. Connection health KPIs: circuit breaker state, uptime (1 hr), avg latency, and request success rate. Supervision charts for current, voltage and temperature
+- **Device identity registry** – 260+ IO-Link manufacturers bundled from the official IO-Link Community `Vendor_ID_Table.xml` (v252). Vendor IDs resolve to company names automatically; device IDs map to model names for known devices
+- **Port mode switching** – "Switch to IO-Link" button on ports in digital output/input mode; writes the mode directly to the AL1350 via REST. Ports in IO-Link mode with nothing connected show a "No device detected" warning
 - **Supervision trends** – current, voltage, temperature time-series charts
 - **Connection Diagnostics** – Timeline chart, poll latency graph, recent events table, live backend log viewer, uptime counter, and time-since-last-drop stat
 - **Edge Device page** – Raspberry Pi runtime stats: CPU/memory rolling charts, CPU temperature, load average, service health, and Chromium kiosk process count
-- **Training worksheets** – Interactive guided worksheets (CP0001/CP0002) for each sensor type with live data, ISDU controls, and quizzes
+- **Training content (CP0001 / CP0002)** – 8 chapters of sensor fundamentals (CP0001) and 8 engineering worksheets (CP0002), all with interactive games, quizzes, live ISDU controls, and real maintenance scenarios. Latest additions: Chapter 8 (Device Identity — vendor ID match game, PDin decode) and Worksheet 8 (identify an unlabelled sensor using the IO-Link Master page)
 - **Adaptive polling** – Connected ports polled every 1 s; inactive ports every 5 s to reduce AL1350 load
 - **Port labels & device hints** – Display names and device-type overrides configurable per port in `config.json`
 - **Wi-Fi configuration panel** – Connect the Pi to a new network from the Settings page (via `nmcli`)
 - **Device type decoding** – Photoelectric, temperature, capacitive (Carlo Gavazzi 4-byte PDin with 16-bit dielectric value), proximity, and CL50 LED PDin/PDout decoded in every WebSocket push
 - **File logging** – Rotating log at `logs/app.log` (10 MB × 5 files); in-memory ring buffer at `/api/logs`
 - **Circuit breaker** – 5-failure open, 15 s recovery; transitions logged with context
+- **Kiosk hardening** – `--disable-pinch` blocks touchscreen pinch-to-zoom on WaveShare displays
 - **Light & dark theme** – Theme-aware IO-Link logo, persisted in `localStorage`
 
 ---
@@ -142,10 +145,11 @@ The repo builds and deploys the UI to [GitHub Pages](https://hadefuwa.github.io/
 ├── src/                         # Vite app source
 │   ├── main.js                   # App entry, routing, sidebar, logo theme switching
 │   ├── home-page.js              # HMI dashboard — gauges, charts, IODD parameter cards
-│   ├── io-link-page.js           # IO-Link port table + supervision charts + parameter panels
+│   ├── io-link-page.js           # IO-Link Master page — port cards, KPIs, supervision charts, parameter panels
+│   ├── io-link-vendors.js        # IO-Link vendor registry — 260+ manufacturers (IO-Link Community v252)
 │   ├── worksheets-page.js        # Interactive training worksheets with live ISDU controls
-│   ├── cp0001-page.js            # Course Package 1 — sensor fundamentals worksheets
-│   ├── cp0002-page.js            # Course Package 2 — IO-Link deep-dive worksheets
+│   ├── learn-page.js             # CP0001 — 8 chapters: sensor fundamentals, device identity
+│   ├── cp0002-page.js            # CP0002 — 8 worksheets: IO-Link deep-dive, maintenance scenarios
 │   ├── admin-page.js             # Connection Diagnostics — latency, circuit breaker, log viewer
 │   ├── edge-device-page.js       # Edge Device — Pi CPU/memory charts, service status
 │   ├── settings-page.js          # Theme selector + IO-Link config + Wi-Fi panel
@@ -174,6 +178,7 @@ The repo builds and deploys the UI to [GitHub Pages](https://hadefuwa.github.io/
 | `GET /api/io-link/port/<n>/parameters` | Read all IODD parameters for a port (resolves device from registry) |
 | `POST /api/io-link/port/<n>/parameter/read` | Read a single ISDU parameter `{index, subindex, dtype, scale}` |
 | `POST /api/io-link/port/<n>/parameter/write` | Write a parameter value `{index, subindex, value, dtype, scale}` |
+| `POST /api/io-link/port/<n>/mode` | Set port operating mode `{mode: 'io-link' \| 'digital_in' \| 'digital_out' \| 'inactive'}` |
 | `POST /api/io-link/port/<n>/command` | Send a device command by name `{command}` (e.g. `teach_sp1`, `factory_reset`) |
 | `GET /api/logs?n=200` | Last N backend log entries (in-memory ring buffer) |
 | `GET /api/system/health` | Pi runtime stats (CPU, memory, temp, load) |

@@ -63,10 +63,11 @@ Pi credentials and network details are in `docs/PI_SSH.md`.
 |------|------|
 | `src/main.js` | App entry, page routing, Chart.js init, IO-Link logo theme switching |
 | `src/home-page.js` | HMI dashboard — gauges, charts, IODD parameter cards per sensor |
-| `src/io-link-page.js` | IO-Link port table, supervision charts, per-port parameter panels |
+| `src/io-link-page.js` | IO-Link Master page — port cards, connection KPIs, supervision charts, parameter panels |
+| `src/io-link-vendors.js` | IO-Link vendor registry — 260+ manufacturers from IO-Link Community XML v252; `resolveVendorName(id)` and `resolveDeviceName(vendorId, deviceId, rawName)` |
 | `src/worksheets-page.js` | Interactive training worksheets with live ISDU read/write controls |
-| `src/cp0001-page.js` | Course Package 1 — sensor fundamentals (photoelectric, capacitive, temperature, LED) |
-| `src/cp0002-page.js` | Course Package 2 — IO-Link deep-dive worksheets |
+| `src/learn-page.js` | CP0001 — 8 chapters: sensor fundamentals through device identity |
+| `src/cp0002-page.js` | CP0002 — 8 engineering worksheets: IO-Link deep-dive and maintenance scenarios |
 | `src/settings-page.js` | Theme selector and IO-Link connection config UI |
 | `src/admin-page.js` | Connection Diagnostics — IO-Link latency graph, circuit breaker, log viewer |
 | `src/edge-device-page.js` | Edge Device page — Pi CPU/memory charts, service status, Chromium health |
@@ -136,6 +137,7 @@ Commands are written as uint8 to index 2, subindex 0: e.g. teach SP1 for TV7105 
 - `POST /api/io-link/port/{n}/parameter/read` — body: `{index, subindex, dtype, scale}` → `{success, raw_hex, value}`
 - `POST /api/io-link/port/{n}/parameter/write` — body: `{index, subindex, value, dtype, scale}` → `{success}`
 - `POST /api/io-link/port/{n}/command` — body: `{command}` (name key from registry `commands` dict) → `{success}`
+- `POST /api/io-link/port/{n}/mode` — body: `{mode: 'io-link'|'digital_in'|'digital_out'|'inactive'}` — writes port mode to AL1350 via `/iolinkmaster/port[N]/mode/setdata` and forces immediate re-poll. Returns `{success, port, mode}`
 
 ### Frontend ISDU Helpers (home-page.js and worksheets-page.js)
 
@@ -145,6 +147,28 @@ Both pages define the same async pattern:
 - `_hmiIsduCommand(portNum, cmdName, statusElId)` → bool
 
 Parameter panels auto-load on first WebSocket message from each sensor. Port number is tracked in `_sectionPortNum['cap-port-num']` / `['temp-port-num']` / `['detection-port-num']` (populated by `_setPortBadge` in the WS handler).
+
+## IO-Link Master Page — Key Data Flow Notes
+
+The IO-Link Master page (`src/io-link-page.js`) has two data sources that must stay in sync:
+
+- **WebSocket** (`/ws`) — MQTT-sourced push at 500 ms. Carries `ports[].pdin`, `ports[].mode`, `supervision`, `source`, `master_ip`, `device_name`, `software`. The `success`, `degraded_mode`, `master_ip` and `software` fields are merged into `system_state` by the HTTP poll loop and then re-broadcast via MQTT spread.
+- **`/api/io-link/diagnostics`** — polled every 15 s. Returns `{success, stats: {...}}`. **All KPI fields live under `.stats`**, not at the top level. Keys: `stats.circuit_state`, `stats.consecutive_failures`, `stats.uptime_pct_1h`, `stats.drops_1h`, `stats.request_rtt_p50_ms`, `stats.request_rtt_p95_ms`, `stats.request_success_rate_pct`, `stats.mqtt_connected`, `stats.port_freshness_age_sec`.
+
+**MQTT / HTTP merge:** Static port metadata (`vendor_id`, `device_id`, `name`) comes from the HTTP poll (via `get_port_info` with `include_static=True`, run every 6 cycles). The MQTT message parser initialises ports from `system_state.ports`, so once the HTTP poll has populated those fields they are preserved across MQTT updates. The HTTP poll also explicitly merges them back via the `if mqtt_connected:` block in `poll_loop`.
+
+**`software` keys are capitalized:** The AL1350 returns `{"Bootloader": "AL1xxx_bl_f7_v2.4.1"}` — keys start with uppercase. The frontend must check `software['Bootloader']`, not `software.bootloader`.
+
+**Port 4 (Light Stack / CL50):** Always keep in IO-Link mode. The "Switch to IO-Link" button in the port card is suppressed for `device_type === 'status_led'` ports.
+
+## Vendor / Device Identity
+
+`src/io-link-vendors.js` exports `resolveVendorName(vendorId)` and `resolveDeviceName(vendorId, deviceId, rawName)`.
+
+- `VENDOR_NAMES` — 260+ entries from IO-Link Community `Vendor_ID_Table.xml` v252 (May 2026). IDs above 1260 are not in the official XML; add them manually with a comment.
+- `DEVICE_NAMES` — keyed `'vendorId/deviceId'`; overrides the raw product name string for devices where the name needs a friendlier label. Current entries cover the four sensors in this kit.
+
+Known vendor IDs in this kit: 310 (ifm), 342 (Contrinex), 612 (OMRON), 1586 (RS Pro).
 
 ## Frontend Conventions
 

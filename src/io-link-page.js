@@ -320,10 +320,12 @@ function updatePortCards(ports) {
     const noDevEl = document.getElementById(`pc-${n}-nodev`);
     if (noDevEl) noDevEl.classList.toggle('hidden', !(isIOLink && !p.vendor_id));
 
-    // "Switch to IO-Link" button — show when port is in digital_in / digital_out
+    // "Switch to IO-Link" button — show when port is in digital_in / digital_out,
+    // but never for the light stack (status_led) which is always IO-Link only.
     const actionEl = document.getElementById(`pc-${n}-action`);
     if (actionEl) {
-      const showSwitch = mode === 'digital_out' || mode === 'digital_in';
+      const showSwitch = (mode === 'digital_out' || mode === 'digital_in')
+        && (p.device_type || '') !== 'status_led';
       actionEl.classList.toggle('hidden', !showSwitch);
     }
 
