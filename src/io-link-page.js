@@ -4,6 +4,7 @@
  */
 
 import Chart from 'chart.js/auto';
+import { resolveVendorName, resolveDeviceName } from './io-link-vendors.js';
 
 // API/WebSocket base – when using Vite dev server (e.g. 5173), point to FastAPI (8000)
 const resolveApiBase = () => {
@@ -14,95 +15,184 @@ const resolveApiBase = () => {
 const API_BASE = resolveApiBase();
 const WS_BASE = API_BASE.replace(/^http/, 'ws');
 
+
+const SOURCE_BADGE = {
+  mqtt:          'badge-success',
+  getdatamulti:  'badge-info',
+  fallback:      'badge-warning',
+  error:         'badge-error',
+  pending:       'badge-ghost',
+};
+
+const MODE_COLOR = {
+  'io-link':    'border-success',
+  'digital_in': 'border-info',
+  'digital_out':'border-info',
+  'error':      'border-error',
+};
+
+function _portCardHtml(n) {
+  return `
+    <div class="card bg-base-200 shadow-xl border-l-4 border-transparent transition-colors duration-500" id="pc-${n}">
+      <div class="card-body p-3 space-y-2">
+        <div class="flex items-start justify-between gap-2">
+          <div class="flex items-center gap-2 min-w-0">
+            <span class="text-3xl font-black font-mono text-base-content/15 leading-none select-none">${n}</span>
+            <div class="min-w-0">
+              <div class="font-semibold text-sm truncate" id="pc-${n}-label">—</div>
+              <span class="badge badge-sm mt-0.5" id="pc-${n}-mode">—</span>
+            </div>
+          </div>
+          <div class="flex flex-col items-end gap-1 flex-shrink-0">
+            <span class="badge badge-xs font-mono" id="pc-${n}-source">—</span>
+            <span class="text-xs opacity-40 font-mono" id="pc-${n}-fresh"></span>
+          </div>
+        </div>
+        <div class="grid grid-cols-[auto_1fr] gap-x-3 gap-y-0.5 text-xs font-mono">
+          <span class="opacity-40">Vendor</span><span id="pc-${n}-vendor">—</span>
+          <span class="opacity-40">Device</span><span id="pc-${n}-device">—</span>
+          <span class="opacity-40">PDin</span><span id="pc-${n}-pdin" class="font-mono truncate">—</span>
+        </div>
+        <div id="pc-${n}-events" class="flex flex-wrap gap-1"></div>
+        <div id="pc-${n}-nodev" class="hidden text-xs text-warning font-medium">⚠ IO-Link mode — no device detected</div>
+        <div id="pc-${n}-blurb" class="text-xs opacity-50 leading-relaxed hidden"></div>
+        <div id="pc-${n}-action" class="hidden">
+          <button type="button" class="btn btn-xs btn-outline btn-warning port-mode-switch-btn" data-port="${n}" data-mode="io-link">
+            Switch to IO-Link
+          </button>
+        </div>
+      </div>
+    </div>`;
+}
+
 export function renderIOLinkMaster() {
-  const learnUrl = `${API_BASE}/learn`;
   const imgSrc = typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.BASE_URL
     ? import.meta.env.BASE_URL + 'assets/img/AL1350.png'
     : '/assets/img/AL1350.png';
   return `
     <div class="space-y-3 io-link-page">
-      <!-- Header row with inline faded device image -->
+
+      <!-- ── Master Header ── -->
       <div class="card bg-base-200 shadow-xl">
         <div class="card-body py-3 px-4 relative overflow-hidden">
           <img id="productImage" src="${imgSrc}" alt="" aria-hidden="true"
-            class="absolute right-2 top-1/2 -translate-y-1/2 h-16 w-auto object-contain opacity-10 pointer-events-none select-none"
+            class="absolute right-2 top-1/2 -translate-y-1/2 h-20 w-auto object-contain opacity-10 pointer-events-none select-none"
             onerror="this.style.display='none';" />
-          <div class="relative">
-            <h2 class="card-title text-base-content text-lg" id="deviceName">IO-Link Master</h2>
-            <p class="text-xs text-base-content/60">Port status, supervision &amp; versions. Connection set in <a href="#" data-page="settings" class="link link-primary">Settings</a>. <a href="${learnUrl}" target="_blank" rel="noopener" class="link link-secondary">Learn more</a></p>
-          </div>
-        </div>
-      </div>
-
-      <!-- Port Status Table -->
-      <div class="card bg-base-200 shadow-xl">
-        <div class="card-body py-3 px-4">
-          <h2 class="card-title text-base-content text-base">Port Status</h2>
-          <div class="overflow-x-auto">
-            <table class="table table-zebra table-xs table-pin-rows touch-stack-table" id="portTable">
-              <thead>
-                <tr>
-                  <th data-col="port">Port</th>
-                  <th data-col="mode">Mode</th>
-                  <th data-col="comm_mode">Comm. Mode</th>
-                  <th data-col="master_cycle">MasterCycle</th>
-                  <th data-col="vendor_id">Vendor ID</th>
-                  <th data-col="device_id">Device ID</th>
-                  <th data-col="name">Name</th>
-                  <th data-col="serial">Serial</th>
-                  <th data-col="pdin">PD In</th>
-                  <th data-col="pdout">PD Out</th>
-                </tr>
-              </thead>
-              <tbody id="portTableBody">
-                <tr><td colspan="10" class="text-center">Loading...</td></tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </div>
-
-      <!-- Supervision Trends (charts) -->
-      <div class="card bg-base-200 shadow-xl">
-        <div class="card-body py-3 px-4">
-          <h2 class="card-title text-base-content text-base">Supervision Trends</h2>
-          <div class="grid grid-cols-1 md:grid-cols-3 gap-3 mt-1">
-            <div><p class="text-xs font-semibold text-center mb-1">Current (mA)</p><div class="h-36"><canvas id="chartCurrent"></canvas></div></div>
-            <div><p class="text-xs font-semibold text-center mb-1">Voltage (mV)</p><div class="h-36"><canvas id="chartVoltage"></canvas></div></div>
-            <div><p class="text-xs font-semibold text-center mb-1">Temperature (°C)</p><div class="h-36"><canvas id="chartTemp"></canvas></div></div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Supervision + Software (hidden until data arrives) -->
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-        <div id="supervisionCard" class="card bg-base-200 shadow-xl hidden">
-          <div class="card-body py-3 px-4">
-            <h2 class="card-title text-base-content text-base">Supervision</h2>
-            <div class="overflow-x-auto">
-              <table class="table table-xs">
-                <tbody id="supervisionTableBody"></tbody>
-              </table>
+          <div class="relative space-y-2">
+            <div class="flex items-center gap-2 flex-wrap">
+              <h2 class="font-bold text-lg" id="deviceName">IFM AL1350</h2>
+              <span class="badge" id="connectionBadge">Connecting…</span>
+              <span class="badge badge-outline badge-sm font-mono" id="sourceBadge">—</span>
             </div>
-          </div>
-        </div>
-        <div id="softwareCard" class="card bg-base-200 shadow-xl hidden">
-          <div class="card-body py-3 px-4">
-            <h2 class="card-title text-base-content text-base">Software Versions</h2>
-            <div class="overflow-x-auto">
-              <table class="table table-xs">
-                <tbody id="softwareTableBody"></tbody>
-              </table>
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-x-6 gap-y-0.5 text-xs font-mono">
+              <span class="opacity-40">IP Address</span><span id="masterIpDisplay">—</span>
+              <span class="opacity-40">Bootloader</span><span id="masterBootloader">—</span>
+            </div>
+            <div id="degradedAlert" class="hidden alert alert-warning py-1 px-2 text-xs gap-1.5">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+              <span id="degradedAlertText">Degraded mode active — falling back to per-request HTTP polling</span>
             </div>
           </div>
         </div>
       </div>
 
-      <!-- Simulate Fault (Training) -->
+      <!-- ── Connection Health KPIs ── -->
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-2">
+        <div class="card bg-base-200 shadow-sm">
+          <div class="card-body p-3 text-center">
+            <div class="text-xs opacity-40 uppercase tracking-wider mb-1">Circuit Breaker</div>
+            <span class="badge badge-lg font-mono" id="circuitStateBadge">—</span>
+            <div class="text-xs opacity-40 mt-1">Failures: <span id="circuitFailures">—</span></div>
+          </div>
+        </div>
+        <div class="card bg-base-200 shadow-sm">
+          <div class="card-body p-3 text-center">
+            <div class="text-xs opacity-40 uppercase tracking-wider mb-1">Uptime (1 hr)</div>
+            <div class="text-2xl font-bold font-mono" id="uptimePct">—</div>
+            <div class="text-xs opacity-40 mt-0.5">Drops: <span id="drops1h">—</span></div>
+          </div>
+        </div>
+        <div class="card bg-base-200 shadow-sm">
+          <div class="card-body p-3 text-center">
+            <div class="text-xs opacity-40 uppercase tracking-wider mb-1">Avg Latency</div>
+            <div class="text-2xl font-bold font-mono" id="avgLatency">—</div>
+            <div class="text-xs opacity-40 mt-0.5">P95: <span id="p95Latency">—</span></div>
+          </div>
+        </div>
+        <div class="card bg-base-200 shadow-sm">
+          <div class="card-body p-3 text-center">
+            <div class="text-xs opacity-40 uppercase tracking-wider mb-1">Request Success</div>
+            <div class="text-2xl font-bold font-mono" id="requestSuccessRate">—</div>
+            <div class="text-xs opacity-40 mt-0.5">MQTT: <span id="mqttState">—</span></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── Port Status Cards ── -->
+      <div>
+        <h2 class="text-xs font-semibold opacity-40 uppercase tracking-wider px-1 mb-2">Port Status</h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-3" id="portCardsGrid">
+          ${[1,2,3,4].map(_portCardHtml).join('')}
+        </div>
+      </div>
+
+      <!-- ── Power Supervision ── -->
+      <div class="card bg-base-200 shadow-xl">
+        <div class="card-body py-3 px-4 space-y-3">
+          <h2 class="font-bold text-base">Power Supervision</h2>
+          <div class="grid grid-cols-3 gap-2">
+            <div class="bg-base-100 rounded-xl p-3 text-center">
+              <div class="text-xs opacity-40 uppercase tracking-wider">Voltage</div>
+              <div class="text-2xl font-bold font-mono mt-1" id="kpiVoltage">—</div>
+              <div class="text-xs opacity-40">V</div>
+            </div>
+            <div class="bg-base-100 rounded-xl p-3 text-center">
+              <div class="text-xs opacity-40 uppercase tracking-wider">Current</div>
+              <div class="text-2xl font-bold font-mono mt-1" id="kpiCurrent">—</div>
+              <div class="text-xs opacity-40">A</div>
+            </div>
+            <div class="bg-base-100 rounded-xl p-3 text-center">
+              <div class="text-xs opacity-40 uppercase tracking-wider">Temperature</div>
+              <div class="text-2xl font-bold font-mono mt-1" id="kpiTemp">—</div>
+              <div class="text-xs opacity-40">°C</div>
+            </div>
+          </div>
+          <div id="supervisionStatusRow" class="hidden text-xs font-mono opacity-50">
+            Supervision status register: <span id="supervisionStatus">—</span>
+            <span class="ml-2 opacity-60">(non-zero indicates master alert condition)</span>
+          </div>
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+            <div>
+              <p class="text-xs opacity-40 text-center mb-1">Current (A) · history</p>
+              <div class="h-28"><canvas id="chartCurrent"></canvas></div>
+            </div>
+            <div>
+              <p class="text-xs opacity-40 text-center mb-1">Voltage (V) · history</p>
+              <div class="h-28"><canvas id="chartVoltage"></canvas></div>
+            </div>
+            <div>
+              <p class="text-xs opacity-40 text-center mb-1">Temperature (°C) · history</p>
+              <div class="h-28"><canvas id="chartTemp"></canvas></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── Active Port Details (IODD parameter panels) ── -->
+      <div id="portDetailsSection" class="card bg-base-200 shadow-xl hidden">
+        <div class="card-body py-3 px-4">
+          <h2 class="font-bold text-base">Device Parameters (IO-Link ISDU)</h2>
+          <p class="text-xs opacity-60">Parameters read directly from each sensor over the IO-Link acyclic channel. Writable parameters can be changed here and take effect immediately.</p>
+          <div id="portDetailsContainer" class="mt-2"></div>
+        </div>
+      </div>
+
+      <!-- ── Simulate Fault (Training) ── -->
       <div id="simulate-fault" class="card bg-base-200 shadow-xl">
         <div class="card-body py-3 px-4">
-          <h2 class="card-title text-base-content text-base">Simulate Fault (Training)</h2>
-          <div class="flex flex-wrap items-center gap-2 mt-1">
+          <h2 class="font-bold text-base">Simulate Fault (Training)</h2>
+          <p class="text-xs opacity-60 mb-2">Inject a training fault event onto a port. The fault appears in the Active Port Details panel and the HMI dashboard event log. Clear it when the exercise is complete.</p>
+          <div class="flex flex-wrap items-center gap-2">
             <span class="text-sm">Port:</span>
             <select id="simulateFaultPort" class="select select-bordered select-sm touch-fault-port">
               <option value="1">1</option>
@@ -112,7 +202,7 @@ export function renderIOLinkMaster() {
             </select>
             <span class="text-sm">Fault:</span>
             <select id="simulateFaultEvent" class="select select-bordered select-sm touch-fault-event">
-              <option value="">-- Select fault --</option>
+              <option value="">— Select fault —</option>
               <option value='{"code":"0x01","label":"Wire break"}'>Wire break</option>
               <option value='{"code":"0x02","label":"Short circuit"}'>Short circuit</option>
               <option value='{"code":"0x08","label":"Lens dirty"}'>Lens dirty</option>
@@ -126,14 +216,6 @@ export function renderIOLinkMaster() {
         </div>
       </div>
 
-      <!-- Active Port Details (hidden until active ports exist) -->
-      <div id="portDetailsSection" class="card bg-base-200 shadow-xl hidden">
-        <div class="card-body py-3 px-4">
-          <h2 class="card-title text-base-content text-base">Active Port Details</h2>
-          <p class="text-xs text-base-content/60">Process data and decoded device status</p>
-          <div id="portDetailsContainer"></div>
-        </div>
-      </div>
     </div>
   `;
 }
@@ -151,30 +233,24 @@ let websocket = null;
 let reconnectTimer = null;
 let reconnectAttempts = 0;
 let hasEverConnected = false;
+let _diagInterval = null;
 const MAX_RECONNECT = 10;
 const RECONNECT_DELAY = 5000;
 
 function showConnecting(msg) {
-  const el = document.getElementById('connectionStatus');
-  if (el) { el.textContent = msg || 'Connecting...'; el.className = 'font-medium text-base-content/60'; }
-  const glow = document.getElementById('connectionGlow');
-  if (glow) { glow.className = 'connection-glow-dot glow-checking'; }
+  const badge = document.getElementById('connectionBadge');
+  if (badge) { badge.textContent = msg || 'Connecting…'; badge.className = 'badge badge-ghost'; }
 }
 
 function showError(msg, clearData) {
-  const el = document.getElementById('connectionStatus');
-  if (el) {
-    el.textContent = msg;
-    el.className = 'font-medium text-error';
-  }
-  const glow = document.getElementById('connectionGlow');
-  if (glow) { glow.className = 'connection-glow-dot glow-red'; }
-  const ds = document.getElementById('dataSource');
-  if (ds) ds.textContent = '-';
+  const badge = document.getElementById('connectionBadge');
+  if (badge) { badge.textContent = msg; badge.className = 'badge badge-error'; }
+  const src = document.getElementById('sourceBadge');
+  if (src) src.textContent = '—';
   if (clearData || !lastGoodData) {
-    updatePortTable([]);
-    updateSupervisionTable({});
-    updateSoftwareTable({});
+    updatePortCards([]);
+    updateSupervisionKpis({});
+    updateMasterInfo({});
   }
 }
 
@@ -185,90 +261,110 @@ function updateUI(data) {
   }
   hasEverConnected = true;
   lastGoodData = data;
-  const conn = document.getElementById('connectionStatus');
-  if (conn) {
-    conn.textContent = 'Connected';
-    conn.className = 'font-medium text-success';
-  }
-  const glow = document.getElementById('connectionGlow');
-  if (glow) { glow.className = 'connection-glow-dot glow-green'; }
-  const ds = document.getElementById('dataSource');
-  if (ds) ds.textContent = data.source || 'WebSocket';
+
+  const badge = document.getElementById('connectionBadge');
+  if (badge) { badge.textContent = 'Connected'; badge.className = 'badge badge-success'; }
+
+  const src = document.getElementById('sourceBadge');
+  if (src) src.textContent = data.source || 'ws';
+
   const name = document.getElementById('deviceName');
   if (name) name.textContent = data.device_name || 'IO-Link Master';
-  const last = document.getElementById('lastUpdate');
-  if (last) last.textContent = new Date().toLocaleTimeString();
-  const poll = document.getElementById('pollInterval');
-  if (poll) poll.textContent = 'Real-time';
 
-  updatePortTable(data.ports || []);
-  updateSupervisionTable(data.supervision || {});
-  updateSoftwareTable(data.software || {});
+  const ipEl = document.getElementById('masterIpDisplay');
+  if (ipEl) ipEl.textContent = data.master_ip || '—';
+
+  const degradedAlert = document.getElementById('degradedAlert');
+  if (degradedAlert) degradedAlert.classList.toggle('hidden', !data.degraded_mode);
+
+  updatePortCards(data.ports || []);
+  updateSupervisionKpis(data.supervision || {});
+  updateMasterInfo(data.software || {});
   updateSupervisionCharts();
 }
 
-function updatePortTable(ports) {
-  const tbody = document.getElementById('portTableBody');
-  if (!tbody) return;
-  tbody.innerHTML = '';
-  if (!ports || ports.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="10" class="text-center">No port data</td></tr>';
-    hideEmptyPortColumns([]);
-    return;
-  }
+function updatePortCards(ports) {
+  if (!ports || ports.length === 0) return;
   for (const p of ports) {
-    const isActive = (p.mode || '').toLowerCase().includes('io-link');
-    const isInactiveLabelled = !isActive && p.label;
-    const pdin = p.pdin ? (p.pdin.length <= 8 ? p.pdin : p.pdin.substring(0, 8) + '...') : '-';
-    const pdout = p.pdout ? (p.pdout.length <= 8 ? p.pdout : p.pdout.substring(0, 8) + '...') : '-';
-    const displayName = escapeHtml(p.label || p.name || '-');
-    const modeCell = isInactiveLabelled
-      ? `${escapeHtml(p.mode || '-')} <span class="badge badge-warning badge-xs ml-1">Disconnected</span>`
-      : escapeHtml(p.mode || '-');
-    const row = document.createElement('tr');
-    if (isActive) row.className = 'bg-success/20';
-    else if (isInactiveLabelled) row.className = 'opacity-60';
-    row.innerHTML = `
-      <td data-label="Port">${p.port}</td>
-      <td data-label="Mode">${modeCell}</td>
-      <td data-label="Comm. Mode">${escapeHtml(p.comm_mode || '-')}</td>
-      <td data-label="MasterCycle">${escapeHtml(p.master_cycle_time || '-')}</td>
-      <td data-label="Vendor ID">${escapeHtml(p.vendor_id || '-')}</td>
-      <td data-label="Device ID">${escapeHtml(p.device_id || '-')}</td>
-      <td data-label="Name">${displayName}</td>
-      <td data-label="Serial">${escapeHtml(p.serial || '-')}</td>
-      <td data-label="PD In"><code class="text-xs">${escapeHtml(pdin)}</code></td>
-      <td data-label="PD Out"><code class="text-xs">${escapeHtml(pdout)}</code></td>
-    `;
-    tbody.appendChild(row);
-  }
-  hideEmptyPortColumns(ports);
-  loadActivePortDetails(ports);
-}
+    const n = p.port;
+    const card = document.getElementById(`pc-${n}`);
+    if (!card) continue;
 
-function hideEmptyPortColumns(ports) {
-  const table = document.getElementById('portTable');
-  if (!table) return;
-  const colKeys = ['port', 'mode', 'comm_mode', 'master_cycle', 'vendor_id', 'device_id', 'name', 'serial', 'pdin', 'pdout'];
-  const dataKeys = ['port', 'mode', 'comm_mode', 'master_cycle_time', 'vendor_id', 'device_id', 'name', 'serial', 'pdin', 'pdout'];
-  const headers = table.querySelectorAll('thead th');
-  headers.forEach((th, i) => {
-    const key = dataKeys[i];
-    if (key === 'port' || key === 'mode') { th.classList.remove('hidden'); return; }
-    const hasValue = ports.some(p => {
-      const v = key === 'name' ? (p.label || p[key]) : p[key];
-      return v != null && String(v).trim() !== '' && String(v).trim() !== '-';
-    });
-    th.classList.toggle('hidden', !hasValue);
-  });
-  const rows = table.querySelectorAll('tbody tr');
-  rows.forEach(row => {
-    const cells = row.querySelectorAll('td');
-    cells.forEach((td, i) => {
-      const th = headers[i];
-      if (th) td.classList.toggle('hidden', th.classList.contains('hidden'));
-    });
-  });
+    const mode = (p.mode || 'inactive').toLowerCase();
+    const isIOLink = mode === 'io-link';
+    const isError  = mode === 'error';
+
+    // Border colour
+    card.className = card.className.replace(/border-\S+/g, '').trim();
+    card.classList.add(MODE_COLOR[mode] || 'border-transparent');
+
+    const set = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val ?? '—'; };
+    const setHtml = (id, html) => { const el = document.getElementById(id); if (el) el.innerHTML = html; };
+
+    set(`pc-${n}-label`, p.label || p.name || `Port ${n}`);
+
+    // Mode badge
+    const modeEl = document.getElementById(`pc-${n}-mode`);
+    if (modeEl) {
+      const cls = isIOLink ? 'badge-success' : isError ? 'badge-error' : 'badge-ghost';
+      modeEl.className = `badge badge-sm mt-0.5 ${cls}`;
+      modeEl.textContent = isIOLink ? 'IO-Link' : isError ? 'Error' : (mode.replace('_', ' ') || 'Inactive');
+    }
+
+    // Vendor / device — only meaningful in IO-Link mode with an enumerated device
+    const hasDevice = isIOLink && !!p.vendor_id;
+    set(`pc-${n}-vendor`, hasDevice ? resolveVendorName(p.vendor_id) : '—');
+    set(`pc-${n}-device`, hasDevice ? resolveDeviceName(p.vendor_id, p.device_id, p.name) : '—');
+
+    // "No device detected" warning — IO-Link mode configured but nothing enumerated
+    const noDevEl = document.getElementById(`pc-${n}-nodev`);
+    if (noDevEl) noDevEl.classList.toggle('hidden', !(isIOLink && !p.vendor_id));
+
+    // "Switch to IO-Link" button — show when port is in digital_in / digital_out
+    const actionEl = document.getElementById(`pc-${n}-action`);
+    if (actionEl) {
+      const showSwitch = mode === 'digital_out' || mode === 'digital_in';
+      actionEl.classList.toggle('hidden', !showSwitch);
+    }
+
+    // PDin hex — show up to 10 hex chars (5 bytes)
+    const pdinHex = p.pdin_hex || p.pdin || '';
+    set(`pc-${n}-pdin`, pdinHex ? (pdinHex.length > 10 ? pdinHex.substring(0, 10) + '…' : pdinHex) : '—');
+
+    // Data source badge
+    const srcEl = document.getElementById(`pc-${n}-source`);
+    if (srcEl) {
+      const src = (p.source || 'pending').toLowerCase();
+      srcEl.className = `badge badge-xs font-mono ${SOURCE_BADGE[src] || 'badge-ghost'}`;
+      srcEl.textContent = src;
+    }
+
+    // Events / faults
+    const eventsEl = document.getElementById(`pc-${n}-events`);
+    if (eventsEl) {
+      if (p.events && p.events.length > 0) {
+        eventsEl.innerHTML = p.events.map(ev =>
+          `<span class="badge badge-error badge-xs">${escapeHtml(ev.code)} ${escapeHtml(ev.label)}</span>`
+        ).join('');
+      } else {
+        eventsEl.innerHTML = '';
+      }
+    }
+
+    // Short device blurb (collapsed by default, shown in card footer for inactive ports)
+    const blurbEl = document.getElementById(`pc-${n}-blurb`);
+    if (blurbEl && !isIOLink) {
+      const dtype = p.device_type || 'unknown';
+      const blurb = LEARN_BLURBS[dtype];
+      if (blurb) {
+        blurbEl.textContent = blurb.blurb.split('.')[0] + '.'; // first sentence only
+        blurbEl.classList.remove('hidden');
+      }
+    } else if (blurbEl) {
+      blurbEl.classList.add('hidden');
+    }
+  }
+  loadActivePortDetails(ports);
 }
 
 async function loadActivePortDetails(ports) {
@@ -304,7 +400,7 @@ const LEARN_BLURBS = {
   status_led: { blurb: 'Status lights show machine or line state (e.g. green = running, red = fault). Check supervision and that the correct state is displayed.', anchor: 'status-led' },
   photo_electric: { blurb: 'Contrinex LTR-M18PA-PMx-603 diffuse photoelectric sensor (M18, Red LED, 5–1000 mm range; sold by RS as 0360240). Output 1 activates on light-on — object present when beam is reflected back. Keep the lens clean; signal quality drops before total failure, giving early warning. Adjust sensitivity via the potentiometer for reliable detection at your target distance.', anchor: 'photo-electric' },
   temperature: { blurb: 'Temperature sensors report °C for process and maintenance. Check supervision current and wiring; use trends to spot overheating.', anchor: 'temperature' },
-  proximity: { blurb: 'Proximity sensors report presence or distance. Check mounting distance and contamination; use event flags and cycle count for MTTF-based replacement.', anchor: 'proximity' },
+  proximity: { blurb: 'Omron E2E-X16MB1T12 M18 inductive proximity sensor (IO-Link V1.1, COM3 230.4 kbps). Detects ferrous and non-ferrous metals up to 16 mm (iron). Full ISDU access — read operating hours, configure output logic (NO/NC), timer mode and timer time, and read instability and over-approach diagnostic alarms live. Instability alarm (PDin bit 4) activates when the target sits at the edge of the sensing range; over-approach alarm (bit 5) activates when target is too close. Keep sensing face clear of swarf and mounting bracket interference.', anchor: 'proximity' },
   capacitive: { blurb: 'RS PRO / Carlo Gavazzi M18 capacitive sensor (model 2377240, non-flush, 12 mm range). Detects conductive and non-conductive targets — SO1 activates when an object is present. Also outputs a 16-bit analogue dielectric value useful for level sensing and material identification. Keep the sensing face clean and dry; use the Quality of Run (QoR) value to detect gradual contamination before output failure.', anchor: 'proximity' }
 };
 function generateDisconnectedPortHTML(port) {
@@ -546,31 +642,70 @@ function wireParamPanelEvents(root) {
   });
 }
 
-function updateSupervisionTable(supervision) {
-  const tbody = document.getElementById('supervisionTableBody');
-  const card = document.getElementById('supervisionCard');
-  if (!tbody) return;
-  tbody.innerHTML = '';
-  const entries = Object.entries(supervision || {}).filter(([, v]) => v != null && String(v).trim() !== '' && String(v).trim() !== '-');
-  if (card) card.classList.toggle('hidden', entries.length === 0);
-  for (const [k, v] of entries) {
-    const tr = document.createElement('tr');
-    tr.innerHTML = `<td class="font-medium">${escapeHtml(k)}</td><td>${escapeHtml(v)}</td>`;
-    tbody.appendChild(tr);
-  }
+function updateSupervisionKpis(supervision) {
+  const set = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val ?? '—'; };
+  set('kpiVoltage', supervision.voltage != null ? Number(supervision.voltage).toFixed(1) : '—');
+  set('kpiCurrent', supervision.current != null ? Number(supervision.current).toFixed(2) : '—');
+  set('kpiTemp',    supervision.temperature != null ? Number(supervision.temperature).toFixed(1) : '—');
+  const statusVal = supervision.status ?? supervision.supervisionstatus;
+  const statusRow = document.getElementById('supervisionStatusRow');
+  if (statusRow) statusRow.classList.toggle('hidden', statusVal == null);
+  set('supervisionStatus', statusVal != null ? statusVal : '—');
 }
 
-function updateSoftwareTable(software) {
-  const tbody = document.getElementById('softwareTableBody');
-  const card = document.getElementById('softwareCard');
-  if (!tbody) return;
-  tbody.innerHTML = '';
-  const entries = Object.entries(software || {}).filter(([, v]) => v != null && String(v).trim() !== '' && String(v).trim() !== '-');
-  if (card) card.classList.toggle('hidden', entries.length === 0);
-  for (const [k, v] of entries) {
-    const tr = document.createElement('tr');
-    tr.innerHTML = `<td class="font-medium">${escapeHtml(k)}</td><td>${escapeHtml(v)}</td>`;
-    tbody.appendChild(tr);
+function updateMasterInfo(software) {
+  const set = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val ?? '—'; };
+  set('masterBootloader', software['Bootloader'] || software.bootloader || software['bootloader version'] || '—');
+}
+
+async function fetchDiagnostics() {
+  try {
+    const res = await fetch(`${API_BASE}/api/io-link/diagnostics`, { signal: AbortSignal.timeout(5000) });
+    const resp = await res.json();
+    if (!resp) return;
+    const d = resp.stats || {};
+
+    const set = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val ?? '—'; };
+
+    // Circuit breaker
+    const circuitBadge = document.getElementById('circuitStateBadge');
+    if (circuitBadge) {
+      const state = (d.circuit_state || 'unknown').toLowerCase();
+      const cls = state === 'closed' ? 'badge-success' : state === 'open' ? 'badge-error' : 'badge-warning';
+      circuitBadge.className = `badge badge-lg font-mono ${cls}`;
+      circuitBadge.textContent = d.circuit_state || '—';
+    }
+    set('circuitFailures', d.consecutive_failures ?? '—');
+
+    // Uptime
+    const uptime = d.uptime_pct_1h;
+    set('uptimePct', uptime != null ? uptime.toFixed(1) + '%' : '—');
+    set('drops1h', d.drops_1h ?? '—');
+
+    // Latency
+    set('avgLatency',  d.request_rtt_p50_ms != null ? d.request_rtt_p50_ms.toFixed(0) + ' ms' : '—');
+    set('p95Latency',  d.request_rtt_p95_ms != null ? d.request_rtt_p95_ms.toFixed(0) + ' ms' : '—');
+
+    // Request success rate
+    const sr = d.request_success_rate_pct;
+    set('requestSuccessRate', sr != null ? sr.toFixed(1) + '%' : '—');
+
+    // MQTT state
+    const mqttEl = document.getElementById('mqttState');
+    if (mqttEl) {
+      const connected = d.mqtt_connected;
+      mqttEl.textContent = connected == null ? '—' : (connected ? 'Connected' : 'Disconnected');
+      mqttEl.className = connected ? 'text-success font-mono' : 'text-error font-mono';
+    }
+
+    // Port freshness badges
+    const freshness = d.port_freshness_age_sec || {};
+    for (const [portStr, age] of Object.entries(freshness)) {
+      const el = document.getElementById(`pc-${portStr}-fresh`);
+      if (el) el.textContent = age != null ? `${Math.round(age)}s ago` : '';
+    }
+  } catch (_) {
+    // diagnostics endpoint may not exist on older backends — silently skip
   }
 }
 
@@ -750,6 +885,7 @@ export function destroyIOLinkPage() {
     websocket.close();
     websocket = null;
   }
+  if (_diagInterval) { clearInterval(_diagInterval); _diagInterval = null; }
   ioLinkCharts.forEach(c => c.destroy());
   ioLinkCharts = [];
 }
@@ -828,14 +964,51 @@ function setupSimulateFault() {
   }
 }
 
+function setupPortModeSwitch() {
+  document.addEventListener('click', async e => {
+    const btn = e.target.closest('.port-mode-switch-btn');
+    if (!btn) return;
+    const port = parseInt(btn.dataset.port, 10);
+    const mode = btn.dataset.mode;
+    btn.disabled = true;
+    btn.textContent = 'Switching…';
+    try {
+      const res = await fetch(`${API_BASE}/api/io-link/port/${port}/mode`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ mode }),
+        signal: AbortSignal.timeout(6000)
+      });
+      const data = await res.json();
+      if (data.success) {
+        btn.textContent = '✓ Done';
+        btn.classList.replace('btn-warning', 'btn-success');
+      } else {
+        btn.textContent = `✗ ${data.error || 'Failed'}`;
+        btn.classList.replace('btn-warning', 'btn-error');
+        btn.disabled = false;
+      }
+    } catch {
+      btn.textContent = '✗ Timeout';
+      btn.classList.replace('btn-warning', 'btn-error');
+      btn.disabled = false;
+    }
+  });
+}
+
 export function initIOLinkPage() {
   ioLinkCharts.forEach(c => c.destroy());
   ioLinkCharts = [];
   hasEverConnected = false;
   if (reconnectTimer) clearTimeout(reconnectTimer);
+  if (_diagInterval) { clearInterval(_diagInterval); _diagInterval = null; }
   connectWebSocket();
   setupRawDecodedToggle();
   setupSimulateFault();
+  setupPortModeSwitch();
   const portDetailsSection = document.getElementById('portDetailsSection');
   if (portDetailsSection) wireParamPanelEvents(portDetailsSection);
+  // Fetch diagnostics KPIs immediately then every 15 s
+  fetchDiagnostics();
+  _diagInterval = setInterval(fetchDiagnostics, 15000);
 }

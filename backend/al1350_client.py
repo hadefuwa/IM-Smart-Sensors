@@ -576,6 +576,16 @@ class AL1350ClientManager:
         self.degraded_reason = "getdatamulti unavailable" if self.degraded_mode else ""
         return ports, device_info, supervision
 
+    async def set_port_mode(self, port_number: int, mode: int) -> Dict[str, Any]:
+        """Set port operating mode. 0=inactive, 1=digital_in, 2=digital_out, 3=io-link."""
+        res = await self._service_request(
+            f"/iolinkmaster/port[{port_number}]/mode/setdata",
+            data={"newvalue": mode},
+        )
+        # Force immediate re-poll so the new mode is reflected straight away
+        self._port_next_poll_ts[port_number] = 0.0
+        return res or {}
+
     async def write_iot_network_setblock(
         self,
         *,

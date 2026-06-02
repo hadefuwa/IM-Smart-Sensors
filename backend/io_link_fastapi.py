@@ -198,6 +198,7 @@ csv_logger = CSVLogger()
 # Global state
 system_state = {
     'device_name': '',
+    'master_ip': '',
     'ports': [],
     'supervision': {},
     'software': {},
@@ -412,24 +413,31 @@ async def poll_io_link_master():
             if mqtt_connected:
                 # Merge only the fields HTTP poll is authoritative for
                 system_state['device_name'] = (device_info.get('device_name') or system_state.get('device_name') or 'IO-Link Master')
+                system_state['master_ip'] = al1350._master_ip
                 system_state['software'] = device_info.get('software') or system_state.get('software', {})
                 system_state['device_icon_url'] = device_info.get('device_icon_url') or system_state.get('device_icon_url')
                 system_state['degraded_mode'] = al1350.degraded_mode
                 system_state['degraded_reason'] = al1350.degraded_reason
                 system_state['last_good_data_ts'] = al1350.last_good_data_ts or None
                 system_state['success'] = is_connected
-                # Merge ISDU counter values into the MQTT-sourced port list
+                # Merge static metadata and ISDU counters from HTTP poll into MQTT-sourced ports.
+                # MQTT only carries pdin/mode; vendor_id, device_id, serial, comm_mode,
+                # master_cycle_time come from the device tree via HTTP.
                 if isinstance(ports, list):
                     port_map = {p['port']: p for p in ports}
                     for port in system_state.get('ports') or []:
                         pn = port.get('port')
                         if pn in port_map:
-                            for key in ('detection_counter', 'detection_counter_delta'):
-                                if key in port_map[pn]:
-                                    port[key] = port_map[pn][key]
+                            for key in ('vendor_id', 'device_id', 'serial', 'comm_mode',
+                                        'master_cycle_time', 'name',
+                                        'detection_counter', 'detection_counter_delta'):
+                                val = port_map[pn].get(key)
+                                if val:
+                                    port[key] = val
             else:
                 system_state = {
                     'device_name': (device_info.get('device_name') or system_state.get('device_name') or 'IO-Link Master'),
+                    'master_ip': al1350._master_ip,
                     'ports': ports if isinstance(ports, list) else [],
                     'supervision': supervision,
                     'software': device_info.get('software') or system_state.get('software', {}),
@@ -1057,6 +1065,25 @@ async def write_port_parameter(port_num: int, request: Request):
     if not ok:
         return JSONResponse({'success': False, 'error': 'ISDU write failed'})
     return JSONResponse({'success': True, 'wrote_hex': hex_val, 'value': value})
+
+
+@app.post("/api/io-link/port/{port_num}/mode")
+async def set_port_mode(port_num: int, request: Request):
+    """Set port operating mode. Body: {mode: 'io-link' | 'digital_in' | 'digital_out' | 'inactive'}"""
+    if port_num < 1 or port_num > 4:
+        raise HTTPException(status_code=400, detail="Port must be 1–4")
+    body = await request.json()
+    mode_name = body.get('mode', '')
+    MODE_STR_MAP = {'inactive': 0, 'digital_in': 1, 'digital_out': 2, 'io-link': 3}
+    if mode_name not in MODE_STR_MAP:
+        raise HTTPException(status_code=400, detail=f"mode must be one of {list(MODE_STR_MAP.keys())}")
+    mode_int = MODE_STR_MAP[mode_name]
+    res = await al1350.set_port_mode(port_num, mode_int)
+    code = res.get('code', 0)
+    if code in (200, 204):
+        logger.info(f"Port {port_num} mode set to {mode_name} ({mode_int})")
+        return JSONResponse({'success': True, 'port': port_num, 'mode': mode_name})
+    return JSONResponse({'success': False, 'error': f'AL1350 returned code {code}'}, status_code=502)
 
 
 @app.post("/api/io-link/port/{port_num}/command")

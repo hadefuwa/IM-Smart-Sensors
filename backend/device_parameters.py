@@ -5,6 +5,8 @@ Sources:
   IFM TV7105  — ifm-TV7105-20170308-IODD1.1.xml (HTW Dresden / IFM)
   RS PRO 2377240 / Carlo Gavazzi CA18FAF08BPxxIO — CGI-CA18FAF08BPxxIO_1-20200302-IODD1.1.xml
   RS PRO 0360240 photoelectric (Contrinex OEM) — standard Smart Sensor Profile only (IODD not public)
+    [COMMENTED OUT — sensor swapped for Omron E2E-X16MB1T12 on port 1; re-enable (342,131842) if reverted]
+  OMRON E2E-X NEXT M18 family — OMRON-E2E-NEXT-X_B1T18-20191010-IODD1.1.xml (IO-Link V1.1, COM3)
   IFM CL50PKQ LED stack — PDout write only; no IODD retrieved
 """
 
@@ -138,6 +140,70 @@ _CAPACITIVE_PARAMS = {
     ]
 }
 
+# ── Omron E2E-X NEXT M18 Inductive Proximity (IO-Link V1.1) ──────────────────
+# IODD: OMRON-E2E-NEXT-X_B1T18-20191010-IODD1.1.xml
+# VendorID: 612 (0x0264), DeviceID: 131094 (0x02001_6) — covers all sensing-distance variants
+# No teach command; no SP1/SP2 — switching point is determined by sensing distance (mechanical)
+_PROXIMITY_OMRON_PARAMS = {
+    'label': 'OMRON E2E-X NEXT M18 Inductive Proximity Sensor (IO-Link V1.1)',
+    'pdo_write': False,
+    'commands': {
+        'factory_reset': {'value': 130, 'label': 'Restore factory settings (all parameters → default)'},
+    },
+    'parameters': [
+        # ── Identity ──────────────────────────────────────────────────────────
+        _p(18, 0, 'Product Name',      T_STRING, group=G_IDENTITY),
+        _p(19, 0, 'Product ID',        T_STRING, group=G_IDENTITY),
+        _p(21, 0, 'Serial Number',     T_STRING, group=G_IDENTITY),
+        _p(22, 0, 'Hardware Rev',      T_STRING, group=G_IDENTITY),
+        _p(23, 0, 'Firmware Rev',      T_STRING, group=G_IDENTITY),
+        _p(24, 0, 'Application Tag',   T_STRING, access='rw', group=G_IDENTITY,
+           desc='User-editable label stored in the sensor', max_len=32),
+        # ── Diagnostics ───────────────────────────────────────────────────────
+        _p(36,  0, 'Device Status', T_UINT8, group=G_DIAGNOSTICS,
+           enum={0: 'OK', 1: 'Maintenance required', 2: 'Out-of-specification',
+                 3: 'Functional check', 4: 'Failure'}),
+        _p(160, 1, 'Operating Hours',         T_UINT32, group=G_DIAGNOSTICS, unit='h'),
+        _p(165, 0, 'Internal Temp (Present)', T_UINT16, group=G_DIAGNOSTICS,
+           desc='Internal ADC temperature reading (raw)'),
+        _p(166, 0, 'Internal Temp (Max)',     T_UINT16, group=G_DIAGNOSTICS),
+        _p(167, 0, 'Internal Temp (Min)',     T_UINT16, group=G_DIAGNOSTICS),
+        # ── Configuration ─────────────────────────────────────────────────────
+        _p(61, 1, 'Switchpoint Logic OUT1', T_UINT8, access='rw', group=G_CONFIG,
+           enum={0: 'NO — Normally Open (object → output ON)',
+                 1: 'NC — Normally Closed (object → output OFF)'},
+           desc='Output polarity. Change to NC if wiring requires it.'),
+        _p(65, 1, 'Timer Mode', T_UINT8, access='rw', group=G_CONFIG,
+           enum={0: 'Disabled', 1: 'ON Delay', 2: 'OFF Delay', 3: 'One Shot'},
+           default=0),
+        _p(65, 2, 'Timer Time', T_UINT16, access='rw', group=G_CONFIG,
+           unit='ms', min=0, max=16383, default=5,
+           desc='Delay/one-shot time in ms. Active when Timer Mode ≠ Disabled.'),
+        _p(161, 0, 'Instability Alarm Delay', T_UINT8, access='rw', group=G_CONFIG,
+           enum={0: 'No delay', 1: '10 ms', 2: '50 ms', 3: '100 ms',
+                 4: '300 ms', 5: '500 ms', 6: '1000 ms'},
+           default=4,
+           desc='How long the target must be unstable before the alarm fires.'),
+        _p(163, 0, 'Diagnosis Mode', T_UINT8, access='rw', group=G_CONFIG,
+           enum={0: 'Disabled',
+                 1: 'Mode 1 — Instability + Over-Approach alarms',
+                 2: 'Mode 2 — Instability alarm only',
+                 3: 'Mode 3 — Over-Approach alarm only'},
+           default=1,
+           desc='Enables smart diagnostic outputs on the process data PDin bits 4–5.'),
+        _p(164, 0, 'Excessive Proximity Distance', T_UINT8, access='rw', group=G_CONFIG,
+           enum={0: 'Iron 10%',      1: 'Iron 20%',      2: 'Iron 30%',
+                 3: 'SUS 10%',       4: 'SUS 20%',       5: 'SUS 30%',
+                 6: 'Aluminium 10%', 7: 'Aluminium 20%'},
+           default=1,
+           desc='Fraction of nominal sensing distance that triggers the Over-Approach alarm. '
+                'SUS = stainless steel. Match to the target material in your application.'),
+    ]
+}
+
+# ── Contrinex LTR-M18PA-PMS-603 photoelectric (IO-Link 1.0) ──────────────────
+# COMMENTED OUT — sensor swapped for OMRON E2E-X16MB1T12 on port 1.
+# Re-enable the registry entry (342, 131842) below if the photoelectric is re-fitted.
 _PHOTOELECTRIC_PARAMS = {
     'label': 'Contrinex LTR-M18PA-PMS-603 Diffuse Photoelectric (IO-Link 1.0 — identity only)',
     'isdu_limited': True,  # only pages 0 and 1 respond; no configurable params accessible over IO-Link
@@ -205,8 +271,9 @@ _PHOTOELECTRIC_PARAMS = {
 DEVICE_REGISTRY = {
     (310,  733):       _TV7105_PARAMS,
     (1586, 1052673):   _CAPACITIVE_PARAMS,
-    (896,  1069056):   _CAPACITIVE_PARAMS,   # Carlo Gavazzi official IDs
-    (342,  131842):    _PHOTOELECTRIC_PARAMS,
+    (896,  1069056):   _CAPACITIVE_PARAMS,        # Carlo Gavazzi official IDs
+    (612,  131094):    _PROXIMITY_OMRON_PARAMS,   # OMRON E2E-X NEXT M18 (IO-Link V1.1)
+    # (342, 131842):   _PHOTOELECTRIC_PARAMS,     # Contrinex LTR-M18PA-PMS-603 IO-Link 1.0 — re-enable if sensor re-fitted
 }
 
 

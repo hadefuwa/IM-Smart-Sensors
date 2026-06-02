@@ -13,7 +13,7 @@
     "use_https": false
   },
   "port_labels": {
-    "1": {"label": "Photoelectric",  "device_type_hint": "photo_electric"},
+    "1": {"label": "Proximity",       "device_type_hint": "proximity"},
     "2": {"label": "Capacitive",     "device_type_hint": "capacitive"},
     "3": {"label": "IFM TV7105",     "device_type_hint": "temperature"},
     "4": {"label": "Light Stack",    "device_type_hint": "status_led"}

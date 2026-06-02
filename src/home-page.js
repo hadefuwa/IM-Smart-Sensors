@@ -184,19 +184,18 @@ export function renderHomePage() {
       <!-- Per-port detail sections -->
       <div class="space-y-5">
 
-        <!-- ── Photoelectric ── -->
+        <!-- ── Proximity (OMRON E2E-X16MB1T12) — was Photoelectric (Contrinex LTR-M18PA-PMS-603) ── -->
         <div class="space-y-1.5">
           <div class="flex items-center gap-3 px-1">
             <span class="badge badge-outline font-mono font-bold text-xs" id="detection-port-num">PORT —</span>
-            <span class="text-sm font-semibold opacity-60" id="detection-port-label">Photoelectric Sensor</span>
+            <span class="text-sm font-semibold opacity-60" id="detection-port-label">Proximity Sensor</span>
             <div class="flex-1 h-px bg-base-300"></div>
           </div>
           ${renderPassport('photo')}
-          <div class="px-1 text-xs font-mono opacity-30">RS PRO M18 · 300 mm · IP67</div>
+          <div class="px-1 text-xs font-mono opacity-30">OMRON E2E-X16MB1T12 · M18 Inductive · 16 mm · IO-Link V1.1</div>
           <div class="flex gap-5 px-1 items-center">
-            ${_outputDotHtml('photo-out1-dot', 'OUT1', 'Primary switching output (object detected)')}
-            ${_outputDotHtml('photo-out2-dot', 'OUT2', 'Complementary output')}
-            ${_outputDotHtml('photo-err-dot',  'FAULT', 'Sensor fault flag (bit 7)', true)}
+            ${_outputDotHtml('photo-out1-dot', 'OUT1',  'Primary switching output — metal object within sensing range')}
+            ${_outputDotHtml('photo-err-dot',  'FAULT', 'Sensor error flag', true)}
           </div>
           <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
             <div class="card bg-base-200 shadow-xl">
@@ -219,6 +218,41 @@ export function renderHomePage() {
               </div>
             </div>
           </div>
+          <div class="card bg-base-200 shadow-xl">
+            <div class="card-body p-3 space-y-2">
+              <span class="text-xs font-semibold opacity-50 uppercase tracking-wider block">IO-Link Diagnostic Alarms</span>
+              <div class="space-y-1">
+
+                <!-- Instability Alarm row -->
+                <div>
+                  <button type="button" class="w-full flex items-center gap-3 py-1.5 text-left group" onclick="this.nextElementSibling.classList.toggle('hidden'); this.querySelector('.prox-chevron').classList.toggle('rotate-180')">
+                    <div id="prox-instab-indicator" class="w-3 h-3 rounded-full flex-shrink-0 bg-base-300 transition-colors duration-300"></div>
+                    <span class="text-xs font-semibold flex-1" id="prox-instab-label">Instability Alarm — Off</span>
+                    <svg class="prox-chevron w-3.5 h-3.5 opacity-40 flex-shrink-0 transition-transform duration-200" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                  </button>
+                  <div class="hidden px-6 pb-2">
+                    <p class="text-xs opacity-60 leading-relaxed">The target is at the edge of the sensor's sensing range, causing the output to switch on and off rapidly. This usually means the target is too far away or misaligned. Move the target closer to the sensor face, or reposition the sensor bracket.</p>
+                  </div>
+                </div>
+
+                <div class="divider my-0"></div>
+
+                <!-- Over-Approach Alarm row -->
+                <div>
+                  <button type="button" class="w-full flex items-center gap-3 py-1.5 text-left group" onclick="this.nextElementSibling.classList.toggle('hidden'); this.querySelector('.prox-chevron').classList.toggle('rotate-180')">
+                    <div id="prox-overapproach-indicator" class="w-3 h-3 rounded-full flex-shrink-0 bg-base-300 transition-colors duration-300"></div>
+                    <span class="text-xs font-semibold flex-1" id="prox-overapproach-label">Over-Approach Alarm — Off</span>
+                    <svg class="prox-chevron w-3.5 h-3.5 opacity-40 flex-shrink-0 transition-transform duration-200" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                  </button>
+                  <div class="hidden px-6 pb-2">
+                    <p class="text-xs opacity-60 leading-relaxed">The target is excessively close to the sensor face — within the threshold set by the Excessive Proximity Distance parameter (default: 20% of nominal sensing distance). In high-vibration environments this risks mechanical contact and sensor damage. Increase the standoff distance between the target and sensor.</p>
+                  </div>
+                </div>
+
+              </div>
+              <div class="text-xs opacity-40 italic pt-1">These alarms require Diagnosis Mode 1, 2, or 3 to be enabled in the sensor configuration below.</div>
+            </div>
+          </div>
           <div id="signal-quality-section" class="card bg-base-200 shadow-xl hidden">
             <div class="card-body p-3">
               <span class="text-xs font-semibold opacity-50 uppercase tracking-wider">Signal Quality <span class="opacity-40 normal-case">· 1 min</span></span>
@@ -228,31 +262,44 @@ export function renderHomePage() {
           <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
             <div class="card bg-base-200 shadow-xl">
               <div class="card-body p-3">
-                <span class="text-xs font-semibold opacity-50 uppercase tracking-wider">Detection History <span class="opacity-40 normal-case">· 1 hr</span></span>
+                <span class="text-xs font-semibold opacity-50 uppercase tracking-wider">Proximity Detection History <span class="opacity-40 normal-case">· 1 hr</span></span>
                 <div class="h-24 mt-1"><canvas id="chart-photo-det-history"></canvas></div>
               </div>
             </div>
             <div class="card bg-base-200 shadow-xl">
               <div class="card-body p-3">
-                <span class="text-xs font-semibold opacity-50 uppercase tracking-wider">Signal Quality History <span class="opacity-40 normal-case">· 1 hr</span></span>
+                <span class="text-xs font-semibold opacity-50 uppercase tracking-wider">Instability Alarm History <span class="opacity-40 normal-case">· 1 hr</span></span>
                 <div class="h-24 mt-1"><canvas id="chart-photo-sq-history"></canvas></div>
               </div>
             </div>
           </div>
           <div class="card bg-base-200 shadow-xl" id="hmi-photo-isdu-card">
             <div class="card-body p-3">
-              <span class="text-xs font-semibold opacity-50 uppercase tracking-wider mb-2 block">Device Identity (IO-Link)</span>
+              <span class="text-xs font-semibold opacity-50 uppercase tracking-wider mb-2 block">Device Identity &amp; Configuration (IO-Link V1.1)</span>
               <div id="hmi-photo-isdu-loading" class="text-xs opacity-30 font-mono">Waiting for sensor connection…</div>
-              <div id="hmi-photo-isdu-content" class="hidden space-y-2">
+              <div id="hmi-photo-isdu-content" class="hidden space-y-3">
                 <div class="grid grid-cols-2 gap-x-4 gap-y-1 text-xs font-mono">
                   <span class="opacity-50">Vendor ID</span><span class="font-bold" id="hmi-photo-vendor-id">—</span>
                   <span class="opacity-50">Device ID</span><span class="font-bold" id="hmi-photo-device-id">—</span>
                   <span class="opacity-50">IO-Link Rev</span><span class="font-bold" id="hmi-photo-iol-rev">—</span>
-                  <span class="opacity-50">PDin Length</span><span class="font-bold" id="hmi-photo-pdin-len">—</span>
+                  <span class="opacity-50">Product Name</span><span class="font-bold" id="hmi-photo-product-name">—</span>
                 </div>
-                <div class="alert alert-info p-2 mt-2">
-                  <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                  <span class="text-xs">This sensor's IO-Link 1.0 firmware exposes identity only — no ISDU parameter access. Sensitivity and detection range are adjusted via the two potentiometers on the sensor body.</span>
+                <div class="divider my-1 text-xs opacity-40">Configuration</div>
+                <div class="grid grid-cols-2 gap-x-4 gap-y-1.5 text-xs font-mono items-center">
+                  <span class="opacity-50">Output Logic (OUT1)</span>
+                  <span class="font-bold" id="hmi-prox-output-logic">—</span>
+                  <span class="opacity-50">Timer Mode</span>
+                  <span class="font-bold" id="hmi-prox-timer-mode">—</span>
+                  <span class="opacity-50">Timer Time</span>
+                  <span class="font-bold" id="hmi-prox-timer-time">—</span>
+                  <span class="opacity-50">Diagnosis Mode</span>
+                  <span class="font-bold" id="hmi-prox-diag-mode">—</span>
+                  <span class="opacity-50">Operating Hours</span>
+                  <span class="font-bold" id="hmi-prox-op-hours">—</span>
+                </div>
+                <div class="flex gap-2 mt-1">
+                  <button id="hmi-prox-isdu-refresh" class="btn btn-xs btn-outline">Refresh</button>
+                  <span id="hmi-prox-isdu-status" class="text-xs opacity-50 self-center"></span>
                 </div>
               </div>
             </div>
@@ -537,7 +584,7 @@ function renderConfigModals() {
 
     <dialog id="modal-photo-config" class="modal">
       <div class="modal-box">
-        <h3 class="font-bold text-lg">Photoelectric Sensor Configuration</h3>
+        <h3 class="font-bold text-lg">Proximity Sensor Configuration</h3>
         <div class="py-4 space-y-4">
           <div class="form-control">
             <label class="label"><span class="label-text">Counter Value</span></label>
@@ -1057,7 +1104,7 @@ function processPortData(port, masterConnected = true) {
   const deviceType = getDeviceType(port);
   const portActive = masterConnected && port.mode === 'io-link';
 
-  const containerMap = { temperature: 'mimic-temperature', photoelectric: 'mimic-photoelectric', capacitive: 'mimic-capacitive', led: 'mimic-led' };
+  const containerMap = { temperature: 'mimic-temperature', proximity: 'mimic-photoelectric', photoelectric: 'mimic-photoelectric', capacitive: 'mimic-capacitive', led: 'mimic-led' };
   if (containerMap[deviceType]) setComponentConnected(containerMap[deviceType], portActive);
 
   if (!portActive) return;
@@ -1080,7 +1127,35 @@ function processPortData(port, masterConnected = true) {
       _loadHmiTempParams(port.port);
     }
 
+  } else if (deviceType === 'proximity' && mimicComponents.photoelectric) {
+    _setPortBadge('detection-port-num', 'detection-port-label', port);
+    mimicComponents.photoelectric.update(port.pdin_decoded || {});
+
+    const isDetected = port.pdin_decoded?.object_present || false;
+    addToHistory(detectionHistory, isDetected ? 1 : 0);
+    if (isDetected && !_lastDetectedState) {
+      detectionCycleCount++;
+      sessionStorage.setItem('photoDetectionCycles', String(detectionCycleCount));
+    }
+    _lastDetectedState = isDetected;
+    updateChart(charts.detectionHistory, detectionHistory);
+    updateCycleCounter(detectionCycleCount);
+
+    _setOutputDot('photo-out1-dot', port.pdin_decoded?.object_present ?? null);
+    _setOutputDot('photo-err-dot',  port.pdin_decoded?.error         ?? null, true);
+    _updateProxAlarm('prox-instab-indicator',      'prox-instab-label',
+                     port.pdin_decoded?.instability_alarm,   'Instability Alarm');
+    _updateProxAlarm('prox-overapproach-indicator', 'prox-overapproach-label',
+                     port.pdin_decoded?.over_approach_alarm, 'Over-Approach Alarm');
+
+    updatePortPassport('photo', port);
+    if (!_hmiParamsLoaded.photo) {
+      _hmiParamsLoaded.photo = true;
+      _loadHmiProximityParams(port.port);
+    }
+
   } else if (deviceType === 'photoelectric' && mimicComponents.photoelectric) {
+    // PHOTOELECTRIC FALLBACK — kept in case Contrinex LTR-M18PA-PMS-603 is re-fitted on port 1
     _setPortBadge('detection-port-num', 'detection-port-label', port);
     mimicComponents.photoelectric.update(port.pdin_decoded || {});
 
@@ -1095,8 +1170,9 @@ function processPortData(port, masterConnected = true) {
     updateCycleCounter(detectionCycleCount);
 
     _setOutputDot('photo-out1-dot', port.pdin_decoded?.object_detected ?? null);
-    _setOutputDot('photo-out2-dot', port.pdin_decoded?.out2 ?? null);
-    _setOutputDot('photo-err-dot',  port.pdin_decoded?.error ?? null, true);
+    _setOutputDot('photo-err-dot',  port.pdin_decoded?.error           ?? null, true);
+    _updateProxAlarm('prox-instab-indicator',       'prox-instab-label',      false, 'Instability Alarm');
+    _updateProxAlarm('prox-overapproach-indicator', 'prox-overapproach-label', false, 'Over-Approach Alarm');
 
     const sq = port.pdin_decoded?.signal_quality_percent ?? null;
     if (sq !== null) {
@@ -1152,6 +1228,13 @@ function processPortData(port, masterConnected = true) {
     updateLedStatePanel(port.pdout_decoded || {});
     updatePortPassport('led', port);
   }
+}
+
+function _updateProxAlarm(indicatorId, labelId, active, alarmName) {
+  const dot   = document.getElementById(indicatorId);
+  const label = document.getElementById(labelId);
+  if (dot)   dot.className   = `mt-0.5 w-3 h-3 rounded-full flex-shrink-0 transition-colors duration-300 ${active ? 'bg-warning animate-pulse' : 'bg-base-300'}`;
+  if (label) label.textContent = active ? `${alarmName} — Active` : `${alarmName} — Off`;
 }
 
 function _setOutputDot(id, active, isError = false) {
@@ -1302,20 +1385,19 @@ async function _loadHmiTempParams(portNum) {
   }
 }
 
-async function _loadHmiPhotoParams(portNum) {
+async function _loadHmiProximityParams(portNum) {
   const loading = document.getElementById('hmi-photo-isdu-loading');
   const content = document.getElementById('hmi-photo-isdu-content');
   if (!loading || !content) return;
   loading.textContent = 'Loading…';
 
-  // Only pages 0 and 1 respond on this sensor (IO-Link 1.0 minimal ISDU)
-  const page0 = await _hmiIsduRead(portNum, 0, 0, 'string');
+  const set = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val ?? '—'; };
 
-  loading.classList.add('hidden');
-  content.classList.remove('hidden');
+  const OUTPUT_LOGIC = { 0: 'NO — Normally Open', 1: 'NC — Normally Closed' };
+  const TIMER_MODE   = { 0: 'Disabled', 1: 'ON Delay', 2: 'OFF Delay', 3: 'One Shot' };
+  const DIAG_MODE    = { 0: 'Disabled', 1: 'Mode 1 — Instab + Over-Approach', 2: 'Mode 2 — Instability', 3: 'Mode 3 — Over-Approach' };
 
-  // Decode the raw hex from page 0 — standard IO-Link identification block
-  // Structure: [0]=MCT [1]=MinCT [2]=MSeqCap [3]=RevID [4]=PDIn [5]=PDOut [6-7]=VendorID [8-10]=DeviceID
+  // Read identity from IO-Link page 0 (standard block)
   const base = window.IO_LINK_API_BASE || window.location.origin;
   try {
     const r = await fetch(`${base}/api/io-link/port/${portNum}/parameter/read`, {
@@ -1324,8 +1406,63 @@ async function _loadHmiPhotoParams(portNum) {
     });
     const j = await r.json();
     if (j.success && j.raw_hex) {
-      const hex = j.raw_hex;
-      const b = hex.match(/.{2}/g).map(h => parseInt(h, 16));
+      const b = j.raw_hex.match(/.{2}/g).map(h => parseInt(h, 16));
+      const vendorId = ((b[6] << 8) | b[7]);
+      const deviceId = ((b[8] << 16) | (b[9] << 8) | b[10]);
+      const revId = b[3] ? `1.${b[3] & 0x0F}` : '1.0';
+      set('hmi-photo-vendor-id', `${vendorId} (0x${vendorId.toString(16).toUpperCase().padStart(4,'0')})`);
+      set('hmi-photo-device-id', `${deviceId} (0x${deviceId.toString(16).toUpperCase().padStart(6,'0')})`);
+      set('hmi-photo-iol-rev', `V${revId}`);
+    }
+  } catch { /* identity block failed */ }
+
+  // Product name — ISDU index 18
+  const productName = await _hmiIsduRead(portNum, 18, 0, 'string');
+  set('hmi-photo-product-name', productName);
+
+  // Output logic — index 61/sub1
+  const outLogic = await _hmiIsduRead(portNum, 61, 1, 'uint8');
+  set('hmi-prox-output-logic', outLogic != null ? (OUTPUT_LOGIC[outLogic] ?? `${outLogic}`) : null);
+
+  // Timer mode — index 65/sub1
+  const timerMode = await _hmiIsduRead(portNum, 65, 1, 'uint8');
+  set('hmi-prox-timer-mode', timerMode != null ? (TIMER_MODE[timerMode] ?? `${timerMode}`) : null);
+
+  // Timer time — index 65/sub2
+  const timerTime = await _hmiIsduRead(portNum, 65, 2, 'uint16');
+  set('hmi-prox-timer-time', timerTime != null ? `${timerTime} ms` : null);
+
+  // Diagnosis mode — index 163
+  const diagMode = await _hmiIsduRead(portNum, 163, 0, 'uint8');
+  set('hmi-prox-diag-mode', diagMode != null ? (DIAG_MODE[diagMode] ?? `${diagMode}`) : null);
+
+  // Operating hours — index 160/sub1 (24-bit record; read as uint32, upper byte ignored)
+  const opHours = await _hmiIsduRead(portNum, 160, 1, 'uint32');
+  set('hmi-prox-op-hours', opHours != null ? `${opHours} h` : null);
+
+  loading.classList.add('hidden');
+  content.classList.remove('hidden');
+}
+
+// _loadHmiPhotoParams — COMMENTED OUT: was used for Contrinex LTR-M18PA-PMS-603 (IO-Link 1.0).
+// Re-enable if the photoelectric sensor is re-fitted on port 1 and restore the call in processPortData.
+/*
+async function _loadHmiPhotoParams(portNum) {
+  const loading = document.getElementById('hmi-photo-isdu-loading');
+  const content = document.getElementById('hmi-photo-isdu-content');
+  if (!loading || !content) return;
+  loading.textContent = 'Loading…';
+  loading.classList.add('hidden');
+  content.classList.remove('hidden');
+  const base = window.IO_LINK_API_BASE || window.location.origin;
+  try {
+    const r = await fetch(`${base}/api/io-link/port/${portNum}/parameter/read`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ index: 0, subindex: 0, dtype: 'string', scale: 1 }),
+    });
+    const j = await r.json();
+    if (j.success && j.raw_hex) {
+      const b = j.raw_hex.match(/.{2}/g).map(h => parseInt(h, 16));
       const vendorId = ((b[6] << 8) | b[7]);
       const deviceId = ((b[8] << 16) | (b[9] << 8) | b[10]);
       const revId = b[3] ? `1.${b[3] & 0x0F}` : '1.0';
@@ -1336,8 +1473,9 @@ async function _loadHmiPhotoParams(portNum) {
       set('hmi-photo-iol-rev', revId);
       set('hmi-photo-pdin-len', `${pdinLen} bytes`);
     }
-  } catch { /* identity read failed, values stay at — */ }
+  } catch { }
 }
+*/
 
 function initHmiParams() {
   // Cap SP1 slider live display
@@ -1364,6 +1502,12 @@ function initHmiParams() {
       if (disp) disp.textContent = `${(+tempSp2Slider.value / 10).toFixed(1)} °C`;
     });
   }
+
+  // Proximity refresh
+  document.getElementById('hmi-prox-isdu-refresh')?.addEventListener('click', () => {
+    const p = _sectionPortNum['detection-port-num'];
+    if (p) _loadHmiProximityParams(p);
+  });
 
   // Cap refresh
   document.getElementById('hmi-cap-isdu-refresh')?.addEventListener('click', () => {
@@ -1465,16 +1609,18 @@ function _sortSectionsByPort() {
 
 function getDeviceType(port) {
   const t = port.device_type || '';
-  if (t === 'photo_electric') return 'photoelectric';
+  if (t === 'proximity')      return 'proximity';
+  if (t === 'photo_electric') return 'photoelectric';   // kept for fallback if sensor is swapped back
   if (t === 'temperature')    return 'temperature';
   if (t === 'status_led')     return 'led';
   if (t === 'capacitive')     return 'capacitive';
 
   const n = (port.name || '').toUpperCase();
-  if (n.includes('TEMP') || n.includes('TN') || n.includes('TR'))         return 'temperature';
-  if (n.includes('PHOTO') || n.includes('O5D') || n.includes('O2D'))      return 'photoelectric';
-  if (n.includes('CAPACITIVE') || n.includes('23772'))                     return 'capacitive';
-  if (n.includes('LED') || n.includes('CL50') || n.includes('LIGHT'))     return 'led';
+  if (n.includes('TEMP') || n.includes('TN') || n.includes('TR'))          return 'temperature';
+  if (n.startsWith('E2E') || n.includes('PROX') || n.includes('INDUCTIVE')) return 'proximity';
+  if (n.includes('PHOTO') || n.includes('O5D') || n.includes('O2D'))       return 'photoelectric';
+  if (n.includes('CAPACITIVE') || n.includes('23772'))                      return 'capacitive';
+  if (n.includes('LED') || n.includes('CL50') || n.includes('LIGHT'))      return 'led';
   return 'unknown';
 }
 

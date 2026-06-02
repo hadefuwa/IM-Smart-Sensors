@@ -12,6 +12,10 @@ DISPLAY=:0 XAUTHORITY=/home/pi/.Xauthority xset s off
 DISPLAY=:0 XAUTHORITY=/home/pi/.Xauthority xset s noblank
 DISPLAY=:0 XAUTHORITY=/home/pi/.Xauthority xset -dpms
 
+# Hide mouse cursor immediately and keep it hidden (hides after 0.1s idle)
+pkill -f unclutter 2>/dev/null
+DISPLAY=:0 XAUTHORITY=/home/pi/.Xauthority unclutter -idle 0.1 -root &
+
 DISPLAY=:0 XAUTHORITY=/home/pi/.Xauthority chromium \
   --kiosk \
   --noerrdialogs \
@@ -26,4 +30,5 @@ DISPLAY=:0 XAUTHORITY=/home/pi/.Xauthority chromium \
   --touch-events=enabled \
   --enable-touch-drag-drop \
   --overscroll-history-navigation=0 \
+  --disable-pinch \
   http://localhost/ &

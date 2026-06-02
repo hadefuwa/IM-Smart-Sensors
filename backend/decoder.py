@@ -19,12 +19,14 @@ DEVICE_ID_FALLBACK = [
     # Carlo Gavazzi / RS PRO capacitive sensor M18, model 2377240
     # (vendorID 1586 / 0x0632, deviceID 1052673 / 0x101001, productname '2377240')
     (1586, 1052673, DEVICE_TYPE_CAPACITIVE),
-    # Contrinex LTR-M18PA-PMx-603 photoelectric sensor M18 diffuse (port 1; sold as RS PRO 0360240)
-    # vendorID 342 / 0x156, deviceID 131842 / 0x20302, productname returns "unknown" from AL1350
-    (342, 131842, DEVICE_TYPE_PHOTO_ELECTRIC),
+    # OMRON E2E-X NEXT M18 inductive proximity (IO-Link V1.1, COM3)
+    # vendorID 612 / 0x0264, deviceID 131094 / 0x020016, productname 'E2E-X16MB1T18 2M' etc.
+    (612, 131094, DEVICE_TYPE_PROXIMITY),
     # IFM TV7105 temperature sensor (port 3)
     # vendorID 310 / 0x136, deviceID 733 / 0x2DD, productname "TV7105"
     (310, 733, DEVICE_TYPE_TEMPERATURE),
+    # Contrinex LTR-M18PA-PMx-603 photoelectric (IO-Link 1.0) — COMMENTED OUT, sensor swapped
+    # (342, 131842, DEVICE_TYPE_PHOTO_ELECTRIC),
 ]
 
 # Common IO-Link event codes (hex) -> human-readable label (for maintenance training)
@@ -59,7 +61,8 @@ def get_device_type(vendor_id, device_id, name):
         return DEVICE_TYPE_STATUS_LED
     if any(x in name_lower for x in ('capacitive', 'ki', 'kq', 'kc')) or '23772' in name_upper:
         return DEVICE_TYPE_CAPACITIVE
-    if any(x in name_lower for x in ('proximity', 'inductive', 'prox')):
+    # OMRON E2E-X NEXT family and generic inductive/proximity names
+    if name_upper.startswith('E2E') or any(x in name_lower for x in ('proximity', 'inductive', 'prox')):
         return DEVICE_TYPE_PROXIMITY
 
     # Fallback table — compare as integers if possible, else as strings
@@ -139,25 +142,48 @@ def decode_temperature_pdin(bytes_data):
 
 def decode_proximity_pdin(bytes_data):
     """
-    Decode Process Data In for proximity sensors.
-    Often 1 byte (present/absent) or 2 bytes (distance in mm).
+    Decode Process Data In for inductive proximity sensors.
+
+    OMRON E2E-X NEXT M18 (IO-Link V1.1) — 2-byte / 16-bit PDin layout:
+      Byte 0 bit 0 : OUT1 — Control Output 1 (object detected)
+      Byte 0 bit 4 : Instability Detection Alarm (Diagnosis Mode 1 or 2)
+      Byte 0 bit 5 : Over-Approach / Excessive Proximity Alarm (Diagnosis Mode 1 or 3)
+      Byte 0 bit 6 : Warning flag
+      Byte 0 bit 7 : Error flag
+      Byte 1 [7:0] : Monitor Output (uint8, reserved/manufacturer use)
+
+    Fallback for 1-byte generic sensors: bit 0 = object present.
     """
     decoded = {
-        'object_present': False,
-        'distance_mm': None,
-        'raw_hex': '',
-        'description': 'No data'
+        'object_present':      False,
+        'instability_alarm':   False,
+        'over_approach_alarm': False,
+        'warning':             False,
+        'error':               False,
+        'monitor_output':      None,
+        'raw_hex':             '',
+        'description':         'No data',
     }
     if not bytes_data or len(bytes_data) < 1:
         return decoded
     if isinstance(bytes_data, bytearray):
         bytes_data = list(bytes_data)
     decoded['raw_hex'] = ''.join(f'{b:02X}' for b in bytes_data)
-    decoded['object_present'] = bool(bytes_data[0] & 0x01)
-    decoded['description'] = 'Object present' if decoded['object_present'] else 'Object absent'
+
+    b0 = bytes_data[0]
+    decoded['object_present']      = bool(b0 & 0x01)
+    decoded['instability_alarm']   = bool(b0 & 0x10)
+    decoded['over_approach_alarm'] = bool(b0 & 0x20)
+    decoded['warning']             = bool(b0 & 0x40)
+    decoded['error']               = bool(b0 & 0x80)
+
     if len(bytes_data) >= 2:
-        decoded['distance_mm'] = bytes_data[0] | (bytes_data[1] << 8)
-        decoded['description'] += f', {decoded["distance_mm"]} mm'
+        decoded['monitor_output'] = bytes_data[1]
+
+    decoded['description'] = 'Object present' if decoded['object_present'] else 'Object absent'
+    if decoded['instability_alarm']:   decoded['description'] += ' [INSTABILITY]'
+    if decoded['over_approach_alarm']: decoded['description'] += ' [TOO CLOSE]'
+    if decoded['error']:               decoded['description'] += ' [FAULT]'
     return decoded
 
 

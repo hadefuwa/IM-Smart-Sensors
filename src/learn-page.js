@@ -18,7 +18,8 @@ const ICONS = {
   lightbulb: '<svg xmlns="http://www.w3.org/2000/svg" class="w-8 h-8 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" /></svg>',
   sun: '<svg xmlns="http://www.w3.org/2000/svg" class="w-8 h-8 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" /></svg>',
   thermometer: '<svg xmlns="http://www.w3.org/2000/svg" class="w-8 h-8 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg>',
-  magnet: '<svg xmlns="http://www.w3.org/2000/svg" class="w-8 h-8 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>'
+  magnet: '<svg xmlns="http://www.w3.org/2000/svg" class="w-8 h-8 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>',
+  identity: '<svg xmlns="http://www.w3.org/2000/svg" class="w-8 h-8 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V8a2 2 0 00-2-2h-5m-4 0V5a2 2 0 114 0v1m-4 0a2 2 0 104 0M9 14a3 3 0 106 0 3 3 0 00-6 0z" /></svg>'
 };
 
 const LEARN_CHAPTERS = [
@@ -362,6 +363,76 @@ const LEARN_CHAPTERS = [
         <div class="learn-cycle-chart-container relative h-40"><canvas class="learn-cycle-chart"></canvas></div>
       </div>
     `
+  },
+  {
+    id: 8,
+    title: 'Device Identity',
+    shortTitle: 'Device ID',
+    iconKey: 'identity',
+    takeaway: 'Every IO-Link sensor carries a digital identity — you never have to guess what\'s connected.',
+    contentHtml: `
+      <p class="text-base-content/90 leading-relaxed">Every IO-Link sensor broadcasts three identity fields the moment it connects to the master. No label, no paperwork, no hunting through supplier catalogues — the sensor tells you exactly what it is.</p>
+      <div class="my-4 flex flex-wrap gap-2">
+        <button type="button" class="learn-reveal-btn btn btn-outline btn-sm">What is Vendor ID?</button>
+        <button type="button" class="learn-reveal-btn btn btn-outline btn-sm">What is Device ID?</button>
+        <button type="button" class="learn-reveal-btn btn btn-outline btn-sm">What is PDin?</button>
+      </div>
+      <div class="learn-reveal-content hidden mt-2 p-3 rounded-lg bg-primary/10 border border-primary/30 text-base-content/90 text-sm space-y-2">
+        <p><strong>Vendor ID</strong> — a 16-bit integer assigned by the IO-Link Community to each manufacturer. e.g. 310 = ifm electronic, 612 = OMRON. The master reads it automatically at connection, every time.</p>
+        <p><strong>Device ID</strong> — the manufacturer's own product code for a specific model. e.g. 131090 = OMRON E2E-X16MB1T12 proximity sensor. Together with the Vendor ID it uniquely identifies any registered IO-Link device.</p>
+        <p><strong>PDin</strong> (Process Data In) — raw hex bytes the sensor sends every IO-Link cycle. The master decodes these into engineering values: temperature, switching state, signal quality, alarm flags. Each byte's meaning is defined in the device's IODD file.</p>
+      </div>
+      <div class="my-4 p-4 rounded-xl border border-base-300 bg-base-300/30">
+        <p class="font-medium text-base-content mb-2">Where does an IO-Link master read the Vendor ID from?</p>
+        <div class="learn-quiz" data-correct="b">
+          <label class="flex items-center gap-2 cursor-pointer p-2 rounded-lg hover:bg-base-content/5 learn-quiz-option" data-value="a"><input type="radio" name="ch8-q1" value="a"> A barcode label on the sensor body</label>
+          <label class="flex items-center gap-2 cursor-pointer p-2 rounded-lg hover:bg-base-content/5 learn-quiz-option" data-value="b"><input type="radio" name="ch8-q1" value="b"> Automatically over the IO-Link connection at power-up</label>
+          <label class="flex items-center gap-2 cursor-pointer p-2 rounded-lg hover:bg-base-content/5 learn-quiz-option" data-value="c"><input type="radio" name="ch8-q1" value="c"> From the engineer's maintenance log</label>
+        </div>
+        <p class="learn-quiz-feedback hidden mt-2 text-sm font-medium"></p>
+      </div>
+      <div class="mt-4">
+        <h3 class="text-sm font-semibold uppercase tracking-wide text-base-content/70 mb-3">Before vs. After</h3>
+        <div class="overflow-x-auto rounded-lg border border-base-300">
+          <table class="table table-zebra">
+            <thead><tr><th class="bg-base-300/50 font-semibold">Traditional sensor</th><th class="bg-base-300/50 font-semibold">IO-Link sensor</th></tr></thead>
+            <tbody class="text-sm">
+              <tr><td class="text-base-content/70 italic py-3">Label wears off → technician can't identify the part → wrong spare ordered → extra downtime.</td><td class="py-3">Vendor ID + Device ID always readable from the master. Exact model confirmed in seconds, right spare ordered first time.</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div class="mt-6 p-4 rounded-xl border-2 border-primary/20 bg-base-300/20">
+        <h4 class="font-semibold text-base-content mb-2">Game: Match the Vendor ID to the company</h4>
+        <p class="text-sm text-base-content/70 mb-2">Click a Vendor ID, then click the matching company name. (These are the three sensors in your kit.)</p>
+        <div class="flex flex-wrap gap-2 mb-2">
+          <button type="button" class="learn-id-match-left btn btn-sm btn-outline font-mono" data-id="a">310</button>
+          <button type="button" class="learn-id-match-left btn btn-sm btn-outline font-mono" data-id="b">612</button>
+          <button type="button" class="learn-id-match-left btn btn-sm btn-outline font-mono" data-id="c">1586</button>
+        </div>
+        <div class="flex flex-wrap gap-2">
+          <button type="button" class="learn-id-match-right btn btn-sm btn-ghost border border-base-300" data-id="x">ifm electronic</button>
+          <button type="button" class="learn-id-match-right btn btn-sm btn-ghost border border-base-300" data-id="y">OMRON Corporation</button>
+          <button type="button" class="learn-id-match-right btn btn-sm btn-ghost border border-base-300" data-id="z">RS Pro</button>
+        </div>
+        <p class="learn-id-match-pairs mt-2 text-sm text-base-content/70">Pairs: 0/3</p>
+        <p class="learn-id-match-result hidden mt-1 font-medium"></p>
+      </div>
+      <div class="mt-4 p-4 rounded-xl border-2 border-primary/20 bg-base-300/20">
+        <h4 class="font-semibold text-base-content mb-2">Game: Decode PDin — Temperature Sensor (Port 3)</h4>
+        <p class="text-sm text-base-content/70 mb-2">The TV7105 reports PDin <code class="font-mono bg-base-100 px-1 rounded text-xs">00 FE FF 00</code>. Click each byte pair to find out what it encodes.</p>
+        <div class="flex flex-wrap gap-2">
+          <button type="button" class="learn-pdin-byte btn btn-sm btn-outline font-mono" data-meaning="Bytes 0–1 = signed int16. 0x00FE = 254. Divide by 10 → 25.4 °C. This is the live temperature reading.">00 FE</button>
+          <button type="button" class="learn-pdin-byte btn btn-sm btn-outline font-mono" data-meaning="Bytes 2–3 = status flags. Contains SP1 / SP2 switching outputs and alarm bits. All alarm flags clear in this reading.">FF 00</button>
+        </div>
+        <p class="learn-pdin-msg mt-3 min-h-[2.5rem] p-2 rounded-lg bg-base-200/80 text-base-content/90 text-sm italic">Click a byte pair above to decode it.</p>
+      </div>
+      <div class="mt-4 p-4 rounded-xl border-2 border-primary/20 bg-base-300/20">
+        <h4 class="font-semibold text-base-content mb-2">Simulation: Live identity lookup</h4>
+        <p class="text-sm text-base-content/70 mb-2">Simulated master scanning ports and resolving Vendor ID → company → model.</p>
+        <div class="learn-identity-stream h-28 overflow-y-auto rounded-lg bg-base-100/80 border border-base-300 font-mono text-xs p-2 space-y-0.5"></div>
+      </div>
+    `
   }
 ];
 
@@ -385,7 +456,7 @@ function setLearnProgress(completed, lastIndex) {
   } catch (e) {}
 }
 
-const LEARN_CARD_ACCENTS = ['p', 's', 'a', 'p', 's', 'a', 'p'];
+const LEARN_CARD_ACCENTS = ['p', 's', 'a', 'p', 's', 'a', 'p', 's'];
 
 function buildMapHtml(completedSet) {
   const cards = LEARN_CHAPTERS.map(function (ch, i) {
@@ -994,6 +1065,82 @@ function initChapterGamesAndSimulations(container, chapterIndex) {
         chart.data.datasets[0].data = data;
         chart.update('none');
       }, 1500);
+      learnSimTimers.push(t);
+    }
+  }
+
+  // ---- Chapter 8: Device Identity match game + PDin decode + identity stream ----
+  if (idx === 7) {
+    const CH8_PAIRS = { a: 'x', b: 'y', c: 'z' };
+    let selectedLeft = null;
+    const pairs = {};
+    const leftBtns = container.querySelectorAll('.learn-id-match-left');
+    const rightBtns = container.querySelectorAll('.learn-id-match-right');
+    const pairsEl = container.querySelector('.learn-id-match-pairs');
+    const resultEl = container.querySelector('.learn-id-match-result');
+    function updateIdPairs() {
+      const count = Object.keys(pairs).length;
+      if (pairsEl) pairsEl.textContent = 'Pairs: ' + count + '/3';
+      if (count === 3) {
+        const ok = Object.keys(CH8_PAIRS).every(function(k) { return pairs[k] === CH8_PAIRS[k]; });
+        if (resultEl) {
+          resultEl.classList.remove('hidden');
+          resultEl.textContent = ok
+            ? '✓ Correct! 310 → ifm electronic · 612 → OMRON Corporation · 1586 → RS Pro'
+            : 'Not all correct. Hint: check the IO-Link Master page for the Vendor IDs on each port.';
+          resultEl.className = 'learn-id-match-result mt-1 font-medium ' + (ok ? 'text-success' : 'text-warning');
+        }
+      }
+    }
+    leftBtns.forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        leftBtns.forEach(function(b) { b.classList.remove('ring-2', 'ring-primary'); });
+        if (pairs[btn.getAttribute('data-id')]) return;
+        btn.classList.add('ring-2', 'ring-primary');
+        selectedLeft = btn.getAttribute('data-id');
+      });
+    });
+    rightBtns.forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        if (selectedLeft === null) return;
+        pairs[selectedLeft] = btn.getAttribute('data-id');
+        leftBtns.forEach(function(b) { b.classList.remove('ring-2', 'ring-primary'); });
+        selectedLeft = null;
+        updateIdPairs();
+      });
+    });
+
+    const pdinBtns = container.querySelectorAll('.learn-pdin-byte');
+    const pdinMsg = container.querySelector('.learn-pdin-msg');
+    pdinBtns.forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        if (pdinMsg) {
+          pdinMsg.textContent = btn.getAttribute('data-meaning');
+          pdinMsg.className = 'learn-pdin-msg mt-3 p-2 rounded-lg bg-success/10 border border-success/30 text-base-content/90 text-sm';
+        }
+      });
+    });
+
+    const streamEl = container.querySelector('.learn-identity-stream');
+    if (streamEl) {
+      const entries = [
+        { port: 1, vendor: 612,  company: 'OMRON Corporation', device: 131090,  model: 'E2E-X16MB1T12' },
+        { port: 2, vendor: 1586, company: 'RS Pro',            device: 1052673, model: 'M18 Capacitive' },
+        { port: 3, vendor: 310,  company: 'ifm electronic',    device: 733,     model: 'TV7105' },
+      ];
+      const lines = [];
+      let ei = 0;
+      function addIdLine(text, cls) {
+        lines.push('<span class="' + (cls || '') + '">' + text + '</span>');
+        if (lines.length > 18) lines.shift();
+        streamEl.innerHTML = lines.map(function(l) { return '<div>' + l + '</div>'; }).join('');
+        streamEl.scrollTop = streamEl.scrollHeight;
+      }
+      const t = setInterval(function() {
+        const e = entries[ei % entries.length]; ei++;
+        addIdLine('Port ' + e.port + '  VendorID=' + e.vendor + '  →  ' + e.company, 'text-primary');
+        setTimeout(function() { addIdLine('       DeviceID=' + e.device + '  →  ' + e.model, 'text-secondary'); }, 600);
+      }, 2800);
       learnSimTimers.push(t);
     }
   }

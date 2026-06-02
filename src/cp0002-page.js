@@ -81,7 +81,7 @@ const WORKSHEETS = [
           </label>
           <label class="cp2-kit-item flex items-center gap-3 cursor-pointer rounded-xl border-2 border-transparent px-3 py-2 transition-all duration-200">
             <input type="checkbox" class="checkbox checkbox-md checkbox-secondary flex-shrink-0">
-            <span class="cp2-kit-text"><strong>Port 1 — Contrinex LTR-M18PA-PMS-603</strong> — M18 diffuse photoelectric. IO-Link 1.0: PDin carries a switching bit only. ISDU limited to identity (index 0). Sensitivity adjusted via physical potentiometer on the sensor body.</span>
+            <span class="cp2-kit-text"><strong>Port 1 — OMRON E2E-X16MB1T12</strong> — M18 inductive proximity. IO-Link V1.1 COM3 (230.4 kbps): full ISDU access. PDin bit 0 = switching output; bits 4–5 = instability / over-approach alarms. Output logic, timer mode, and diagnosis mode configurable remotely.</span>
           </label>
           <label class="cp2-kit-item flex items-center gap-3 cursor-pointer rounded-xl border-2 border-transparent px-3 py-2 transition-all duration-200">
             <input type="checkbox" class="checkbox checkbox-md checkbox-secondary flex-shrink-0">
@@ -111,8 +111,8 @@ const WORKSHEETS = [
         <p class="text-xs font-semibold text-base-content/60 uppercase tracking-wide mb-2">System architecture — data flow</p>
         <svg viewBox="0 0 570 205" xmlns="http://www.w3.org/2000/svg" class="w-full" style="font-family:system-ui,sans-serif">
           <rect x="2"   y="24"  width="124" height="32" rx="5" fill="#3b82f6"/>
-          <text x="64"  y="37"  text-anchor="middle" fill="white" font-size="10" font-weight="600">Photoelectric</text>
-          <text x="64"  y="49"  text-anchor="middle" fill="#bfdbfe" font-size="8">Port 1 · IO-Link 1.0</text>
+          <text x="64"  y="37"  text-anchor="middle" fill="white" font-size="10" font-weight="600">Proximity (E2E)</text>
+          <text x="64"  y="49"  text-anchor="middle" fill="#bfdbfe" font-size="8">Port 1 · IO-Link 1.1</text>
           <rect x="2"   y="64"  width="124" height="32" rx="5" fill="#7c3aed"/>
           <text x="64"  y="77"  text-anchor="middle" fill="white" font-size="10" font-weight="600">Capacitive</text>
           <text x="64"  y="89"  text-anchor="middle" fill="#ddd6fe" font-size="8">Port 2 · IO-Link 1.1</text>
@@ -259,7 +259,7 @@ const WORKSHEETS = [
 
       <div class="divider my-2"></div>
       <button type="button" class="btn btn-ghost btn-sm ws-suggested-btn" data-target="cp2-ws0-suggested">Show answers</button>
-      <div id="cp2-ws0-suggested" class="hidden p-4 rounded-lg border border-base-300 bg-base-300/50 text-base-content/80 text-sm leading-relaxed ws-suggested">Q1: c — 192.168.7.4 (listed on the IO-Link Master checklist item). Q2: c — 500 ms interval = 2 messages per second. Q3: c — bridges the private 192.168.7.x subnet to the building LAN so browsers do not need to be on the IO-Link subnet. Q4: c — Ports 1–4 are used (photoelectric, capacitive, temperature, light stack).</div>
+      <div id="cp2-ws0-suggested" class="hidden p-4 rounded-lg border border-base-300 bg-base-300/50 text-base-content/80 text-sm leading-relaxed ws-suggested">Q1: c — 192.168.7.4 (listed on the IO-Link Master checklist item). Q2: c — 500 ms interval = 2 messages per second. Q3: c — bridges the private 192.168.7.x subnet to the building LAN so browsers do not need to be on the IO-Link subnet. Q4: c — Ports 1–4 are used (proximity, capacitive, temperature, light stack).</div>
     `
   },
   {
@@ -328,7 +328,7 @@ const WORKSHEETS = [
         <p class="ml-4 text-base-content/70">IP: 192.168.7.2  |  FastAPI + uvicorn  |  Mosquitto MQTT broker</p>
         <p class="ml-4">│</p>
         <p class="ml-4">├─ Subscribes to AL1350 MQTT topics</p>
-        <p class="ml-4">├─ Decodes sensor PDin (temperature, photoelectric state, capacitive count, CL50 LED)</p>
+        <p class="ml-4">├─ Decodes sensor PDin (temperature, proximity state + alarms, capacitive count, CL50 LED)</p>
         <p class="ml-4">├─ Merges MQTT data + HTTP fallback data</p>
         <p class="ml-4">│</p>
         <p class="ml-4">└─ <span class="text-success">WebSocket /ws</span>  → pushes JSON to all connected browsers</p>
@@ -430,18 +430,18 @@ const WORKSHEETS = [
           <text x="70" y="18" text-anchor="middle" fill="#94a3b8" font-size="9" font-weight="600">RAW PDin (hex)</text>
           <text x="285" y="18" text-anchor="middle" fill="#94a3b8" font-size="9" font-weight="600">decoder.py</text>
           <text x="490" y="18" text-anchor="middle" fill="#94a3b8" font-size="9" font-weight="600">DECODED VALUE</text>
-          <!-- Row 1: Photoelectric -->
+          <!-- Row 1: Proximity -->
           <rect x="5" y="26" width="130" height="34" rx="5" fill="#1e3a5f"/>
-          <text x="70" y="40" text-anchor="middle" fill="#93c5fd" font-size="9" font-weight="600">Photoelectric Port 1</text>
-          <text x="70" y="52" text-anchor="middle" fill="#bfdbfe" font-size="8" font-style="italic">0x01 (2 bytes, bit 0)</text>
+          <text x="70" y="40" text-anchor="middle" fill="#93c5fd" font-size="9" font-weight="600">Proximity Port 1</text>
+          <text x="70" y="52" text-anchor="middle" fill="#bfdbfe" font-size="8" font-style="italic">E2E-X16 (2 bytes, 16-bit)</text>
           <line x1="135" y1="43" x2="200" y2="43" stroke="#94a3b8" stroke-width="1.5" marker-end="url(#ws3-arr)"/>
           <rect x="200" y="26" width="170" height="34" rx="5" fill="#1e293b"/>
-          <text x="285" y="40" text-anchor="middle" fill="#e2e8f0" font-size="8">parse bit 0 → switching state</text>
-          <text x="285" y="52" text-anchor="middle" fill="#64748b" font-size="7">IO-Link 1.0 — identity ISDU only</text>
+          <text x="285" y="40" text-anchor="middle" fill="#e2e8f0" font-size="8">bits 0,4,5 → state + alarms</text>
+          <text x="285" y="52" text-anchor="middle" fill="#64748b" font-size="7">IO-Link 1.1 — full ISDU access</text>
           <line x1="370" y1="43" x2="425" y2="43" stroke="#94a3b8" stroke-width="1.5" marker-end="url(#ws3-arr)"/>
           <rect x="425" y="26" width="138" height="34" rx="5" fill="#1e3a5f"/>
-          <text x="494" y="40" text-anchor="middle" fill="#93c5fd" font-size="9" font-weight="600">detected: true/false</text>
-          <text x="494" y="52" text-anchor="middle" fill="#bfdbfe" font-size="8">switching output bit</text>
+          <text x="494" y="40" text-anchor="middle" fill="#93c5fd" font-size="9" font-weight="600">object_present + alarms</text>
+          <text x="494" y="52" text-anchor="middle" fill="#bfdbfe" font-size="8">instability / over-approach</text>
           <!-- Row 2: Capacitive -->
           <rect x="5" y="70" width="130" height="34" rx="5" fill="#3b1f6b"/>
           <text x="70" y="84" text-anchor="middle" fill="#ddd6fe" font-size="9" font-weight="600">Capacitive Port 2</text>
@@ -484,8 +484,8 @@ const WORKSHEETS = [
       <div class="space-y-4 mt-3">
 
         <div class="rounded-lg border border-base-300 bg-base-200 p-4">
-          <p class="font-semibold text-base-content">Port 1 — Photoelectric Sensor (Contrinex LTR-M18PA-PMS-603)</p>
-          <p class="text-base-content/80 text-sm mt-1">PDin is 2 bytes. Bit 0 of byte 0 = switching output (object detected: 1, not detected: 0). Additional bits carry signal quality. Note: this sensor uses IO-Link 1.0 — only identity data (index 0) is accessible via ISDU; sensitivity is adjusted via the physical potentiometer on the sensor body.</p>
+          <p class="font-semibold text-base-content">Port 1 — Proximity Sensor (OMRON E2E-X16MB1T12, IO-Link V1.1)</p>
+          <p class="text-base-content/80 text-sm mt-1">PDin is 2 bytes (16-bit). Bit 0 of byte 0 = switching output (object present: 1, absent: 0). Bit 4 = instability alarm. Bit 5 = over-approach alarm (target too close). Byte 1 = monitor output. Full ISDU access — output logic, timer mode, and diagnosis mode are all writable over IO-Link.</p>
           <p class="mt-2 font-medium text-base-content text-sm"><strong>Q:</strong> If the raw PDin hex is <code class="font-mono bg-base-300 px-1 rounded">0x01</code>, what is the switching output state?</p>
           <div class="space-y-1 mt-1">
             <label class="flex items-center gap-2 cursor-pointer text-sm"><input type="radio" name="cp2-ws2-q1" value="a" class="radio radio-xs radio-secondary"> No object detected</label>
@@ -522,7 +522,7 @@ const WORKSHEETS = [
         <div class="rounded-lg border border-base-300 bg-base-200 p-4">
           <p class="font-semibold text-base-content">Port 4 — CL50 Light Stack</p>
           <p class="text-base-content/80 text-sm mt-1">The CL50 PDin encodes each colour segment's state (off / on / flash) across multiple bits. The backend's CL50 decoder maps bit fields to a human-readable state object: <code class="font-mono text-xs bg-base-300 px-1 rounded">&#123; red: 'flash', amber: 'off', green: 'on' &#125;</code>.</p>
-          <p class="mt-2 font-medium text-base-content text-sm"><strong>Q:</strong> Why does the CL50 need a more complex decode than the photoelectric sensor?</p>
+          <p class="mt-2 font-medium text-base-content text-sm"><strong>Q:</strong> Why does the CL50 need a more complex decode than the proximity sensor?</p>
           <div class="space-y-1 mt-1">
             <label class="flex items-center gap-2 cursor-pointer text-sm"><input type="radio" name="cp2-ws2-q4" value="a" class="radio radio-xs radio-secondary"> It uses a completely different IO-Link variant that the standard binary decoder cannot process</label>
             <label class="flex items-center gap-2 cursor-pointer text-sm"><input type="radio" name="cp2-ws2-q4" value="b" class="radio radio-xs radio-secondary"> Each colour channel (red, amber, green) has three states (on/flash/off) encoded in separate bit fields</label>
@@ -542,7 +542,7 @@ const WORKSHEETS = [
           </label>
           <label class="cp2-kit-item flex items-center gap-3 cursor-pointer rounded-xl border-2 border-transparent px-3 py-2 transition-all duration-200">
             <input type="checkbox" class="checkbox checkbox-sm checkbox-warning flex-shrink-0">
-            <span class="cp2-kit-text">Wave your hand at the <strong>photoelectric sensor</strong> (Port 1) and confirm the switching state flips on the Dashboard</span>
+            <span class="cp2-kit-text">Hold a <strong>metal object</strong> (screwdriver, spanner) near the <strong>proximity sensor</strong> (Port 1) and confirm the switching state (OUT1) flips on the Dashboard — inductive sensors only detect metal</span>
           </label>
           <label class="cp2-kit-item flex items-center gap-3 cursor-pointer rounded-xl border-2 border-transparent px-3 py-2 transition-all duration-200">
             <input type="checkbox" class="checkbox checkbox-sm checkbox-warning flex-shrink-0">
@@ -557,7 +557,7 @@ const WORKSHEETS = [
 
       <div class="divider my-2"></div>
       <button type="button" class="btn btn-ghost btn-sm ws-suggested-btn" data-target="cp2-ws2-suggested">Show suggested answers</button>
-      <div id="cp2-ws2-suggested" class="hidden p-4 rounded-lg border border-base-300 bg-base-300/50 text-base-content/80 text-sm leading-relaxed ws-suggested">Q1 (photoelectric): b — bit 0 = 1 means object detected. Q2 (capacitive): b — a running count tracks how many containers have been filled. Q3 (temperature): c — 0x02EE = 750 → 750/10 = 75.0 °C. Q4 (CL50): b — multiple colour channels each with on/flash/off states require separate bit fields.</div>
+      <div id="cp2-ws2-suggested" class="hidden p-4 rounded-lg border border-base-300 bg-base-300/50 text-base-content/80 text-sm leading-relaxed ws-suggested">Q1 (proximity): b — bit 0 = 1 means object present (metal target within sensing range). Q2 (capacitive): b — a running count tracks how many containers have been filled. Q3 (temperature): c — 0x02EE = 750 → 750/10 = 75.0 °C. Q4 (CL50): b — multiple colour channels each with on/flash/off states require separate bit fields.</div>
     `
   },
   {
@@ -1048,6 +1048,130 @@ const WORKSHEETS = [
       <div class="divider my-2"></div>
       <button type="button" class="btn btn-ghost btn-sm ws-suggested-btn" data-target="cp2-ws6-suggested">Show suggested answers</button>
       <div id="cp2-ws6-suggested" class="hidden p-4 rounded-lg border border-base-300 bg-base-300/50 text-base-content/80 text-sm leading-relaxed ws-suggested">Q1: c — Standard: 40×35=1,400 min=23.3 h. IO-Link: 40×8=320 min=5.3 h. Saving = 18 h/year. Q2: b — 18 × £5,000 = £90,000/year. Q3: c — automatic parameter restore (no re-commissioning cost) and remote diagnostics (no site visit needed). Q4: b — event data (faults and warnings) triggers maintenance work orders.</div>
+    `
+  },
+  {
+    id: 8,
+    title: 'Device Identity — Vendor ID, Device ID &amp; PDin',
+    shortDesc: 'Identify an unknown sensor using IO-Link device identity fields.',
+    estimatedTime: 'About 15 min',
+    whyItMatters: 'Physical labels wear off. Maintenance records go missing. The Vendor ID and Device ID embedded in every IO-Link sensor mean you can always confirm what is connected, order the exact right spare, and decode PDin correctly — without leaving the dashboard.',
+    relatedDashboard: 'IO-Link Master page — Port Status cards',
+    prerequisites: 'CP0001 Chapter 8 recommended',
+    contentHtml: `
+      <p class="text-base-content/90 leading-relaxed text-base"><strong class="text-base-content">Scenario:</strong> During a planned shutdown a technician discovers that the physical label on the sensor connected to Port 1 has completely worn away. There is no maintenance record for this port. Before ordering a spare and signing off the job, you must positively identify the device using the app — without touching the physical unit.</p>
+
+      <!-- Identity field diagram -->
+      <div class="rounded-xl border border-base-300 bg-base-200 p-3 mt-4">
+        <p class="text-xs font-semibold text-base-content/60 uppercase tracking-wide mb-2">What the IO-Link master reads automatically at connection</p>
+        <svg viewBox="0 0 560 120" xmlns="http://www.w3.org/2000/svg" class="w-full" style="font-family:system-ui,sans-serif">
+          <rect x="10" y="20" width="100" height="80" rx="8" fill="#1e293b" stroke="#334155" stroke-width="1.5"/>
+          <text x="60" y="48" text-anchor="middle" fill="#94a3b8" font-size="8" font-weight="600">IO-Link</text>
+          <text x="60" y="60" text-anchor="middle" fill="#94a3b8" font-size="8" font-weight="600">Sensor</text>
+          <text x="60" y="75" text-anchor="middle" fill="#64748b" font-size="7">(unknown label)</text>
+          <line x1="110" y1="60" x2="145" y2="60" stroke="#475569" stroke-width="1.5" marker-end="url(#arr8)"/>
+          <defs><marker id="arr8" markerWidth="6" markerHeight="6" refX="3" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#475569"/></marker></defs>
+          <rect x="145" y="20" width="110" height="80" rx="8" fill="#0f172a" stroke="#f97316" stroke-width="1.5"/>
+          <text x="200" y="48" text-anchor="middle" fill="#fb923c" font-size="8" font-weight="600">AL1350 Master</text>
+          <text x="200" y="62" text-anchor="middle" fill="#94a3b8" font-size="7">reads identity</text>
+          <text x="200" y="75" text-anchor="middle" fill="#94a3b8" font-size="7">at power-up</text>
+          <line x1="255" y1="38" x2="290" y2="28" stroke="#475569" stroke-width="1.2" marker-end="url(#arr8)"/>
+          <line x1="255" y1="60" x2="290" y2="60" stroke="#475569" stroke-width="1.2" marker-end="url(#arr8)"/>
+          <line x1="255" y1="82" x2="290" y2="92" stroke="#475569" stroke-width="1.2" marker-end="url(#arr8)"/>
+          <rect x="290" y="14" width="250" height="24" rx="6" fill="#1e3a5f"/>
+          <text x="302" y="25" fill="#60a5fa" font-size="8" font-weight="700">Vendor ID:</text>
+          <text x="360" y="25" fill="#93c5fd" font-size="8">612 → OMRON Corporation</text>
+          <rect x="290" y="48" width="250" height="24" rx="6" fill="#14532d"/>
+          <text x="302" y="59" fill="#4ade80" font-size="8" font-weight="700">Device ID:</text>
+          <text x="355" y="59" fill="#86efac" font-size="8">131090 → E2E-X16MB1T12</text>
+          <rect x="290" y="82" width="250" height="24" rx="6" fill="#3b1f6b"/>
+          <text x="302" y="93" fill="#c084fc" font-size="8" font-weight="700">PDin hex:</text>
+          <text x="350" y="93" fill="#d8b4fe" font-size="8">5000 → decoded process data</text>
+        </svg>
+      </div>
+
+      <!-- Questions -->
+      <p class="mt-4 font-medium text-base-content"><strong>Q1.</strong> Open the <a href="#" data-page="io-link-master" class="link link-secondary">IO-Link Master page</a>. What Vendor ID does Port 1 report?</p>
+      <div class="space-y-2 mt-1">
+        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="cp2-ws7-q1" value="a" class="radio radio-sm radio-secondary"> 310</label>
+        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="cp2-ws7-q1" value="b" class="radio radio-sm radio-secondary"> 612</label>
+        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="cp2-ws7-q1" value="c" class="radio radio-sm radio-secondary"> 1586</label>
+      </div>
+
+      <p class="mt-4 font-medium text-base-content"><strong>Q2.</strong> The IO-Link Master page shows the Vendor ID resolved to a company name. Which manufacturer does Vendor ID 612 identify?</p>
+      <div class="space-y-2 mt-1">
+        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="cp2-ws7-q2" value="a" class="radio radio-sm radio-secondary"> ifm electronic</label>
+        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="cp2-ws7-q2" value="b" class="radio radio-sm radio-secondary"> Balluff</label>
+        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="cp2-ws7-q2" value="c" class="radio radio-sm radio-secondary"> OMRON Corporation</label>
+      </div>
+
+      <p class="mt-4 font-medium text-base-content"><strong>Q3.</strong> Port 1 also reports Device ID 131090, which the app resolves to <strong>E2E-X16MB1T12 Proximity</strong>. Why does knowing the Device ID matter when ordering a spare?</p>
+      <div class="space-y-2 mt-1">
+        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="cp2-ws7-q3" value="a" class="radio radio-sm radio-secondary"> The master uses it to set the sensor's IP address on the IO-Link network</label>
+        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="cp2-ws7-q3" value="b" class="radio radio-sm radio-secondary"> It uniquely identifies the exact model, so you order the right part first time and the master can restore parameters automatically after swap</label>
+        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="cp2-ws7-q3" value="c" class="radio radio-sm radio-secondary"> It shows the sensor's remaining service life in hours</label>
+      </div>
+
+      <p class="mt-4 font-medium text-base-content"><strong>Q4.</strong> Port 1 currently shows PDin hex <code class="font-mono bg-base-200 px-1 rounded text-sm">5000</code>. The first byte is <code class="font-mono bg-base-200 px-1 rounded text-sm">50</code> (binary 0101 0000). Bit 4 being set indicates the instability alarm is active. What is the correct maintenance response?</p>
+      <div class="space-y-2 mt-1">
+        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="cp2-ws7-q4" value="a" class="radio radio-sm radio-secondary"> No action — an instability alarm means the sensor passed its self-test</label>
+        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="cp2-ws7-q4" value="b" class="radio radio-sm radio-secondary"> Check sensor alignment — the target is likely at the edge of the sensing range</label>
+        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="cp2-ws7-q4" value="c" class="radio radio-sm radio-secondary"> Replace the sensor immediately — bit 4 means a permanent hardware fault</label>
+      </div>
+
+      <p class="mt-4 font-medium text-base-content"><strong>Q5.</strong> A sensor with a worn label is found on Port 2. The app shows Vendor ID 1586 and Device ID 1052673. Which spare should you order?</p>
+      <div class="space-y-2 mt-1">
+        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="cp2-ws7-q5" value="a" class="radio radio-sm radio-secondary"> IFM TV7105 temperature sensor</label>
+        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="cp2-ws7-q5" value="b" class="radio radio-sm radio-secondary"> OMRON E2E-X16MB1T12 proximity sensor</label>
+        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="cp2-ws7-q5" value="c" class="radio radio-sm radio-secondary"> RS Pro M18 capacitive sensor (Carlo Gavazzi OEM, product code 2377240)</label>
+      </div>
+
+      <!-- PDin reference table -->
+      <div class="rounded-xl border-2 border-secondary/30 bg-secondary/5 p-4 mt-4 space-y-2">
+        <p class="font-bold text-base-content text-sm">📋 PDin quick reference — sensors in this kit</p>
+        <div class="overflow-x-auto">
+          <table class="table table-zebra table-sm text-xs">
+            <thead><tr><th>Port</th><th>Sensor</th><th>PDin example</th><th>Key bytes</th></tr></thead>
+            <tbody>
+              <tr><td>1</td><td>OMRON Proximity</td><td class="font-mono">5000</td><td>Byte 0 bit 0 = output; bit 4 = instability alarm; bit 5 = over-approach alarm</td></tr>
+              <tr><td>2</td><td>RS Pro Capacitive</td><td class="font-mono">000A0002</td><td>Bytes 0–1 = 16-bit analogue dielectric value; byte 3 bit 1 = SO2 output</td></tr>
+              <tr><td>3</td><td>IFM TV7105 Temp</td><td class="font-mono">00FEFF00</td><td>Bytes 0–1 = int16 raw temperature ÷ 10 = °C; bytes 2–3 = SP1/SP2 flags</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Challenge -->
+      <div class="rounded-xl border-2 border-warning/50 bg-warning/5 p-4 mt-4 space-y-3">
+        <p class="font-bold text-base-content text-base">🎯 Challenge — positively identify all connected sensors</p>
+        <p class="text-sm text-base-content/80">Using the <a href="#" data-page="io-link-master" class="link link-warning">IO-Link Master page</a>, complete the identification task for every active port and record the findings. Tick each item when confirmed.</p>
+        <div class="space-y-2 text-sm">
+          <label class="cp2-kit-item flex items-center gap-3 cursor-pointer rounded-xl border-2 border-transparent px-3 py-2 transition-all duration-200">
+            <input type="checkbox" class="checkbox checkbox-sm checkbox-warning flex-shrink-0">
+            <span class="cp2-kit-text">On the IO-Link Master page, note the <strong>Vendor ID and resolved company name</strong> for Port 1, Port 2, and Port 3</span>
+          </label>
+          <label class="cp2-kit-item flex items-center gap-3 cursor-pointer rounded-xl border-2 border-transparent px-3 py-2 transition-all duration-200">
+            <input type="checkbox" class="checkbox checkbox-sm checkbox-warning flex-shrink-0">
+            <span class="cp2-kit-text">Confirm the <strong>Device ID and model name</strong> for each port — verify they match the hardware on the bench</span>
+          </label>
+          <label class="cp2-kit-item flex items-center gap-3 cursor-pointer rounded-xl border-2 border-transparent px-3 py-2 transition-all duration-200">
+            <input type="checkbox" class="checkbox checkbox-sm checkbox-warning flex-shrink-0">
+            <span class="cp2-kit-text">Read the live <strong>PDin hex</strong> for Port 3 (temperature sensor) and decode the first two bytes into a °C value using the formula: int16 ÷ 10</span>
+          </label>
+          <label class="cp2-kit-item flex items-center gap-3 cursor-pointer rounded-xl border-2 border-transparent px-3 py-2 transition-all duration-200">
+            <input type="checkbox" class="checkbox checkbox-sm checkbox-warning flex-shrink-0">
+            <span class="cp2-kit-text">Check Port 1's PDin first byte — if bit 4 is set, <strong>investigate sensor alignment</strong> before signing off the job</span>
+          </label>
+          <label class="cp2-kit-item flex items-center gap-3 cursor-pointer rounded-xl border-2 border-transparent px-3 py-2 transition-all duration-200">
+            <input type="checkbox" class="checkbox checkbox-sm checkbox-warning flex-shrink-0">
+            <span class="cp2-kit-text">Record the Vendor ID, Device ID, and current PDin for each port in a maintenance log entry — this is the IO-Link equivalent of a physical inspection report</span>
+          </label>
+        </div>
+      </div>
+
+      <div class="divider my-2"></div>
+      <button type="button" class="btn btn-ghost btn-sm ws-suggested-btn" data-target="cp2-ws7-suggested">Show suggested answers</button>
+      <div id="cp2-ws7-suggested" class="hidden p-4 rounded-lg border border-base-300 bg-base-300/50 text-base-content/80 text-sm leading-relaxed ws-suggested">Q1: b — Vendor ID 612 is shown on the Port 1 card on the IO-Link Master page. Q2: c — 612 is registered to OMRON Corporation in the IO-Link Community vendor table. Q3: b — the Device ID uniquely identifies the model; the master can use it to restore IODD parameters automatically after a swap. Q4: b — instability alarm means the target is at the sensing range boundary; adjust alignment before considering replacement. Q5: c — Vendor 1586 (RS Pro) Device 1052673 = the M18 capacitive sensor (Carlo Gavazzi OEM, RS Pro part 2377240).</div>
     `
   }
 ];

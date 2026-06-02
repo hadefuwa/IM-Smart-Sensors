@@ -173,7 +173,7 @@ const WORKSHEETS = [
             <span class="kit-text"><strong>IO-Link Master (IFM AL1350)</strong> — the orange box with numbered ports along the side. This is the hub. Everything else plugs into it.</span></label>
           <label class="kit-item flex items-center gap-3 cursor-pointer rounded-xl border-2 border-transparent px-3 py-2 transition-all duration-200">
             <input type="checkbox" class="checkbox checkbox-md checkbox-success flex-shrink-0">
-            <span class="kit-text"><strong>Port 1 — Photoelectric Sensor</strong> — the blue M18 barrel with a red LED on the face. Fires a light beam and detects when something gets in the way.</span></label>
+            <span class="kit-text"><strong>Port 1 — Proximity Sensor (Omron E2E-X16MB1T12)</strong> — the M18 barrel with a flat sensing face. Creates an electromagnetic field and detects when a metal object enters it — no contact, no light beam needed.</span></label>
           <label class="kit-item flex items-center gap-3 cursor-pointer rounded-xl border-2 border-transparent px-3 py-2 transition-all duration-200">
             <input type="checkbox" class="checkbox checkbox-md checkbox-success flex-shrink-0">
             <span class="kit-text"><strong>Port 2 — Capacitive Sensor</strong> — the larger white M18 cylinder. Detects materials like liquid, powder, or plastic — even through a container wall.</span></label>
@@ -199,8 +199,8 @@ const WORKSHEETS = [
 
           <!-- Sensor boxes -->
           <rect x="2"   y="24"  width="124" height="32" rx="5" fill="#3b82f6"/>
-          <text x="64"  y="37"  text-anchor="middle" fill="white" font-size="10" font-weight="600">Photoelectric</text>
-          <text x="64"  y="49"  text-anchor="middle" fill="#bfdbfe" font-size="8">Port 1 · IO-Link</text>
+          <text x="64"  y="37"  text-anchor="middle" fill="white" font-size="10" font-weight="600">Proximity (E2E)</text>
+          <text x="64"  y="49"  text-anchor="middle" fill="#bfdbfe" font-size="8">Port 1 · IO-Link V1.1</text>
 
           <rect x="2"   y="64"  width="124" height="32" rx="5" fill="#7c3aed"/>
           <text x="64"  y="77"  text-anchor="middle" fill="white" font-size="10" font-weight="600">Capacitive</text>
@@ -277,7 +277,7 @@ const WORKSHEETS = [
           <div class="rounded-lg bg-base-200 border border-base-300 p-3 space-y-1 text-center">
             <p class="text-xs text-base-content/50 font-medium">PORT 1</p>
             <div id="intro-p1-dot" class="w-6 h-6 rounded-full bg-base-300 mx-auto transition-all"></div>
-            <p class="text-xs font-semibold text-base-content">Photoelectric</p>
+            <p class="text-xs font-semibold text-base-content">Proximity</p>
             <p id="intro-p1-val" class="text-xs text-base-content/70">—</p>
           </div>
           <div class="rounded-lg bg-base-200 border border-base-300 p-3 space-y-1 text-center">
@@ -308,14 +308,14 @@ const WORKSHEETS = [
         <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="ws0-q1" value="c" class="radio radio-sm radio-primary"> Blue — it is called the controller</label>
       </div>
 
-      <p class="mt-3 font-medium text-base-content"><strong>Q2.</strong> Which sensor detects objects by firing a beam of light?</p>
+      <p class="mt-3 font-medium text-base-content"><strong>Q2.</strong> Which sensor on this kit detects metal objects using an electromagnetic field?</p>
       <div class="space-y-2 mt-1">
         <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="ws0-q2" value="a" class="radio radio-sm radio-primary"> The capacitive sensor on Port 2</label>
         <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="ws0-q2" value="b" class="radio radio-sm radio-primary"> The temperature sensor on Port 3</label>
-        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="ws0-q2" value="c" class="radio radio-sm radio-primary"> The photoelectric sensor on Port 1</label>
+        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="ws0-q2" value="c" class="radio radio-sm radio-primary"> The proximity sensor on Port 1</label>
       </div>
 
-      <p class="mt-3 font-medium text-base-content"><strong>Q3.</strong> What can the capacitive sensor detect that the photoelectric sensor cannot?</p>
+      <p class="mt-3 font-medium text-base-content"><strong>Q3.</strong> What can the capacitive sensor detect that the proximity sensor cannot?</p>
       <div class="space-y-2 mt-1">
         <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="ws0-q3" value="a" class="radio radio-sm radio-primary"> Objects moving faster than 1 m/s</label>
         <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="ws0-q3" value="b" class="radio radio-sm radio-primary"> Materials like liquid or powder — even through a container wall</label>
@@ -334,10 +334,10 @@ const WORKSHEETS = [
       <!-- Challenge -->
       <div class="rounded-xl border-2 border-warning/50 bg-warning/5 p-4 mt-4 space-y-3" id="ws-challenge-box">
         <p class="font-bold text-base-content text-base">🎯 Challenge</p>
-        <p class="text-sm text-base-content/80">Trigger the photoelectric sensor with your hand — but <strong>do not</strong> trigger the capacitive sensor. If the capacitive detects anything at all, you fail and must reset.</p>
+        <p class="text-sm text-base-content/80">Trigger the proximity sensor (Port 1) with a <strong>metal object</strong> (screwdriver, spanner) — but <strong>do not</strong> trigger the capacitive sensor. If the capacitive detects anything at all, you fail and must reset.</p>
         <div class="grid grid-cols-2 gap-3">
           <div class="rounded-lg bg-base-200 border border-base-300 p-3 text-center space-y-1">
-            <p class="text-xs text-base-content/50 font-medium uppercase tracking-wide">Port 1 · Photoelectric</p>
+            <p class="text-xs text-base-content/50 font-medium uppercase tracking-wide">Port 1 · Proximity</p>
             <div id="ch-p1-dot" class="w-8 h-8 rounded-full bg-base-300 mx-auto transition-all duration-100"></div>
             <p id="ch-p1-val" class="text-xs font-bold text-base-content">—</p>
           </div>
@@ -515,6 +515,7 @@ const WORKSHEETS = [
       </div>
     `
   },
+  /* ── COMMENTED OUT — Photoelectric WS3 (swap back by commenting this block in and commenting out the proximity WS3 below) ──
   {
     id: 3,
     title: 'The Photoelectric Sensor',
@@ -523,48 +524,67 @@ const WORKSHEETS = [
     whyItMatters: 'Photoelectric sensors are everywhere on production lines. Knowing what they detect, what their LED means, and what "lens dirty" actually looks like will save you a lot of time.',
     relatedDashboard: 'Dashboard: Port 1 — Photoelectric',
     prerequisites: 'Complete Worksheet 1 first',
+    contentHtml: `...photoelectric content preserved — see git history or cp0001 backup...`
+  },
+  ── END PHOTOELECTRIC WS3 COMMENT ── */
+
+  // ── PROXIMITY SENSOR WS3 (Omron E2E-X16MB1T12) ──
+  {
+    id: 3,
+    title: 'The Proximity Sensor',
+    shortDesc: 'Detecting metal without touching — Port 1.',
+    estimatedTime: 'About 15 min',
+    whyItMatters: 'Inductive proximity sensors are one of the most common sensor types in manufacturing. The Omron E2E runs IO-Link V1.1 which gives you live diagnostic alarms — instability and over-approach — that warn you before the sensor causes production problems.',
+    relatedDashboard: 'Dashboard: Port 1 — Proximity',
+    prerequisites: 'Complete Worksheet 1 first',
     contentHtml: `
-      <p class="text-base-content/90 leading-relaxed">A photoelectric sensor fires a beam of light and checks whether it bounces back. If something is in the way, the output switches on.</p>
+      <p class="text-base-content/90 leading-relaxed">An inductive proximity sensor generates an oscillating electromagnetic field at its face. When a metal target enters that field it absorbs energy and damps the oscillation — the sensor detects this change and switches its output on. It never touches the target and does not need a light beam.</p>
 
       <!-- M-size explainer -->
       <div class="rounded-lg border border-base-300 bg-base-200 p-3 mt-3 text-sm">
         <p class="font-bold text-base-content mb-1">📏 What does M18 mean?</p>
-        <p class="text-base-content/80">The <strong>M number</strong> is the diameter of the sensor body in millimetres — like a bolt size. <strong>M18</strong> = 18 mm across. You'll see M8, M12, M18, and M30 in industry. Bigger number = bigger sensor. Both the photoelectric and capacitive on this kit are M18 — same diameter, but different shapes.</p>
+        <p class="text-base-content/80">The <strong>M number</strong> is the diameter of the sensor body in millimetres — like a bolt size. <strong>M18</strong> = 18 mm across. Both the proximity and capacitive sensors on this kit are M18 — same thread size, different sensing technology.</p>
       </div>
 
-      <!-- WS3 SVG diagram -->
+      <!-- WS3 SVG diagram — electromagnetic field -->
       <div class="rounded-xl border border-base-300 bg-base-200 p-3 mt-3">
-        <p class="text-xs font-semibold text-base-content/60 uppercase tracking-wide mb-2">How it works</p>
+        <p class="text-xs font-semibold text-base-content/60 uppercase tracking-wide mb-2">How inductive sensing works</p>
         <svg viewBox="0 0 570 175" xmlns="http://www.w3.org/2000/svg" class="w-full" style="font-family:system-ui,sans-serif">
           <!-- Sensor body -->
-          <rect x="10" y="55" width="90" height="65" rx="8" fill="#1e3a5f"/>
-          <circle cx="100" cy="87" r="8" fill="#ef4444" opacity="0.9"/>
-          <text x="55" y="82" text-anchor="middle" fill="white" font-size="10" font-weight="600">Photoelectric</text>
-          <text x="55" y="96" text-anchor="middle" fill="#93c5fd" font-size="8">M18 sensor</text>
-          <text x="55" y="132" text-anchor="middle" fill="#94a3b8" font-size="8">Emitter / Receiver</text>
-
-          <!-- Light beam (dashed red line) -->
-          <line x1="108" y1="87" x2="330" y2="87" stroke="#ef4444" stroke-width="2" stroke-dasharray="8,4"/>
-          <text x="220" y="78" text-anchor="middle" fill="#ef4444" font-size="9" font-weight="600">light beam</text>
-
-          <!-- Object blocking beam -->
-          <rect x="330" y="55" width="60" height="65" rx="5" fill="#6b7280"/>
-          <text x="360" y="84" text-anchor="middle" fill="white" font-size="10" font-weight="600">Object</text>
-          <text x="360" y="98" text-anchor="middle" fill="#d1d5db" font-size="8">(blocks beam)</text>
-
-          <!-- Arrow showing beam is blocked -->
-          <line x1="295" y1="87" x2="328" y2="87" stroke="#ef4444" stroke-width="2" stroke-dasharray="8,4"/>
-          <line x1="390" y1="87" x2="430" y2="87" stroke="#94a3b8" stroke-width="1.5" stroke-dasharray="4,3" opacity="0.4"/>
-
+          <rect x="10" y="50" width="90" height="75" rx="8" fill="#1e3a5f"/>
+          <text x="55" y="78" text-anchor="middle" fill="white" font-size="10" font-weight="600">Proximity</text>
+          <text x="55" y="92" text-anchor="middle" fill="#93c5fd" font-size="8">Omron E2E-X16</text>
+          <text x="55" y="106" text-anchor="middle" fill="#93c5fd" font-size="7">M18 inductive</text>
+          <text x="55" y="138" text-anchor="middle" fill="#94a3b8" font-size="8">Coil / Oscillator</text>
+          <!-- EM field arcs -->
+          <path d="M100 87 Q140 60 140 87 Q140 114 100 87" fill="none" stroke="#3b82f6" stroke-width="2" opacity="0.5" stroke-dasharray="6,3"/>
+          <path d="M100 87 Q162 46 162 87 Q162 128 100 87" fill="none" stroke="#3b82f6" stroke-width="2" opacity="0.4" stroke-dasharray="6,3"/>
+          <path d="M100 87 Q184 32 184 87 Q184 142 100 87" fill="none" stroke="#3b82f6" stroke-width="2" opacity="0.3" stroke-dasharray="6,3"/>
+          <text x="200" y="64" text-anchor="middle" fill="#3b82f6" font-size="9" font-weight="600">EM field</text>
+          <!-- Metal target -->
+          <rect x="310" y="57" width="70" height="60" rx="5" fill="#78716c"/>
+          <text x="345" y="84" text-anchor="middle" fill="white" font-size="10" font-weight="600">Metal</text>
+          <text x="345" y="98" text-anchor="middle" fill="#d6d3d1" font-size="8">target</text>
+          <!-- Field damping -->
+          <text x="245" y="50" text-anchor="middle" fill="#ef4444" font-size="8" font-weight="600">field damped →</text>
+          <text x="245" y="62" text-anchor="middle" fill="#ef4444" font-size="7">oscillation drops</text>
           <!-- Output box -->
-          <rect x="450" y="65" width="110" height="45" rx="5" fill="#16a34a"/>
-          <text x="505" y="85" text-anchor="middle" fill="white" font-size="11" font-weight="700">OUTPUT: ON</text>
-          <circle cx="480" cy="96" r="5" fill="#86efac"/>
-          <text x="505" y="102" text-anchor="middle" fill="#bbf7d0" font-size="8">beam blocked</text>
-
+          <rect x="420" y="65" width="140" height="44" rx="5" fill="#16a34a"/>
+          <text x="490" y="84" text-anchor="middle" fill="white" font-size="11" font-weight="700">OUTPUT: ON</text>
+          <text x="490" y="100" text-anchor="middle" fill="#bbf7d0" font-size="8">metal in range → switches</text>
           <!-- Bottom note -->
-          <text x="285" y="155" text-anchor="middle" fill="#64748b" font-size="8">Beam blocked → output switches ON. No beam → output OFF.</text>
+          <text x="285" y="158" text-anchor="middle" fill="#64748b" font-size="8">Metal enters EM field → oscillation damped → output ON. Remove metal → field restores → output OFF.</text>
         </svg>
+      </div>
+
+      <!-- IO-Link V1.1 diagnostic alarms info box -->
+      <div class="rounded-lg border border-info/30 bg-info/5 p-3 mt-3 text-sm space-y-1">
+        <p class="font-bold text-base-content">IO-Link V1.1 — what it adds over standard wiring</p>
+        <p class="text-base-content/80">The Omron E2E runs IO-Link V1.1 at COM3 (230.4 kbps). On top of the basic switching output, the process data carries two extra diagnostic alarm bits:</p>
+        <ul class="list-disc list-inside mt-1 space-y-1 text-base-content/80">
+          <li><strong>Instability Alarm (PDin bit 4):</strong> The target is near the edge of the sensing range — detection may be unreliable. Adjust the bracket to bring the target further into the sensing zone.</li>
+          <li><strong>Over-Approach Alarm (PDin bit 5):</strong> The target is too close to the sensor face — excessive proximity causes oscillation overload and can damage the sensor over time. Increase the standoff distance.</li>
+        </ul>
       </div>
 
       <!-- Live section -->
@@ -577,7 +597,7 @@ const WORKSHEETS = [
           <div id="ws2-dot" class="w-8 h-8 rounded-full bg-base-300 border-2 border-base-300 transition-all duration-150 shadow-md"></div>
           <div>
             <p id="ws2-state-label" class="text-base font-bold text-base-content">—</p>
-            <p id="ws2-quality-label" class="text-xs text-base-content/60 mt-0.5">Signal quality: —</p>
+            <p id="ws2-quality-label" class="text-xs text-base-content/60 mt-0.5">Alarms: —</p>
           </div>
         </div>
         <div class="space-y-1">
@@ -585,14 +605,14 @@ const WORKSHEETS = [
           <div style="height:80px; position:relative;"><canvas id="ws2-chart"></canvas></div>
         </div>
         <div class="space-y-1">
-          <p class="text-xs text-base-content/60 font-medium uppercase tracking-wide">Signal quality %</p>
+          <p class="text-xs text-base-content/60 font-medium uppercase tracking-wide">Instability alarm history (last 60 samples — 1 = alarm active)</p>
           <div style="height:60px; position:relative;"><canvas id="ws2-sig-chart"></canvas></div>
         </div>
       </div>
 
-      <!-- Task: wave 5 times -->
+      <!-- Task: bring metal object close 5 times -->
       <div class="rounded-lg border border-success/30 bg-success/5 p-3 mt-3" id="ws2-task-box">
-        <p class="font-semibold text-base-content text-sm mb-2">🎯 Task: wave your hand in front of the sensor 5 times</p>
+        <p class="font-semibold text-base-content text-sm mb-2">🎯 Task: bring a metal object (screwdriver, spanner) close to the sensor face 5 times</p>
         <div class="flex items-center gap-3">
           <progress id="ws2-wave-progress" class="progress progress-success w-full" value="0" max="5"></progress>
           <span id="ws2-wave-count" class="text-sm font-mono font-bold text-base-content whitespace-nowrap">0 / 5</span>
@@ -600,51 +620,51 @@ const WORKSHEETS = [
         <p id="ws2-task-done" class="hidden text-success text-sm font-bold mt-1">✓ Task complete!</p>
       </div>
 
-      <p class="mt-4 font-medium text-base-content"><strong>Q1.</strong> Wave your hand in front of the sensor and watch the waveform above. What does the chart do when an object is detected?</p>
+      <p class="mt-4 font-medium text-base-content"><strong>Q1.</strong> Hold a metal object close to the sensor and watch the waveform above. What does the chart do when metal is detected?</p>
       <div class="space-y-2 mt-1">
-        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="ws2-q1" value="a" class="radio radio-sm radio-primary"> The line jumps from 0 to 1, then drops back to 0 when your hand moves away</label>
+        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="ws2-q1" value="a" class="radio radio-sm radio-primary"> The line jumps from 0 to 1, then drops back to 0 when the metal moves away</label>
         <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="ws2-q1" value="b" class="radio radio-sm radio-primary"> The line stays flat at 0 the whole time</label>
-        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="ws2-q1" value="c" class="radio radio-sm radio-primary"> The line drops below zero when something is detected</label>
+        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="ws2-q1" value="c" class="radio radio-sm radio-primary"> The line drops below zero when metal is detected</label>
       </div>
 
-      <p class="mt-3 font-medium text-base-content"><strong>Q2.</strong> The sensor output is always ON even when nothing is in front of it. What is the most likely cause?</p>
+      <p class="mt-3 font-medium text-base-content"><strong>Q2.</strong> The Instability Alarm fires while the sensor output is ON. What does this tell you about the target position?</p>
       <div class="space-y-2 mt-1">
-        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="ws2-q2" value="a" class="radio radio-sm radio-primary"> The sensor is working perfectly</label>
-        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="ws2-q2" value="b" class="radio radio-sm radio-primary"> The lens may be dirty, or a background object is reflecting the beam</label>
-        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="ws2-q2" value="c" class="radio radio-sm radio-primary"> The cable is broken</label>
+        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="ws2-q2" value="a" class="radio radio-sm radio-primary"> The sensor has detected two metal objects at the same time</label>
+        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="ws2-q2" value="b" class="radio radio-sm radio-primary"> The target is near the edge of the sensing range — detection may be unreliable</label>
+        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="ws2-q2" value="c" class="radio radio-sm radio-primary"> The sensor cable has a loose connection</label>
       </div>
 
-      <p class="mt-3 font-medium text-base-content"><strong>Q3.</strong> Hold your hand very close to the sensor face, then slowly move it 30 cm away. What happens to the signal quality reading?</p>
+      <p class="mt-3 font-medium text-base-content"><strong>Q3.</strong> The Over-Approach Alarm fires when the metal target is held very close to the sensor face. What is the correct response?</p>
       <div class="space-y-2 mt-1">
-        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="ws2-q3" value="a" class="radio radio-sm radio-primary"> Signal quality stays constant regardless of distance</label>
-        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="ws2-q3" value="b" class="radio radio-sm radio-primary"> Signal quality keeps increasing the further away you go</label>
-        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="ws2-q3" value="c" class="radio radio-sm radio-primary"> Signal quality is highest at the ideal sensing distance — too close or too far reduces it</label>
+        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="ws2-q3" value="a" class="radio radio-sm radio-primary"> Replace the sensor immediately — the over-approach alarm means it has failed</label>
+        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="ws2-q3" value="b" class="radio radio-sm radio-primary"> Increase the standoff distance between the sensor face and the target</label>
+        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="ws2-q3" value="c" class="radio radio-sm radio-primary"> Reduce sensitivity using the teach button</label>
       </div>
 
       <div class="divider my-2"></div>
 
       <div class="rounded-xl border-2 border-warning/50 bg-warning/5 p-4 mt-4 space-y-3" id="ws3-challenge-box">
-        <p class="font-bold text-base-content text-base">🔧 Maintenance Scenario — Signal Quality Audit</p>
+        <p class="font-bold text-base-content text-base">🔧 Maintenance Scenario — Stability Confirmation</p>
         <div class="rounded-lg bg-base-300/50 p-3 text-sm text-base-content/80 border border-base-300">
-          <p><strong>Job ticket:</strong> Port 1 has been flagged for intermittent misses on the production line. Run a signal quality audit using IO-Link diagnostics to determine whether the sensor is healthy, marginal, or needs repositioning.</p>
-          <p class="mt-2 text-xs text-base-content/60 font-semibold uppercase tracking-wide">IO-Link rule:</p>
+          <p><strong>Job ticket:</strong> Port 1 has been flagged for intermittent detection on the assembly line — the target bracket may have shifted. Bring a metal object (screwdriver) to the ideal sensing distance — approximately 8–12 mm from the face — and confirm the sensor reports stable detection with no instability alarm.</p>
+          <p class="mt-2 text-xs text-base-content/60 font-semibold uppercase tracking-wide">IO-Link diagnostic rule:</p>
           <div class="flex gap-2 mt-1 flex-wrap">
-            <span class="badge badge-sm bg-success/20 text-success border-success/40">&gt;80% — Healthy</span>
-            <span class="badge badge-sm bg-warning/20 text-warning border-warning/40">50–80% — Marginal</span>
-            <span class="badge badge-sm bg-error/20 text-error border-error/40">&lt;50% — Clean / Reposition</span>
+            <span class="badge badge-sm bg-success/20 text-success border-success/40">Detected + No Alarm — Stable ✓</span>
+            <span class="badge badge-sm bg-warning/20 text-warning border-warning/40">Detected + Instability — Marginal</span>
+            <span class="badge badge-sm bg-error/20 text-error border-error/40">Not Detected — Out of range</span>
           </div>
-          <p class="mt-2 text-xs text-base-content/60">Adjust the sensor position or clean the lens until signal quality reaches <strong>&gt;80%</strong>. The audit passes when a healthy reading is confirmed.</p>
+          <p class="mt-2 text-xs text-base-content/60">Position the target until the sensor detects it <strong>without</strong> the instability alarm. The audit passes when stable detection is confirmed.</p>
         </div>
         <div class="space-y-1">
           <div class="flex items-center justify-between text-xs text-base-content/60">
-            <span class="font-semibold uppercase tracking-wide">Signal Quality</span>
+            <span class="font-semibold uppercase tracking-wide">Stability Status</span>
             <span id="ws3-ch-sq-pct" class="font-mono font-bold">—</span>
           </div>
           <div class="w-full bg-base-300 rounded-full h-5 overflow-hidden">
-            <div id="ws3-ch-sq-bar" class="h-5 rounded-full transition-all duration-300 bg-error" style="width:0%"></div>
+            <div id="ws3-ch-sq-bar" class="h-5 rounded-full transition-all duration-300 bg-base-300" style="width:0%"></div>
           </div>
           <div class="flex justify-between text-xs text-base-content/40 px-0.5">
-            <span>0%</span><span>50%</span><span>80%</span><span>100%</span>
+            <span>Not detected</span><span>Detected (unstable)</span><span>Detected (stable)</span>
           </div>
         </div>
         <div id="ws3-ch-result" class="hidden rounded-lg p-3 text-center font-bold text-sm"></div>
@@ -1233,13 +1253,13 @@ const WORKSHEETS = [
       <div class="space-y-4 mt-3">
 
         <div class="rounded-xl border-2 border-primary/30 bg-primary/5 p-4 space-y-3">
-          <p class="font-bold text-base-content">🔦 Scenario A — Port 1 (Photoelectric)</p>
-          <p class="text-sm text-base-content/80">Dashboard shows <strong>Lens contamination warning</strong>. Output is stuck ON even when the conveyor is empty.</p>
+          <p class="font-bold text-base-content">🔧 Scenario A — Port 1 (Proximity)</p>
+          <p class="text-sm text-base-content/80">Dashboard shows <strong>Instability Alarm active</strong>. The output is intermittently switching even though the target appears stationary.</p>
           <p class="font-medium text-sm text-base-content mt-2">What do you do first?</p>
           <div class="space-y-2">
             <label class="flex items-center gap-2 cursor-pointer text-sm"><input type="radio" name="ws6-a" value="a" class="radio radio-xs radio-primary"> Replace the sensor immediately</label>
-            <label class="flex items-center gap-2 cursor-pointer text-sm"><input type="radio" name="ws6-a" value="b" class="radio radio-xs radio-primary"> Clean the lens — if it keeps happening, check for reflective surfaces behind the detection zone</label>
-            <label class="flex items-center gap-2 cursor-pointer text-sm"><input type="radio" name="ws6-a" value="c" class="radio radio-xs radio-primary"> Adjust the setpoint higher</label>
+            <label class="flex items-center gap-2 cursor-pointer text-sm"><input type="radio" name="ws6-a" value="b" class="radio radio-xs radio-primary"> Check and adjust the target bracket — the instability alarm means the target is at the edge of the sensing range, so moving it into the nominal zone (8–12 mm) should clear the alarm</label>
+            <label class="flex items-center gap-2 cursor-pointer text-sm"><input type="radio" name="ws6-a" value="c" class="radio radio-xs radio-primary"> Adjust the setpoint higher in the sensor parameters</label>
           </div>
         </div>
 
@@ -1336,7 +1356,7 @@ const WORKSHEETS = [
         <svg viewBox="0 0 570 165" xmlns="http://www.w3.org/2000/svg" class="w-full" style="font-family:system-ui,sans-serif">
           <!-- Sensor boxes -->
           <rect x="2"   y="18"  width="90" height="22" rx="4" fill="#3b82f6"/>
-          <text x="47"  y="33"  text-anchor="middle" fill="white" font-size="9" font-weight="600">Photoelectric P1</text>
+          <text x="47"  y="33"  text-anchor="middle" fill="white" font-size="9" font-weight="600">Proximity P1</text>
           <rect x="2"   y="46"  width="90" height="22" rx="4" fill="#7c3aed"/>
           <text x="47"  y="61"  text-anchor="middle" fill="white" font-size="9" font-weight="600">Capacitive P2</text>
           <rect x="2"   y="74"  width="90" height="22" rx="4" fill="#d97706"/>
@@ -1384,14 +1404,14 @@ const WORKSHEETS = [
       <div class="space-y-4 mt-3">
 
         <div class="rounded-xl border-2 border-primary/30 bg-primary/5 p-4 space-y-3">
-          <p class="font-bold text-base-content">🔦 Section 1 — Photoelectric Sensor (Port 1)</p>
+          <p class="font-bold text-base-content">🔧 Section 1 — Proximity Sensor (Port 1)</p>
           <label class="kit-item flex items-start gap-3 cursor-pointer rounded-xl border-2 border-transparent px-3 py-2 transition-all duration-200">
             <input type="checkbox" class="checkbox checkbox-md checkbox-success flex-shrink-0 mt-0.5">
-            <span>Wave your hand in front of the sensor and confirm the output dot changes on the Dashboard.</span>
+            <span>Hold a metal object (screwdriver, spanner) near the sensor face and confirm the output dot changes on the Dashboard.</span>
           </label>
           <label class="kit-item flex items-start gap-3 cursor-pointer rounded-xl border-2 border-transparent px-3 py-2 transition-all duration-200">
             <input type="checkbox" class="checkbox checkbox-md checkbox-success flex-shrink-0 mt-0.5">
-            <span>The waveform on the Photoelectric worksheet jumped from 0 to 1 when you triggered it.</span>
+            <span>The waveform on the Proximity Sensor worksheet jumped from 0 to 1 when the metal object was in range.</span>
           </label>
           <p class="text-sm font-medium text-base-content mt-1">What is the sensor's current output state on the dashboard?</p>
           <div class="space-y-1">
@@ -1482,11 +1502,11 @@ const WORKSHEETS = [
 
       <div class="rounded-xl border-2 border-warning/50 bg-warning/5 p-4 mt-4 space-y-3" id="ws8-challenge-box">
         <p class="font-bold text-base-content text-base">🎯 Challenge</p>
-        <p class="text-sm text-base-content/80">Complete the sequence <strong>in order</strong>: first trigger the photoelectric sensor, then trigger the capacitive sensor, then check the temperature is above 15°C. All three must happen in order.</p>
+        <p class="text-sm text-base-content/80">Complete the sequence <strong>in order</strong>: first trigger the proximity sensor with a metal object, then trigger the capacitive sensor, then check the temperature is above 15°C. All three must happen in order.</p>
         <div class="flex justify-center gap-6 py-2">
           <div class="text-center space-y-1">
             <div id="ws8-ch-s1" class="w-10 h-10 rounded-full bg-base-300 border-2 border-base-300 flex items-center justify-center text-xs font-bold text-base-content/50 transition-all mx-auto">1</div>
-            <p class="text-xs text-base-content/60">Photoelectric<br>triggered</p>
+            <p class="text-xs text-base-content/60">Proximity<br>triggered</p>
           </div>
           <div class="text-center space-y-1">
             <div id="ws8-ch-s2" class="w-10 h-10 rounded-full bg-base-300 border-2 border-base-300 flex items-center justify-center text-xs font-bold text-base-content/50 transition-all mx-auto">2</div>
@@ -1600,7 +1620,7 @@ let _alarmThreshold = 40;
 // WS2 (smart sensor) challenge
 let _ws2ChDone = false;
 
-// WS3 (photoelectric) challenge — signal quality audit
+// WS3 (proximity) challenge — stability confirmation
 let _ws3ChDone = false;
 
 // WS4 (capacitive) challenge — false trigger fix via ISDU
@@ -1658,7 +1678,7 @@ function initLiveIntro(container) {
     const p3Active = connected && p3?.mode === 'io-link';
     const p4Active = connected && p4?.mode === 'io-link';
 
-    const det1  = p1?.pdin_decoded?.object_detected;
+    const det1  = p1?.pdin_decoded?.object_present || p1?.pdin_decoded?.object_detected;
     const temp3 = p3?.pdin_decoded?.temperature_c;
     const c4    = p4?.pdin_decoded?.color1;
     const cnt2  = p2?.detection_counter ?? 0;
@@ -1666,7 +1686,7 @@ function initLiveIntro(container) {
     const det2 = p2?.pdin_decoded?.object_detected;
 
     setPortCard('intro-p1-dot', 'intro-p1-val', p1Active,
-      p1Active ? (det1 ? 'Detected ●' : 'No object ○') : 'Inactive', colours.photo);
+      p1Active ? (det1 ? 'Metal detected ●' : 'No metal ○') : 'Inactive', colours.photo);
     setPortCard('intro-p2-dot', 'intro-p2-val', p2Active,
       p2Active ? (det2 ? 'Detected ●' : 'No object ○') : 'Inactive', colours.cap);
     setPortCard('intro-p3-dot', 'intro-p3-val', p3Active,
@@ -1710,7 +1730,7 @@ function initLiveIntro(container) {
       } else if (det1) {
         _chSucceeded = true;
         chResult.className = 'rounded-lg p-3 text-center font-bold text-base bg-success/20 text-success border border-success/40';
-        chResult.textContent = '✓ Challenge complete! Photoelectric triggered, capacitive clean.';
+        chResult.textContent = '✓ Challenge complete! Proximity triggered with metal object, capacitive clean.';
         chResult.classList.remove('hidden');
         chP1dot.style.backgroundColor = '#22c55e';
         chP1dot.style.boxShadow = '0 0 12px #22c55e80';
@@ -1766,12 +1786,12 @@ function initLiveWs2Smart(container) {
     const p3 = getPort(data, 3);
     const p4 = getPort(data, 4);
 
-    const det1  = p1?.pdin_decoded?.object_detected;
+    const det1  = p1?.pdin_decoded?.object_present || p1?.pdin_decoded?.object_detected;
     const det2  = p2?.pdin_decoded?.object_detected;
     const temp3 = p3?.pdin_decoded?.temperature_c;
     const c4    = p4?.pdin_decoded?.color1;
 
-    setSmallDot('ws2-ch-p1', 'ws2-ch-p1-val', !!det1, det1 ? 'Detected' : 'Clear', colours.photo);
+    setSmallDot('ws2-ch-p1', 'ws2-ch-p1-val', !!det1, det1 ? 'Metal' : 'Clear', colours.photo);
     setSmallDot('ws2-ch-p2', 'ws2-ch-p2-val', !!det2, det2 ? 'Detected' : 'Clear', colours.cap);
     setSmallDot('ws2-ch-p3', 'ws2-ch-p3-val', p3?.mode === 'io-link',
       temp3 != null ? `${temp3.toFixed(1)}°C` : '—', colours.temp);
@@ -1801,6 +1821,7 @@ function initLiveWs2Smart(container) {
   }
 }
 
+// WS3 — now drives Omron E2E proximity sensor (was photoelectric)
 function initLiveWs2(container) {
   _lastPhotoState = false;
   _photoWaveCount = 0;
@@ -1810,18 +1831,20 @@ function initLiveWs2(container) {
     [{ data: Array(60).fill(0), borderColor: '#3b82f6', backgroundColor: 'rgba(59,130,246,0.15)',
        fill: true, tension: 0.3, pointRadius: 0, borderWidth: 2 }], -0.1, 1.2, '');
   const sigChart = makeChart('ws2-sig-chart', 'line',
-    [{ data: Array(60).fill(null), borderColor: '#10b981', backgroundColor: 'rgba(16,185,129,0.1)',
-       fill: true, tension: 0.3, pointRadius: 0, borderWidth: 2 }], 0, 100, '%');
+    [{ data: Array(60).fill(0), borderColor: '#f59e0b', backgroundColor: 'rgba(245,158,11,0.1)',
+       fill: true, tension: 0.3, pointRadius: 0, borderWidth: 2 }], -0.1, 1.2, '');
 
   startLiveData(data => {
     const port = getPort(data, 1);
     setLiveStatus('ws2-live-badge', !!port);
     if (!port || !port.pdin_decoded) return;
 
-    const det = port.pdin_decoded.object_detected || false;
-    const sq  = port.pdin_decoded.signal_quality_percent ?? null;
+    // Omron uses object_present; keep object_detected as fallback
+    const det     = port.pdin_decoded.object_present || port.pdin_decoded.object_detected || false;
+    const instab  = port.pdin_decoded.instability_alarm   || false;
+    const overApp = port.pdin_decoded.over_approach_alarm || false;
 
-    // dot
+    // detection dot
     const dot = container.querySelector('#ws2-dot');
     if (dot) {
       dot.className = det
@@ -1829,9 +1852,17 @@ function initLiveWs2(container) {
         : 'w-8 h-8 rounded-full border-2 shadow-md transition-all duration-150 bg-base-300 border-base-300';
     }
     const lbl = container.querySelector('#ws2-state-label');
-    if (lbl) lbl.textContent = det ? 'Object detected' : 'No object';
+    if (lbl) lbl.textContent = det ? 'Metal detected' : 'No metal';
     const qLbl = container.querySelector('#ws2-quality-label');
-    if (qLbl) qLbl.textContent = sq !== null ? `Signal quality: ${sq}%` : 'Signal quality: —';
+    if (qLbl) {
+      const alarms = [];
+      if (instab)  alarms.push('Instability');
+      if (overApp) alarms.push('Over-approach');
+      qLbl.textContent = alarms.length ? `Alarms: ${alarms.join(', ')}` : 'Alarms: None';
+      qLbl.className = alarms.length
+        ? 'text-xs text-warning mt-0.5 font-semibold'
+        : 'text-xs text-base-content/60 mt-0.5';
+    }
 
     // task: count rising edges
     if (det && !_lastPhotoState) {
@@ -1846,32 +1877,39 @@ function initLiveWs2(container) {
     }
     _lastPhotoState = det;
 
-    // ── WS3 challenge: signal quality audit ─────────────────────────────────
-    if (sq !== null) {
-      const sqBar = container.querySelector('#ws3-ch-sq-bar');
-      const sqPct = container.querySelector('#ws3-ch-sq-pct');
-      if (sqPct) sqPct.textContent = `${sq}%`;
-      if (sqBar) {
-        sqBar.style.width = `${sq}%`;
-        sqBar.className = sq >= 80
-          ? 'h-5 rounded-full transition-all duration-300 bg-success'
-          : sq >= 50
-            ? 'h-5 rounded-full transition-all duration-300 bg-warning'
-            : 'h-5 rounded-full transition-all duration-300 bg-error';
+    // ── WS3 challenge: stability confirmation ────────────────────────────────
+    const sqBar = container.querySelector('#ws3-ch-sq-bar');
+    const sqPct = container.querySelector('#ws3-ch-sq-pct');
+    if (sqPct) {
+      if (!det) {
+        sqPct.textContent = 'Not detected';
+      } else if (instab) {
+        sqPct.textContent = 'Detected — Unstable';
+      } else {
+        sqPct.textContent = 'Detected — Stable ✓';
       }
-      if (!_ws3ChDone && sq >= 80) {
-        _ws3ChDone = true;
-        const ws3Result = container.querySelector('#ws3-ch-result');
-        if (ws3Result) {
-          ws3Result.className = 'rounded-lg p-3 text-center font-bold text-base bg-success/20 text-success border border-success/40';
-          ws3Result.textContent = `✓ Audit complete — signal quality ${sq}% (healthy). Sensor confirmed serviceable. Log it and move on.`;
-          ws3Result.classList.remove('hidden');
-        }
+    }
+    if (sqBar) {
+      const w = !det ? 0 : instab ? 50 : 100;
+      sqBar.style.width = `${w}%`;
+      sqBar.className = !det
+        ? 'h-5 rounded-full transition-all duration-300 bg-error'
+        : instab
+          ? 'h-5 rounded-full transition-all duration-300 bg-warning'
+          : 'h-5 rounded-full transition-all duration-300 bg-success';
+    }
+    if (!_ws3ChDone && det && !instab) {
+      _ws3ChDone = true;
+      const ws3Result = container.querySelector('#ws3-ch-result');
+      if (ws3Result) {
+        ws3Result.className = 'rounded-lg p-3 text-center font-bold text-base bg-success/20 text-success border border-success/40';
+        ws3Result.textContent = '✓ Audit complete — stable detection confirmed, no instability alarm. Sensor is correctly positioned. Log it and move on.';
+        ws3Result.classList.remove('hidden');
       }
     }
 
     pushToChart(chart, det ? 1 : 0);
-    if (sq !== null) pushToChart(sigChart, sq);
+    pushToChart(sigChart, instab ? 1 : 0);
   });
 
   // WS3 challenge reset

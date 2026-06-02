@@ -176,23 +176,16 @@ export function createCounterDisplay(containerId, state = {}, options = {}) {
 
   // Render the counter display
   const render = (sensorState) => {
-    const isDetected = sensorState.object_detected || false;
-    const signalQuality = sensorState.signal_quality_percent || 0;
-    
-    // Increment counter if object is detected (simple logic for demo)
+    // Support both proximity (object_present) and legacy photoelectric (object_detected)
+    const isDetected = sensorState.object_present || sensorState.object_detected || false;
+
     if (isDetected && !render.lastDetected) {
       currentCount++;
     }
     render.lastDetected = isDetected;
 
-    // Signal quality color
-    let qualityColor = 'text-success';
-    if (signalQuality < 40) qualityColor = 'text-error';
-    else if (signalQuality < 70) qualityColor = 'text-warning';
-
     container.innerHTML = `
       <div class="counter-display-wrapper flex flex-col items-center justify-center p-4 cursor-pointer hover:bg-base-300/50 rounded-lg transition-all">
-        <!-- Part Present Indicator -->
         <div class="mb-3">
           <div class="indicator-light w-16 h-16 rounded-full border-4 border-base-content/20 flex items-center justify-center" style="background-color: ${isDetected ? '#22c55e' : '#374151'}; box-shadow: ${isDetected ? '0 0 20px #22c55e' : 'none'};">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 ${isDetected ? 'text-white' : 'text-base-content/30'}" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -200,24 +193,13 @@ export function createCounterDisplay(containerId, state = {}, options = {}) {
             </svg>
           </div>
         </div>
-        
-        <!-- Counter Display -->
         <div class="text-center mb-2">
           <div class="text-2xl font-bold font-mono">${currentCount.toLocaleString()}</div>
-          <div class="text-xs opacity-60">Total Count</div>
+          <div class="text-xs opacity-60">Detection Count</div>
         </div>
-
-        <!-- Signal Quality Bar -->
-        ${signalQuality > 0 ? `
-          <div class="w-full mt-2">
-            <div class="text-xs ${qualityColor} mb-1">Signal: ${signalQuality}%</div>
-            <progress class="progress ${qualityColor === 'text-success' ? 'progress-success' : qualityColor === 'text-warning' ? 'progress-warning' : 'progress-error'} w-full h-2" value="${signalQuality}" max="100"></progress>
-          </div>
-        ` : ''}
-
-        <div class="mt-3 text-center">
-          <div class="text-sm font-semibold">Photoelectric Sensor</div>
-          <div class="text-xs opacity-60">${isDetected ? 'Object Present' : 'No Object'}</div>
+        <div class="mt-1 text-center">
+          <div class="text-sm font-semibold">Proximity Sensor</div>
+          <div class="text-xs opacity-60">${isDetected ? 'Metal Detected' : 'No Object'}</div>
         </div>
       </div>
     `;
