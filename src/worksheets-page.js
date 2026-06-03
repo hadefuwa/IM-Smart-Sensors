@@ -2,6 +2,7 @@
  * CP0001: Maintenance on Smart Sensors
  * 7 worksheets with embedded live sensor charts, indicators, sliders, and task progress.
  */
+import { markVisited } from './progress-page.js';
 
 import Chart from 'chart.js/auto';
 
@@ -15,6 +16,7 @@ let _wsLive = null;
 let _wsCallback = null;
 let _wsReconnectTimer = null;
 const _activeCharts = {};
+let _canvasAnimCancellers = [];
 
 function startLiveData(callback) {
   stopLiveData();
@@ -334,7 +336,7 @@ const WORKSHEETS = [
       <!-- Challenge -->
       <div class="rounded-xl border-2 border-warning/50 bg-warning/5 p-4 mt-4 space-y-3" id="ws-challenge-box">
         <p class="font-bold text-base-content text-base">🎯 Challenge</p>
-        <p class="text-sm text-base-content/80">Trigger the proximity sensor (Port 1) with a <strong>metal object</strong> (screwdriver, spanner) — but <strong>do not</strong> trigger the capacitive sensor. If the capacitive detects anything at all, you fail and must reset.</p>
+        <p class="text-sm text-base-content/80">Trigger the proximity sensor (Port 1) with a <strong>metal object</strong> (screwdriver, spanner) — but <strong>do not</strong> trigger the capacitive sensor. If the capacitive raw value exceeds the tolerance, you fail and must reset.</p>
         <div class="grid grid-cols-2 gap-3">
           <div class="rounded-lg bg-base-200 border border-base-300 p-3 text-center space-y-1">
             <p class="text-xs text-base-content/50 font-medium uppercase tracking-wide">Port 1 · Proximity</p>
@@ -360,6 +362,18 @@ const WORKSHEETS = [
         </div>
       </div>
 
+      <div class="rounded-xl border border-base-300 bg-base-200/60 p-4 mt-3 space-y-2">
+        <div class="flex items-center justify-between">
+          <p class="text-sm font-semibold text-base-content">Capacitive tolerance before failure</p>
+          <span id="ch-tol-label" class="font-mono text-sm font-bold text-primary">30</span>
+        </div>
+        <input type="range" id="ch-tol-slider" min="0" max="10000" value="30" class="range range-primary range-sm w-full" />
+        <div class="flex justify-between text-xs text-base-content/40">
+          <span>0 (any signal fails)</span><span>10 000 (very tolerant)</span>
+        </div>
+        <p class="text-xs text-base-content/60">Drag to set the raw capacitive threshold. Values above this trigger a fail. Default is 30 — adjust lower for stricter challenges or higher to allow some ambient capacitance.</p>
+      </div>
+
       <p class="mt-4 font-medium text-base-content"><strong>Q5.</strong> During the challenge, what did you notice about the capacitive sensor that a normal on/off sensor wouldn't show you?</p>
       <div class="space-y-2 mt-1">
         <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="ws0-q5" value="a" class="radio radio-sm radio-primary"> It only ever shows two states — on or off — same as a normal sensor</label>
@@ -377,73 +391,47 @@ const WORKSHEETS = [
     relatedDashboard: 'Dashboard: Port Status overview',
     prerequisites: '',
     contentHtml: `
-      <p class="text-base-content/90 leading-relaxed text-base">A normal sensor gives you one thing — on or off. A smart sensor uses the same cable but tells you a lot more. Here's the difference.</p>
+      <p class="text-base-content/90 leading-relaxed text-base">Sensors come in different types — and it's worth being clear about what each one gives you before we look at what IO-Link adds on top.</p>
 
       <div class="rounded-xl border-2 border-base-300 bg-base-200 p-4 mt-4 space-y-2">
-        <p class="font-bold text-base-content">🔌 Normal Sensor</p>
-        <ul class="list-disc list-inside space-y-1 text-sm text-base-content/80 ml-2">
-          <li>Output: ON or OFF — that's it</li>
-          <li>If it stops working, you have no idea why</li>
-          <li>You have to test it manually to find the fault</li>
+        <p class="font-bold text-base-content">⚡ Digital (On/Off) Sensor</p>
+        <p class="text-sm text-base-content/80">The most common type on a production line. Output is either ON or OFF — a proximity sensor detecting metal, a limit switch confirming a door is closed, a photoelectric beam that's broken. Simple, fast, and reliable. But when it stops working, it just goes silent — you get no clue why.</p>
+        <ul class="list-disc list-inside space-y-1 text-sm text-base-content/80 ml-2 mt-1">
+          <li>Output: HIGH or LOW (24 V or 0 V on the signal wire)</li>
+          <li>No data — just a switching state</li>
+          <li>If it fails, you have to go and test it manually</li>
         </ul>
+        <canvas id="ws2-anim-digital" style="display:block;width:100%;height:120px;border-radius:8px;margin-top:8px"></canvas>
+      </div>
+
+      <div class="rounded-xl border-2 border-base-300 bg-base-200 p-4 mt-3 space-y-2">
+        <p class="font-bold text-base-content">〰️ Analogue Sensor</p>
+        <p class="text-sm text-base-content/80">An analogue sensor sends a continuously varying signal — typically 4–20 mA or 0–10 V — that represents a measured value. A pressure transmitter outputting 12 mA might mean 6 bar. A temperature sensor at 16 mA might mean 80 °C. You get a real measurement, not just on/off.</p>
+        <ul class="list-disc list-inside space-y-1 text-sm text-base-content/80 ml-2 mt-1">
+          <li>Output: a live value (e.g. 4–20 mA = 0–100 bar)</li>
+          <li>Better than digital — you can see the actual process value</li>
+          <li>Still no fault codes, no identity, no remote configuration</li>
+          <li>Requires calibration and is sensitive to cable length and interference</li>
+        </ul>
+        <canvas id="ws2-anim-analogue" style="display:block;width:100%;height:130px;border-radius:8px;margin-top:8px"></canvas>
       </div>
 
       <div class="rounded-xl border-2 border-primary/30 bg-primary/5 p-4 mt-3 space-y-2">
-        <p class="font-bold text-base-content">💡 IO-Link Smart Sensor — same cable, more information</p>
-        <ul class="list-disc list-inside space-y-1 text-sm text-base-content/80 ml-2">
-          <li>What it is measuring right now — temperature in °C, object detected yes/no, distance</li>
+        <p class="font-bold text-base-content">💡 IO-Link Smart Sensor — digital on/off, but with a superpower</p>
+        <p class="text-sm text-base-content/80">An IO-Link sensor starts life as a standard digital sensor — it still has a fast switching output (OUT1) that works exactly like the digital sensors above. But IO-Link adds a communication channel on the same 3-wire cable. That channel lets the master read and write data to the sensor without interrupting the switching output.</p>
+        <ul class="list-disc list-inside space-y-1 text-sm text-base-content/80 ml-2 mt-1">
+          <li>Switching output still works — the PLC sees ON or OFF as normal</li>
+          <li>Process data (PDin) carries the measured value, signal quality, alarm flags</li>
           <li>Fault codes — for example "lens dirty" or "wire break"</li>
-          <li>Its own model number and serial number</li>
-          <li>Settings you can change remotely without touching the sensor</li>
+          <li>Identity — vendor ID, device ID, serial number read automatically</li>
+          <li>Remote parameter write — change setpoints or output logic without touching the sensor</li>
         </ul>
+        <canvas id="ws2-anim-iolink" style="display:block;width:100%;height:200px;border-radius:8px;margin-top:8px"></canvas>
       </div>
 
       <div class="rounded-xl border-2 border-info/30 bg-info/5 p-4 mt-3">
         <p class="font-bold text-base-content mb-1">📦 Same Cable — No Extra Wiring</p>
-        <p class="text-sm text-base-content/80">IO-Link uses the standard 3-wire sensor cable. The master (AL1350) and the sensor automatically agree to talk IO-Link — you do not need a special cable or extra wiring. Same connector you already know, all the extra data.</p>
-      </div>
-
-      <!-- WS2 SVG diagram -->
-      <div class="rounded-xl border border-base-300 bg-base-200 p-3 mt-3">
-        <p class="text-xs font-semibold text-base-content/60 uppercase tracking-wide mb-2">How it works</p>
-        <svg viewBox="0 0 570 185" xmlns="http://www.w3.org/2000/svg" class="w-full" style="font-family:system-ui,sans-serif">
-          <!-- Left: Normal Sensor -->
-          <rect x="2" y="20" width="120" height="40" rx="5" fill="#6b7280"/>
-          <text x="62" y="37" text-anchor="middle" fill="white" font-size="11" font-weight="600">Normal Sensor</text>
-          <text x="62" y="52" text-anchor="middle" fill="#d1d5db" font-size="8">standard output</text>
-          <!-- 3-wire line -->
-          <line x1="122" y1="40" x2="175" y2="40" stroke="#94a3b8" stroke-width="2"/>
-          <text x="148" y="34" text-anchor="middle" fill="#94a3b8" font-size="8">3-wire</text>
-          <!-- Single output box -->
-          <rect x="175" y="20" width="80" height="40" rx="5" fill="#374151"/>
-          <text x="215" y="37" text-anchor="middle" fill="white" font-size="10" font-weight="600">ON / OFF</text>
-          <text x="215" y="51" text-anchor="middle" fill="#9ca3af" font-size="8">one signal only</text>
-
-          <!-- Right: IO-Link Sensor -->
-          <rect x="310" y="20" width="120" height="40" rx="5" fill="#2563eb"/>
-          <text x="370" y="37" text-anchor="middle" fill="white" font-size="11" font-weight="600">IO-Link Sensor</text>
-          <text x="370" y="52" text-anchor="middle" fill="#bfdbfe" font-size="8">smart output</text>
-          <!-- 3-wire line -->
-          <line x1="430" y1="40" x2="475" y2="40" stroke="#94a3b8" stroke-width="2"/>
-          <text x="452" y="34" text-anchor="middle" fill="#94a3b8" font-size="8">3-wire</text>
-          <!-- 4 stacked data boxes -->
-          <rect x="475" y="10" width="90" height="18" rx="3" fill="#16a34a"/>
-          <text x="520" y="23" text-anchor="middle" fill="white" font-size="9">Object: detected</text>
-          <rect x="475" y="31" width="90" height="18" rx="3" fill="#d97706"/>
-          <text x="520" y="44" text-anchor="middle" fill="white" font-size="9">Fault: none</text>
-          <rect x="475" y="52" width="90" height="18" rx="3" fill="#2563eb"/>
-          <text x="520" y="65" text-anchor="middle" fill="white" font-size="9">Model: TV7105</text>
-          <rect x="475" y="73" width="90" height="18" rx="3" fill="#7c3aed"/>
-          <text x="520" y="86" text-anchor="middle" fill="white" font-size="9">SP1: 40°C</text>
-
-          <!-- Centre label -->
-          <text x="285" y="108" text-anchor="middle" fill="#f59e0b" font-size="9" font-weight="700">Same 3-wire cable</text>
-          <line x1="200" y1="112" x2="265" y2="112" stroke="#f59e0b" stroke-width="1.5" stroke-dasharray="4,2"/>
-          <line x1="305" y1="112" x2="370" y2="112" stroke="#f59e0b" stroke-width="1.5" stroke-dasharray="4,2"/>
-
-          <!-- Bottom label -->
-          <text x="285" y="140" text-anchor="middle" fill="#64748b" font-size="8">IO-Link layers live data, fault codes, identity and settings on top of the existing signal</text>
-        </svg>
+        <p class="text-sm text-base-content/80">IO-Link uses the standard 3-wire sensor cable. The master (AL1350) and the sensor automatically negotiate to talk IO-Link — you do not need a special cable or extra wiring. Same connector, same installation, all the extra data on top.</p>
       </div>
 
       <!-- WS2 Live panel -->
@@ -476,41 +464,67 @@ const WORKSHEETS = [
         </div>
       </div>
 
-      <p class="mt-4 font-medium text-base-content"><strong>Q1.</strong> A sensor stops switching and you don't know why. What extra information might an IO-Link sensor show you that a normal sensor can't?</p>
+      <p class="mt-4 font-medium text-base-content"><strong>Q1.</strong> A digital sensor on a conveyor stops switching. What can a maintenance technician find out from a standard digital sensor when this happens?</p>
       <div class="space-y-2 mt-1">
-        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="ws1-q1" value="a" class="radio radio-sm radio-primary"> Nothing — IO-Link sensors behave exactly the same as normal sensors when faulty</label>
-        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="ws1-q1" value="b" class="radio radio-sm radio-primary"> A fault code such as "lens dirty" or "wire break" — telling you exactly what to fix</label>
-        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="ws1-q1" value="c" class="radio radio-sm radio-primary"> The name of the person who installed it</label>
+        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="ws1-q1" value="a" class="radio radio-sm radio-primary"> The exact fault code and which internal component has failed</label>
+        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="ws1-q1" value="b" class="radio radio-sm radio-primary"> Nothing — the sensor just goes silent, you have to go and test it manually</label>
+        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="ws1-q1" value="c" class="radio radio-sm radio-primary"> The last reading before it failed, stored in its internal log</label>
       </div>
 
-      <p class="mt-3 font-medium text-base-content"><strong>Q2.</strong> IO-Link uses:</p>
+      <p class="mt-3 font-medium text-base-content"><strong>Q2.</strong> A pressure transmitter outputs 12 mA on a 4–20 mA loop calibrated to 0–100 bar. What is the current pressure reading?</p>
       <div class="space-y-2 mt-1">
-        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="ws1-q2" value="a" class="radio radio-sm radio-primary"> A completely different cable and connector from a standard sensor</label>
-        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="ws1-q2" value="b" class="radio radio-sm radio-primary"> The same 3-wire cable — the master and sensor agree to talk IO-Link automatically</label>
-        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="ws1-q2" value="c" class="radio radio-sm radio-primary"> An ethernet cable with a special connector</label>
+        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="ws1-q2" value="a" class="radio radio-sm radio-primary"> 12 bar — the mA value equals the bar reading directly</label>
+        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="ws1-q2" value="b" class="radio radio-sm radio-primary"> 50 bar — 12 mA is the midpoint of the 4–20 mA range, which maps to 50% of 100 bar</label>
+        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="ws1-q2" value="c" class="radio radio-sm radio-primary"> 0 bar — the sensor is in fault because 12 mA is below the normal 16 mA minimum</label>
       </div>
 
-      <p class="mt-3 font-medium text-base-content"><strong>Q3.</strong> Go to the Dashboard. How many ports does the IO-Link Master have?</p>
+      <p class="mt-3 font-medium text-base-content"><strong>Q3.</strong> An IO-Link sensor still has its standard switching output (OUT1) active. What does the IO-Link communication channel add on top of that?</p>
       <div class="space-y-2 mt-1">
-        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="ws1-q3" value="a" class="radio radio-sm radio-primary"> 4 ports</label>
-        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="ws1-q3" value="b" class="radio radio-sm radio-primary"> 8 ports</label>
-        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="ws1-q3" value="c" class="radio radio-sm radio-primary"> 16 ports</label>
+        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="ws1-q3" value="a" class="radio radio-sm radio-primary"> It replaces OUT1 entirely — you only get the data stream, not a switching output</label>
+        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="ws1-q3" value="b" class="radio radio-sm radio-primary"> Process data, fault codes, device identity, and remote parameter writes — all over the same 3-wire cable without interrupting OUT1</label>
+        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="ws1-q3" value="c" class="radio radio-sm radio-primary"> A higher voltage signal so the PLC can tell it is an IO-Link device</label>
+      </div>
+
+      <p class="mt-3 font-medium text-base-content"><strong>Q4.</strong> Why might you choose an analogue sensor over a digital sensor for monitoring tank level?</p>
+      <div class="space-y-2 mt-1">
+        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="ws1-q4" value="a" class="radio radio-sm radio-primary"> Analogue sensors are cheaper and easier to wire than digital sensors</label>
+        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="ws1-q4" value="b" class="radio radio-sm radio-primary"> An analogue signal gives a continuous level reading — you see exactly how full the tank is, not just "full" or "empty"</label>
+        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="ws1-q4" value="c" class="radio radio-sm radio-primary"> Analogue sensors send fault codes that digital sensors cannot</label>
+      </div>
+
+      <p class="mt-3 font-medium text-base-content"><strong>Q5.</strong> Looking at the IO-Link wire animation above — what does the square wave at the bottom of the cable represent?</p>
+      <div class="space-y-2 mt-1">
+        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="ws1-q5" value="a" class="radio radio-sm radio-primary"> The IO-Link data packets being encoded onto the wire</label>
+        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="ws1-q5" value="b" class="radio radio-sm radio-primary"> The standard switching output (OUT1) — still present and working exactly as a normal digital sensor, while the data stream runs above it</label>
+        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="ws1-q5" value="c" class="radio radio-sm radio-primary"> The power supply waveform showing 24V DC to the sensor</label>
       </div>
 
       <div class="divider my-2"></div>
 
       <div class="rounded-xl border-2 border-warning/50 bg-warning/5 p-4 mt-4 space-y-3" id="ws2-challenge-box">
-        <p class="font-bold text-base-content text-base">🔧 Maintenance Scenario — Pre-Shift Health Check</p>
+        <p class="font-bold text-base-content text-base">🔧 Maintenance Scenario — Fault Diagnosis</p>
         <div class="rounded-lg bg-base-300/50 p-3 text-sm text-base-content/80 border border-base-300">
-          <p><strong>Job ticket:</strong> You are starting your shift. Before anything else, verify that all 4 IO-Link sensors are online and communicating. A trainee says "everything is fine" — but has not checked the dashboard.</p>
-          <p class="mt-1 text-xs text-base-content/60">Use the live panel above. Each dot should be lit when the sensor is in IO-Link mode. The challenge passes when all 4 ports are confirmed active.</p>
+          <p><strong>Job ticket:</strong> An alarm has been triggered on the IO-Link system. You have been given access to the backend debug log. Read through the output carefully — most of it is normal traffic, but buried inside are clues that reveal exactly what is wrong. Identify the fault.</p>
+          <p class="mt-1 text-xs text-base-content/60">Tip: watch for <span class="text-warning font-mono">[WARN]</span> lines — they stand out from the normal <span class="font-mono text-base-content/40">[INFO]</span> and <span class="font-mono text-base-content/40">[DEBUG]</span> traffic.</p>
         </div>
-        <div id="ws2-ch-result" class="hidden rounded-lg p-3 text-center font-bold text-sm"></div>
         <div class="flex justify-center">
-          <button type="button" id="ws2-ch-reset" class="btn btn-warning btn-sm gap-2">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
-            Reset Check
+          <button type="button" id="ws2-start-btn" class="btn btn-warning btn-sm gap-2">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+            Start Scenario
           </button>
+        </div>
+        <div id="ws2-console-wrap" class="hidden space-y-1">
+          <p class="text-xs font-semibold text-base-content/40 uppercase tracking-wide font-mono">── backend debug log ──────────────────────────</p>
+          <div id="ws2-console" class="rounded-lg font-mono text-xs p-3 overflow-y-hidden" style="height:210px;background:#0a0f1a;line-height:1.55"></div>
+        </div>
+        <div id="ws2-diag-wrap" class="hidden space-y-3">
+          <p class="font-medium text-base-content text-sm">Based on the debug log, what is the fault?</p>
+          <div id="ws2-diag-options" class="space-y-1"></div>
+          <div id="ws2-diag-result" class="hidden rounded-lg p-3 text-center font-bold text-sm"></div>
+          <div class="flex gap-2 justify-center flex-wrap">
+            <button type="button" id="ws2-submit-btn" class="btn btn-primary btn-sm" disabled>Submit Diagnosis</button>
+            <button type="button" id="ws2-new-btn" class="btn btn-ghost btn-sm">Try Another Fault</button>
+          </div>
         </div>
       </div>
     `
@@ -543,7 +557,7 @@ const WORKSHEETS = [
       <!-- M-size explainer -->
       <div class="rounded-lg border border-base-300 bg-base-200 p-3 mt-3 text-sm">
         <p class="font-bold text-base-content mb-1">📏 What does M18 mean?</p>
-        <p class="text-base-content/80">The <strong>M number</strong> is the diameter of the sensor body in millimetres — like a bolt size. <strong>M18</strong> = 18 mm across. Both the proximity and capacitive sensors on this kit are M18 — same thread size, different sensing technology.</p>
+        <p class="text-base-content/80">The <strong>M number</strong> is the diameter of the sensor body in millimetres — like a bolt size. <strong>M18</strong> = 18 mm across.</p>
       </div>
 
       <!-- WS3 SVG diagram — electromagnetic field -->
@@ -1595,11 +1609,15 @@ function buildWorksheetViewHtml(worksheetIndex) {
           ${ws.contentHtml}
         </div>
       </div>
-      <footer class="pt-4 border-t-2 border-base-300">
+      <footer class="pt-4 border-t-2 border-base-300 flex items-center justify-between gap-2">
         <a href="#" data-page="io-link-master" class="btn btn-outline btn-sm gap-2">
           <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
           Dashboard
         </a>
+        <button type="button" class="btn btn-primary btn-sm gap-2 ws-next-btn">
+          Next
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
+        </button>
       </footer>
     </div>`;
 }
@@ -1613,6 +1631,7 @@ let _capTaskCount = 0;
 
 let _chFailed = false;
 let _chSucceeded = false;
+let _chCapTolerance = 30;
 
 let _tempBaseline = null;
 let _alarmThreshold = 40;
@@ -1649,6 +1668,7 @@ const CL_COLOUR_MAP = {
 function initLiveIntro(container) {
   _chFailed = false;
   _chSucceeded = false;
+  _chCapTolerance = 30;
   const colours = { photo: '#3b82f6', cap: '#8b5cf6', temp: '#f97316', led: '#22c55e' };
 
   function setPortCard(dotId, valId, active, value, colour) {
@@ -1722,10 +1742,10 @@ function initLiveIntro(container) {
       chP2dot.className = (det2 || capPct > 5) ? 'w-8 h-8 rounded-full mx-auto transition-all' : 'w-8 h-8 rounded-full bg-base-300 mx-auto transition-all';
       chP2val.textContent = det2 ? 'Detected ●' : capPct > 0.5 ? `Level: ${capPct.toFixed(0)}%` : 'No object ○';
 
-      if (capRaw > 0) {
+      if (capRaw > _chCapTolerance) {
         _chFailed = true;
         chResult.className = 'rounded-lg p-3 text-center font-bold text-sm bg-error/20 text-error border border-error/40';
-        chResult.textContent = `✗ Failed — capacitive level hit ${capRaw}. Reset and try again.`;
+        chResult.textContent = `✗ Failed — capacitive level hit ${capRaw} (tolerance: ${_chCapTolerance}). Reset and try again.`;
         chResult.classList.remove('hidden');
       } else if (det1) {
         _chSucceeded = true;
@@ -1737,6 +1757,17 @@ function initLiveIntro(container) {
       }
     }
   });
+
+  // Tolerance slider
+  const tolSlider = container.querySelector('#ch-tol-slider');
+  const tolLabel = container.querySelector('#ch-tol-label');
+  if (tolSlider) {
+    _chCapTolerance = parseInt(tolSlider.value, 10);
+    tolSlider.addEventListener('input', () => {
+      _chCapTolerance = parseInt(tolSlider.value, 10);
+      if (tolLabel) tolLabel.textContent = _chCapTolerance;
+    });
+  }
 
   // Reset button
   const resetBtn = container.querySelector('#ch-reset-btn');
@@ -1762,8 +1793,410 @@ function initLiveIntro(container) {
   }
 }
 
+function initSensorTypeAnimations(container) {
+  _canvasAnimCancellers.forEach(c => { c.cancelled = true; });
+  _canvasAnimCancellers = [];
+
+  if (!container.querySelector('#ws2-anim-digital') && !container.querySelector('#ws2-anim-iolink')) return;
+
+  function makeLoop(drawFn) {
+    const token = { cancelled: false };
+    _canvasAnimCancellers.push(token);
+    function loop(t) {
+      if (token.cancelled) return;
+      try { drawFn(t); } catch (e) { /* keep looping even if one frame errors */ }
+      requestAnimationFrame(loop);
+    }
+    requestAnimationFrame(loop);
+  }
+
+  function rrect(ctx, x, y, w, h, r) {
+    ctx.beginPath();
+    ctx.moveTo(x + r, y); ctx.lineTo(x + w - r, y);
+    ctx.arcTo(x + w, y, x + w, y + r, r); ctx.lineTo(x + w, y + h - r);
+    ctx.arcTo(x + w, y + h, x + w - r, y + h, r); ctx.lineTo(x + r, y + h);
+    ctx.arcTo(x, y + h, x, y + h - r, r); ctx.lineTo(x, y + r);
+    ctx.arcTo(x, y, x + r, y, r); ctx.closePath();
+  }
+
+  function setupCanvas(el, h) {
+    const ctx = el.getContext('2d');
+    let ready = false, w = 0;
+    return {
+      ctx,
+      init() {
+        if (ready) return { w, h };
+        const dpr = window.devicePixelRatio || 1;
+        w = el.offsetWidth || 300;
+        el.width = Math.round(w * dpr); el.height = Math.round(h * dpr);
+        ctx.scale(dpr, dpr); ready = true;
+        return { w, h };
+      }
+    };
+  }
+
+  // ── 1. Digital ────────────────────────────────────────────────────────────
+  const digEl = container.querySelector('#ws2-anim-digital');
+  if (digEl) {
+    const { ctx, init } = setupCanvas(digEl, 120);
+    const PERIOD = 2600, HALF = 1300, WIN = 7000;
+    const LED_W = 110; // px reserved for indicator panel on left
+
+    makeLoop(t => {
+      const { w, h } = init();
+      ctx.clearRect(0, 0, w, h);
+      const curV = ((t % PERIOD) + PERIOD) % PERIOD < HALF ? 1 : 0;
+      const col   = curV ? '#22c55e' : '#4b5563';
+      const glow  = curV ? '#22c55e' : 'transparent';
+
+      // ── LED panel (left) ─────────────────────────────────────────────────
+      ctx.fillStyle = 'rgba(0,0,0,0.06)';
+      rrect(ctx, 0, 0, LED_W - 8, h, 8); ctx.fill();
+
+      // LED circle
+      const cx = (LED_W - 8) / 2, cy = h / 2 - 12, r = 22;
+      if (curV) {
+        ctx.save(); ctx.shadowColor = '#22c55e'; ctx.shadowBlur = 20;
+        ctx.beginPath(); ctx.arc(cx, cy, r + 4, 0, Math.PI * 2);
+        ctx.fillStyle = 'rgba(34,197,94,0.25)'; ctx.fill(); ctx.restore();
+      }
+      ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI * 2);
+      ctx.fillStyle = col; ctx.fill();
+      ctx.beginPath(); ctx.arc(cx - 6, cy - 6, 6, 0, Math.PI * 2);
+      ctx.fillStyle = curV ? 'rgba(255,255,255,0.4)' : 'rgba(255,255,255,0.08)'; ctx.fill();
+
+      // State labels
+      ctx.textAlign = 'center';
+      ctx.font = 'bold 15px system-ui,sans-serif';
+      ctx.fillStyle = curV ? '#22c55e' : '#9ca3af';
+      ctx.fillText(curV ? 'ON' : 'OFF', cx, cy + r + 16);
+      ctx.font = '11px system-ui,sans-serif';
+      ctx.fillStyle = curV ? '#86efac' : '#6b7280';
+      ctx.fillText(curV ? '24 V' : '0 V', cx, cy + r + 30);
+      ctx.textAlign = 'left';
+
+      // ── Square wave (right) ───────────────────────────────────────────────
+      const wX = LED_W, wW = w - LED_W, pad = 14;
+      const sigH = h - pad * 2;
+
+      // grid rails
+      ctx.save(); ctx.strokeStyle = 'rgba(150,150,150,0.2)'; ctx.lineWidth = 1; ctx.setLineDash([4, 4]);
+      ctx.beginPath(); ctx.moveTo(wX, pad);       ctx.lineTo(w, pad);
+      ctx.moveTo(wX, h - pad); ctx.lineTo(w, h - pad); ctx.stroke(); ctx.setLineDash([]); ctx.restore();
+
+      // "24V" / "0V" rail labels
+      ctx.font = '9px system-ui,sans-serif'; ctx.fillStyle = 'rgba(150,150,150,0.7)';
+      ctx.fillText('24V', wX + 4, pad + 10);
+      ctx.fillText(' 0V', wX + 4, h - pad - 4);
+
+      // waveform
+      ctx.beginPath(); ctx.lineWidth = 2.5;
+      let pv = -1;
+      for (let x = 0; x <= wW; x++) {
+        const ms = t - WIN + (x / wW) * WIN;
+        const v  = ((ms % PERIOD) + PERIOD) % PERIOD < HALF ? 1 : 0;
+        const px = wX + x, py = pad + (1 - v) * sigH;
+        if (x === 0) { ctx.moveTo(px, py); }
+        else { if (v !== pv) ctx.lineTo(px, pad + (1 - pv) * sigH); ctx.lineTo(px, py); }
+        pv = v;
+      }
+      ctx.strokeStyle = curV ? '#22c55e' : '#6b7280'; ctx.stroke();
+
+      // live dot at right edge
+      ctx.beginPath(); ctx.arc(w - 6, pad + (1 - curV) * sigH, 5, 0, Math.PI * 2);
+      ctx.fillStyle = col; ctx.fill();
+    });
+  }
+
+  // ── 2. Analogue ───────────────────────────────────────────────────────────
+  const anaEl = container.querySelector('#ws2-anim-analogue');
+  if (anaEl) {
+    const { ctx, init } = setupCanvas(anaEl, 130);
+    const WIN = 7000;
+    const AXIS_W = 38; // Y-axis label area
+
+    function val(ms) { return 0.5 + 0.44 * Math.sin(ms / 2200 * Math.PI * 2); }
+
+    makeLoop(t => {
+      const { w, h } = init();
+      ctx.clearRect(0, 0, w, h);
+      const padT = 8, padB = 18;
+      const sigH = h - padT - padB;
+      const plotX = AXIS_W, plotW = w - AXIS_W - 6;
+
+      // background
+      ctx.fillStyle = 'rgba(245,158,11,0.04)';
+      ctx.fillRect(plotX, padT, plotW, sigH);
+
+      // Y-axis grid + labels
+      const yTicks = [
+        { v: 1.0, label: '20 mA' },
+        { v: 0.75, label: '16 mA' },
+        { v: 0.5,  label: '12 mA' },
+        { v: 0.25, label: ' 8 mA' },
+        { v: 0.0,  label: ' 4 mA' },
+      ];
+      ctx.save();
+      ctx.font = '9px system-ui,sans-serif'; ctx.textAlign = 'right';
+      yTicks.forEach(({ v, label }) => {
+        const y = padT + (1 - v) * sigH;
+        ctx.fillStyle = 'rgba(150,150,150,0.8)'; ctx.fillText(label, AXIS_W - 4, y + 3);
+        ctx.strokeStyle = v === 0.5 ? 'rgba(245,158,11,0.2)' : 'rgba(150,150,150,0.13)';
+        ctx.lineWidth = 1; ctx.setLineDash(v === 0.5 ? [] : [4, 4]);
+        ctx.beginPath(); ctx.moveTo(plotX, y); ctx.lineTo(w - 6, y); ctx.stroke();
+      });
+      ctx.setLineDash([]); ctx.restore();
+
+      // fill under curve
+      ctx.beginPath();
+      for (let x = 0; x <= plotW; x++) {
+        const ms = t - WIN + (x / plotW) * WIN;
+        const y  = padT + (1 - val(ms)) * sigH;
+        if (x === 0) ctx.moveTo(plotX + x, y); else ctx.lineTo(plotX + x, y);
+      }
+      ctx.lineTo(plotX + plotW, padT + sigH); ctx.lineTo(plotX, padT + sigH); ctx.closePath();
+      ctx.fillStyle = 'rgba(245,158,11,0.15)'; ctx.fill();
+
+      // wave line
+      ctx.beginPath();
+      for (let x = 0; x <= plotW; x++) {
+        const ms = t - WIN + (x / plotW) * WIN;
+        const y  = padT + (1 - val(ms)) * sigH;
+        if (x === 0) ctx.moveTo(plotX + x, y); else ctx.lineTo(plotX + x, y);
+      }
+      ctx.strokeStyle = '#f59e0b'; ctx.lineWidth = 2.5; ctx.stroke();
+
+      // live dot
+      const cv = val(t);
+      const dotY = padT + (1 - cv) * sigH;
+      ctx.beginPath(); ctx.arc(plotX + plotW - 5, dotY, 5, 0, Math.PI * 2);
+      ctx.fillStyle = '#f59e0b'; ctx.fill();
+
+      // value readout box top-right
+      const mA  = (4 + cv * 16).toFixed(1);
+      const bar = Math.round(cv * 100);
+      const label = `${mA} mA  →  ${bar} bar`;
+      ctx.font = 'bold 10px system-ui,sans-serif'; ctx.textAlign = 'right';
+      const tw = ctx.measureText(label).width;
+      ctx.fillStyle = 'rgba(245,158,11,0.15)';
+      ctx.fillRect(w - tw - 14, padT + 2, tw + 10, 16);
+      ctx.fillStyle = '#f59e0b'; ctx.fillText(label, w - 9, padT + 13);
+      ctx.textAlign = 'left';
+
+      // X-axis label
+      ctx.font = '9px system-ui,sans-serif'; ctx.fillStyle = 'rgba(150,150,150,0.6)';
+      ctx.fillText('time →', plotX + 4, h - 4);
+    });
+  }
+
+  // ── 3. IO-Link wire visualisation ────────────────────────────────────────
+  const iolEl = container.querySelector('#ws2-anim-iolink');
+  if (iolEl) {
+    const { ctx, init } = setupCanvas(iolEl, 200);
+
+    const DIG_PERIOD = 2600, DIG_HALF = 1300, WIN = 5000;
+
+    const PKT_TYPES = [
+      { key: 'OUT1',  label: 'OUT1',       color: '#22c55e' },
+      { key: 'Temp',  label: 'Temp',        color: '#f97316' },
+      { key: 'Fault', label: 'Fault',       color: '#3b82f6' },
+      { key: 'Model', label: 'Model',       color: '#7c3aed' },
+      { key: 'SP1',   label: 'SP1',         color: '#ec4899' },
+      { key: 'SN',    label: 'S/N',         color: '#0891b2' },
+    ];
+
+    const liveVals = {
+      OUT1:  { text: 'HIGH',    color: '#22c55e', flash: 0 },
+      Temp:  { text: '25.4°C',  color: '#f97316', flash: 0 },
+      Fault: { text: 'NONE',    color: '#3b82f6', flash: 0 },
+      Model: { text: 'TV7105',  color: '#7c3aed', flash: 0 },
+      SP1:   { text: '40°C',    color: '#ec4899', flash: 0 },
+      SN:    { text: '00128',   color: '#0891b2', flash: 0 },
+    };
+
+    let packets = [], pkIdx = 0, lastSpawn = null, prevT = null, tempV = 25.4, out1 = true;
+
+    makeLoop(t => {
+      const { w, h } = init();
+      const dt = prevT ? Math.min(t - prevT, 50) : 16;
+      prevT = t;
+      if (lastSpawn === null) lastSpawn = t;
+
+      ctx.clearRect(0, 0, w, h);
+
+      // ── dark background ───────────────────────────────────────────────
+      ctx.fillStyle = '#0f172a';
+      rrect(ctx, 0, 0, w, h, 8); ctx.fill();
+
+      // ── layout ────────────────────────────────────────────────────────
+      const WY    = 72;           // wire centre Y
+      const BOX_W = 62, BOX_H = 44;
+      const SEN_CX = BOX_W / 2 + 8;
+      const MAS_CX = w - BOX_W / 2 - 8;
+      const WX1 = SEN_CX + BOX_W / 2 + 6;
+      const WX2 = MAS_CX - BOX_W / 2 - 6;
+      const WL  = WX2 - WX1;
+      const PKT_SPEED  = WL / 1600;  // px/ms — crosses in 1.6 s
+      const SPAWN_INTV = 530;
+
+      const curV = ((t % DIG_PERIOD) + DIG_PERIOD) % DIG_PERIOD < DIG_HALF ? 1 : 0;
+
+      // update live vals
+      if ((curV === 1) !== out1) {
+        out1 = curV === 1;
+        liveVals.OUT1.text = out1 ? 'HIGH' : 'LOW';
+      }
+      tempV += (Math.random() - 0.5) * 0.06;
+      liveVals.Temp.text = tempV.toFixed(1) + '°C';
+
+      // ── sensor box ────────────────────────────────────────────────────
+      const senX = SEN_CX - BOX_W / 2, senY = WY - BOX_H / 2;
+      rrect(ctx, senX, senY, BOX_W, BOX_H, 7);
+      ctx.fillStyle = curV ? 'rgba(34,197,94,0.12)' : 'rgba(30,41,59,0.9)';
+      ctx.fill();
+      if (curV) {
+        ctx.save(); ctx.shadowColor = '#22c55e'; ctx.shadowBlur = 14;
+        ctx.strokeStyle = '#22c55e'; ctx.lineWidth = 1.5; ctx.stroke(); ctx.restore();
+      } else {
+        ctx.strokeStyle = '#334155'; ctx.lineWidth = 1.5; ctx.stroke();
+      }
+      // LED
+      ctx.beginPath(); ctx.arc(SEN_CX, WY - 10, 5, 0, Math.PI * 2);
+      ctx.fillStyle = curV ? '#22c55e' : '#1e293b'; ctx.fill();
+      if (curV) {
+        ctx.save(); ctx.shadowColor = '#22c55e'; ctx.shadowBlur = 8; ctx.fill(); ctx.restore();
+      }
+      ctx.textAlign = 'center'; ctx.fillStyle = '#64748b'; ctx.font = '7px system-ui';
+      ctx.fillText('IO-Link', SEN_CX, WY + 6);
+      ctx.fillText('Sensor', SEN_CX, WY + 15);
+
+      // ── master box ────────────────────────────────────────────────────
+      const masX = MAS_CX - BOX_W / 2, masY = WY - BOX_H / 2;
+      rrect(ctx, masX, masY, BOX_W, BOX_H, 7);
+      ctx.fillStyle = 'rgba(59,130,246,0.12)'; ctx.fill();
+      ctx.strokeStyle = '#3b82f6'; ctx.lineWidth = 1.5; ctx.stroke();
+      ctx.beginPath(); ctx.arc(MAS_CX, WY - 10, 5, 0, Math.PI * 2);
+      ctx.fillStyle = '#3b82f6'; ctx.fill();
+      ctx.textAlign = 'center'; ctx.fillStyle = '#93c5fd'; ctx.font = '7px system-ui';
+      ctx.fillText('AL1350', MAS_CX, WY + 6);
+      ctx.fillText('Master', MAS_CX, WY + 15);
+
+      // ── 3-wire cable ──────────────────────────────────────────────────
+      // find leading packet for glow
+      const lead = packets.find(pk => pk.x > WX1 && pk.x < WX2);
+      [{ off: -3, w: 1.5, c: '#1e3a2f' }, { off: 0, w: 3, c: '#334155' }, { off: 3, w: 1.5, c: '#1e2a3a' }]
+        .forEach(({ off, w: lw, c }) => {
+          ctx.beginPath(); ctx.moveTo(WX1, WY + off); ctx.lineTo(WX2, WY + off);
+          ctx.strokeStyle = c; ctx.lineWidth = lw; ctx.stroke();
+        });
+
+      // traveling glow along cable
+      if (lead) {
+        const rel = (lead.x - WX1) / WL;
+        const spread = 80;
+        const g = ctx.createLinearGradient(lead.x - spread, 0, lead.x + spread, 0);
+        g.addColorStop(0, 'transparent');
+        g.addColorStop(0.5, lead.color + '55');
+        g.addColorStop(1, 'transparent');
+        ctx.beginPath(); ctx.moveTo(WX1, WY); ctx.lineTo(WX2, WY);
+        ctx.strokeStyle = g; ctx.lineWidth = 8; ctx.stroke();
+      }
+
+      // ── switching signal wave (below cable) ───────────────────────────
+      const sigCY = WY + 26, sigAmp = 9;
+      ctx.save(); ctx.beginPath(); ctx.rect(WX1, sigCY - sigAmp - 4, WL, (sigAmp + 4) * 2); ctx.clip();
+      ctx.beginPath();
+      let pv = -1;
+      for (let x = 0; x <= WL; x++) {
+        const ms = t - WIN + (x / WL) * WIN;
+        const v  = ((ms % DIG_PERIOD) + DIG_PERIOD) % DIG_PERIOD < DIG_HALF ? 1 : 0;
+        const px = WX1 + x, py = sigCY + (v ? -sigAmp : sigAmp);
+        if (x === 0) ctx.moveTo(px, py);
+        else { if (v !== pv) ctx.lineTo(px, pv ? sigCY - sigAmp : sigCY + sigAmp); ctx.lineTo(px, py); }
+        pv = v;
+      }
+      ctx.strokeStyle = curV ? '#22c55e' : '#475569'; ctx.lineWidth = 1.5; ctx.stroke();
+      ctx.restore();
+      ctx.font = '8px system-ui'; ctx.textAlign = 'left'; ctx.fillStyle = '#334155';
+      ctx.fillText('OUT1', WX1 + 2, sigCY - sigAmp - 6);
+
+      // ── spawn packets ─────────────────────────────────────────────────
+      if (t - lastSpawn >= SPAWN_INTV) {
+        lastSpawn = t;
+        const pt = PKT_TYPES[pkIdx % PKT_TYPES.length]; pkIdx++;
+        packets.push({ type: pt, x: WX1 + 2, color: pt.color, alpha: 0, arrived: false });
+      }
+
+      // ── update + draw packets ─────────────────────────────────────────
+      packets = packets.filter(pk => {
+        pk.x    += PKT_SPEED * dt;
+        pk.alpha = Math.min(1, pk.alpha + 0.07);
+
+        if (!pk.arrived && pk.x >= WX2 - 8) {
+          pk.arrived = true;
+          if (liveVals[pk.type.key]) liveVals[pk.type.key].flash = t + 450;
+        }
+        return pk.x < WX2 + 4;
+      });
+
+      packets.forEach(pk => {
+        const label = pk.type.label + ': ' + (liveVals[pk.type.key]?.text || '');
+        ctx.font = 'bold 9px system-ui'; ctx.textAlign = 'center';
+        const tw = ctx.measureText(label).width + 14;
+        const pillY = WY - 34, pillH = 16;
+
+        ctx.globalAlpha = pk.alpha;
+        ctx.save(); ctx.shadowColor = pk.color; ctx.shadowBlur = 10;
+        ctx.fillStyle = pk.color;
+        rrect(ctx, pk.x - tw / 2, pillY, tw, pillH, 4); ctx.fill(); ctx.restore();
+        ctx.fillStyle = '#fff'; ctx.fillText(label, pk.x, pillY + pillH - 4);
+        // connector line pill → wire
+        ctx.strokeStyle = pk.color + '50'; ctx.lineWidth = 1;
+        ctx.beginPath(); ctx.moveTo(pk.x, pillY + pillH); ctx.lineTo(pk.x, WY - 2); ctx.stroke();
+        ctx.globalAlpha = 1;
+      });
+
+      // ── divider ───────────────────────────────────────────────────────
+      const divY = WY + BOX_H / 2 + 22;
+      ctx.strokeStyle = '#1e293b'; ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.moveTo(10, divY); ctx.lineTo(w - 10, divY); ctx.stroke();
+
+      // ── received data panel ───────────────────────────────────────────
+      const KEYS = ['OUT1', 'Temp', 'Fault', 'Model', 'SP1', 'SN'];
+      const cols = 3, cellW = (w - 16) / cols, rowH = 24;
+      const panelY = divY + 8;
+      ctx.font = '8px system-ui'; ctx.textAlign = 'left';
+      KEYS.forEach((key, i) => {
+        const col = i % cols, row = Math.floor(i / cols);
+        const cx = 8 + col * cellW, cy = panelY + row * rowH;
+        const val = liveVals[key];
+        const hot = t < val.flash;
+
+        if (hot) {
+          ctx.fillStyle = val.color + '22';
+          rrect(ctx, cx, cy, cellW - 4, rowH - 2, 4); ctx.fill();
+        }
+
+        // dot
+        ctx.save();
+        if (hot) { ctx.shadowColor = val.color; ctx.shadowBlur = 8; }
+        ctx.beginPath(); ctx.arc(cx + 8, cy + rowH / 2 - 1, 4, 0, Math.PI * 2);
+        ctx.fillStyle = hot ? val.color : val.color + '70'; ctx.fill(); ctx.restore();
+
+        // key label
+        ctx.fillStyle = '#475569'; ctx.font = '8px system-ui';
+        ctx.fillText(key, cx + 16, cy + 10);
+        // value
+        ctx.fillStyle = hot ? val.color : '#94a3b8'; ctx.font = 'bold 9px system-ui';
+        ctx.fillText(val.text, cx + 16, cy + 22);
+      });
+    });
+  }
+}
+
 function initLiveWs2Smart(container) {
   _ws2ChDone = false;
+  initSensorTypeAnimations(container);
   const colours = { photo: '#3b82f6', cap: '#8b5cf6', temp: '#f97316', led: '#22c55e' };
 
   function setSmallDot(dotId, valId, active, value, colour) {
@@ -1798,25 +2231,245 @@ function initLiveWs2Smart(container) {
     setSmallDot('ws2-ch-p4', 'ws2-ch-p4-val', p4?.mode === 'io-link',
       c4 || '—', colours.led);
 
-    // pass when all 4 ports confirmed in io-link mode
-    const allOnline = [p1, p2, p3, p4].every(p => p?.mode === 'io-link');
-    if (!_ws2ChDone && allOnline) {
-      _ws2ChDone = true;
-      const result = container.querySelector('#ws2-ch-result');
-      if (result) {
-        result.className = 'rounded-lg p-3 text-center font-bold text-base bg-success/20 text-success border border-success/40';
-        result.textContent = '✓ Health check passed — all 4 ports confirmed active in IO-Link mode. System ready for production.';
-        result.classList.remove('hidden');
-      }
-    }
   });
 
-  const resetBtn = container.querySelector('#ws2-ch-reset');
-  if (resetBtn) {
-    resetBtn.addEventListener('click', () => {
-      _ws2ChDone = false;
-      const result = container.querySelector('#ws2-ch-result');
-      if (result) result.classList.add('hidden');
+  // ── Maintenance scenario — fault diagnosis ─────────────────────────────
+  const FAULTS = [
+    {
+      name: 'Temperature Sensor Over-Setpoint (Port 3)',
+      hints: [
+        '[WARN]  ⚠ TV7105 Port[3] — SP1 alarm bit SET in PDin byte 2',
+        '[WARN]  ⚠ temperature decode: Port[3] value=67.3°C threshold=40.0°C EXCEEDED',
+        '[WARN]  ⚠ pdin_decode: Port[3] flags=0x02 — switching output 2 active (alarm)',
+        '[WARN]  ⚠ isdu index=0x0247 SP1 setpoint=400 (40.0°C) — process value above limit',
+      ],
+      options: [
+        { text: 'Temperature sensor on Port 3 is reading above its SP1 setpoint alarm', correct: true },
+        { text: 'IO-Link communication lost — Port 3 device not responding', correct: false },
+        { text: 'Wrong sensor plugged into Port 3 — identity mismatch detected', correct: false },
+        { text: 'Supply voltage too low — master reporting undervoltage', correct: false },
+      ],
+    },
+    {
+      name: 'Proximity Sensor Output Stuck HIGH (Port 1)',
+      hints: [
+        '[WARN]  ⚠ Port[1] OUT1 state unchanged for 52 consecutive poll cycles',
+        '[WARN]  ⚠ pdin_decode: Port[1] object_detected=True — no edge transition in 26s',
+        '[WARN]  ⚠ switching_counter: Port[1] delta=0 over last 60s — output may be latched',
+        '[WARN]  ⚠ Omron E2E-X16 Port[1] — instability alarm NOT set, target appears stationary',
+      ],
+      options: [
+        { text: 'MQTT broker has disconnected — live data is stale', correct: false },
+        { text: 'Proximity sensor Port 1 OUT1 output is stuck HIGH — no switching detected in 26 seconds', correct: true },
+        { text: 'Temperature alarm triggered on Port 3', correct: false },
+        { text: 'Capacitive sensor on Port 2 detecting a continuous object', correct: false },
+      ],
+    },
+    {
+      name: 'Wrong Device Connected to Port 2',
+      hints: [
+        '[WARN]  ⚠ Port[2] identity: vendor_id=310 — expected 1586 (RS Pro / Carlo Gavazzi)',
+        '[WARN]  ⚠ device_id mismatch Port[2]: got 733 (ifm TV7105) expected 1052673',
+        '[WARN]  ⚠ IODD lookup Port[2]: parameter map unavailable — wrong device type',
+        '[WARN]  ⚠ Port[2] resolved as temperature sensor — capacitive parameter reads will fail',
+      ],
+      options: [
+        { text: 'Port 2 switching output is stuck in the ON state', correct: false },
+        { text: 'IO-Link master has lost its network connection', correct: false },
+        { text: 'Wrong sensor plugged into Port 2 — a temperature sensor is present instead of the capacitive sensor', correct: true },
+        { text: 'SP1 alarm active on the capacitive sensor on Port 2', correct: false },
+      ],
+    },
+    {
+      name: 'IO-Link Communication Loss (Port 3)',
+      hints: [
+        '[ERROR] Port[3] iolreadacyclic: timeout after 3000ms — no response from device',
+        '[WARN]  ⚠ Port[3] mode transition: io-link → inactive — device offline',
+        '[ERROR] pdin_fetch Port[3]: connection refused — PDin data unavailable',
+        '[WARN]  ⚠ circuit_breaker Port[3]: consecutive_failures=5 — state=OPEN',
+      ],
+      options: [
+        { text: 'Temperature sensor is reading above its configured setpoint', correct: false },
+        { text: 'Port 3 IO-Link communication has been lost — the device is no longer responding', correct: true },
+        { text: 'MQTT broker has stopped publishing data to the backend', correct: false },
+        { text: 'Capacitive sensor on Port 2 is stuck in detection state', correct: false },
+      ],
+    },
+    {
+      name: 'Master Supply Voltage Undervoltage',
+      hints: [
+        '[WARN]  ⚠ supervision: processdatamaster/voltage = 18.2V — below 20V minimum',
+        '[WARN]  ⚠ AL1350 supervisionstatus: voltage_alarm=True current=1.4A',
+        '[WARN]  ⚠ supervision poll: supply voltage 18.2V — sensor reliability affected',
+        '[WARN]  ⚠ getdatamulti: intermittent timeouts — possible brownout condition',
+      ],
+      options: [
+        { text: 'IO-Link master supply voltage is below the minimum operating level', correct: true },
+        { text: 'Temperature sensor calibration offset has drifted out of range', correct: false },
+        { text: 'Port 1 proximity sensor cable has a wire break', correct: false },
+        { text: 'MQTT publish rate is too high causing the broker to drop messages', correct: false },
+      ],
+    },
+  ];
+
+  const SPAM_POOL = [
+    '[INFO]  poll_loop: tick #{n} elapsed {t}ms',
+    '[DEBUG] mqtt: publish pdin port[{p}] 0x{hex}',
+    '[INFO]  getdatamulti: 4 ports responded OK in 11ms',
+    '[DEBUG] circuit_breaker: state=CLOSED consecutive_failures=0',
+    '[INFO]  adaptive_poll: port[{p}] mode=io-link next_poll_in=1000ms',
+    '[DEBUG] ws_broadcast: {c} client(s) connected',
+    '[INFO]  isdu_cache: HIT index=0x{hi} port[{p}] age=12s',
+    '[DEBUG] supervision: voltage=24.1V current=1.2A temp=38°C',
+    '[INFO]  mqtt: heartbeat broker=192.168.7.2 latency=2ms',
+    '[DEBUG] pdin_decode: port[{p}] recv {b} bytes OK',
+    '[INFO]  al1350_client: connection pool active_conns=2 limit=3',
+    '[DEBUG] device_tree: cache valid age={a}s TTL=300s',
+    '[INFO]  getdatamulti: response 14ms ports_ok=4',
+    '[DEBUG] port[{p}] vendor_id={vid} device_id={did} cached',
+    '[INFO]  websocket: /ws keepalive sent to {c} client(s)',
+    '[DEBUG] degraded_mode: False — using getdatamulti path',
+    '[INFO]  mqtt: subscribe ack topics=3 qos=0',
+    '[DEBUG] al1350: GET /iolinkmaster/port[{p}]/mode 200 OK',
+    '[INFO]  poll_loop: tick #{n} elapsed {t}ms',
+    '[DEBUG] pdin_history: port[{p}] buffer_fill=48/50',
+  ];
+
+  function buildSpamLine(tick) {
+    const t = SPAM_POOL[Math.floor(Math.random() * SPAM_POOL.length)];
+    return t
+      .replace('{n}', String(tick).padStart(5, '0'))
+      .replace('{t}', (0.5 + Math.random() * 2.5).toFixed(2))
+      .replace('{p}', Math.floor(Math.random() * 4) + 1)
+      .replace('{hex}', Math.floor(Math.random() * 65536).toString(16).padStart(4, '0'))
+      .replace('{hi}', Math.floor(Math.random() * 256).toString(16).padStart(2, '0'))
+      .replace('{b}', Math.floor(Math.random() * 6) + 2)
+      .replace('{c}', Math.floor(Math.random() * 3) + 1)
+      .replace('{a}', Math.floor(Math.random() * 280) + 10)
+      .replace('{vid}', [310, 342, 612, 1586][Math.floor(Math.random() * 4)])
+      .replace('{did}', [733, 131090, 1052673, 131842][Math.floor(Math.random() * 4)]);
+  }
+
+  function lineColor(line) {
+    if (line.startsWith('[ERROR]')) return '#f87171';
+    if (line.startsWith('[WARN]'))  return '#fbbf24';
+    if (line.startsWith('[DEBUG]')) return '#475569';
+    return '#64748b';
+  }
+
+  const startBtn    = container.querySelector('#ws2-start-btn');
+  const consoleWrap = container.querySelector('#ws2-console-wrap');
+  const consoleEl   = container.querySelector('#ws2-console');
+  const diagWrap    = container.querySelector('#ws2-diag-wrap');
+  const diagOptions = container.querySelector('#ws2-diag-options');
+  const diagResult  = container.querySelector('#ws2-diag-result');
+  const submitBtn   = container.querySelector('#ws2-submit-btn');
+  const newBtn      = container.querySelector('#ws2-new-btn');
+
+  let scenarioFault = null, submitted = false;
+  let tick = 1000, linesSinceHint = 0, hintIdx = 0;
+
+  const scenarioToken = { cancelled: false };
+  _canvasAnimCancellers.push(scenarioToken);
+
+  function appendConsoleLine(text) {
+    if (!consoleEl) return;
+    const d = document.createElement('div');
+    d.style.color = lineColor(text);
+    d.style.whiteSpace = 'nowrap';
+    d.style.overflow = 'hidden';
+    d.style.textOverflow = 'ellipsis';
+    d.textContent = text;
+    consoleEl.appendChild(d);
+    while (consoleEl.children.length > 80) consoleEl.removeChild(consoleEl.firstChild);
+    consoleEl.scrollTop = consoleEl.scrollHeight;
+  }
+
+  let scenarioIid = null;
+
+  function stopScenario() {
+    if (scenarioIid) { clearInterval(scenarioIid); scenarioIid = null; }
+  }
+
+  function startScenario() {
+    stopScenario();
+    submitted = false;
+    tick = 10000 + Math.floor(Math.random() * 5000);
+    linesSinceHint = 0; hintIdx = 0;
+
+    // pick random fault
+    scenarioFault = FAULTS[Math.floor(Math.random() * FAULTS.length)];
+
+    // show sections
+    if (consoleWrap) consoleWrap.classList.remove('hidden');
+    if (diagWrap)    diagWrap.classList.remove('hidden');
+    if (diagResult)  diagResult.classList.add('hidden');
+    if (consoleEl)   consoleEl.innerHTML = '';
+
+    // build shuffled options
+    const opts = [...scenarioFault.options].sort(() => Math.random() - 0.5);
+    if (diagOptions) {
+      diagOptions.innerHTML = opts.map((o, i) =>
+        `<label class="flex items-start gap-2 cursor-pointer p-2 rounded-lg hover:bg-base-content/5 transition-colors">
+          <input type="radio" name="ws2-diag" data-correct="${o.correct}" class="radio radio-sm radio-warning mt-0.5 flex-shrink-0">
+          <span class="text-sm text-base-content leading-snug">${o.text}</span>
+        </label>`
+      ).join('');
+      diagOptions.querySelectorAll('input').forEach(inp => {
+        inp.addEventListener('change', () => { if (submitBtn) submitBtn.disabled = false; });
+      });
+    }
+    if (submitBtn) submitBtn.disabled = true;
+
+    // pre-fill console with a burst of spam
+    for (let i = 0; i < 10; i++) { tick++; appendConsoleLine(buildSpamLine(tick)); }
+
+    // stream new lines
+    scenarioIid = setInterval(() => {
+      if (scenarioToken.cancelled) { clearInterval(scenarioIid); scenarioIid = null; return; }
+      tick++;
+      linesSinceHint++;
+      // show a hint every 8-10 lines
+      const hintDue = linesSinceHint >= 8 + Math.floor(Math.random() * 3);
+      if (hintDue) {
+        linesSinceHint = 0;
+        appendConsoleLine(scenarioFault.hints[hintIdx % scenarioFault.hints.length]);
+        hintIdx++;
+      } else {
+        appendConsoleLine(buildSpamLine(tick));
+      }
+    }, 300);
+  }
+
+  if (startBtn) startBtn.addEventListener('click', startScenario);
+
+  if (submitBtn) {
+    submitBtn.addEventListener('click', () => {
+      if (submitted || !scenarioFault) return;
+      const checked = diagOptions ? diagOptions.querySelector('input:checked') : null;
+      if (!checked) return;
+      submitted = true;
+      stopScenario();
+      const correct = checked.dataset.correct === 'true';
+      if (diagResult) {
+        diagResult.className = 'rounded-lg p-3 font-bold text-sm ' +
+          (correct
+            ? 'bg-success/20 text-success border border-success/40'
+            : 'bg-error/20 text-error border border-error/40');
+        diagResult.textContent = correct
+          ? '✓ Correct — ' + scenarioFault.name + '. You spotted the fault from the debug log.'
+          : '✗ Not quite. Re-read the amber [WARN] lines in the console — they contain the clues. Try another scenario.';
+        diagResult.classList.remove('hidden');
+      }
+    });
+  }
+
+  if (newBtn) {
+    newBtn.addEventListener('click', () => {
+      stopScenario();
+      if (consoleWrap) consoleWrap.classList.add('hidden');
+      if (diagWrap)    diagWrap.classList.add('hidden');
+      submitted = false; scenarioFault = null;
     });
   }
 }
@@ -2484,6 +3137,7 @@ function scrollToTop() {
 }
 
 function showIndex() {
+  _canvasAnimCancellers.forEach(c => { c.cancelled = true; }); _canvasAnimCancellers = [];
   stopLiveData();
   currentWorksheetIndex = 0;
   const root = document.getElementById('worksheets-root');
@@ -2493,8 +3147,10 @@ function showIndex() {
 
 function showWorksheet(n) {
   if (n < 1 || n > TOTAL) return;
+  _canvasAnimCancellers.forEach(c => { c.cancelled = true; }); _canvasAnimCancellers = [];
   stopLiveData();
   currentWorksheetIndex = n;
+  markVisited('cp0001', n);
   const root = document.getElementById('worksheets-root');
   if (!root) return;
   root.innerHTML = buildWorksheetViewHtml(n);

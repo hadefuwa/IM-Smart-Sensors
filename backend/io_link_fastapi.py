@@ -616,6 +616,18 @@ async def start_background_polling():
         await al1350.refresh_gettree(force=True)
     except Exception as e:
         logger.warning(f"Initial gettree warmup failed: {e}")
+
+    # Enforce IO-Link mode on Port 4 (light stack). The AL1350 may revert to
+    # digital_out after a power cycle if no device was connected at boot time.
+    try:
+        res = await al1350.set_port_mode(4, 3)
+        code = res.get('code', 0)
+        if code in (200, 204):
+            logger.info("Port 4 enforced as IO-Link mode on startup")
+        else:
+            logger.warning(f"Port 4 mode enforce returned code {code}")
+    except Exception as e:
+        logger.warning(f"Port 4 mode enforce failed: {e}")
     if polling_task is None or polling_task.done():
         polling_task = asyncio.create_task(poll_io_link_master())
         logger.info("IO-Link HTTP polling task started")

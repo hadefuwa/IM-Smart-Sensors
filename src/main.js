@@ -9,6 +9,7 @@ import { renderCp0002Page, initCp0002Page, destroyCp0002Page } from './cp0002-pa
 import { renderSettingsPage, initSettingsPage, applySavedAppSettings } from './settings-page.js';
 import { renderAdminPage, initAdminPage, destroyAdminPage } from './admin-page.js';
 import { renderEdgeDevicePage, initEdgeDevicePage, destroyEdgeDevicePage } from './edge-device-page.js';
+import { renderProgressPage, initProgressPage } from './progress-page.js';
 import {
   Chart,
   LineController,
@@ -6047,6 +6048,7 @@ const PAGES = {
   'learn': renderLearnPage,
   'worksheets': renderWorksheetsPage,
   'cp0002': renderCp0002Page,
+  'progress': renderProgressPage,
   'settings': renderSettingsPage,
   'admin': renderAdminPage,
   'edge-device': renderEdgeDevicePage,
@@ -6142,6 +6144,7 @@ app.innerHTML = `
           <li><a href="#" data-page="worksheets"><span class="font-mono text-xs opacity-60">CP0001</span> Maintenance on Smart Sensors</a></li>
           <li><a href="#" data-page="cp0002"><span class="font-mono text-xs opacity-60">CP0002</span> Industry 4.0 IO-Link</a></li>
           <li><a href="#" data-page="learn">Further Study</a></li>
+          <li><a href="#" data-page="progress">Student Progress</a></li>
 
           <!-- ── Resources ── -->
           <li class="menu-title pt-3 select-none pointer-events-none">
@@ -6341,6 +6344,8 @@ function renderPage(pageKey) {
     initAdminPage();
   } else if (pageKey === 'edge-device') {
     initEdgeDevicePage();
+  } else if (pageKey === 'progress') {
+    initProgressPage();
   }
 }
 

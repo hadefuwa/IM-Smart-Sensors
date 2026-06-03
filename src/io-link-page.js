@@ -179,7 +179,7 @@ export function renderIOLinkMaster() {
       </div>
 
       <!-- ── Active Port Details (IODD parameter panels) ── -->
-      <div id="portDetailsSection" class="card bg-base-200 shadow-xl hidden">
+      <div id="portDetailsSection" class="card bg-base-200 shadow-xl">
         <div class="card-body py-3 px-4">
           <h2 class="font-bold text-base">Device Parameters (IO-Link ISDU)</h2>
           <p class="text-xs opacity-60">Parameters read directly from each sensor over the IO-Link acyclic channel. Writable parameters can be changed here and take effect immediately.</p>
@@ -234,6 +234,7 @@ let reconnectTimer = null;
 let reconnectAttempts = 0;
 let hasEverConnected = false;
 let _diagInterval = null;
+let _lastPortDetailKey = null;
 const MAX_RECONNECT = 10;
 const RECONNECT_DELAY = 5000;
 
@@ -366,44 +367,75 @@ function updatePortCards(ports) {
       blurbEl.classList.add('hidden');
     }
   }
-  loadActivePortDetails(ports);
+
+  // Only reload the Device Parameters section when the set of active ports changes
+  // (e.g. a sensor is plugged in or unplugged). Skipping on every 500ms WS push
+  // prevents the section from jumping and collapsing open parameter panels.
+  const portDetailKey = (ports || [])
+    .map(p => `${p.port}:${(p.mode || 'inactive').toLowerCase()}`)
+    .join(',');
+  if (portDetailKey !== _lastPortDetailKey) {
+    _lastPortDetailKey = portDetailKey;
+    loadActivePortDetails(ports);
+  }
+}
+
+function _setPortPanel(container, portNum, html) {
+  const existing = container.querySelector(`[data-port="${portNum}"]`);
+  const temp = document.createElement('div');
+  temp.innerHTML = html.trim();
+  const newPanel = temp.firstElementChild;
+  if (!newPanel) return;
+  if (existing) {
+    container.replaceChild(newPanel, existing);
+  } else {
+    container.appendChild(newPanel);
+  }
 }
 
 async function loadActivePortDetails(ports) {
   const container = document.getElementById('portDetailsContainer');
-  const section = document.getElementById('portDetailsSection');
   if (!container) return;
   const active = (ports || []).filter(p => (p.mode || '').toLowerCase().includes('io-link'));
   const inactiveLabelled = (ports || []).filter(p => !(p.mode || '').toLowerCase().includes('io-link') && p.label);
-  if (active.length === 0 && inactiveLabelled.length === 0) {
-    if (section) section.classList.add('hidden');
-    container.innerHTML = '';
-    return;
-  }
-  if (section) section.classList.remove('hidden');
-  let html = '';
-  for (const port of active) {
+
+  // Show placeholder for every port immediately — prevents layout jump while fetching
+  [...active, ...inactiveLabelled].forEach(port => {
+    if (!container.querySelector(`[data-port="${port.port}"]`)) {
+      const div = document.createElement('div');
+      div.className = 'port-detail-card rounded-lg border border-base-300 bg-base-100 p-4 mb-3';
+      div.dataset.port = port.port;
+      div.innerHTML = `<p class="text-sm text-base-content/40 italic">Port ${port.port} — loading…</p>`;
+      container.appendChild(div);
+    }
+  });
+
+  // Fetch all active ports in parallel, update each panel as it resolves
+  await Promise.all(active.map(async port => {
     try {
       const res = await fetch(`${API_BASE}/api/io-link/port/${port.port}`, { signal: AbortSignal.timeout(10000) });
       const data = await res.json();
-      if (data.success && data.port) html += generatePortDetailsHTML(data.port);
-      else html += `<div class="alert alert-warning">Port ${port.port}: No data</div>`;
-    } catch (e) {
-      html += `<div class="alert alert-warning">Port ${port.port}: Error</div>`;
+      const html = (data.success && data.port)
+        ? generatePortDetailsHTML(data.port)
+        : `<div class="port-detail-card rounded-lg border border-warning/40 bg-base-100 p-4 mb-3" data-port="${port.port}"><p class="text-sm opacity-60">Port ${port.port}: No data</p></div>`;
+      _setPortPanel(container, port.port, html);
+    } catch {
+      _setPortPanel(container, port.port,
+        `<div class="port-detail-card rounded-lg border border-error/30 bg-base-100 p-4 mb-3" data-port="${port.port}"><p class="text-sm text-error/70">Port ${port.port}: Failed to load</p></div>`);
     }
-  }
-  for (const port of inactiveLabelled) {
-    html += generateDisconnectedPortHTML(port);
-  }
-  container.innerHTML = html || '<p class="text-center">No details</p>';
+  }));
+
+  inactiveLabelled.forEach(port => {
+    _setPortPanel(container, port.port, generateDisconnectedPortHTML(port));
+  });
 }
 
 const LEARN_BLURBS = {
-  status_led: { blurb: 'Status lights show machine or line state (e.g. green = running, red = fault). Check supervision and that the correct state is displayed.', anchor: 'status-led' },
-  photo_electric: { blurb: 'Contrinex LTR-M18PA-PMx-603 diffuse photoelectric sensor (M18, Red LED, 5–1000 mm range; sold by RS as 0360240). Output 1 activates on light-on — object present when beam is reflected back. Keep the lens clean; signal quality drops before total failure, giving early warning. Adjust sensitivity via the potentiometer for reliable detection at your target distance.', anchor: 'photo-electric' },
-  temperature: { blurb: 'Temperature sensors report °C for process and maintenance. Check supervision current and wiring; use trends to spot overheating.', anchor: 'temperature' },
-  proximity: { blurb: 'Omron E2E-X16MB1T12 M18 inductive proximity sensor (IO-Link V1.1, COM3 230.4 kbps). Detects ferrous and non-ferrous metals up to 16 mm (iron). Full ISDU access — read operating hours, configure output logic (NO/NC), timer mode and timer time, and read instability and over-approach diagnostic alarms live. Instability alarm (PDin bit 4) activates when the target sits at the edge of the sensing range; over-approach alarm (bit 5) activates when target is too close. Keep sensing face clear of swarf and mounting bracket interference.', anchor: 'proximity' },
-  capacitive: { blurb: 'RS PRO / Carlo Gavazzi M18 capacitive sensor (model 2377240, non-flush, 12 mm range). Detects conductive and non-conductive targets — SO1 activates when an object is present. Also outputs a 16-bit analogue dielectric value useful for level sensing and material identification. Keep the sensing face clean and dry; use the Quality of Run (QoR) value to detect gradual contamination before output failure.', anchor: 'proximity' }
+  status_led: { blurb: 'IFM CL50 multi-colour light stack. Driven via IO-Link PDout — red, amber and green channels each independently controllable with on/flash/off states.', anchor: 'status-led' },
+  photo_electric: { blurb: 'Contrinex LTR-M18PA-PMx-603 diffuse photoelectric sensor (M18, 5–1000 mm). Object detected when beam is reflected back. Monitor signal quality — it drops before the sensor fails completely.', anchor: 'photo-electric' },
+  temperature: { blurb: 'IFM TV7105 IO-Link temperature sensor (±0.1 °C). PDin bytes 0–1 = temperature as int16 ÷ 10. SP1/SP2 setpoints and alarm flags in bytes 2–3.', anchor: 'temperature' },
+  proximity: { blurb: 'OMRON E2E-X16MB1T12 M18 inductive proximity sensor (16 mm range). PDin bit 4 = instability alarm (target at range edge); bit 5 = over-approach alarm (target too close).', anchor: 'proximity' },
+  capacitive: { blurb: 'RS PRO / Carlo Gavazzi M18 capacitive sensor (12 mm range). Outputs a switching signal plus a 16-bit analogue dielectric value — useful for level sensing and contamination detection.', anchor: 'proximity' }
 };
 function generateDisconnectedPortHTML(port) {
   const dtype = port.device_type || 'unknown';
@@ -646,8 +678,9 @@ function wireParamPanelEvents(root) {
 
 function updateSupervisionKpis(supervision) {
   const set = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val ?? '—'; };
-  set('kpiVoltage', supervision.voltage != null ? Number(supervision.voltage).toFixed(1) : '—');
-  set('kpiCurrent', supervision.current != null ? Number(supervision.current).toFixed(2) : '—');
+  // AL1350 reports voltage in mV (÷1000 → V) and current in 10 mA units (÷100 → A)
+  set('kpiVoltage', supervision.voltage != null ? (supervision.voltage / 1000).toFixed(2) : '—');
+  set('kpiCurrent', supervision.current != null ? (supervision.current / 100).toFixed(2) : '—');
   set('kpiTemp',    supervision.temperature != null ? Number(supervision.temperature).toFixed(1) : '—');
   const statusVal = supervision.status ?? supervision.supervisionstatus;
   const statusRow = document.getElementById('supervisionStatusRow');
@@ -718,8 +751,8 @@ function updateSupervisionCharts() {
       const history = data.history || [];
       if (history.length < 2) return;
       const labels = history.map((h, i) => (i % Math.max(1, Math.floor(history.length / 8)) === 0 || i === history.length - 1) ? new Date(h.ts * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '');
-      const currentSer = history.map(h => h.current);
-      const voltageSer = history.map(h => h.voltage);
+      const currentSer = history.map(h => h.current != null ? h.current / 100 : null);
+      const voltageSer = history.map(h => h.voltage != null ? h.voltage / 1000 : null);
       const tempSer = history.map(h => h.temperature);
 
       ioLinkCharts.forEach(c => c.destroy());
@@ -890,6 +923,7 @@ export function destroyIOLinkPage() {
   if (_diagInterval) { clearInterval(_diagInterval); _diagInterval = null; }
   ioLinkCharts.forEach(c => c.destroy());
   ioLinkCharts = [];
+  _lastPortDetailKey = null;
 }
 
 function setupRawDecodedToggle() {
@@ -1004,6 +1038,20 @@ export function initIOLinkPage() {
   hasEverConnected = false;
   if (reconnectTimer) clearTimeout(reconnectTimer);
   if (_diagInterval) { clearInterval(_diagInterval); _diagInterval = null; }
+
+  // Pre-render loading placeholders for all 4 ports so the section has stable
+  // height from the start — no layout jump when real data arrives
+  const container = document.getElementById('portDetailsContainer');
+  if (container && !container.querySelector('[data-port]')) {
+    [1, 2, 3, 4].forEach(n => {
+      const div = document.createElement('div');
+      div.className = 'port-detail-card rounded-lg border border-base-300 bg-base-100 p-4 mb-3';
+      div.dataset.port = n;
+      div.innerHTML = `<p class="text-sm text-base-content/40 italic">Port ${n} — connecting…</p>`;
+      container.appendChild(div);
+    });
+  }
+
   connectWebSocket();
   setupRawDecodedToggle();
   setupSimulateFault();

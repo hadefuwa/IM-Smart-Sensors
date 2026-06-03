@@ -17,7 +17,8 @@ Industrial HMI dashboard for monitoring **IFM IO-Link Master** devices (AL1100/A
 - **Supervision trends** – current, voltage, temperature time-series charts
 - **Connection Diagnostics** – Timeline chart, poll latency graph, recent events table, live backend log viewer, uptime counter, and time-since-last-drop stat
 - **Edge Device page** – Raspberry Pi runtime stats: CPU/memory rolling charts, CPU temperature, load average, service health, and Chromium kiosk process count
-- **Training content (CP0001 / CP0002)** – 8 chapters of sensor fundamentals (CP0001) and 8 engineering worksheets (CP0002), all with interactive games, quizzes, live ISDU controls, and real maintenance scenarios. Latest additions: Chapter 8 (Device Identity — vendor ID match game, PDin decode) and Worksheet 8 (identify an unlabelled sensor using the IO-Link Master page)
+- **Training content (CP0001 / CP0002)** – 8 worksheets of sensor fundamentals (CP0001) and 8 engineering worksheets (CP0002), all with interactive games, quizzes, live ISDU controls, and real maintenance scenarios. CP0001 WS2 includes three live canvas animations comparing digital on/off, analogue 4–20 mA, and IO-Link signal types side-by-side, plus a randomised fault-diagnosis scenario with a streaming backend debug console (5 fault types, shuffled answer options each run)
+- **Student Progress page** – Session-based visit tracker for CP0001 and CP0002 worksheets. SVG progress rings, per-worksheet completion grid, JSON export for tutors, and one-click session reset
 - **Adaptive polling** – Connected ports polled every 1 s; inactive ports every 5 s to reduce AL1350 load
 - **Port labels & device hints** – Display names and device-type overrides configurable per port in `config.json`
 - **Wi-Fi configuration panel** – Connect the Pi to a new network from the Settings page (via `nmcli`)

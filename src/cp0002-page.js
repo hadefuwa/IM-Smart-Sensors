@@ -4,6 +4,7 @@
  * Audience: engineers, system integrators, HNC/degree students.
  * Prerequisite: CP0001 recommended.
  */
+import { markVisited } from './progress-page.js';
 
 // ── Live data infrastructure ──────────────────────────────────────────────────
 function getWsBase() {
@@ -1273,6 +1274,7 @@ function showIndex() {
 function showWorksheet(n) {
   if (n < 1 || n > TOTAL) return;
   currentWorksheetIndex = n;
+  markVisited('cp0002', n);
   const root = document.getElementById('cp0002-root');
   if (!root) return;
   root.innerHTML = buildWorksheetViewHtml(n);

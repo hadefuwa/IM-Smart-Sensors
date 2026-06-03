@@ -65,7 +65,8 @@ Pi credentials and network details are in `docs/PI_SSH.md`.
 | `src/home-page.js` | HMI dashboard — gauges, charts, IODD parameter cards per sensor |
 | `src/io-link-page.js` | IO-Link Master page — port cards, connection KPIs, supervision charts, parameter panels |
 | `src/io-link-vendors.js` | IO-Link vendor registry — 260+ manufacturers from IO-Link Community XML v252; `resolveVendorName(id)` and `resolveDeviceName(vendorId, deviceId, rawName)` |
-| `src/worksheets-page.js` | Interactive training worksheets with live ISDU read/write controls |
+| `src/worksheets-page.js` | CP0001 interactive worksheets — live ISDU controls, canvas signal animations, randomised fault-diagnosis scenario |
+| `src/progress-page.js` | Student Progress page — session-based visit tracking for CP0001 and CP0002; JSON export and reset |
 | `src/learn-page.js` | CP0001 — 8 chapters: sensor fundamentals through device identity |
 | `src/cp0002-page.js` | CP0002 — 8 engineering worksheets: IO-Link deep-dive and maintenance scenarios |
 | `src/settings-page.js` | Theme selector and IO-Link connection config UI |
@@ -169,6 +170,50 @@ The IO-Link Master page (`src/io-link-page.js`) has two data sources that must s
 - `DEVICE_NAMES` — keyed `'vendorId/deviceId'`; overrides the raw product name string for devices where the name needs a friendlier label. Current entries cover the four sensors in this kit.
 
 Known vendor IDs in this kit: 310 (ifm), 342 (Contrinex), 612 (OMRON), 1586 (RS Pro).
+
+## CP0001 Worksheet 2 — Signal Type Animations
+
+WS2 ("What is a Smart Sensor?") contains three `<canvas>` animations that run via `requestAnimationFrame` loops managed by `initSensorTypeAnimations(container)` in `worksheets-page.js`.
+
+**Canvas animation lifecycle — critical pattern:**
+- Canvas animations use a separate `_canvasAnimCancellers` array (not `stopLiveData`). This is intentional: `stopLiveData` is called on every WebSocket reconnect and must not cancel animations. `_canvasAnimCancellers` is only cleared in `showWorksheet` and `showIndex` (navigation events).
+- `ctx.roundRect` is NOT used — the Pi's Chromium is too old. Use the local `rrect(ctx, x, y, w, h, r)` helper instead.
+- RAF loops are wrapped in try/catch so a single bad frame doesn't kill the loop permanently.
+- Canvas width is resolved on the first RAF frame (`el.offsetWidth || 300`) — not at init time — because layout hasn't run yet when `initWorksheetInteractivity` is called synchronously after `innerHTML =`.
+
+**Three animations:**
+- **Digital** — LED indicator panel (left) + scrolling square wave (right). LED glows green with `shadowBlur` when ON.
+- **Analogue** — Oscilloscope with Y-axis mA labels (4–20 mA), scrolling sine wave, gradient fill, live value box.
+- **IO-Link** — Dark canvas: sensor box (left) → 3-wire cable → master box (right). Coloured data-packet pills (`OUT1`, `Temp`, `Fault`, `Model`, `SP1`, `S/N`) spawn at the sensor and travel to the master; a traveling glow follows each packet along the cable. A square wave below the cable shows the switching output is still present. A decoded values panel at the bottom flashes each field when its packet arrives.
+
+## CP0001 Worksheet 2 — Fault Diagnosis Scenario
+
+`initLiveWs2Smart` wires up a randomised maintenance scenario at the bottom of WS2. On each "Start Scenario" click a fault is picked at random from 5 options:
+
+1. Temperature sensor over SP1 setpoint (Port 3)
+2. Proximity sensor OUT1 stuck HIGH (Port 1)
+3. Wrong device identity on Port 2 (temperature sensor instead of capacitive)
+4. IO-Link communication loss on Port 3
+5. Master supply voltage undervoltage
+
+A debug console streams lines every 300 ms. ~90% are realistic backend spam (`[INFO]`/`[DEBUG]`); hints appear every 8–10 lines as `[WARN]` lines in amber. Each fault has 4 unique hints that cycle. Answer options are shuffled on each run. The interval is tracked via `_canvasAnimCancellers` token so it is cleaned up on navigation.
+
+## CP0001 Worksheet 1 — Capacitive Challenge Tolerance
+
+The WS1 challenge (trigger proximity, keep capacitive clean) uses `_chCapTolerance` (default 30) as the raw capacitive value threshold before failure, instead of `> 0`. A slider below the challenge box lets the student adjust from 0–10000. The slider is wired in `initLiveIntro` and resets to 30 on each page load.
+
+## Student Progress Page
+
+`src/progress-page.js` — registered as `data-page="progress"` in the sidebar under Study.
+
+- **Tracking:** CP0001 and CP0002 visited worksheet indices are stored in `sessionStorage` keys `progress_cp0001_visited` and `progress_cp0002_visited`. `markVisited(courseKey, index)` is called from `showWorksheet()` in both `worksheets-page.js` and `cp0002-page.js`.
+- **Session reset:** Clears both sessionStorage keys. Further Study (learn page) is intentionally NOT tracked here.
+- **JSON export:** Downloads a snapshot of both courses via `Blob` + `URL.createObjectURL`. Session start timestamp is included.
+- **Rings:** SVG progress rings per course — green at 100%, amber at ≥50%, red below.
+
+## IO-Link Master Page — Port Details Stability Fix
+
+`_lastPortDetailKey` tracks a string of `port:mode` pairs. `loadActivePortDetails` is only called when that key changes (i.e., a sensor is plugged in or its mode changes). This prevents the IODD parameter panel from collapsing and re-expanding on every 500 ms WebSocket push.
 
 ## Frontend Conventions
 
