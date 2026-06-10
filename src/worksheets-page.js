@@ -17,6 +17,7 @@ let _wsCallback = null;
 let _wsReconnectTimer = null;
 const _activeCharts = {};
 let _canvasAnimCancellers = [];
+let _ws3FaultCleanup = null; // fires on navigation away if fault was injected but not corrected
 
 function startLiveData(callback) {
   stopLiveData();
@@ -48,6 +49,8 @@ function stopLiveData() {
     try { _activeCharts[k].destroy(); } catch {}
     delete _activeCharts[k];
   });
+  if (_ws3FaultCleanup) { _ws3FaultCleanup(); _ws3FaultCleanup = null; }
+  if (_ws4FaultCleanup) { _ws4FaultCleanup(); _ws4FaultCleanup = null; }
 }
 
 function makeChart(canvasId, type, datasets, yMin, yMax, yLabel) {
@@ -554,11 +557,6 @@ const WORKSHEETS = [
     contentHtml: `
       <p class="text-base-content/90 leading-relaxed">An inductive proximity sensor generates an oscillating electromagnetic field at its face. When a metal target enters that field it absorbs energy and damps the oscillation — the sensor detects this change and switches its output on. It never touches the target and does not need a light beam.</p>
 
-      <!-- M-size explainer -->
-      <div class="rounded-lg border border-base-300 bg-base-200 p-3 mt-3 text-sm">
-        <p class="font-bold text-base-content mb-1">📏 What does M18 mean?</p>
-        <p class="text-base-content/80">The <strong>M number</strong> is the diameter of the sensor body in millimetres — like a bolt size. <strong>M18</strong> = 18 mm across.</p>
-      </div>
 
       <!-- WS3 SVG diagram — electromagnetic field -->
       <div class="rounded-xl border border-base-300 bg-base-200 p-3 mt-3">
@@ -657,35 +655,296 @@ const WORKSHEETS = [
 
       <div class="divider my-2"></div>
 
-      <div class="rounded-xl border-2 border-warning/50 bg-warning/5 p-4 mt-4 space-y-3" id="ws3-challenge-box">
-        <p class="font-bold text-base-content text-base">🔧 Maintenance Scenario — Stability Confirmation</p>
-        <div class="rounded-lg bg-base-300/50 p-3 text-sm text-base-content/80 border border-base-300">
-          <p><strong>Job ticket:</strong> Port 1 has been flagged for intermittent detection on the assembly line — the target bracket may have shifted. Bring a metal object (screwdriver) to the ideal sensing distance — approximately 8–12 mm from the face — and confirm the sensor reports stable detection with no instability alarm.</p>
-          <p class="mt-2 text-xs text-base-content/60 font-semibold uppercase tracking-wide">IO-Link diagnostic rule:</p>
-          <div class="flex gap-2 mt-1 flex-wrap">
-            <span class="badge badge-sm bg-success/20 text-success border-success/40">Detected + No Alarm — Stable ✓</span>
-            <span class="badge badge-sm bg-warning/20 text-warning border-warning/40">Detected + Instability — Marginal</span>
-            <span class="badge badge-sm bg-error/20 text-error border-error/40">Not Detected — Out of range</span>
-          </div>
-          <p class="mt-2 text-xs text-base-content/60">Position the target until the sensor detects it <strong>without</strong> the instability alarm. The audit passes when stable detection is confirmed.</p>
+      <!-- Steady-hold challenge -->
+      <div class="rounded-xl border-2 border-primary/40 bg-primary/5 p-4 space-y-3" id="ws3-stable-ch-box">
+        <p class="font-bold text-base-content text-base">⏱ Challenge — Hold Steady for 10 Seconds</p>
+        <p class="text-sm text-base-content/80">Hold a metal object at 8–12 mm from the sensor face for 10 continuous seconds <strong>without</strong> triggering the instability alarm. If the alarm fires, the timer resets to zero.</p>
+        <div class="flex items-center gap-3 flex-wrap">
+          <button type="button" id="ws3-sd-start" class="btn btn-primary btn-sm">Start Challenge</button>
+          <span id="ws3-sd-status" class="text-sm text-base-content/60">Press Start to begin</span>
         </div>
-        <div class="space-y-1">
-          <div class="flex items-center justify-between text-xs text-base-content/60">
-            <span class="font-semibold uppercase tracking-wide">Stability Status</span>
-            <span id="ws3-ch-sq-pct" class="font-mono font-bold">—</span>
+        <div id="ws3-sd-body" class="hidden space-y-3">
+          <div class="space-y-1">
+            <div class="flex items-center justify-between text-xs text-base-content/60">
+              <span class="font-semibold uppercase tracking-wide">Stable detection</span>
+              <span id="ws3-sd-timer" class="font-mono font-bold text-base-content">0.0 s / 10.0 s</span>
+            </div>
+            <div class="w-full bg-base-300 rounded-full h-4 overflow-hidden">
+              <div id="ws3-sd-bar" class="h-4 rounded-full transition-all duration-300 bg-primary" style="width:0%"></div>
+            </div>
           </div>
-          <div class="w-full bg-base-300 rounded-full h-5 overflow-hidden">
-            <div id="ws3-ch-sq-bar" class="h-5 rounded-full transition-all duration-300 bg-base-300" style="width:0%"></div>
+          <div class="flex items-center gap-3">
+            <div id="ws3-sd-dot" class="w-5 h-5 rounded-full bg-base-300 border-2 border-base-300 flex-shrink-0 transition-all duration-150"></div>
+            <span id="ws3-sd-label" class="text-sm font-medium text-base-content/60">Waiting for metal...</span>
           </div>
-          <div class="flex justify-between text-xs text-base-content/40 px-0.5">
-            <span>Not detected</span><span>Detected (unstable)</span><span>Detected (stable)</span>
+          <div class="space-y-1">
+            <p class="text-xs text-base-content/60 font-medium uppercase tracking-wide">Detection waveform (last 60 samples)</p>
+            <div style="height:60px; position:relative;"><canvas id="ws3-sd-det-chart"></canvas></div>
+          </div>
+          <div class="space-y-1">
+            <p class="text-xs text-base-content/60 font-medium uppercase tracking-wide">Instability alarm — must stay 0</p>
+            <div style="height:50px; position:relative;"><canvas id="ws3-sd-instab-chart"></canvas></div>
+          </div>
+          <div id="ws3-sd-result" class="hidden rounded-lg p-3 text-center font-bold text-sm"></div>
+        </div>
+      </div>
+
+      <div class="divider my-2"></div>
+
+      <div class="space-y-2 mt-4">
+        <p class="font-bold text-base-content text-base">🔧 Maintenance Scenario — Parameter Misconfiguration</p>
+        <p class="text-sm text-base-content/80">IO-Link sensors store their configuration <em>inside the device</em>, not on the master. When a sensor is removed and refitted during maintenance, an accidental parameter change can leave it behaving incorrectly — even though physically everything looks fine and IO-Link comms are green. Your job is to diagnose the misconfiguration and correct it using IO-Link ISDU acyclic read/write.</p>
+      </div>
+
+      <!-- HMI Diagnostic Terminal -->
+      <div class="rounded-xl overflow-hidden mt-3 border border-neutral/60" id="ws3-challenge-box">
+
+        <!-- Title bar -->
+        <div class="flex items-center justify-between px-3 py-2 bg-neutral border-b border-neutral/40">
+          <div class="flex items-center gap-2">
+            <div id="ws3-hdr-dot" class="w-2.5 h-2.5 rounded-full bg-error animate-pulse flex-shrink-0"></div>
+            <span id="ws3-hdr-status" class="font-mono text-xs font-bold text-error tracking-widest uppercase">Active Fault</span>
+          </div>
+          <span class="font-mono text-xs text-neutral-content/50 hidden sm:block">LINE 3 — PROXIMITY SENSOR — PORT 1</span>
+          <span class="font-mono text-xs text-neutral-content/40">MJT-2247</span>
+        </div>
+
+        <!-- Shift handover note -->
+        <div class="bg-neutral/60 px-3 py-3 border-b border-neutral/40">
+          <p class="font-mono text-xs text-neutral-content/40 uppercase tracking-widest mb-2">Shift Handover — Night Shift to Day Shift</p>
+          <div class="rounded-lg border border-neutral/40 bg-black/30 p-3 font-mono text-xs space-y-1.5">
+            <p class="text-neutral-content/50">TO: Day Shift Maintenance&nbsp;&nbsp;&nbsp;FROM: Night Shift (T. Okafor)&nbsp;&nbsp;&nbsp;DATE: 09-Jun-26 06:00</p>
+            <p class="text-neutral-content/30 border-t border-neutral/20 pt-1.5">LINE 3 — PREVENTIVE MAINTENANCE COMPLETED 02:30–04:45</p>
+            <p class="text-neutral-content/80">Port 1 proximity sensor (Omron E2E-X16MB1T12) pulled and cleaned — oil contamination on face from gearbox leak. Refitted and torqued to spec. IO-Link comms re-established, green LED confirmed at 04:52.</p>
+            <p class="text-neutral-content/80 mt-1">NOTE: Line 3 has stopped three times between 05:30 and handover. Operator reports the belt sensor is triggering when the belt is empty. I checked the bracket — alignment looks straight. No obvious mechanical damage. Handing to day shift for investigation.</p>
+            <p class="text-warning mt-1">⚠ Do not restart line until root cause confirmed. Production supervisor aware.</p>
           </div>
         </div>
-        <div id="ws3-ch-result" class="hidden rounded-lg p-3 text-center font-bold text-sm"></div>
-        <div class="flex justify-center">
-          <button type="button" id="ws3-ch-reset" class="btn btn-warning btn-sm gap-2">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
-            Reset Audit
+
+        <!-- Alarm log -->
+        <div class="bg-neutral px-3 py-2 border-b border-neutral/40">
+          <p class="font-mono text-xs text-neutral-content/40 uppercase tracking-widest mb-1.5">Alarm Log — Line 3</p>
+          <table class="w-full font-mono text-xs border-collapse">
+            <tbody>
+              <tr class="border-b border-neutral/20">
+                <td class="py-1 pr-3 text-neutral-content/40 whitespace-nowrap">05:47:12</td>
+                <td class="pr-3 text-error font-semibold whitespace-nowrap">LINE3-ESTOP</td>
+                <td class="text-neutral-content/70">Emergency stop — belt sensor triggered on empty belt</td>
+                <td class="pl-2 text-error text-right">✕</td>
+              </tr>
+              <tr class="border-b border-neutral/20">
+                <td class="py-1 pr-3 text-neutral-content/40 whitespace-nowrap">05:44:31</td>
+                <td class="pr-3 text-warning font-semibold whitespace-nowrap">PORT1-PROX</td>
+                <td class="text-neutral-content/70">Detection ACTIVE — no product confirmed on belt</td>
+                <td class="pl-2 text-warning text-right">⚠</td>
+              </tr>
+              <tr class="border-b border-neutral/20">
+                <td class="py-1 pr-3 text-neutral-content/40 whitespace-nowrap">05:31:08</td>
+                <td class="pr-3 text-error font-semibold whitespace-nowrap">LINE3-ESTOP</td>
+                <td class="text-neutral-content/70">Emergency stop — belt sensor triggered on empty belt</td>
+                <td class="pl-2 text-error text-right">✕</td>
+              </tr>
+              <tr class="border-b border-neutral/20">
+                <td class="py-1 pr-3 text-neutral-content/40 whitespace-nowrap">05:28:44</td>
+                <td class="pr-3 text-warning font-semibold whitespace-nowrap">PORT1-PROX</td>
+                <td class="text-neutral-content/70">Detection ACTIVE — no product confirmed on belt</td>
+                <td class="pl-2 text-warning text-right">⚠</td>
+              </tr>
+              <tr>
+                <td class="py-1 pr-3 text-neutral-content/40 whitespace-nowrap">04:52:17</td>
+                <td class="pr-3 text-neutral-content/40 whitespace-nowrap">PORT1-PROX</td>
+                <td class="text-neutral-content/70">IO-Link comms re-established — post-PM reconnect OK</td>
+                <td class="pl-2 text-neutral-content/30 text-right">✓</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Live process values -->
+        <div class="bg-neutral px-3 py-2 border-b border-neutral/40">
+          <p class="font-mono text-xs text-neutral-content/40 uppercase tracking-widest mb-1.5">Live Process Values — Port 1</p>
+          <div class="grid grid-cols-2 gap-x-6 gap-y-1 font-mono text-xs">
+            <div class="flex items-center justify-between gap-2">
+              <span class="text-neutral-content/40">Detection</span>
+              <span id="ws3-hmi-det" class="font-bold text-neutral-content">—</span>
+            </div>
+            <div class="flex items-center justify-between gap-2">
+              <span class="text-neutral-content/40">Instability</span>
+              <span id="ws3-hmi-instab" class="font-bold text-neutral-content">—</span>
+            </div>
+            <div class="flex items-center justify-between gap-2">
+              <span class="text-neutral-content/40">Over-Approach</span>
+              <span id="ws3-hmi-overapp" class="font-bold text-neutral-content">—</span>
+            </div>
+            <div class="flex items-center justify-between gap-2">
+              <span class="text-neutral-content/40">Monitor Out</span>
+              <span id="ws3-hmi-mon" class="font-bold text-neutral-content">—</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Step 0: Start scenario -->
+        <div class="bg-neutral px-3 py-3 border-b border-neutral/40 space-y-3" id="ws3-ms-setup">
+          <p class="font-mono text-xs text-neutral-content/40 uppercase tracking-widest">Ready to Investigate</p>
+          <p class="text-sm text-neutral-content/80">You have been handed the above job ticket. Click <strong class="text-neutral-content">Start Scenario</strong> to load the fault into the sensor so you can investigate it live.</p>
+          <div class="flex items-center gap-3 flex-wrap">
+            <button type="button" id="ws3-ms-inject-btn" class="btn btn-warning btn-sm gap-2">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+              Start Scenario
+            </button>
+            <span id="ws3-ms-inject-status" class="text-xs font-mono text-neutral-content/40"></span>
+          </div>
+        </div>
+
+        <!-- Step 1: Observe (revealed after inject) -->
+        <div id="ws3-ms-observe" class="hidden bg-neutral px-3 py-3 border-b border-neutral/40 space-y-3">
+          <p class="font-mono text-xs text-success uppercase tracking-widest">Scenario Active — Step 1: Observe the Anomaly</p>
+          <p class="text-sm text-neutral-content/80">The fault is now live. Try holding a metal object close to the sensor face and watch the live values below:</p>
+          <div class="grid grid-cols-2 gap-x-6 gap-y-1 font-mono text-xs rounded border border-neutral/40 bg-black/20 px-3 py-2">
+            <div class="flex items-center justify-between gap-2">
+              <span class="text-neutral-content/40">Detection</span>
+              <span id="ws3-obs-det" class="font-bold text-neutral-content">—</span>
+            </div>
+            <div class="flex items-center justify-between gap-2">
+              <span class="text-neutral-content/40">Instability</span>
+              <span id="ws3-obs-instab" class="font-bold text-neutral-content">—</span>
+            </div>
+            <div class="flex items-center justify-between gap-2">
+              <span class="text-neutral-content/40">Over-Approach</span>
+              <span id="ws3-obs-overapp" class="font-bold text-neutral-content">—</span>
+            </div>
+            <div class="flex items-center justify-between gap-2">
+              <span class="text-neutral-content/40">Monitor Out</span>
+              <span id="ws3-obs-mon" class="font-bold text-neutral-content">—</span>
+            </div>
+          </div>
+          <p class="text-sm text-neutral-content/80">The alarm log shows the sensor triggering on an empty belt. That pattern — detecting when nothing is there, not detecting when something is — is a classic sign that output polarity has been reversed. When you have observed this, continue.</p>
+          <button type="button" id="ws3-ms-observe-next" class="btn btn-primary btn-sm font-mono gap-2">I have observed the anomaly — Continue to Diagnosis →</button>
+        </div>
+
+        <!-- Step 2: Diagnose (revealed after observe) -->
+        <div id="ws3-ms-diag" class="hidden bg-neutral px-3 py-3 border-b border-neutral/40 space-y-3">
+          <p class="font-mono text-xs text-neutral-content/40 uppercase tracking-widest">Step 2 — Diagnosis</p>
+          <p class="text-sm text-neutral-content/80">The output is consistently inverted — active with no target, inactive with a target present. The bracket alignment is confirmed correct. IO-Link comms are clean — no errors, stable monitor output.</p>
+          <p class="text-sm text-neutral-content/80 font-semibold text-neutral-content">What is the most likely root cause?</p>
+          <div class="flex flex-col gap-2">
+            <button type="button" data-ans="nc" class="btn btn-sm font-mono text-left justify-start" style="border:1px solid rgba(255,255,255,0.15);color:rgba(255,255,255,0.5);background:transparent">Output logic parameter changed from NO to NC — inverts the switching behaviour</button>
+            <button type="button" data-ans="hw" class="btn btn-sm font-mono text-left justify-start" style="border:1px solid rgba(255,255,255,0.15);color:rgba(255,255,255,0.5);background:transparent">Sensor coil is damaged — mechanical impact during removal reversed the output</button>
+            <button type="button" data-ans="cable" class="btn btn-sm font-mono text-left justify-start" style="border:1px solid rgba(255,255,255,0.15);color:rgba(255,255,255,0.5);background:transparent">IO-Link cable polarity swapped at the master connector — wiring error</button>
+          </div>
+          <p id="ws3-ms-diag-fb" class="hidden text-sm font-semibold"></p>
+        </div>
+
+        <!-- Step 3: Read parameter (revealed after correct diagnosis) -->
+        <div id="ws3-ms-read" class="hidden bg-neutral px-3 py-3 border-b border-neutral/40 space-y-3">
+          <p class="font-mono text-xs text-success uppercase tracking-widest">Diagnosis Confirmed ✓ — Step 3: Verify with ISDU Read</p>
+          <p class="text-sm text-neutral-content/80">Good call. Now <em>prove</em> it — read the Switchpoint Logic OUT1 parameter directly from sensor memory using IO-Link ISDU acyclic read. This is exactly how a field engineer would verify a suspected parameter change: read the device, confirm the value, document the evidence.</p>
+          <div class="rounded border border-neutral/40 bg-black/30 p-2 text-xs font-mono text-neutral-content/50 space-y-0.5">
+            <p>ISDU READ — Port 1 — Index 0x3D (61) / Subindex 1 — Switchpoint Logic OUT1</p>
+            <p class="text-neutral-content/30">Factory default: 0x00 (NO — Normally Open) · Fault value: 0x01 (NC — Normally Closed)</p>
+          </div>
+          <div class="flex items-center gap-3 flex-wrap">
+            <button type="button" id="ws3-ms-read-btn" class="btn btn-sm font-mono" style="border:1px solid rgba(59,130,246,0.5);color:#3b82f6;background:transparent">Read Parameter →</button>
+            <span id="ws3-ms-read-status" class="text-xs font-mono text-neutral-content/40"></span>
+          </div>
+          <div id="ws3-ms-read-result" class="hidden rounded border border-neutral/40 bg-black/30 p-3 font-mono text-xs space-y-1.5">
+            <p class="text-neutral-content/40 uppercase tracking-widest text-xs">ISDU READ RESPONSE</p>
+            <p class="text-neutral-content/50">Port: 1 · Index: 0x3D · Subindex: 1</p>
+            <p>Raw hex: <span id="ws3-ms-read-hex" class="text-warning">—</span></p>
+            <p>Decoded: <span id="ws3-ms-read-val" class="text-warning font-bold">—</span></p>
+            <p id="ws3-ms-read-interp" class="mt-1">—</p>
+          </div>
+          <button type="button" id="ws3-ms-read-next" class="hidden btn btn-sm font-mono" style="border:1px solid rgba(255,255,255,0.2);color:rgba(255,255,255,0.5);background:transparent">Proceed to Write Fix →</button>
+        </div>
+
+        <!-- Step 4: Write fix (revealed after read) -->
+        <div id="ws3-ms-write" class="hidden bg-neutral px-3 py-3 border-b border-neutral/40 space-y-3">
+          <p class="font-mono text-xs text-neutral-content/40 uppercase tracking-widest">Step 4 — Corrective Action: ISDU Write</p>
+          <p class="text-sm text-neutral-content/80">Read confirms Switchpoint Logic OUT1 is <strong class="text-error">1 (NC — Normally Closed)</strong>. The factory default is <strong class="text-success">0 (NO — Normally Open)</strong>. Write the correct value back to restore normal output polarity.</p>
+          <div class="rounded border border-neutral/40 bg-black/30 p-2 text-xs font-mono text-neutral-content/50 space-y-0.5">
+            <p>ISDU WRITE — Port 1 — Index 0x3D (61) / Subindex 1 — Switchpoint Logic OUT1</p>
+            <p class="text-success">Target value: 0x00 (NO — Normally Open — object detected → output ON)</p>
+          </div>
+          <div class="flex items-center gap-3 flex-wrap">
+            <button type="button" id="ws3-ms-write-btn" class="btn btn-sm font-mono" style="border:1px solid rgba(74,222,128,0.5);color:#4ade80;background:transparent">Write NO (0x00) to Sensor →</button>
+            <span id="ws3-ms-write-status" class="text-xs font-mono text-neutral-content/40"></span>
+          </div>
+        </div>
+
+        <!-- Step 5: Verify (revealed after write) -->
+        <div id="ws3-ms-verify" class="hidden bg-neutral px-3 py-3 border-b border-neutral/40 space-y-3">
+          <p class="font-mono text-xs text-success uppercase tracking-widest">Write Complete ✓ — Step 5: Verify Correct Operation</p>
+          <p class="text-sm text-neutral-content/80">Parameter written. Hold a metal object close to the sensor and confirm the output is now correct: metal present → <strong class="text-success">DETECTED</strong>, no metal → <strong class="text-neutral-content">NO OBJECT</strong>. Hold stable for 3 continuous seconds to confirm.</p>
+          <div class="grid grid-cols-2 gap-x-6 gap-y-1 font-mono text-xs rounded border border-neutral/40 bg-black/20 px-3 py-2">
+            <div class="flex items-center justify-between gap-2">
+              <span class="text-neutral-content/40">Detection</span>
+              <span id="ws3-vfy-det" class="font-bold text-neutral-content">—</span>
+            </div>
+            <div class="flex items-center justify-between gap-2">
+              <span class="text-neutral-content/40">Instability</span>
+              <span id="ws3-vfy-instab" class="font-bold text-neutral-content">—</span>
+            </div>
+            <div class="flex items-center justify-between gap-2">
+              <span class="text-neutral-content/40">Over-Approach</span>
+              <span id="ws3-vfy-overapp" class="font-bold text-neutral-content">—</span>
+            </div>
+            <div class="flex items-center justify-between gap-2">
+              <span class="text-neutral-content/40">Monitor Out</span>
+              <span id="ws3-vfy-mon" class="font-bold text-neutral-content">—</span>
+            </div>
+          </div>
+          <div class="space-y-1.5">
+            <div class="flex items-center justify-between font-mono text-xs">
+              <span class="text-neutral-content/40">Verification status</span>
+              <span id="ws3-ms-vfy-pct" class="text-neutral-content">Waiting for detection…</span>
+            </div>
+            <div class="w-full rounded-full h-4 overflow-hidden" style="background:rgba(255,255,255,0.08)">
+              <div id="ws3-ms-vfy-bar" class="h-4 rounded-full transition-all duration-300" style="width:0%;background:rgba(255,255,255,0.12)"></div>
+            </div>
+            <div class="flex justify-between font-mono text-xs text-neutral-content/30 px-0.5">
+              <span>Not detected</span><span>Hold 3 s →</span><span>✓ Verified</span>
+            </div>
+          </div>
+          <div class="space-y-1">
+            <div class="flex items-center justify-between font-mono text-xs">
+              <span class="text-neutral-content/40">Stable hold</span>
+              <span id="ws3-ms-vfy-timer" class="text-neutral-content">0.0 s / 3.0 s</span>
+            </div>
+            <div class="w-full rounded-full h-2 overflow-hidden" style="background:rgba(255,255,255,0.08)">
+              <div id="ws3-ms-vfy-tbar" class="h-2 rounded-full transition-all duration-300 bg-success" style="width:0%"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Sign-off section (revealed after verify) -->
+        <div id="ws3-ms-signoff" class="hidden bg-neutral px-3 py-3 border-b border-neutral/40 space-y-3">
+          <p class="font-mono text-xs text-success uppercase tracking-widest">Verification Passed ✓ — Close Ticket</p>
+          <p class="text-sm text-neutral-content/80">Before closing the ticket, confirm the following:</p>
+          <div class="space-y-2">
+            <label class="flex items-center gap-3 cursor-pointer font-mono text-xs">
+              <input type="checkbox" class="checkbox checkbox-xs checkbox-success" id="ws3-ms-ck1">
+              <span class="text-neutral-content/70">Root cause confirmed via ISDU read: Switchpoint Logic OUT1 was NC (0x01) — corrected to NO (0x00) via ISDU write</span>
+            </label>
+            <label class="flex items-center gap-3 cursor-pointer font-mono text-xs">
+              <input type="checkbox" class="checkbox checkbox-xs checkbox-success" id="ws3-ms-ck2">
+              <span class="text-neutral-content/70">Sensor verified: stable detection with correct output polarity confirmed, no active alarms</span>
+            </label>
+            <label class="flex items-center gap-3 cursor-pointer font-mono text-xs">
+              <input type="checkbox" class="checkbox checkbox-xs checkbox-success" id="ws3-ms-ck3">
+              <span class="text-neutral-content/70">Corrective action documented: update PM checklist to include ISDU parameter verification after sensor removal/refit</span>
+            </label>
+          </div>
+          <button type="button" id="ws3-ms-close-btn" class="btn btn-xs btn-outline w-full font-mono tracking-wider" style="color:#4ade80;border-color:#4ade80" disabled>CLOSE TICKET — MJT-2247</button>
+        </div>
+
+        <!-- Completion banner -->
+        <div id="ws3-ch-result" class="hidden px-3 py-2 font-mono text-xs border-t border-success/30 bg-success/10 text-success"></div>
+
+        <!-- Reset -->
+        <div class="bg-neutral px-3 py-2 border-t border-neutral/40 flex justify-end">
+          <button type="button" id="ws3-ch-reset" class="btn btn-ghost btn-xs gap-1 font-mono text-neutral-content/20 opacity-40 hover:opacity-70">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+            RESET
           </button>
         </div>
       </div>
@@ -773,13 +1032,27 @@ const WORKSHEETS = [
         </div>
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <!-- SSC1 SP1 -->
-          <div class="rounded-lg bg-base-200 border border-base-300 p-3 space-y-2">
+          <div class="rounded-lg bg-base-200 border border-base-300 p-3 space-y-3">
             <p class="text-xs font-semibold text-base-content">Detection Threshold (SSC1 SP1)</p>
-            <p class="text-xs text-base-content/60">Lower = more sensitive. Range 10–10000. Current value read from sensor.</p>
-            <div class="flex items-center gap-2">
-              <span class="text-xs text-base-content/50">Sensitive</span>
+            <p class="text-xs text-base-content/80 leading-relaxed">SP1 is the threshold the sensor compares its measured capacitive field against. When the field reading crosses SP1, the output switches ON. Every installation is different — a sensor mounted on a plastic hopper full of wet grain needs a very different SP1 to the same sensor mounted on a dry conveyor belt — so SP1 must always be set for the specific application.</p>
+            <div class="space-y-1.5 text-xs text-base-content/70">
+              <div class="flex items-start gap-2 rounded bg-error/10 border border-error/20 p-2">
+                <span class="text-error font-bold flex-shrink-0">SP1 too high:</span>
+                <span>The sensor ignores weak field changes. It won't detect light materials or targets at distance — missed detections, production stops waiting for a signal that never comes.</span>
+              </div>
+              <div class="flex items-start gap-2 rounded bg-warning/10 border border-warning/20 p-2">
+                <span class="text-warning font-bold flex-shrink-0">SP1 too low:</span>
+                <span>The sensor reacts to the container wall, humidity, or your hand nearby. Continuous false triggers — production bypasses the sensor and runs unprotected.</span>
+              </div>
+              <div class="flex items-start gap-2 rounded bg-success/10 border border-success/20 p-2">
+                <span class="text-success font-bold flex-shrink-0">SP1 correct:</span>
+                <span>Set just above the ambient field reading with nothing present. The best way to achieve this is Teach Mode (below) — the sensor measures the environment and sets SP1 automatically with a known margin.</span>
+              </div>
+            </div>
+            <div class="flex items-center gap-2 pt-1">
+              <span class="text-xs text-base-content/50">More sensitive</span>
               <input type="range" id="ws3-sp1-slider" min="10" max="10000" value="1000" step="10" class="range range-secondary range-xs flex-1">
-              <span class="text-xs text-base-content/50">Low</span>
+              <span class="text-xs text-base-content/50">Less sensitive</span>
             </div>
             <div class="flex items-center justify-between">
               <span id="ws3-sp1-val" class="font-mono text-sm font-bold text-secondary">—</span>
@@ -788,28 +1061,46 @@ const WORKSHEETS = [
             <span id="ws3-sp1-status" class="text-xs"></span>
           </div>
           <!-- QoT / QoR -->
-          <div class="rounded-lg bg-base-200 border border-base-300 p-3 space-y-2">
+          <div class="rounded-lg bg-base-200 border border-base-300 p-3 space-y-3">
             <p class="text-xs font-semibold text-base-content">Teach &amp; Run Quality</p>
-            <p class="text-xs text-base-content/60">QoT = how well the sensor was taught. QoR = signal margin during operation.</p>
-            <div class="space-y-1">
-              <div class="flex items-center gap-2">
-                <span class="text-xs w-8">QoT</span>
-                <progress id="ws3-qot-bar" class="progress progress-info flex-1" value="0" max="255"></progress>
-                <span id="ws3-qot-val" class="text-xs font-mono w-8 text-right">—</span>
+            <p class="text-xs text-base-content/80 leading-relaxed">These two values are unique to IO-Link — a standard digital or analogue sensor can only tell you <em>on</em> or <em>off</em>. IO-Link lets you read the sensor's internal confidence scores via ISDU:</p>
+            <div class="space-y-3">
+              <div>
+                <div class="flex items-center justify-between mb-1">
+                  <span class="text-xs font-semibold text-info">QoT — Quality of Teach</span>
+                  <span id="ws3-qot-val" class="text-xs font-mono font-bold text-info">—</span>
+                </div>
+                <progress id="ws3-qot-bar" class="progress progress-info w-full" value="0" max="255"></progress>
+                <p class="text-xs text-base-content/60 mt-1">How confident the sensor is that the teach procedure captured a clean reference signal. A score above ~150 means the teach went well. A low score (below 80) means the sensor was taught in noisy conditions — you may get inconsistent detection near the setpoint. <strong>Read after teaching</strong> to verify the teach was successful.</p>
               </div>
-              <div class="flex items-center gap-2">
-                <span class="text-xs w-8">QoR</span>
-                <progress id="ws3-qor-bar" class="progress progress-success flex-1" value="0" max="255"></progress>
-                <span id="ws3-qor-val" class="text-xs font-mono w-8 text-right">—</span>
+              <div>
+                <div class="flex items-center justify-between mb-1">
+                  <span class="text-xs font-semibold text-success">QoR — Quality of Run</span>
+                  <span id="ws3-qor-val" class="text-xs font-mono font-bold text-success">—</span>
+                </div>
+                <progress id="ws3-qor-bar" class="progress progress-success w-full" value="0" max="255"></progress>
+                <p class="text-xs text-base-content/60 mt-1">The real-time signal margin during normal operation — how far the current field reading is from the SP1 threshold. A high QoR means plenty of headroom; the sensor will reliably switch. A low QoR (near zero) means the sensor is operating close to its limit and is at risk of nuisance trips. <strong>Read during operation</strong> to catch marginal installations before they cause downtime.</p>
               </div>
             </div>
-            <button type="button" id="ws3-qot-refresh" class="btn btn-xs btn-ghost">↺ Refresh</button>
+            <div class="flex items-center gap-2 rounded bg-base-300/60 p-2 text-xs text-base-content/70">
+              <span class="text-lg">💡</span>
+              <span>On a conventional sensor you would have no visibility of these margins at all. IO-Link makes the invisible visible — this is one of its core maintenance benefits.</span>
+            </div>
+            <button type="button" id="ws3-qot-refresh" class="btn btn-xs btn-ghost">↺ Refresh from sensor</button>
           </div>
         </div>
         <!-- Teach buttons -->
-        <div class="rounded-lg bg-base-200 border border-base-300 p-3 space-y-2">
+        <div class="rounded-lg bg-base-200 border border-base-300 p-3 space-y-3">
           <p class="text-xs font-semibold text-base-content">Teach Mode — Auto-set Threshold</p>
-          <p class="text-xs text-base-content/60">Place target at the trigger point, press Start, wait, then press Stop. The sensor sets SP1 automatically.</p>
+          <p class="text-xs text-base-content/80 leading-relaxed">Instead of manually guessing a SP1 value with the slider, <strong>Teach Mode</strong> lets the sensor measure its own environment and set the threshold automatically. This is the correct way to commission a capacitive sensor on a real installation.</p>
+          <div class="rounded bg-base-300/60 p-2 space-y-1.5 text-xs text-base-content/70">
+            <p class="font-semibold text-base-content mb-1">How to use it:</p>
+            <p><span class="font-mono text-warning">1.</span> Place the target material at the exact detection point (e.g. hold your hand where you want the sensor to just trip).</p>
+            <p><span class="font-mono text-warning">2.</span> Click <strong>Start Teach</strong> — the sensor enters teach mode and begins sampling the field.</p>
+            <p><span class="font-mono text-warning">3.</span> Hold steady for 2–3 seconds, then click <strong>Stop Teach</strong>. The sensor calculates and writes a new SP1 value based on what it measured.</p>
+            <p><span class="font-mono text-warning">4.</span> Click <strong>↺ Refresh</strong> above to read back the new SP1 and QoT — a good teach should give QoT &gt; 150.</p>
+          </div>
+          <p class="text-xs text-base-content/60">Use <strong>Cancel</strong> if you started by mistake or want to abort without changing SP1.</p>
           <div class="flex flex-wrap gap-2">
             <button type="button" id="ws3-teach-start" class="btn btn-xs btn-warning">Start Teach</button>
             <button type="button" id="ws3-teach-stop" class="btn btn-xs btn-success">Stop Teach</button>
@@ -852,40 +1143,155 @@ const WORKSHEETS = [
 
       <div class="divider my-2"></div>
 
-      <div class="rounded-xl border-2 border-warning/50 bg-warning/5 p-4 mt-4 space-y-3" id="ws4-challenge-box">
-        <p class="font-bold text-base-content text-base">🔧 Maintenance Scenario — Fix the False Triggers</p>
-        <div class="rounded-lg bg-base-300/50 p-3 text-sm text-base-content/80 border border-base-300">
-          <p><strong>Job ticket:</strong> A replacement capacitive sensor on Port 2 is causing false detections — the output fires even with nothing near it. Sensitivity is too high. Use IO-Link to diagnose and correct the SP1 threshold.</p>
+      <div class="space-y-2 mt-4">
+        <p class="font-bold text-base-content text-base">🔧 Maintenance Scenario — Replacement Sensor Not Commissioned</p>
+        <p class="text-sm text-base-content/80">A very common real-world fault: a sensor fails, a technician swaps it for a spare from stores, and the line restarts — but the replacement has factory-default parameters that don't match the installation. SP1 is wrong for the environment, and because no one ran a teach procedure, the sensor has no site-specific calibration. QoT will be zero or very low, meaning the sensor has no confidence in its own threshold. Your job is to diagnose both problems via IO-Link and put the sensor back into service correctly.</p>
+      </div>
+
+      <div class="rounded-xl border-2 border-warning/50 bg-warning/5 p-4 mt-3 space-y-3" id="ws4-challenge-box">
+
+        <!-- Title bar -->
+        <div class="flex items-center gap-2">
+          <div id="ws4-hdr-dot" class="w-3 h-3 rounded-full bg-base-300 flex-shrink-0 transition-all"></div>
+          <p class="font-bold text-base-content text-sm">Maintenance Scenario</p>
+          <span id="ws4-hdr-status" class="text-xs font-mono ml-auto text-base-content/50"></span>
         </div>
-        <div class="space-y-2">
+
+        <!-- Job context -->
+        <div class="rounded-lg bg-base-300/50 p-3 text-sm text-base-content/80 border border-base-300 space-y-1">
+          <p><strong>Job ticket #WO-4412:</strong> Line 3 hopper sensor (Port 2) was replaced yesterday after physical damage. Since reinstatement it reports continuous object detected with the hopper empty. Production has bypassed the sensor and is running unprotected. Attend, diagnose, and restore to service.</p>
+          <p class="text-xs text-base-content/60 mt-1"><strong>Background:</strong> The spare sensor came from stores with factory-default parameters. There is no record of a teach procedure being carried out after fitting.</p>
+        </div>
+
+        <!-- Always-visible HMI live panel -->
+        <div class="rounded-lg bg-base-200 border border-base-300 p-3">
+          <p class="text-xs font-semibold text-base-content/60 uppercase tracking-wide mb-2">Port 2 — Live Process Data</p>
           <div class="flex items-center gap-2">
-            <div id="ws4-ch-s1" class="w-7 h-7 rounded-full bg-base-300 border-2 border-base-300 flex items-center justify-center text-xs font-bold text-base-content/50 transition-all flex-shrink-0">1</div>
-            <span class="text-sm text-base-content/80">Read the current SP1 from the ISDU panel above — note the value</span>
-          </div>
-          <div class="flex items-center gap-2">
-            <div id="ws4-ch-s2" class="w-7 h-7 rounded-full bg-base-300 border-2 border-base-300 flex items-center justify-center text-xs font-bold text-base-content/50 transition-all flex-shrink-0">2</div>
-            <span class="text-sm text-base-content/80">Reduce SP1 by ~50% using the slider above, then click <strong>Apply to sensor</strong></span>
-          </div>
-          <div class="flex items-center gap-2">
-            <div id="ws4-ch-s3" class="w-7 h-7 rounded-full bg-base-300 border-2 border-base-300 flex items-center justify-center text-xs font-bold text-base-content/50 transition-all flex-shrink-0">3</div>
-            <span class="text-sm text-base-content/80">With nothing near the sensor, click <strong>Confirm Fix</strong> — output must be clear</span>
+            <span class="text-xs text-base-content/60">Detection:</span>
+            <span id="ws4-hmi-det" class="font-bold font-mono text-xs text-base-content/40">—</span>
           </div>
         </div>
-        <div class="flex items-center gap-3 rounded-lg bg-base-300/40 p-2">
-          <div id="ws4-ch-dot" class="w-4 h-4 rounded-full bg-base-300 border border-base-300 transition-all flex-shrink-0"></div>
-          <span id="ws4-ch-det-label" class="text-xs font-mono text-base-content/60">waiting for live data…</span>
+
+        <!-- Step 0: idle -->
+        <div id="ws4-ms-setup">
+          <p class="text-sm text-base-content/70 mb-2">Click <strong>Start Scenario</strong> to simulate the fault. The system writes a very low SP1 value to the sensor via ISDU — the threshold drops below the ambient capacitive field, causing continuous false detection, exactly as an incorrectly commissioned replacement sensor would behave.</p>
+          <div class="flex items-center gap-3 flex-wrap">
+            <button type="button" id="ws4-ms-inject-btn" class="btn btn-warning btn-sm font-mono">▶ Start Scenario</button>
+            <span id="ws4-ms-inject-status" class="text-xs font-mono"></span>
+          </div>
         </div>
-        <div id="ws4-ch-result" class="hidden rounded-lg p-3 text-center font-bold text-sm"></div>
-        <div class="flex justify-center gap-2 flex-wrap">
-          <button type="button" id="ws4-ch-confirm" class="btn btn-success btn-sm gap-2" disabled>
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
-            Confirm Fix
-          </button>
-          <button type="button" id="ws4-ch-reset" class="btn btn-warning btn-sm gap-2">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
-            Reset
-          </button>
+
+        <!-- Step 1: observe (hidden) -->
+        <div id="ws4-ms-observe" class="hidden space-y-3">
+          <div class="rounded-lg bg-warning/10 border border-warning/30 p-3">
+            <p class="text-sm font-semibold text-warning mb-1">⚠ Fault condition active — observe the sensor behaviour</p>
+            <p class="text-sm text-base-content/80">SP1 has been forced to a very low value. The threshold is now below the ambient capacitive field, so the detection output is <strong>continuously ON</strong> even with nothing near the sensor face. This matches the false trigger the operators reported.</p>
+          </div>
+          <div class="rounded-lg bg-base-200 border border-base-300 p-3">
+            <p class="text-xs font-semibold text-base-content/60 uppercase tracking-wide mb-2">Live sensor output during fault</p>
+            <div class="flex items-center gap-2">
+              <div id="ws4-obs-dot" class="w-3 h-3 rounded-full bg-base-300 flex-shrink-0 transition-all"></div>
+              <span class="text-xs text-base-content/60">Detection:</span>
+              <span id="ws4-obs-det" class="font-bold font-mono text-xs">—</span>
+            </div>
+          </div>
+          <button type="button" id="ws4-ms-observe-next" class="btn btn-primary btn-sm w-full font-mono">I have observed the false trigger →</button>
         </div>
+
+        <!-- Step 2: diagnose via ISDU read (hidden) -->
+        <div id="ws4-ms-read" class="hidden space-y-3">
+          <div class="rounded-lg bg-info/10 border border-info/30 p-3">
+            <p class="text-sm font-semibold text-info mb-1">🔍 Step: Diagnose — read the parameters</p>
+            <p class="text-sm text-base-content/80">Before touching anything, read the evidence. A field engineer never guesses — they document the before state. Read SP1 below, then also hit <strong>↺ Refresh from sensor</strong> in the Teach &amp; Run Quality panel above to pull the live QoT and QoR values. Both together tell the full story.</p>
+            <p class="text-xs font-mono text-base-content/50 mt-1">SP1: Index 60 (0x3C) / Subindex 1 — SSC1 Setpoint 1</p>
+          </div>
+          <button type="button" id="ws4-ms-read-btn" class="btn btn-info btn-sm font-mono">📖 Read SP1 from device</button>
+          <div id="ws4-ms-read-result" class="hidden rounded-lg bg-base-200 border border-base-300 p-3 space-y-1 font-mono text-xs">
+            <p class="text-base-content/50 uppercase tracking-widest mb-1">ISDU READ RESPONSE — Port 2 · Index 0x3C · Sub 1</p>
+            <p>Raw hex: <span id="ws4-ms-read-hex" class="text-warning">—</span></p>
+            <p>Decoded: SP1 = <span id="ws4-ms-read-val" class="text-warning font-bold">—</span></p>
+            <p id="ws4-ms-read-interp" class="text-base-content/60 font-sans mt-1">—</p>
+          </div>
+          <div class="rounded-lg bg-base-300/50 border border-base-300 p-2 text-xs text-base-content/70 space-y-1">
+            <p class="font-semibold text-base-content">Now check QoT and QoR above (↺ Refresh):</p>
+            <p>QoT near zero confirms the replacement sensor was <strong>never taught</strong> for this installation — it has no calibrated reference point, so its SP1 is a factory guess rather than a measured threshold. QoR will also be unreliable until the sensor is properly commissioned.</p>
+          </div>
+          <button type="button" id="ws4-ms-read-next" class="hidden btn btn-primary btn-sm w-full font-mono">Root cause confirmed — proceed to fix →</button>
+        </div>
+
+        <!-- Step 3: write fix (hidden) -->
+        <div id="ws4-ms-write" class="hidden space-y-3">
+          <div class="rounded-lg bg-success/10 border border-success/30 p-3">
+            <p class="text-sm font-semibold text-success mb-1">🔧 Step: Commission the replacement sensor</p>
+            <p class="text-sm text-base-content/80">Two valid approaches — choose one:</p>
+            <div class="mt-2 space-y-2 text-sm text-base-content/80">
+              <div class="rounded bg-success/10 border border-success/20 p-2">
+                <p class="font-semibold text-success text-xs mb-1">Option A — Teach Mode (recommended for new installations)</p>
+                <p class="text-xs">Use the <strong>Teach Mode</strong> panel above. Hold the target at the detection point, click Start Teach, wait 2–3 seconds, then Stop Teach. The sensor sets SP1 from a real measurement. QoT will rise above 150, confirming a good commission. Hit ↺ Refresh to verify.</p>
+              </div>
+              <div class="rounded bg-base-300/40 border border-base-300 p-2">
+                <p class="font-semibold text-xs mb-1">Option B — Manual SP1 (quicker but less precise)</p>
+                <p class="text-xs">Set the <strong>SP1 slider</strong> above to 800–2000 and click Apply to sensor. This raises the threshold above the ambient noise floor. QoT will remain low — the sensor has no teach reference — but detection will be stable for free-air operation.</p>
+              </div>
+            </div>
+            <p class="text-xs text-base-content/60 mt-2">Whichever method you use, click <strong>Apply Fix</strong> below when the new SP1 value has been written to the device.</p>
+          </div>
+          <button type="button" id="ws4-ms-write-btn" class="btn btn-success btn-sm font-mono">✓ Apply Fix — SP1 written to sensor</button>
+          <span id="ws4-ms-write-status" class="text-xs font-mono"></span>
+        </div>
+
+        <!-- Step 4: verify (hidden) -->
+        <div id="ws4-ms-verify" class="hidden space-y-3">
+          <div class="rounded-lg bg-success/10 border border-success/30 p-3">
+            <p class="text-sm font-semibold text-success mb-1">✅ Step: Verify — hold sensor clear for 3 seconds</p>
+            <p class="text-sm text-base-content/80">With nothing near the sensor, confirm the output stays OFF. A 3-second continuous clear reading is required before the fix is accepted.</p>
+          </div>
+          <div class="rounded-lg bg-base-200 border border-base-300 p-3">
+            <p class="text-xs font-semibold text-base-content/60 uppercase tracking-wide mb-2">Live sensor output after fix</p>
+            <div class="flex items-center gap-2">
+              <div id="ws4-vfy-dot" class="w-3 h-3 rounded-full bg-base-300 flex-shrink-0 transition-all"></div>
+              <span class="text-xs text-base-content/60">Detection:</span>
+              <span id="ws4-vfy-det" class="font-bold font-mono text-xs">—</span>
+            </div>
+          </div>
+          <div class="space-y-1">
+            <div class="flex justify-between text-xs text-base-content/60">
+              <span id="ws4-ms-vfy-bar-label">Waiting for clear output…</span>
+              <span id="ws4-ms-vfy-pct">0%</span>
+            </div>
+            <progress id="ws4-ms-vfy-bar" class="progress progress-success w-full" value="0" max="100"></progress>
+            <p class="text-xs font-mono text-base-content/50 text-right"><span id="ws4-ms-vfy-timer">0.0</span>s / 3.0s</p>
+          </div>
+        </div>
+
+        <!-- Sign-off (hidden) -->
+        <div id="ws4-ms-signoff" class="hidden space-y-3">
+          <p class="text-sm font-semibold text-success">✓ Fix verified — complete the sign-off checklist before closing.</p>
+          <div class="space-y-2">
+            <label class="flex items-start gap-2 cursor-pointer text-sm">
+              <input type="checkbox" id="ws4-ms-ck1" class="checkbox checkbox-success checkbox-sm mt-0.5 flex-shrink-0">
+              <span>SP1 confirmed incorrect via ISDU acyclic read (Index 0x3C / Sub 1) — documented the before value as evidence</span>
+            </label>
+            <label class="flex items-start gap-2 cursor-pointer text-sm">
+              <input type="checkbox" id="ws4-ms-ck2" class="checkbox checkbox-success checkbox-sm mt-0.5 flex-shrink-0">
+              <span>QoT checked — confirmed sensor had no valid teach calibration for this installation (low QoT = factory default, not site-specific)</span>
+            </label>
+            <label class="flex items-start gap-2 cursor-pointer text-sm">
+              <input type="checkbox" id="ws4-ms-ck3" class="checkbox checkbox-success checkbox-sm mt-0.5 flex-shrink-0">
+              <span>New SP1 written via IO-Link (manual or teach), output verified clear for 3 seconds, sensor returned to service without physical removal</span>
+            </label>
+          </div>
+          <button type="button" id="ws4-ms-close-btn" class="btn btn-success btn-sm w-full font-mono" disabled>✓ Close &amp; Complete Scenario</button>
+        </div>
+
+        <!-- Completion message -->
+        <div id="ws4-ch-result" class="hidden"></div>
+
+        <!-- Reset -->
+        <div class="flex justify-end mt-1">
+          <button type="button" id="ws4-ch-reset" class="btn btn-xs btn-ghost text-base-content/40">↺ Reset scenario</button>
+        </div>
+
       </div>
     `
   },
@@ -1642,8 +2048,12 @@ let _ws2ChDone = false;
 // WS3 (proximity) challenge — stability confirmation
 let _ws3ChDone = false;
 
-// WS4 (capacitive) challenge — false trigger fix via ISDU
+// WS4 (capacitive) challenge — injected false trigger scenario
 let _ws4ChDone = false; let _ws4SpWritten = false;
+let _ws4Step = 0; // 0=idle,1=injected,2=observed,3=diagnosed,4=written,5=verified,6=complete
+let _ws4VerifyStart = null;
+let _ws4VerifyDone = false;
+let _ws4FaultCleanup = null; // restores SP1 on navigation if scenario is active mid-run
 
 // WS5 (temperature) challenge — trigger alarm
 let _ws5ChDone = false;
@@ -2480,14 +2890,26 @@ function initLiveWs2(container) {
   _photoWaveCount = 0;
   _ws3ChDone = false;
 
-  const chart = makeChart('ws2-chart', 'line',
-    [{ data: Array(60).fill(0), borderColor: '#3b82f6', backgroundColor: 'rgba(59,130,246,0.15)',
-       fill: true, tension: 0.3, pointRadius: 0, borderWidth: 2 }], -0.1, 1.2, '');
-  const sigChart = makeChart('ws2-sig-chart', 'line',
-    [{ data: Array(60).fill(0), borderColor: '#f59e0b', backgroundColor: 'rgba(245,158,11,0.1)',
-       fill: true, tension: 0.3, pointRadius: 0, borderWidth: 2 }], -0.1, 1.2, '');
+  let chart = null;
+  let sigChart = null;
+  let _ws3SdActive = false;
+  let _ws3SdDone = false;
+  let _ws3SdStableStart = null;
+  let ws3SdChart = null;
+  let ws3SdSigChart = null;
+
+  // Maintenance scenario state — ISDU misconfiguration scenario
+  let _msStep = 0; // 0=idle, 1=injected, 2=observed, 3=diagnosed, 4=read-done, 5=written, 6=verified
+  let _msVerifyStart = null;
+  let _msVerifyDone = false;
 
   startLiveData(data => {
+    if (!chart) chart = makeChart('ws2-chart', 'line',
+      [{ data: Array(60).fill(0), borderColor: '#3b82f6', backgroundColor: 'rgba(59,130,246,0.15)',
+         fill: true, tension: 0.3, pointRadius: 0, borderWidth: 2 }], -0.1, 1.2, '');
+    if (!sigChart) sigChart = makeChart('ws2-sig-chart', 'line',
+      [{ data: Array(60).fill(0), borderColor: '#f59e0b', backgroundColor: 'rgba(245,158,11,0.1)',
+         fill: true, tension: 0.3, pointRadius: 0, borderWidth: 2 }], -0.1, 1.2, '');
     const port = getPort(data, 1);
     setLiveStatus('ws2-live-badge', !!port);
     if (!port || !port.pdin_decoded) return;
@@ -2530,48 +2952,335 @@ function initLiveWs2(container) {
     }
     _lastPhotoState = det;
 
-    // ── WS3 challenge: stability confirmation ────────────────────────────────
-    const sqBar = container.querySelector('#ws3-ch-sq-bar');
-    const sqPct = container.querySelector('#ws3-ch-sq-pct');
-    if (sqPct) {
-      if (!det) {
-        sqPct.textContent = 'Not detected';
-      } else if (instab) {
-        sqPct.textContent = 'Detected — Unstable';
+    // ── HMI diagnostic terminal: live process values (all panels) ────────────
+    const monVal = port.pdin_decoded.monitor_output != null ? String(port.pdin_decoded.monitor_output) : '—';
+    [
+      ['#ws3-hmi-det',    '#ws3-obs-det',    '#ws3-vfy-det'],
+      ['#ws3-hmi-instab', '#ws3-obs-instab', '#ws3-vfy-instab'],
+      ['#ws3-hmi-overapp','#ws3-obs-overapp','#ws3-vfy-overapp'],
+      ['#ws3-hmi-mon',    '#ws3-obs-mon',    '#ws3-vfy-mon'],
+    ].forEach(([...ids], i) => {
+      ids.forEach(id => {
+        const el = container.querySelector(id);
+        if (!el) return;
+        if (i === 0) { el.textContent = det ? 'DETECTED' : 'NO OBJECT'; el.className = det ? 'font-bold text-success font-mono text-xs' : 'font-bold text-error font-mono text-xs'; }
+        else if (i === 1) { el.textContent = instab ? 'ACTIVE' : 'CLEAR'; el.className = instab ? 'font-bold text-warning font-mono text-xs' : 'font-bold text-neutral-content/60 font-mono text-xs'; }
+        else if (i === 2) { el.textContent = overApp ? 'ACTIVE' : 'CLEAR'; el.className = overApp ? 'font-bold text-error font-mono text-xs' : 'font-bold text-neutral-content/60 font-mono text-xs'; }
+        else { el.textContent = monVal; }
+      });
+    });
+
+    // ── Maintenance scenario: verify step (step 5 — after ISDU write) ─────────
+    if (_msStep === 5 && !_msVerifyDone) {
+      const vfyBar   = container.querySelector('#ws3-ms-vfy-bar');
+      const vfyPct   = container.querySelector('#ws3-ms-vfy-pct');
+      const vfyTbar  = container.querySelector('#ws3-ms-vfy-tbar');
+      const vfyTimer = container.querySelector('#ws3-ms-vfy-timer');
+      if (det && !instab) {
+        if (!_msVerifyStart) _msVerifyStart = Date.now();
+        const elapsed = (Date.now() - _msVerifyStart) / 1000;
+        const pct = Math.min(elapsed / 3 * 100, 100);
+        if (vfyPct)   { vfyPct.textContent = 'DETECTED — STABLE ✓'; vfyPct.style.color = '#4ade80'; }
+        if (vfyBar)   { vfyBar.style.width = '100%'; vfyBar.style.background = '#16a34a'; }
+        if (vfyTbar)  vfyTbar.style.width = `${pct}%`;
+        if (vfyTimer) vfyTimer.textContent = `${elapsed.toFixed(1)} s / 3.0 s`;
+        if (elapsed >= 3) {
+          _msVerifyDone = true;
+          _msStep = 6;
+          _ws3ChDone = true;
+          container.querySelector('#ws3-ms-signoff')?.classList.remove('hidden');
+        }
       } else {
-        sqPct.textContent = 'Detected — Stable ✓';
+        _msVerifyStart = null;
+        if (vfyPct)  { vfyPct.textContent = !det ? 'Waiting for detection…' : 'DETECTED — UNSTABLE'; vfyPct.style.color = !det ? '' : '#f59e0b'; }
+        if (vfyBar)  { vfyBar.style.width = !det ? '0%' : '40%'; vfyBar.style.background = !det ? 'rgba(255,255,255,0.12)' : '#d97706'; }
+        if (vfyTbar)  vfyTbar.style.width = '0%';
+        if (vfyTimer) vfyTimer.textContent = '0.0 s / 3.0 s';
       }
     }
-    if (sqBar) {
-      const w = !det ? 0 : instab ? 50 : 100;
-      sqBar.style.width = `${w}%`;
-      sqBar.className = !det
-        ? 'h-5 rounded-full transition-all duration-300 bg-error'
-        : instab
-          ? 'h-5 rounded-full transition-all duration-300 bg-warning'
-          : 'h-5 rounded-full transition-all duration-300 bg-success';
-    }
-    if (!_ws3ChDone && det && !instab) {
-      _ws3ChDone = true;
-      const ws3Result = container.querySelector('#ws3-ch-result');
-      if (ws3Result) {
-        ws3Result.className = 'rounded-lg p-3 text-center font-bold text-base bg-success/20 text-success border border-success/40';
-        ws3Result.textContent = '✓ Audit complete — stable detection confirmed, no instability alarm. Sensor is correctly positioned. Log it and move on.';
-        ws3Result.classList.remove('hidden');
+
+    // ── Steady-hold challenge ────────────────────────────────────────────────
+    if (_ws3SdActive && !_ws3SdDone) {
+      const sdDot   = container.querySelector('#ws3-sd-dot');
+      const sdLabel = container.querySelector('#ws3-sd-label');
+      const sdBar   = container.querySelector('#ws3-sd-bar');
+      const sdTimer = container.querySelector('#ws3-sd-timer');
+
+      if (det && !instab) {
+        if (!_ws3SdStableStart) _ws3SdStableStart = Date.now();
+        const elapsed = (Date.now() - _ws3SdStableStart) / 1000;
+        const pct = Math.min(elapsed / 10 * 100, 100);
+        if (sdDot)   sdDot.className   = 'w-5 h-5 rounded-full border-2 flex-shrink-0 transition-all duration-150 bg-success border-success shadow-md shadow-success/40';
+        if (sdLabel) sdLabel.textContent = `Stable — ${elapsed.toFixed(1)} s`;
+        if (sdBar)   { sdBar.style.width = `${pct}%`; sdBar.className = 'h-4 rounded-full transition-all duration-300 bg-success'; }
+        if (sdTimer) sdTimer.textContent = `${elapsed.toFixed(1)} s / 10.0 s`;
+        if (elapsed >= 10) {
+          _ws3SdDone = true;
+          const sdResult = container.querySelector('#ws3-sd-result');
+          if (sdResult) {
+            sdResult.className = 'rounded-lg p-3 text-center font-bold text-sm bg-success/20 text-success border border-success/40';
+            sdResult.textContent = '✓ Challenge complete — 10 seconds of stable detection with no instability alarm!';
+            sdResult.classList.remove('hidden');
+          }
+          const sdBtn = container.querySelector('#ws3-sd-start');
+          if (sdBtn) { sdBtn.disabled = false; sdBtn.textContent = 'Restart Challenge'; }
+          const sdStatus = container.querySelector('#ws3-sd-status');
+          if (sdStatus) sdStatus.textContent = 'Passed!';
+        }
+      } else {
+        _ws3SdStableStart = null;
+        if (sdDot)   sdDot.className = det
+          ? 'w-5 h-5 rounded-full border-2 flex-shrink-0 transition-all duration-150 bg-warning border-warning'
+          : 'w-5 h-5 rounded-full border-2 flex-shrink-0 transition-all duration-150 bg-base-300 border-base-300';
+        if (sdLabel) sdLabel.textContent = !det ? 'No metal detected — bring it closer' : 'Instability alarm — reposition the target';
+        if (sdBar)   { sdBar.style.width = '0%'; sdBar.className = 'h-4 rounded-full transition-all duration-300 bg-primary'; }
+        if (sdTimer) sdTimer.textContent = '0.0 s / 10.0 s';
       }
+      pushToChart(ws3SdChart, det ? 1 : 0);
+      pushToChart(ws3SdSigChart, instab ? 1 : 0);
     }
 
     pushToChart(chart, det ? 1 : 0);
     pushToChart(sigChart, instab ? 1 : 0);
   });
 
-  // WS3 challenge reset
+  // Steady-hold challenge — Start button
+  const sdStartBtn = container.querySelector('#ws3-sd-start');
+  if (sdStartBtn) {
+    sdStartBtn.addEventListener('click', () => {
+      _ws3SdActive = true;
+      _ws3SdDone = false;
+      _ws3SdStableStart = null;
+      sdStartBtn.disabled = true;
+      sdStartBtn.textContent = 'Running…';
+      const sdStatus = container.querySelector('#ws3-sd-status');
+      if (sdStatus) sdStatus.textContent = 'Challenge active — hold steady!';
+      const sdBody = container.querySelector('#ws3-sd-body');
+      if (sdBody) sdBody.classList.remove('hidden');
+      const sdResult = container.querySelector('#ws3-sd-result');
+      if (sdResult) sdResult.classList.add('hidden');
+      const sdBar = container.querySelector('#ws3-sd-bar');
+      if (sdBar) { sdBar.style.width = '0%'; sdBar.className = 'h-4 rounded-full transition-all duration-300 bg-primary'; }
+      const sdTimer = container.querySelector('#ws3-sd-timer');
+      if (sdTimer) sdTimer.textContent = '0.0 s / 10.0 s';
+      const sdLabel = container.querySelector('#ws3-sd-label');
+      if (sdLabel) sdLabel.textContent = 'Waiting for metal...';
+      const sdDot = container.querySelector('#ws3-sd-dot');
+      if (sdDot) sdDot.className = 'w-5 h-5 rounded-full bg-base-300 border-2 border-base-300 flex-shrink-0 transition-all duration-150';
+      // init charts after layout settles (canvas was hidden)
+      requestAnimationFrame(() => {
+        ws3SdChart = makeChart('ws3-sd-det-chart', 'line',
+          [{ data: Array(60).fill(0), borderColor: '#3b82f6', backgroundColor: 'rgba(59,130,246,0.15)',
+             fill: true, tension: 0.3, pointRadius: 0, borderWidth: 2 }], -0.1, 1.2, '');
+        ws3SdSigChart = makeChart('ws3-sd-instab-chart', 'line',
+          [{ data: Array(60).fill(0), borderColor: '#f59e0b', backgroundColor: 'rgba(245,158,11,0.1)',
+             fill: true, tension: 0.3, pointRadius: 0, borderWidth: 2 }], -0.1, 1.2, '');
+      });
+    });
+  }
+
+  // ── HMI scenario: inject fault ───────────────────────────────────────────────
+  const injectBtn = container.querySelector('#ws3-ms-inject-btn');
+  if (injectBtn) {
+    injectBtn.addEventListener('click', async () => {
+      injectBtn.disabled = true;
+      injectBtn.textContent = 'Injecting…';
+      const status = container.querySelector('#ws3-ms-inject-status');
+      if (status) { status.textContent = 'Writing NC to sensor via ISDU…'; status.className = 'text-xs font-mono text-neutral-content/60'; }
+      const ok = await isduWrite(1, 61, 1, 1, 'uint8', 1, null);
+      if (ok) {
+        _msStep = 1;
+        _ws3FaultCleanup = () => isduWrite(1, 61, 1, 0, 'uint8', 1, null);
+        injectBtn.textContent = 'Scenario Active ✓';
+        injectBtn.disabled = true;
+        injectBtn.style.color = '#4ade80';
+        injectBtn.style.borderColor = '#4ade80';
+        if (status) { status.textContent = ''; }
+        container.querySelector('#ws3-ms-observe')?.classList.remove('hidden');
+      } else {
+        injectBtn.disabled = false;
+        injectBtn.textContent = 'Start Scenario';
+        if (status) { status.textContent = '✗ Failed — check IO-Link connection'; status.className = 'text-xs font-mono text-error'; }
+      }
+    });
+  }
+
+  // ── HMI scenario: observe → continue ─────────────────────────────────────────
+  const observeNext = container.querySelector('#ws3-ms-observe-next');
+  if (observeNext) {
+    observeNext.addEventListener('click', () => {
+      _msStep = 2;
+      container.querySelector('#ws3-ms-diag')?.classList.remove('hidden');
+      observeNext.disabled = true;
+    });
+  }
+
+  // ── HMI scenario: diagnosis chips ───────────────────────────────────────────
+  container.querySelectorAll('#ws3-ms-diag [data-ans]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const fb = container.querySelector('#ws3-ms-diag-fb');
+      if (btn.dataset.ans === 'nc') {
+        _msStep = 3;
+        container.querySelectorAll('#ws3-ms-diag [data-ans]').forEach(b => { b.disabled = true; b.style.opacity = '0.4'; });
+        btn.style.opacity = '1';
+        btn.style.color = '#4ade80';
+        btn.style.borderColor = '#4ade80';
+        if (fb) { fb.textContent = '✓ Correct — the IODD defines a Switchpoint Logic parameter (Index 0x3D / Sub 1) that controls NO vs NC output polarity. Proceed to read it directly from the device and confirm.'; fb.className = 'text-sm font-semibold text-success'; fb.classList.remove('hidden'); }
+        container.querySelector('#ws3-ms-read')?.classList.remove('hidden');
+      } else if (btn.dataset.ans === 'hw') {
+        if (fb) { fb.textContent = 'Not quite — mechanical damage to the coil would show erratic monitor output values or IO-Link comms errors, not a clean inverted signal. The Monitor Out value is stable and comms are healthy. Consistently inverted output with no other alarms points strongly to a configuration issue.'; fb.className = 'text-sm font-semibold text-warning'; fb.classList.remove('hidden'); }
+      } else {
+        if (fb) { fb.textContent = 'Not quite — swapping IO-Link cable polarity at the master would break the communication entirely; you\'d see no process data at all. The alarm log confirms comms were re-established cleanly at 04:52. Look at what parameter controls the output switching direction on an inductive sensor.'; fb.className = 'text-sm font-semibold text-warning'; fb.classList.remove('hidden'); }
+      }
+    });
+  });
+
+  // ── HMI scenario: read parameter ─────────────────────────────────────────────
+  const readBtn = container.querySelector('#ws3-ms-read-btn');
+  if (readBtn) {
+    readBtn.addEventListener('click', async () => {
+      readBtn.disabled = true;
+      readBtn.textContent = 'Reading…';
+      const status = container.querySelector('#ws3-ms-read-status');
+      if (status) { status.textContent = 'ISDU read in progress…'; status.className = 'text-xs font-mono text-neutral-content/60'; }
+      const val = await isduRead(1, 61, 1, 'uint8', 1);
+      readBtn.textContent = 'Read Parameter →';
+      readBtn.disabled = false;
+      if (val !== null) {
+        const resultDiv = container.querySelector('#ws3-ms-read-result');
+        const hexEl     = container.querySelector('#ws3-ms-read-hex');
+        const valEl     = container.querySelector('#ws3-ms-read-val');
+        const interpEl  = container.querySelector('#ws3-ms-read-interp');
+        if (status) { status.textContent = 'Read OK'; status.className = 'text-xs font-mono text-success'; }
+        if (hexEl) hexEl.textContent = `0x${val.toString(16).padStart(2, '0').toUpperCase()}`;
+        if (valEl) {
+          valEl.textContent = val === 1 ? '1 — NC (Normally Closed) ⚠ MISCONFIGURED' : '0 — NO (Normally Open) ✓ CORRECT';
+          valEl.style.color = val === 1 ? '#f87171' : '#4ade80';
+        }
+        if (interpEl) {
+          if (val === 1) {
+            interpEl.textContent = '⚠ Confirmed: Switchpoint Logic is NC. Output ON = no metal present. This is the root cause of false detections on the empty belt.';
+            interpEl.className = 'text-error mt-1';
+          } else {
+            interpEl.textContent = '✓ Switchpoint Logic is already NO. Sensor is correctly configured — re-read to confirm after any writes.';
+            interpEl.className = 'text-success mt-1';
+          }
+        }
+        if (resultDiv) resultDiv.classList.remove('hidden');
+        _msStep = Math.max(_msStep, 4);
+        const nextBtn = container.querySelector('#ws3-ms-read-next');
+        if (nextBtn) nextBtn.classList.remove('hidden');
+      } else {
+        if (status) { status.textContent = '✗ Read failed — check IO-Link connection'; status.className = 'text-xs font-mono text-error'; }
+      }
+    });
+  }
+
+  // ── HMI scenario: read → write transition ────────────────────────────────────
+  const readNext = container.querySelector('#ws3-ms-read-next');
+  if (readNext) {
+    readNext.addEventListener('click', () => {
+      container.querySelector('#ws3-ms-write')?.classList.remove('hidden');
+      readNext.disabled = true;
+    });
+  }
+
+  // ── HMI scenario: write fix ───────────────────────────────────────────────────
+  const writeBtn = container.querySelector('#ws3-ms-write-btn');
+  if (writeBtn) {
+    writeBtn.addEventListener('click', async () => {
+      writeBtn.disabled = true;
+      writeBtn.textContent = 'Writing…';
+      const status = container.querySelector('#ws3-ms-write-status');
+      if (status) { status.textContent = 'ISDU write in progress…'; status.className = 'text-xs font-mono text-neutral-content/60'; }
+      const ok = await isduWrite(1, 61, 1, 0, 'uint8', 1, null);
+      writeBtn.textContent = 'Write NO (0x00) to Sensor →';
+      if (ok) {
+        _msStep = 5;
+        _ws3FaultCleanup = null; // sensor is now correct — no cleanup needed on navigation
+        writeBtn.style.color = '#4ade80';
+        writeBtn.style.borderColor = '#4ade80';
+        if (status) { status.textContent = 'Write OK — Switchpoint Logic restored to NO'; status.className = 'text-xs font-mono text-success'; }
+        container.querySelector('#ws3-ms-verify')?.classList.remove('hidden');
+      } else {
+        writeBtn.disabled = false;
+        if (status) { status.textContent = '✗ Write failed — retry'; status.className = 'text-xs font-mono text-error'; }
+      }
+    });
+  }
+
+  // ── HMI scenario: sign-off checkboxes ───────────────────────────────────────
+  ['ws3-ms-ck1', 'ws3-ms-ck2', 'ws3-ms-ck3'].forEach(id => {
+    container.querySelector(`#${id}`)?.addEventListener('change', () => {
+      const all = ['ws3-ms-ck1', 'ws3-ms-ck2', 'ws3-ms-ck3'].every(cid => container.querySelector(`#${cid}`)?.checked);
+      const btn = container.querySelector('#ws3-ms-close-btn');
+      if (btn) btn.disabled = !all;
+    });
+  });
+
+  // ── HMI scenario: close ticket ──────────────────────────────────────────────
+  const msCloseBtn = container.querySelector('#ws3-ms-close-btn');
+  if (msCloseBtn) {
+    msCloseBtn.addEventListener('click', () => {
+      msCloseBtn.disabled = true;
+      msCloseBtn.textContent = 'TICKET CLOSED';
+      const dot = container.querySelector('#ws3-hdr-dot');
+      if (dot) { dot.classList.remove('animate-pulse', 'bg-error'); dot.classList.add('bg-success'); }
+      const faultLbl = container.querySelector('#ws3-hdr-status');
+      if (faultLbl) { faultLbl.textContent = 'RESOLVED'; faultLbl.classList.remove('text-error'); faultLbl.classList.add('text-success'); }
+      const result = container.querySelector('#ws3-ch-result');
+      if (result) {
+        result.textContent = '✓ MJT-2247 CLOSED — Root cause confirmed (Switchpoint Logic OUT1 NC → NO), corrected via ISDU write, operation verified. Line 3 cleared for restart.';
+        result.classList.remove('hidden');
+      }
+    });
+  }
+
+  // ── HMI scenario: reset ─────────────────────────────────────────────────────
   const ws3Reset = container.querySelector('#ws3-ch-reset');
   if (ws3Reset) {
     ws3Reset.addEventListener('click', () => {
       _ws3ChDone = false;
-      const r = container.querySelector('#ws3-ch-result');
-      if (r) r.classList.add('hidden');
+      _msStep = 0;
+      _msVerifyStart = null;
+      _msVerifyDone = false;
+      if (_ws3FaultCleanup) { _ws3FaultCleanup(); _ws3FaultCleanup = null; }
+      ['ws3-ms-observe', 'ws3-ms-diag', 'ws3-ms-read', 'ws3-ms-write', 'ws3-ms-verify', 'ws3-ms-signoff', 'ws3-ch-result', 'ws3-ms-read-result'].forEach(id => {
+        container.querySelector(`#${id}`)?.classList.add('hidden');
+      });
+      const injectBtn2 = container.querySelector('#ws3-ms-inject-btn');
+      if (injectBtn2) { injectBtn2.disabled = false; injectBtn2.textContent = 'Start Scenario'; injectBtn2.style.color = ''; injectBtn2.style.borderColor = ''; }
+      const injectStatus = container.querySelector('#ws3-ms-inject-status');
+      if (injectStatus) { injectStatus.textContent = ''; injectStatus.className = 'text-xs font-mono text-neutral-content/40'; }
+      const observeNext2 = container.querySelector('#ws3-ms-observe-next');
+      if (observeNext2) { observeNext2.disabled = false; }
+      container.querySelectorAll('#ws3-ms-diag [data-ans]').forEach(b => { b.disabled = false; b.style.opacity = '1'; b.style.color = ''; b.style.borderColor = ''; });
+      container.querySelector('#ws3-ms-diag-fb')?.classList.add('hidden');
+      const readBtn2 = container.querySelector('#ws3-ms-read-btn');
+      if (readBtn2) { readBtn2.disabled = false; readBtn2.textContent = 'Read Parameter →'; }
+      const readStatus = container.querySelector('#ws3-ms-read-status');
+      if (readStatus) { readStatus.textContent = ''; readStatus.className = 'text-xs font-mono text-neutral-content/40'; }
+      const readNext2 = container.querySelector('#ws3-ms-read-next');
+      if (readNext2) { readNext2.classList.add('hidden'); readNext2.disabled = false; }
+      const writeBtn2 = container.querySelector('#ws3-ms-write-btn');
+      if (writeBtn2) { writeBtn2.disabled = false; writeBtn2.textContent = 'Write NO (0x00) to Sensor →'; writeBtn2.style.color = ''; writeBtn2.style.borderColor = ''; }
+      const writeStatus = container.querySelector('#ws3-ms-write-status');
+      if (writeStatus) { writeStatus.textContent = ''; writeStatus.className = 'text-xs font-mono text-neutral-content/40'; }
+      const vfyBar = container.querySelector('#ws3-ms-vfy-bar');
+      if (vfyBar) { vfyBar.style.width = '0%'; vfyBar.style.background = 'rgba(255,255,255,0.12)'; }
+      const vfyTbar = container.querySelector('#ws3-ms-vfy-tbar');
+      if (vfyTbar) vfyTbar.style.width = '0%';
+      const vfyPct = container.querySelector('#ws3-ms-vfy-pct');
+      if (vfyPct) { vfyPct.textContent = 'Waiting for detection…'; vfyPct.style.color = ''; }
+      const vfyTimer = container.querySelector('#ws3-ms-vfy-timer');
+      if (vfyTimer) vfyTimer.textContent = '0.0 s / 3.0 s';
+      ['ws3-ms-ck1', 'ws3-ms-ck2', 'ws3-ms-ck3'].forEach(id => { const cb = container.querySelector(`#${id}`); if (cb) cb.checked = false; });
+      const closeBtn2 = container.querySelector('#ws3-ms-close-btn');
+      if (closeBtn2) { closeBtn2.disabled = true; closeBtn2.textContent = 'CLOSE TICKET — MJT-2247'; }
+      const dot = container.querySelector('#ws3-hdr-dot');
+      if (dot) { dot.classList.remove('bg-success'); dot.classList.add('animate-pulse', 'bg-error'); }
+      const faultLbl = container.querySelector('#ws3-hdr-status');
+      if (faultLbl) { faultLbl.textContent = 'Active Fault'; faultLbl.classList.remove('text-success'); faultLbl.classList.add('text-error'); }
     });
   }
 }
@@ -2580,21 +3289,22 @@ function initLiveWs3(container) {
   _lastCapState = false;
   _capTaskCount = 0;
   _ws4ChDone = false; _ws4SpWritten = false;
+  _ws4Step = 0; _ws4VerifyStart = null; _ws4VerifyDone = false;
 
-  const chart = makeChart('ws3-chart', 'line',
-    [{ data: Array(60).fill(0), borderColor: '#8b5cf6', backgroundColor: 'rgba(139,92,246,0.15)',
-       fill: true, tension: 0.3, pointRadius: 0, borderWidth: 2 }], -0.1, 1.2, '');
+  let chart = null;
 
   startLiveData(data => {
+    if (!chart) chart = makeChart('ws3-chart', 'line',
+      [{ data: Array(60).fill(0), borderColor: '#8b5cf6', backgroundColor: 'rgba(139,92,246,0.15)',
+         fill: true, tension: 0.3, pointRadius: 0, borderWidth: 2 }], -0.1, 1.2, '');
     const port = getPort(data, 2);
     setLiveStatus('ws3-live-badge', !!port);
     if (!port || !port.pdin_decoded) return;
 
     const det   = port.pdin_decoded.object_detected || false;
     const count = port.detection_counter ?? 0;
-    const analogueVal = port.pdin_decoded.analogue_value ?? 0;
 
-    // dot
+    // main detection dot
     const dot = container.querySelector('#ws3-dot');
     if (dot) {
       dot.className = det
@@ -2604,7 +3314,6 @@ function initLiveWs3(container) {
     const lbl = container.querySelector('#ws3-state-label');
     if (lbl) lbl.textContent = det ? 'Detected' : 'Clear';
 
-    // live counter
     const cntEl = container.querySelector('#ws3-count-display');
     if (cntEl) cntEl.textContent = count;
 
@@ -2615,67 +3324,206 @@ function initLiveWs3(container) {
       const tc   = container.querySelector('#ws3-task-count');
       if (prog) prog.value = _capTaskCount;
       if (tc)   tc.textContent = `${_capTaskCount} / 5`;
-      if (_capTaskCount >= 5) {
-        container.querySelector('#ws3-task-done')?.classList.remove('hidden');
-      }
+      if (_capTaskCount >= 5) container.querySelector('#ws3-task-done')?.classList.remove('hidden');
     }
     _lastCapState = det;
 
     pushToChart(chart, det ? 1 : 0);
 
-    // ── WS4 challenge: false trigger fix — update live detection dot ─────────
-    const chDot   = container.querySelector('#ws4-ch-dot');
-    const chLabel = container.querySelector('#ws4-ch-det-label');
-    if (chDot) {
-      chDot.className = det
-        ? 'w-4 h-4 rounded-full bg-error border border-error transition-all flex-shrink-0'
-        : 'w-4 h-4 rounded-full bg-success border border-success transition-all flex-shrink-0';
+    // ── WS4 scenario: multi-panel live value updates ──────────────────────────
+    // HMI panel (always visible)
+    const hmiDet = container.querySelector('#ws4-hmi-det');
+    if (hmiDet) {
+      hmiDet.textContent = det ? 'DETECTED' : 'CLEAR';
+      hmiDet.className = det ? 'font-bold font-mono text-xs text-error' : 'font-bold font-mono text-xs text-success';
     }
-    if (chLabel) chLabel.textContent = det ? 'Output ACTIVE — false trigger present' : 'Output CLEAR — no false trigger';
+    // Observe panel (step 1)
+    const obsDot = container.querySelector('#ws4-obs-dot');
+    const obsDet = container.querySelector('#ws4-obs-det');
+    if (obsDot) obsDot.className = det ? 'w-3 h-3 rounded-full bg-error flex-shrink-0 transition-all' : 'w-3 h-3 rounded-full bg-base-300 flex-shrink-0 transition-all';
+    if (obsDet) { obsDet.textContent = det ? 'DETECTED' : 'CLEAR'; obsDet.className = det ? 'font-bold font-mono text-xs text-error' : 'font-bold font-mono text-xs text-success'; }
+    // Verify panel (step 4)
+    const vfyDot = container.querySelector('#ws4-vfy-dot');
+    const vfyDet = container.querySelector('#ws4-vfy-det');
+    if (vfyDot) vfyDot.className = det ? 'w-3 h-3 rounded-full bg-error flex-shrink-0 transition-all' : 'w-3 h-3 rounded-full bg-success flex-shrink-0 transition-all';
+    if (vfyDet) { vfyDet.textContent = det ? 'DETECTED' : 'CLEAR'; vfyDet.className = det ? 'font-bold font-mono text-xs text-error' : 'font-bold font-mono text-xs text-success'; }
 
-    // enable confirm button only after SP1 written and output is clear
-    const confirmBtn = container.querySelector('#ws4-ch-confirm');
-    if (confirmBtn) confirmBtn.disabled = !(_ws4SpWritten && !det);
+    // Verify countdown (step 4 — 3s clear hold)
+    if (_ws4Step === 4 && !_ws4VerifyDone) {
+      if (!det) {
+        if (!_ws4VerifyStart) _ws4VerifyStart = Date.now();
+        const elapsed = (Date.now() - _ws4VerifyStart) / 1000;
+        const pct = Math.min(elapsed / 3 * 100, 100);
+        const bar   = container.querySelector('#ws4-ms-vfy-bar');
+        const pctEl = container.querySelector('#ws4-ms-vfy-pct');
+        const timer = container.querySelector('#ws4-ms-vfy-timer');
+        const barLbl = container.querySelector('#ws4-ms-vfy-bar-label');
+        if (bar)    bar.value = pct;
+        if (pctEl)  pctEl.textContent = `${Math.round(pct)}%`;
+        if (timer)  timer.textContent = elapsed.toFixed(1);
+        if (barLbl) barLbl.textContent = 'Holding clear…';
+        if (elapsed >= 3) {
+          _ws4VerifyDone = true;
+          _ws4Step = 5;
+          _ws4ChDone = true;
+          container.querySelector('#ws4-ms-verify')?.classList.add('hidden');
+          container.querySelector('#ws4-ms-signoff')?.classList.remove('hidden');
+          const hdrDot    = container.querySelector('#ws4-hdr-dot');
+          const hdrStatus = container.querySelector('#ws4-hdr-status');
+          if (hdrDot)    hdrDot.className = 'w-3 h-3 rounded-full bg-success flex-shrink-0 transition-all';
+          if (hdrStatus) { hdrStatus.textContent = 'Scenario Complete'; hdrStatus.className = 'text-xs font-mono ml-auto text-success'; }
+        }
+      } else {
+        // detection came back — reset timer
+        _ws4VerifyStart = null;
+        const bar   = container.querySelector('#ws4-ms-vfy-bar');
+        const pctEl = container.querySelector('#ws4-ms-vfy-pct');
+        const timer = container.querySelector('#ws4-ms-vfy-timer');
+        const barLbl = container.querySelector('#ws4-ms-vfy-bar-label');
+        if (bar)    bar.value = 0;
+        if (pctEl)  pctEl.textContent = '0%';
+        if (timer)  timer.textContent = '0.0';
+        if (barLbl) barLbl.textContent = 'Detection resumed — keep sensor clear…';
+      }
+    }
   });
 
-  // WS4 challenge step 3 — confirm fix
-  const ws4Confirm = container.querySelector('#ws4-ch-confirm');
-  if (ws4Confirm) {
-    ws4Confirm.addEventListener('click', () => {
-      if (!_ws4SpWritten) return;
-      _ws4ChDone = true;
-      const r = container.querySelector('#ws4-ch-result');
-      if (r) {
-        r.className = 'rounded-lg p-3 text-center font-bold text-base bg-success/20 text-success border border-success/40';
-        r.textContent = '✓ Fix confirmed — SP1 adjusted via IO-Link, false triggers eliminated. Ready to return to service.';
-        r.classList.remove('hidden');
+  // ── Step 0: inject fault ──────────────────────────────────────────────────
+  const injectBtn    = container.querySelector('#ws4-ms-inject-btn');
+  const injectStatus = container.querySelector('#ws4-ms-inject-status');
+  if (injectBtn) {
+    injectBtn.addEventListener('click', async () => {
+      injectBtn.disabled = true;
+      if (injectStatus) { injectStatus.textContent = 'Injecting fault…'; injectStatus.className = 'text-xs font-mono text-base-content/60'; }
+      const ok = await isduWrite(2, 60, 1, 10, 'int16', 1, null);
+      if (ok) {
+        _ws4Step = 1;
+        _ws4FaultCleanup = () => isduWrite(2, 60, 1, 1000, 'int16', 1, null);
+        injectBtn.textContent = 'Scenario Active ✓';
+        injectBtn.className = 'btn btn-success btn-sm font-mono btn-disabled';
+        if (injectStatus) injectStatus.textContent = '';
+        container.querySelector('#ws4-ms-observe')?.classList.remove('hidden');
+        const hdrDot    = container.querySelector('#ws4-hdr-dot');
+        const hdrStatus = container.querySelector('#ws4-hdr-status');
+        if (hdrDot)    hdrDot.className = 'w-3 h-3 rounded-full bg-error flex-shrink-0 transition-all animate-pulse';
+        if (hdrStatus) { hdrStatus.textContent = 'Active Fault'; hdrStatus.className = 'text-xs font-mono ml-auto text-error'; }
+      } else {
+        injectBtn.disabled = false;
+        if (injectStatus) { injectStatus.textContent = 'Failed — is the sensor connected?'; injectStatus.className = 'text-xs font-mono text-error'; }
       }
-      // mark steps complete
-      ['ws4-ch-s1','ws4-ch-s2','ws4-ch-s3'].forEach(id => {
-        const el = container.querySelector(`#${id}`);
-        if (el) el.className = 'w-7 h-7 rounded-full border-2 flex items-center justify-center text-xs font-bold transition-all bg-success border-success text-white flex-shrink-0';
-      });
     });
   }
 
-  // WS4 challenge reset
-  const ws4Reset = container.querySelector('#ws4-ch-reset');
-  if (ws4Reset) {
-    ws4Reset.addEventListener('click', () => {
-      _ws4ChDone = false; _ws4SpWritten = false;
-      const r = container.querySelector('#ws4-ch-result');
-      if (r) r.classList.add('hidden');
-      ['ws4-ch-s1','ws4-ch-s2','ws4-ch-s3'].forEach(id => {
-        const el = container.querySelector(`#${id}`);
-        if (el) el.className = 'w-7 h-7 rounded-full bg-base-300 border-2 border-base-300 flex items-center justify-center text-xs font-bold text-base-content/50 transition-all flex-shrink-0';
-      });
-      const confirmBtn = container.querySelector('#ws4-ch-confirm');
-      if (confirmBtn) confirmBtn.disabled = true;
-    });
-  }
+  // ── Step 1 → 2: observed anomaly ─────────────────────────────────────────
+  container.querySelector('#ws4-ms-observe-next')?.addEventListener('click', () => {
+    _ws4Step = 2;
+    container.querySelector('#ws4-ms-observe')?.classList.add('hidden');
+    container.querySelector('#ws4-ms-read')?.classList.remove('hidden');
+  });
 
-  // ── ISDU: load SP1, QoT, QoR from device ─────────────────────────────────
-  const badge = container.querySelector('#ws3-isdu-badge');
+  // ── Step 2: explicit ISDU read ────────────────────────────────────────────
+  container.querySelector('#ws4-ms-read-btn')?.addEventListener('click', async () => {
+    const readBtn = container.querySelector('#ws4-ms-read-btn');
+    if (readBtn) { readBtn.disabled = true; readBtn.textContent = 'Reading…'; }
+    const val = await isduRead(2, 60, 1, 'int16', 1);
+    if (readBtn) { readBtn.disabled = false; readBtn.textContent = '📖 Read SP1 from device'; }
+    if (val !== null) {
+      _ws4Step = 3;
+      const hexEl  = container.querySelector('#ws4-ms-read-hex');
+      const valEl  = container.querySelector('#ws4-ms-read-val');
+      const interp = container.querySelector('#ws4-ms-read-interp');
+      if (hexEl)  hexEl.textContent = `0x${val.toString(16).padStart(4, '0').toUpperCase()}`;
+      if (valEl)  valEl.textContent = val;
+      if (interp) interp.textContent = `SP1 = ${val} — this is far below a typical detection threshold (normally 500–2000). The sensor is tripping on ambient capacitive field noise because the threshold is set too low. Increasing SP1, or running a teach procedure, will restore normal operation.`;
+      container.querySelector('#ws4-ms-read-result')?.classList.remove('hidden');
+      container.querySelector('#ws4-ms-read-next')?.classList.remove('hidden');
+    } else {
+      const readResult = container.querySelector('#ws4-ms-read-result');
+      if (readResult) { readResult.innerHTML = '<p class="text-error text-xs">Read failed — check IO-Link connection</p>'; readResult.classList.remove('hidden'); }
+    }
+  });
+
+  // ── Step 3 → 4: proceed to write ─────────────────────────────────────────
+  container.querySelector('#ws4-ms-read-next')?.addEventListener('click', () => {
+    container.querySelector('#ws4-ms-read')?.classList.add('hidden');
+    container.querySelector('#ws4-ms-write')?.classList.remove('hidden');
+  });
+
+  // ── Step 4: write fix ─────────────────────────────────────────────────────
+  container.querySelector('#ws4-ms-write-btn')?.addEventListener('click', async () => {
+    const writeBtn    = container.querySelector('#ws4-ms-write-btn');
+    const writeStatus = container.querySelector('#ws4-ms-write-status');
+    const val = parseInt(container.querySelector('#ws3-sp1-slider')?.value ?? 1000);
+    if (writeBtn) { writeBtn.disabled = true; writeBtn.textContent = 'Applying…'; }
+    const ok = await isduWrite(2, 60, 1, val, 'int16', 1, null);
+    if (ok) {
+      _ws4SpWritten = true;
+      _ws4Step = 4;
+      _ws4FaultCleanup = null; // sensor is now corrected — no cleanup needed
+      if (writeBtn) { writeBtn.textContent = '✓ Fix Applied'; writeBtn.style.color = '#4ade80'; }
+      if (writeStatus) writeStatus.textContent = '';
+      container.querySelector('#ws4-ms-write')?.classList.add('hidden');
+      container.querySelector('#ws4-ms-verify')?.classList.remove('hidden');
+      // also update the ISDU panel slider to reflect the written value
+      const sp1Slider = container.querySelector('#ws3-sp1-slider');
+      const sp1ValEl  = container.querySelector('#ws3-sp1-val');
+      if (sp1Slider) sp1Slider.value = val;
+      if (sp1ValEl)  sp1ValEl.textContent = val;
+      const hdrDot    = container.querySelector('#ws4-hdr-dot');
+      const hdrStatus = container.querySelector('#ws4-hdr-status');
+      if (hdrDot)    hdrDot.className = 'w-3 h-3 rounded-full bg-warning flex-shrink-0 transition-all';
+      if (hdrStatus) { hdrStatus.textContent = 'Verifying Fix'; hdrStatus.className = 'text-xs font-mono ml-auto text-warning'; }
+    } else {
+      if (writeBtn) { writeBtn.disabled = false; writeBtn.textContent = '✓ Apply Fix — Write SP1 to sensor'; }
+      if (writeStatus) { writeStatus.textContent = 'Write failed — try again'; writeStatus.className = 'text-xs font-mono text-error'; }
+    }
+  });
+
+  // ── Sign-off checkboxes ───────────────────────────────────────────────────
+  ['ws4-ms-ck1', 'ws4-ms-ck2', 'ws4-ms-ck3'].forEach(id => {
+    container.querySelector(`#${id}`)?.addEventListener('change', () => {
+      const allChecked = ['ws4-ms-ck1', 'ws4-ms-ck2', 'ws4-ms-ck3']
+        .every(cid => container.querySelector(`#${cid}`)?.checked);
+      const closeBtn = container.querySelector('#ws4-ms-close-btn');
+      if (closeBtn) closeBtn.disabled = !allChecked;
+    });
+  });
+
+  container.querySelector('#ws4-ms-close-btn')?.addEventListener('click', () => {
+    _ws4Step = 6;
+    container.querySelector('#ws4-ms-signoff')?.classList.add('hidden');
+    const r = container.querySelector('#ws4-ch-result');
+    if (r) {
+      r.className = 'rounded-lg p-3 text-center font-bold text-base bg-success/20 text-success border border-success/40';
+      r.textContent = '✓ Scenario complete — SP1 and QoT diagnosed via IO-Link, replacement sensor commissioned correctly, output verified clear. Work order #WO-4412 closed.';
+      r.classList.remove('hidden');
+    }
+  });
+
+  // ── Reset ─────────────────────────────────────────────────────────────────
+  container.querySelector('#ws4-ch-reset')?.addEventListener('click', async () => {
+    if (_ws4FaultCleanup) { await _ws4FaultCleanup(); _ws4FaultCleanup = null; }
+    _ws4ChDone = false; _ws4SpWritten = false;
+    _ws4Step = 0; _ws4VerifyStart = null; _ws4VerifyDone = false;
+    ['ws4-ms-observe','ws4-ms-read','ws4-ms-write','ws4-ms-verify','ws4-ms-signoff','ws4-ch-result','ws4-ms-read-result'].forEach(id => {
+      container.querySelector(`#${id}`)?.classList.add('hidden');
+    });
+    container.querySelector('#ws4-ms-read-next')?.classList.add('hidden');
+    const injectBtn    = container.querySelector('#ws4-ms-inject-btn');
+    const injectStatus = container.querySelector('#ws4-ms-inject-status');
+    if (injectBtn) { injectBtn.disabled = false; injectBtn.textContent = '▶ Start Scenario'; injectBtn.className = 'btn btn-warning btn-sm font-mono'; injectBtn.style.color = ''; }
+    if (injectStatus) injectStatus.textContent = '';
+    const hdrDot    = container.querySelector('#ws4-hdr-dot');
+    const hdrStatus = container.querySelector('#ws4-hdr-status');
+    if (hdrDot)    hdrDot.className = 'w-3 h-3 rounded-full bg-base-300 flex-shrink-0 transition-all';
+    if (hdrStatus) { hdrStatus.textContent = ''; hdrStatus.className = 'text-xs font-mono ml-auto text-base-content/50'; }
+    ['ws4-ms-ck1','ws4-ms-ck2','ws4-ms-ck3'].forEach(id => { const el = container.querySelector(`#${id}`); if (el) el.checked = false; });
+    const closeBtn = container.querySelector('#ws4-ms-close-btn');
+    if (closeBtn) closeBtn.disabled = true;
+  });
+
+  // ── ISDU panel: load SP1, QoT, QoR from device ───────────────────────────
+  const badge      = container.querySelector('#ws3-isdu-badge');
   const sp1Slider  = container.querySelector('#ws3-sp1-slider');
   const sp1ValEl   = container.querySelector('#ws3-sp1-val');
 
@@ -2697,9 +3545,6 @@ function initLiveWs3(container) {
     if (qot !== null) { if (qotBar) qotBar.value = qot; if (qotVal) qotVal.textContent = qot; }
     if (qor !== null) { if (qorBar) qorBar.value = qor; if (qorVal) qorVal.textContent = qor; }
     if (badge) { badge.textContent = 'LIVE'; badge.className = 'badge badge-xs badge-success font-mono'; }
-    // mark challenge step 1 complete once ISDU loads
-    const s1 = container.querySelector('#ws4-ch-s1');
-    if (s1) s1.className = 'w-7 h-7 rounded-full border-2 flex items-center justify-center text-xs font-bold transition-all bg-success border-success text-white flex-shrink-0';
   }
   loadCapIsdu();
 
@@ -2708,13 +3553,7 @@ function initLiveWs3(container) {
   }
   container.querySelector('#ws3-sp1-write')?.addEventListener('click', async () => {
     const val = parseInt(sp1Slider?.value ?? 1000);
-    const ok = await isduWrite(2, 60, 1, val, 'int16', 1, 'ws3-sp1-status');
-    if (ok) {
-      _ws4SpWritten = true;
-      // mark challenge step 2 complete
-      const s2 = container.querySelector('#ws4-ch-s2');
-      if (s2) s2.className = 'w-7 h-7 rounded-full border-2 flex items-center justify-center text-xs font-bold transition-all bg-success border-success text-white flex-shrink-0';
-    }
+    await isduWrite(2, 60, 1, val, 'int16', 1, 'ws3-sp1-status');
   });
   container.querySelector('#ws3-qot-refresh')?.addEventListener('click', loadCapIsdu);
   container.querySelector('#ws3-teach-start')?.addEventListener('click',  () => isduCommand(2, 'teach_sp1_start',  'ws3-teach-status'));
@@ -2727,9 +3566,7 @@ function initLiveWs4(container) {
   _alarmThreshold = 40;
   _ws5ChDone = false;
 
-  const chart = makeChart('ws4-chart', 'line',
-    [{ data: Array(60).fill(null), borderColor: '#f97316', backgroundColor: 'rgba(249,115,22,0.15)',
-       fill: true, tension: 0.4, pointRadius: 0, borderWidth: 2 }], null, null, '°C');
+  let chart = null;
 
   // slider
   const slider = container.querySelector('#ws4-alarm-slider');
@@ -2742,6 +3579,9 @@ function initLiveWs4(container) {
   }
 
   startLiveData(data => {
+    if (!chart) chart = makeChart('ws4-chart', 'line',
+      [{ data: Array(60).fill(null), borderColor: '#f97316', backgroundColor: 'rgba(249,115,22,0.15)',
+         fill: true, tension: 0.4, pointRadius: 0, borderWidth: 2 }], null, null, '°C');
     const port = getPort(data, 3);
     setLiveStatus('ws4-live-badge', !!port);
     if (!port || !port.pdin_decoded) return;

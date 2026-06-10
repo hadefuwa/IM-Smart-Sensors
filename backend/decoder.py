@@ -145,12 +145,13 @@ def decode_proximity_pdin(bytes_data):
     Decode Process Data In for inductive proximity sensors.
 
     OMRON E2E-X NEXT M18 (IO-Link V1.1) — 2-byte / 16-bit PDin layout:
-      Byte 0 bit 0 : OUT1 — Control Output 1 (object detected)
-      Byte 0 bit 4 : Instability Detection Alarm (Diagnosis Mode 1 or 2)
-      Byte 0 bit 5 : Over-Approach / Excessive Proximity Alarm (Diagnosis Mode 1 or 3)
-      Byte 0 bit 6 : Warning flag
-      Byte 0 bit 7 : Error flag
-      Byte 1 [7:0] : Monitor Output (uint8, reserved/manufacturer use)
+      IODD bitOffset is counted from the LSB of the 16-bit record (big-endian, byte 0 first).
+      Byte 0 [7:0] : Monitor Output (oscillation amplitude, uint8) — bitOffset 8-15
+      Byte 1 bit 0 : OUT1 — Control Output 1 (object detected)    — bitOffset 0
+      Byte 1 bit 4 : Instability Detection Alarm (Diagnosis Mode 1 or 2) — bitOffset 4
+      Byte 1 bit 5 : Over-Approach / Excessive Proximity Alarm (Diagnosis Mode 1 or 3)
+      Byte 1 bit 6 : Warning flag
+      Byte 1 bit 7 : Error flag
 
     Fallback for 1-byte generic sensors: bit 0 = object present.
     """
@@ -170,15 +171,20 @@ def decode_proximity_pdin(bytes_data):
         bytes_data = list(bytes_data)
     decoded['raw_hex'] = ''.join(f'{b:02X}' for b in bytes_data)
 
-    b0 = bytes_data[0]
-    decoded['object_present']      = bool(b0 & 0x01)
-    decoded['instability_alarm']   = bool(b0 & 0x10)
-    decoded['over_approach_alarm'] = bool(b0 & 0x20)
-    decoded['warning']             = bool(b0 & 0x40)
-    decoded['error']               = bool(b0 & 0x80)
+    # Byte 0 = monitor output (oscillation amplitude)
+    decoded['monitor_output'] = bytes_data[0]
 
+    # Byte 1 = status flags (requires 2-byte PDin)
     if len(bytes_data) >= 2:
-        decoded['monitor_output'] = bytes_data[1]
+        b1 = bytes_data[1]
+        decoded['object_present']      = bool(b1 & 0x01)
+        decoded['instability_alarm']   = bool(b1 & 0x10)
+        decoded['over_approach_alarm'] = bool(b1 & 0x20)
+        decoded['warning']             = bool(b1 & 0x40)
+        decoded['error']               = bool(b1 & 0x80)
+    else:
+        # 1-byte fallback: bit 0 = object present
+        decoded['object_present'] = bool(bytes_data[0] & 0x01)
 
     decoded['description'] = 'Object present' if decoded['object_present'] else 'Object absent'
     if decoded['instability_alarm']:   decoded['description'] += ' [INSTABILITY]'

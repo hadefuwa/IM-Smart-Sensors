@@ -77,7 +77,7 @@ Pi credentials and network details are in `docs/PI_SSH.md`.
 | `backend/io_link_fastapi.py` | Main FastAPI app — all routes + WebSocket handler + ISDU endpoints |
 | `backend/al1350_client.py` | AL1350 HTTP client with circuit breaker, retry/jitter, adaptive polling, ISDU read/write |
 | `backend/device_parameters.py` | IODD-derived parameter registry + ISDU encode/decode helpers |
-| `backend/decoder.py` | CL50 LED decoder + sensor PDin/PDout parsers (temperature, photoelectric, capacitive, proximity) |
+| `backend/decoder.py` | CL50 LED decoder + sensor PDin/PDout parsers (temperature, photoelectric, capacitive, proximity). **Omron E2E byte order is non-obvious — see "Omron E2E Proximity Sensor" section.** |
 | `backend/config.json` | Runtime config — master IP, port, poll intervals, port labels, timeout |
 
 ## Backend Reliability Patterns
@@ -171,6 +171,23 @@ The IO-Link Master page (`src/io-link-page.js`) has two data sources that must s
 
 Known vendor IDs in this kit: 310 (ifm), 342 (Contrinex), 612 (OMRON), 1586 (RS Pro).
 
+## Omron E2E Proximity Sensor — PDin Byte Layout
+
+**Critical:** The IODD uses `bitOffset` counted from the **LSB of the 16-bit record** (big-endian, byte 0 transmitted first). This means byte 0 and byte 1 are NOT in the intuitive order:
+
+| Byte | Content |
+|------|---------|
+| Byte 0 | Monitor Output — oscillation amplitude (uint8, ~80 in free air) |
+| Byte 1 bit 0 | OUT1 — object detected |
+| Byte 1 bit 4 | Instability Detection Alarm |
+| Byte 1 bit 5 | Over-Approach Alarm |
+| Byte 1 bit 6 | Warning flag |
+| Byte 1 bit 7 | Error flag |
+
+In free air, a typical PDin is `5100`: byte 0 = `0x51` (monitor output ≈ 81), byte 1 = `0x00` (all flags clear). **Do not be misled** — the `0x5x` byte is NOT a status byte. Early versions of the decoder incorrectly read byte 0 as flags, causing permanent false "instability alarm" and false detections as the monitor amplitude LSB flickered between `0x50`/`0x51`.
+
+The decoder fix is in `backend/decoder.py` — `decode_proximity_pdin()` now reads flags from `bytes_data[1]` and monitor output from `bytes_data[0]`.
+
 ## CP0001 Worksheet 2 — Signal Type Animations
 
 WS2 ("What is a Smart Sensor?") contains three `<canvas>` animations that run via `requestAnimationFrame` loops managed by `initSensorTypeAnimations(container)` in `worksheets-page.js`.
@@ -197,6 +214,61 @@ WS2 ("What is a Smart Sensor?") contains three `<canvas>` animations that run vi
 5. Master supply voltage undervoltage
 
 A debug console streams lines every 300 ms. ~90% are realistic backend spam (`[INFO]`/`[DEBUG]`); hints appear every 8–10 lines as `[WARN]` lines in amber. Each fault has 4 unique hints that cycle. Answer options are shuffled on each run. The interval is tracked via `_canvasAnimCancellers` token so it is cleaned up on navigation.
+
+## CP0001 Worksheet 3 — Proximity ISDU Misconfiguration Scenario
+
+`initLiveWs2` (note: naming offset — WS3 is driven by `initLiveWs2`) wires up a hands-on ISDU parameter misconfiguration scenario at the bottom of WS3. The sensor is the Omron E2E-X16MB1T12 on Port 1.
+
+**Scenario:** "Start Scenario" clicks `isduWrite(1, 61, 1, 1, 'uint8', 1, null)` to set Switchpoint Logic OUT1 (index 61 / sub 1) to **NC (value 1)**. This inverts output behaviour — the sensor output is ON when nothing is present and OFF when metal is detected. The student must notice the anomaly, diagnose via ISDU read, write the fix (value 0 = NO), and verify the corrected output.
+
+**State machine — `_msStep`:**
+
+| Value | Meaning |
+|-------|---------|
+| 0 | Idle — "Start Scenario" not yet clicked |
+| 1 | Fault injected — sensor set to NC, observe step visible |
+| 2 | Student clicked "I have observed the anomaly" |
+| 3 | Correct diagnosis selected (NC logic) |
+| 4 | ISDU read performed and confirmed NC |
+| 5 | Fix written (value 0 = NO) — verify step visible |
+| 6 | Verify passed (3-second hold) — sign-off visible |
+
+**Auto-restore on navigation — `_ws3FaultCleanup`:**
+
+```js
+let _ws3FaultCleanup = null; // module-level
+```
+
+- Set to `() => isduWrite(1, 61, 1, 0, 'uint8', 1, null)` immediately after a successful inject.
+- Cleared to `null` after a successful fix write (Step 4 → 5).
+- `stopLiveData()` calls and clears it — fires on any in-page navigation away from WS3.
+- **Limitation:** force-closing the browser tab bypasses cleanup. Trainer must navigate back to WS3 and click Reset, or re-run the scenario, to restore NO if the tab was closed mid-fault.
+
+**Three parallel live value panels (all updated in one WS callback loop):**
+
+| Panel prefix | When visible |
+|-------------|-------------|
+| `ws3-hmi-*` | Always — HMI panel at the top of the challenge box |
+| `ws3-obs-*` | Step 1 (observe step) |
+| `ws3-vfy-*` | Step 5 (verify step) |
+
+Fields per panel: `det` (DETECTED / NO OBJECT), `instab` (ACTIVE / CLEAR), `overapp` (ACTIVE / CLEAR), `mon` (monitor output uint8).
+
+**Verify step:** 3-second continuous hold — `det === true && instab === false`. Progress bar `ws3-ms-vfy-bar/pct/tbar/timer` tracks elapsed time. Timer resets if condition breaks before 3 s.
+
+**Sign-off:** 3 checkboxes (`ws3-ms-ck1/ck2/ck3`) — all must be ticked before "Close" button enables.
+
+**Key ISDU parameter — Omron Switchpoint Logic OUT1:**
+
+| Field | Value |
+|-------|-------|
+| Index | 61 (0x3D) |
+| Subindex | 1 |
+| dtype | uint8 |
+| 0 = NO | Normal open — output ON when object detected (default) |
+| 1 = NC | Normal closed — output ON when NO object detected (inverted) |
+
+Registered in `backend/device_parameters.py` at key `(612, 131094)` under `output_logic`.
 
 ## CP0001 Worksheet 1 — Capacitive Challenge Tolerance
 
