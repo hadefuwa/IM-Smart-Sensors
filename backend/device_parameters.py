@@ -7,7 +7,8 @@ Sources:
   RS PRO 0360240 photoelectric (Contrinex OEM) — standard Smart Sensor Profile only (IODD not public)
     [COMMENTED OUT — sensor swapped for Omron E2E-X16MB1T12 on port 1; re-enable (342,131842) if reverted]
   OMRON E2E-X NEXT M18 family — OMRON-E2E-NEXT-X_B1T18-20191010-IODD1.1.xml (IO-Link V1.1, COM3)
-  IFM CL50PKQ LED stack — PDout write only; no IODD retrieved
+  Banner CL50PKQ / CL50 Pro RGB — Banner_Engineering-CL50RGBIOL-20210903-IODD1.1.xml (IO-Link V1.1)
+    VendorID: 451, DeviceID: 393229 — docs/CL50PKQ.pdf (IO-Link Data Reference Guide)
 """
 
 T_UINT8  = 'uint8'
@@ -267,12 +268,58 @@ _PHOTOELECTRIC_PARAMS = {
     ]
 }
 
+# ── Banner CL50 Pro RGB Column Light (IO-Link V1.1) ──────────────────────────
+# IODD: Banner_Engineering-CL50RGBIOL-20210903-IODD1.1.xml
+# VendorID: 451 (Banner Engineering Corp.), DeviceID: 393229
+# PDout-only (3 bytes): Color1/Color2 selection, animation, speed, intensity, audible
+# PDin: N/A (no process data from device to master)
+_CL50_BANNER_PARAMS = {
+    'label': 'Banner CL50 Pro RGB Column Light (IO-Link V1.1)',
+    'pdo_write': True,
+    'commands': {
+        'factory_reset': {'value': 130, 'label': 'Restore factory settings (all parameters → default)'},
+    },
+    'parameters': [
+        # ── Identity ──────────────────────────────────────────────────────────
+        _p(18, 0, 'Product Name',    T_STRING, group=G_IDENTITY),
+        _p(19, 0, 'Product ID',      T_STRING, group=G_IDENTITY),
+        _p(21, 0, 'Serial Number',   T_STRING, group=G_IDENTITY),
+        _p(22, 0, 'Hardware Rev',    T_STRING, group=G_IDENTITY),
+        _p(23, 0, 'Firmware Rev',    T_STRING, group=G_IDENTITY),
+        _p(24, 0, 'Application Tag', T_STRING, access='rw', group=G_IDENTITY,
+           desc='User-editable label stored in the device', max_len=32),
+        # ── Diagnostics ───────────────────────────────────────────────────────
+        _p(36, 0, 'Device Status', T_UINT8, group=G_DIAGNOSTICS,
+           enum={0: 'OK', 1: 'Maintenance required', 2: 'Out-of-specification',
+                 3: 'Functional check', 4: 'Failure'}),
+        # ── Additional Settings (index 75) ────────────────────────────────────
+        _p(75, 1, 'Custom Intensity', T_UINT8, access='rw', group=G_CONFIG,
+           min=0, max=100, default=100, unit='%',
+           desc='Brightness level (0–100%) applied when Color 1 or Color 2 intensity is set to Custom'),
+        _p(75, 2, 'Custom Flash Rate', T_UINT8, access='rw', group=G_CONFIG,
+           min=1, max=20, default=15,
+           desc='Flash rate 1–20 (maps to 0.5–20 Hz). Active when Pulse Pattern uses a timed flash.'),
+        _p(75, 4, 'Restrict To Gamut', T_BOOL, access='rw', group=G_CONFIG,
+           enum={0: 'Off — allow out-of-gamut RGB values', 1: 'On — clamp to device colour gamut'},
+           desc='Limits Custom RGB values to reproducible colours on this device'),
+        # ── Custom Colour 1 (index 76) ────────────────────────────────────────
+        _p(76, 1, 'Custom 1 — Red',   T_UINT8, access='rw', group=G_CONFIG, min=0, max=255, default=255),
+        _p(76, 2, 'Custom 1 — Green', T_UINT8, access='rw', group=G_CONFIG, min=0, max=255, default=255),
+        _p(76, 3, 'Custom 1 — Blue',  T_UINT8, access='rw', group=G_CONFIG, min=0, max=255, default=255),
+        # ── Custom Colour 2 (index 77) ────────────────────────────────────────
+        _p(77, 1, 'Custom 2 — Red',   T_UINT8, access='rw', group=G_CONFIG, min=0, max=255, default=255),
+        _p(77, 2, 'Custom 2 — Green', T_UINT8, access='rw', group=G_CONFIG, min=0, max=255, default=255),
+        _p(77, 3, 'Custom 2 — Blue',  T_UINT8, access='rw', group=G_CONFIG, min=0, max=255, default=255),
+    ]
+}
+
 # ── Registry keyed by (vendor_id_int, device_id_int) ─────────────────────────
 DEVICE_REGISTRY = {
     (310,  733):       _TV7105_PARAMS,
     (1586, 1052673):   _CAPACITIVE_PARAMS,
     (896,  1069056):   _CAPACITIVE_PARAMS,        # Carlo Gavazzi official IDs
     (612,  131094):    _PROXIMITY_OMRON_PARAMS,   # OMRON E2E-X NEXT M18 (IO-Link V1.1)
+    (451,  393229):    _CL50_BANNER_PARAMS,       # Banner CL50 Pro RGB column light (IO-Link V1.1)
     # (342, 131842):   _PHOTOELECTRIC_PARAMS,     # Contrinex LTR-M18PA-PMS-603 IO-Link 1.0 — re-enable if sensor re-fitted
 }
 

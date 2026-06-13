@@ -155,7 +155,8 @@ function updatePortPassport(key, port) {
 
   const strip = document.getElementById(`pp-${key}-strip`);
   if (strip) {
-    strip.innerHTML = chips.join('');
+    const html = chips.join('');
+    if (strip.innerHTML !== html) strip.innerHTML = html;
     const hasChips = chips.length > 0;
     strip.classList.toggle('hidden', !hasChips);
     strip.classList.toggle('flex', hasChips);
@@ -502,14 +503,20 @@ export function renderHomePage() {
             <div class="flex-1 h-px bg-base-300"></div>
           </div>
           ${renderPassport('led')}
+
+          <!-- Current State + Log -->
           <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
             <div class="card bg-base-200 shadow-xl">
               <div class="card-body p-3">
                 <span class="text-xs font-semibold opacity-50 uppercase tracking-wider mb-3 block">Current State</span>
-                <div class="flex items-center gap-4">
-                  <div id="led-color-dot" class="w-10 h-10 rounded-full border-2 border-base-content/20 flex-shrink-0 shadow-inner" style="background:#374151"></div>
-                  <div>
-                    <div class="font-bold font-mono text-xl leading-tight" id="led-state-color">—</div>
+                <div class="flex items-center gap-3">
+                  <div class="flex flex-col gap-1 items-center shrink-0">
+                    <div id="led-color-dot" class="w-8 h-8 rounded-full border-2 border-base-content/20 shadow-inner" style="background:#374151"></div>
+                    <div id="led-color2-dot" class="w-5 h-5 rounded-full border-2 border-base-content/20 shadow-inner hidden" style="background:#374151"></div>
+                  </div>
+                  <div class="min-w-0">
+                    <div class="font-bold font-mono text-base leading-tight" id="led-state-color">—</div>
+                    <div class="text-xs opacity-50 font-mono hidden" id="led-state-color2-row">↔ <span id="led-state-color2">—</span></div>
                     <div class="text-sm opacity-60 font-mono" id="led-state-animation">—</div>
                     <div class="text-xs opacity-40 font-mono" id="led-state-intensity">—</div>
                   </div>
@@ -522,6 +529,120 @@ export function renderHomePage() {
                 <div class="mt-2 overflow-y-auto max-h-24 space-y-1" id="led-state-log-body">
                   <div class="text-xs opacity-40 font-mono">Waiting for data…</div>
                 </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- PDout Control Panel -->
+          <div class="card bg-base-200 shadow-xl">
+            <div class="card-body p-3 space-y-4">
+              <span class="text-xs font-semibold opacity-50 uppercase tracking-wider block">PDout Control</span>
+
+              <!-- Quick colour buttons -->
+              <div>
+                <div class="text-xs opacity-40 font-mono mb-2">Quick Set (Steady)</div>
+                <div class="flex flex-wrap gap-2" id="cl50-quick-btns">
+                  ${[
+                    ['Green',  '#22c55e', 0],
+                    ['Red',    '#ef4444', 1],
+                    ['Amber',  '#f59e0b', 3],
+                    ['Yellow', '#eab308', 4],
+                    ['Blue',   '#3b82f6', 9],
+                    ['White',  '#f3f4f6', 13],
+                    ['Off',    '#374151', null],
+                  ].map(([label, css, idx]) => `
+                    <button class="btn btn-sm gap-1.5 cl50-quick-btn" data-color="${idx !== null ? idx : ''}" data-label="${label}"
+                      style="border-color:${css}40">
+                      <span class="w-3 h-3 rounded-full inline-block shrink-0" style="background:${css}"></span>
+                      ${label}
+                    </button>`).join('')}
+                </div>
+              </div>
+
+              <!-- Full control grid -->
+              <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+                <div>
+                  <label class="text-xs opacity-50 block mb-1">Color 1</label>
+                  <select id="cl50-color1" class="select select-bordered select-sm w-full">
+                    ${CL50_COLORS.map((c,i) => `<option value="${i}">${c}</option>`).join('')}
+                  </select>
+                </div>
+                <div>
+                  <label class="text-xs opacity-50 block mb-1">Color 2</label>
+                  <select id="cl50-color2" class="select select-bordered select-sm w-full">
+                    ${CL50_COLORS.map((c,i) => `<option value="${i}">${c}</option>`).join('')}
+                  </select>
+                </div>
+                <div>
+                  <label class="text-xs opacity-50 block mb-1">Animation</label>
+                  <select id="cl50-animation" class="select select-bordered select-sm w-full">
+                    <option value="0">Off</option>
+                    <option value="1" selected>Steady</option>
+                    <option value="2">Flash</option>
+                    <option value="3">Two Color Flash</option>
+                    <option value="4">Intensity Sweep</option>
+                  </select>
+                </div>
+                <div>
+                  <label class="text-xs opacity-50 block mb-1">Pulse Pattern</label>
+                  <select id="cl50-pulse" class="select select-bordered select-sm w-full">
+                    <option value="0">Normal</option>
+                    <option value="1">Strobe</option>
+                    <option value="2">Three Pulse</option>
+                    <option value="3">SOS</option>
+                    <option value="4">Random</option>
+                  </select>
+                </div>
+                <div>
+                  <label class="text-xs opacity-50 block mb-1">Speed</label>
+                  <select id="cl50-speed" class="select select-bordered select-sm w-full">
+                    <option value="0">Medium</option>
+                    <option value="1">Fast</option>
+                    <option value="2">Slow</option>
+                  </select>
+                </div>
+                <div>
+                  <label class="text-xs opacity-50 block mb-1">Color 1 Intensity</label>
+                  <select id="cl50-c1intensity" class="select select-bordered select-sm w-full">
+                    <option value="0">High</option>
+                    <option value="1">Low</option>
+                    <option value="2">Medium</option>
+                    <option value="3">Off</option>
+                    <option value="4">Custom</option>
+                  </select>
+                </div>
+                <div>
+                  <label class="text-xs opacity-50 block mb-1">Color 2 Intensity</label>
+                  <select id="cl50-c2intensity" class="select select-bordered select-sm w-full">
+                    <option value="0">High</option>
+                    <option value="1">Low</option>
+                    <option value="2">Medium</option>
+                    <option value="3">Off</option>
+                    <option value="4">Custom</option>
+                  </select>
+                </div>
+                <div>
+                  <label class="text-xs opacity-50 block mb-1">Audible</label>
+                  <select id="cl50-audible" class="select select-bordered select-sm w-full">
+                    <option value="0">Off</option>
+                    <option value="1">On</option>
+                    <option value="2">Pulsed</option>
+                    <option value="3">SOS Pulse</option>
+                  </select>
+                </div>
+              </div>
+
+              <!-- Hex preview + write -->
+              <div class="flex items-center gap-3 flex-wrap">
+                <div class="flex items-center gap-2 flex-1">
+                  <span class="text-xs opacity-40 font-mono">PDout hex:</span>
+                  <code class="text-xs font-mono bg-base-300 px-2 py-0.5 rounded" id="cl50-hex-preview">000100</code>
+                </div>
+                <button id="cl50-write-btn" class="btn btn-primary btn-sm gap-2">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/></svg>
+                  Write to Light
+                </button>
+                <span class="text-xs font-mono opacity-50" id="cl50-write-status"></span>
               </div>
             </div>
           </div>
@@ -643,46 +764,66 @@ function renderConfigModals() {
 
     <dialog id="modal-led-config" class="modal">
       <div class="modal-box">
-        <h3 class="font-bold text-lg">Status LED Configuration</h3>
+        <h3 class="font-bold text-lg">Light Stack Control</h3>
         <div class="py-4 space-y-4">
           <div class="form-control">
-            <label class="label"><span class="label-text">Color</span></label>
+            <label class="label"><span class="label-text">Color 1</span></label>
             <select id="led-color" class="select select-bordered">
-              <option value="Green">Green</option>
-              <option value="Red">Red</option>
-              <option value="Orange">Orange</option>
-              <option value="Amber">Amber</option>
-              <option value="Yellow">Yellow</option>
-              <option value="Blue">Blue</option>
-              <option value="White">White</option>
+              ${CL50_COLORS.map((c,i) => `<option value="${i}">${c}</option>`).join('')}
             </select>
           </div>
           <div class="form-control">
-            <label class="label"><span class="label-text">Animation Mode</span></label>
+            <label class="label"><span class="label-text">Color 2 (Two Color Flash)</span></label>
+            <select id="led-color2-modal" class="select select-bordered">
+              ${CL50_COLORS.map((c,i) => `<option value="${i}">${c}</option>`).join('')}
+            </select>
+          </div>
+          <div class="form-control">
+            <label class="label"><span class="label-text">Animation</span></label>
             <select id="led-animation" class="select select-bordered">
-              <option value="Steady">Steady</option>
-              <option value="Flash">Flash</option>
-              <option value="Two Color Flash">Two Color Flash</option>
-              <option value="Intensity Sweep">Intensity Sweep</option>
+              <option value="0">Off</option>
+              <option value="1" selected>Steady</option>
+              <option value="2">Flash</option>
+              <option value="3">Two Color Flash</option>
+              <option value="4">Intensity Sweep</option>
+            </select>
+          </div>
+          <div class="form-control">
+            <label class="label"><span class="label-text">Pulse Pattern</span></label>
+            <select id="led-pulse-modal" class="select select-bordered">
+              <option value="0">Normal</option>
+              <option value="1">Strobe</option>
+              <option value="2">Three Pulse</option>
+              <option value="3">SOS</option>
+              <option value="4">Random</option>
             </select>
           </div>
           <div class="form-control">
             <label class="label"><span class="label-text">Intensity</span></label>
             <select id="led-intensity" class="select select-bordered">
-              <option value="High">High</option>
-              <option value="Medium">Medium</option>
-              <option value="Low">Low</option>
+              <option value="0">High</option>
+              <option value="1">Low</option>
+              <option value="2">Medium</option>
+              <option value="3">Off</option>
             </select>
           </div>
           <div class="form-control">
-            <button id="led-test-mode" class="btn btn-outline btn-sm">Test Mode (Cycle All States)</button>
+            <label class="label"><span class="label-text">Speed</span></label>
+            <select id="led-speed-modal" class="select select-bordered">
+              <option value="0">Medium</option>
+              <option value="1">Fast</option>
+              <option value="2">Slow</option>
+            </select>
           </div>
+          <div class="flex items-center gap-2 pt-1">
+            <span class="text-xs opacity-40 font-mono">PDout hex:</span>
+            <code class="text-xs font-mono bg-base-300 px-2 py-0.5 rounded" id="led-modal-hex-preview">—</code>
+          </div>
+          <div id="led-modal-status" class="text-xs font-mono opacity-60 min-h-4"></div>
         </div>
         <div class="modal-action">
-          <form method="dialog">
-            <button class="btn btn-sm btn-ghost">Cancel</button>
-            <button class="btn btn-sm btn-primary">Save</button>
-          </form>
+          <form method="dialog"><button class="btn btn-sm btn-ghost">Cancel</button></form>
+          <button id="led-modal-save" class="btn btn-sm btn-primary">Write to Light</button>
         </div>
       </div>
       <form method="dialog" class="modal-backdrop"><button>close</button></form>
@@ -871,12 +1012,12 @@ function initializeCharts() {
     });
   }
 
-  // Seed charts with any history preserved from before the page was left
-  if (temperatureHistory.length)   updateChart(charts.temperature,    temperatureHistory);
-  if (detectionHistory.length)     updateChart(charts.detectionHistory, detectionHistory);
-  if (signalQualityHistory.length) updateChart(charts.signalQuality,   signalQualityHistory);
-  if (capDetectionHistory.length)  updateChart(charts.capDetection,    capDetectionHistory);
-  if (capAnalogueHistory.length)   updateChart(charts.capAnalogue,     capAnalogueHistory);
+  // Seed charts with any history preserved from before the page was left (force immediate render)
+  if (temperatureHistory.length)   updateChart(charts.temperature,    temperatureHistory,   true);
+  if (detectionHistory.length)     updateChart(charts.detectionHistory, detectionHistory,   true);
+  if (signalQualityHistory.length) updateChart(charts.signalQuality,   signalQualityHistory, true);
+  if (capDetectionHistory.length)  updateChart(charts.capDetection,    capDetectionHistory, true);
+  if (capAnalogueHistory.length)   updateChart(charts.capAnalogue,     capAnalogueHistory,  true);
   if (tempCount > 0)               updateTempStats();
 }
 
@@ -970,6 +1111,34 @@ function setupConfigModalHandlers() {
     if (el) el.addEventListener('click', () => document.getElementById(modalId)?.showModal());
   });
 
+  // Live hex preview for modal selects
+  const _modalHexPreview = () => {
+    const v = id => parseInt(document.getElementById(id)?.value || '0', 10);
+    const hex = buildCl50Pdout(
+      v('led-color'), v('led-color2-modal'),
+      v('led-animation'), v('led-pulse-modal'),
+      v('led-speed-modal'), v('led-intensity'), v('led-intensity'), 0
+    );
+    const el = document.getElementById('led-modal-hex-preview');
+    if (el) el.textContent = hex;
+    return hex;
+  };
+  ['led-color','led-color2-modal','led-animation','led-pulse-modal','led-intensity','led-speed-modal']
+    .forEach(id => document.getElementById(id)?.addEventListener('change', _modalHexPreview));
+  _modalHexPreview();
+
+  // Wire modal-led-config Save button — animation=4 routes to software sweep (no auto-close)
+  document.getElementById('led-modal-save')?.addEventListener('click', async () => {
+    const v = id => parseInt(document.getElementById(id)?.value || '0', 10);
+    const anim = v('led-animation');
+    if (anim === 4) {
+      await _cl50StartSweep(v('led-color'), v('led-color2-modal'), v('led-speed-modal'), 'led-modal-status');
+    } else {
+      const hex = _modalHexPreview();
+      await _cl50WritePdout(hex, 'led-modal-status');
+    }
+  });
+
   const resetBtn = document.getElementById('photo-reset-counter');
   if (resetBtn) {
     resetBtn.addEventListener('click', () => {
@@ -984,6 +1153,117 @@ function setupConfigModalHandlers() {
   if (resetDataBtn) {
     resetDataBtn.addEventListener('click', resetAllData);
   }
+
+  _initCl50Controls();
+}
+
+function _cl50PortNum() {
+  return _sectionPortNum['led-port-num'] || 4;
+}
+
+function _cl50ReadSelects() {
+  const v = id => parseInt(document.getElementById(id)?.value || '0', 10);
+  return {
+    color1: v('cl50-color1'), color2: v('cl50-color2'),
+    animation: v('cl50-animation'), pulse: v('cl50-pulse'),
+    speed: v('cl50-speed'), c1i: v('cl50-c1intensity'),
+    c2i: v('cl50-c2intensity'), audible: v('cl50-audible'),
+  };
+}
+
+function _cl50UpdateHexPreview() {
+  const s = _cl50ReadSelects();
+  const hex = buildCl50Pdout(s.color1, s.color2, s.animation, s.pulse, s.speed, s.c1i, s.c2i, s.audible);
+  const el = document.getElementById('cl50-hex-preview');
+  if (el) el.textContent = hex;
+  return hex;
+}
+
+async function _cl50WritePdout(hexVal, statusElId) {
+  const port = _cl50PortNum();
+  const base = window.IO_LINK_API_BASE || '';
+  const statusEl = document.getElementById(statusElId);
+  if (statusEl) statusEl.textContent = 'Writing…';
+  try {
+    const res = await fetch(`${base}/api/io-link/port/${port}/pdout`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ value: hexVal }),
+    });
+    const data = await res.json();
+    if (statusEl) {
+      statusEl.textContent = data.success ? '✓ Written' : `✗ ${data.error || 'Failed'}`;
+      setTimeout(() => { if (statusEl) statusEl.textContent = ''; }, 3000);
+    }
+  } catch (e) {
+    if (statusEl) { statusEl.textContent = '✗ Network error'; setTimeout(() => { if (statusEl) statusEl.textContent = ''; }, 3000); }
+  }
+}
+
+async function _cl50StartSweep(color1, color2, speed, statusElId) {
+  const port = _cl50PortNum();
+  const base = window.IO_LINK_API_BASE || '';
+  const statusEl = document.getElementById(statusElId);
+  if (statusEl) statusEl.textContent = 'Starting sweep…';
+  const speedNames = ['medium', 'fast', 'slow'];
+  const speedStr = speedNames[speed] || 'fast';
+  try {
+    const res = await fetch(`${base}/api/io-link/port/${port}/pdout/sweep`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ color1, color2, speed: speedStr }),
+    });
+    const data = await res.json();
+    if (statusEl) {
+      statusEl.textContent = data.success ? '✓ Sweep running' : `✗ ${data.error || 'Failed'}`;
+      setTimeout(() => { if (statusEl) statusEl.textContent = ''; }, 3000);
+    }
+  } catch (e) {
+    if (statusEl) { statusEl.textContent = '✗ Network error'; setTimeout(() => { if (statusEl) statusEl.textContent = ''; }, 3000); }
+  }
+}
+
+function _initCl50Controls() {
+  // Update hex preview whenever any select changes
+  ['cl50-color1','cl50-color2','cl50-animation','cl50-pulse','cl50-speed','cl50-c1intensity','cl50-c2intensity','cl50-audible']
+    .forEach(id => document.getElementById(id)?.addEventListener('change', _cl50UpdateHexPreview));
+
+  // Quick colour buttons — Steady + chosen color1
+  document.getElementById('cl50-quick-btns')?.addEventListener('click', e => {
+    const btn = e.target.closest('.cl50-quick-btn');
+    if (!btn) return;
+    const colorIdx = btn.dataset.color;
+    let hex;
+    if (colorIdx === '') {
+      // Off: animation=0
+      hex = buildCl50Pdout(0, 0, 0, 0, 0, 0, 0, 0);
+    } else {
+      const c = parseInt(colorIdx, 10);
+      hex = buildCl50Pdout(c, c, 1, 0, 0, 0, 0, 0); // Steady, High intensity
+    }
+    // Sync selects to match
+    const animEl = document.getElementById('cl50-animation');
+    const c1El   = document.getElementById('cl50-color1');
+    const c2El   = document.getElementById('cl50-color2');
+    if (animEl) animEl.value = colorIdx === '' ? '0' : '1';
+    if (c1El && colorIdx !== '') c1El.value = colorIdx;
+    if (c2El && colorIdx !== '') c2El.value = colorIdx;
+    _cl50UpdateHexPreview();
+    _cl50WritePdout(hex, 'cl50-write-status');
+  });
+
+  // Write button — animation=4 (Intensity Sweep) routes to software sweep endpoint
+  document.getElementById('cl50-write-btn')?.addEventListener('click', async () => {
+    const s = _cl50ReadSelects();
+    if (s.animation === 4) {
+      await _cl50StartSweep(s.color1, s.color2, s.speed, 'cl50-write-status');
+    } else {
+      const hex = _cl50UpdateHexPreview();
+      await _cl50WritePdout(hex, 'cl50-write-status');
+    }
+  });
+
+  _cl50UpdateHexPreview();
 }
 
 async function resetAllData() {
@@ -1046,6 +1326,7 @@ export function destroyHomePage() {
   if (themeObserver) { themeObserver.disconnect(); themeObserver = null; }
 
   if (histRefreshTimer) { clearInterval(histRefreshTimer); histRefreshTimer = null; }
+  if (_chartFlushTimer) { clearTimeout(_chartFlushTimer); _chartFlushTimer = null; _dirtyCharts.clear(); }
 
   Object.values(charts).forEach(c => { if (c) c.destroy(); });
   Object.values(histCharts).forEach(c => { if (c) c.destroy(); });
@@ -1102,15 +1383,19 @@ function updateDashboard(data) {
 
 function processPortData(port, masterConnected = true) {
   const deviceType = getDeviceType(port);
-  const portActive = masterConnected && port.mode === 'io-link';
+  const portActive = masterConnected && port.mode === 'io-link' && !!port.vendor_id;
 
   const containerMap = { temperature: 'mimic-temperature', proximity: 'mimic-photoelectric', photoelectric: 'mimic-photoelectric', capacitive: 'mimic-capacitive', led: 'mimic-led' };
   if (containerMap[deviceType]) setComponentConnected(containerMap[deviceType], portActive);
 
+  // Update port badge regardless of portActive so it reflects disconnected state
+  const badgeMap = { temperature: ['temp-port-num', 'temp-port-label'], proximity: ['detection-port-num', 'detection-port-label'], photoelectric: ['detection-port-num', 'detection-port-label'], capacitive: ['cap-port-num', 'cap-port-label'], led: ['led-port-num', 'led-port-label'] };
+  const bids = badgeMap[deviceType];
+  if (bids) _setPortBadge(bids[0], bids[1], port, portActive);
+
   if (!portActive) return;
 
   if (deviceType === 'temperature' && mimicComponents.temperature) {
-    _setPortBadge('temp-port-num', 'temp-port-label', port);
     const temp = port.pdin_decoded?.temperature_c ?? 0;
     mimicComponents.temperature.update(temp);
     addToHistory(temperatureHistory, temp);
@@ -1128,7 +1413,6 @@ function processPortData(port, masterConnected = true) {
     }
 
   } else if (deviceType === 'proximity' && mimicComponents.photoelectric) {
-    _setPortBadge('detection-port-num', 'detection-port-label', port);
     mimicComponents.photoelectric.update(port.pdin_decoded || {});
 
     const isDetected = port.pdin_decoded?.object_present || false;
@@ -1156,7 +1440,6 @@ function processPortData(port, masterConnected = true) {
 
   } else if (deviceType === 'photoelectric' && mimicComponents.photoelectric) {
     // PHOTOELECTRIC FALLBACK — kept in case Contrinex LTR-M18PA-PMS-603 is re-fitted on port 1
-    _setPortBadge('detection-port-num', 'detection-port-label', port);
     mimicComponents.photoelectric.update(port.pdin_decoded || {});
 
     const isDetected = port.pdin_decoded?.object_detected || false;
@@ -1187,7 +1470,6 @@ function processPortData(port, masterConnected = true) {
     }
 
   } else if (deviceType === 'capacitive' && mimicComponents.capacitive) {
-    _setPortBadge('cap-port-num', 'cap-port-label', port);
     mimicComponents.capacitive.update(port.pdin_decoded || {});
 
     const isCapDet = port.pdin_decoded?.object_detected || false;
@@ -1223,7 +1505,6 @@ function processPortData(port, masterConnected = true) {
     }
 
   } else if (deviceType === 'led' && mimicComponents.led) {
-    _setPortBadge('led-port-num', 'led-port-label', port);
     mimicComponents.led.update(port.pdout_decoded || {});
     updateLedStatePanel(port.pdout_decoded || {});
     updatePortPassport('led', port);
@@ -1583,11 +1864,18 @@ function initHmiParams() {
   // Photo — identity-only panel, no write controls needed
 }
 
-function _setPortBadge(numId, labelId, port) {
+function _setPortBadge(numId, labelId, port, connected = true) {
   const numEl = document.getElementById(numId);
   const lblEl = document.getElementById(labelId);
-  if (numEl) numEl.textContent = `PORT ${port.port}`;
-  if (lblEl) lblEl.textContent = port.label || port.name || '';
+  if (numEl) {
+    numEl.textContent = `PORT ${port.port}`;
+    numEl.className = `badge font-mono font-bold text-xs ${connected ? 'badge-outline' : 'badge-error badge-outline'}`;
+  }
+  if (lblEl) {
+    const baseName = port.label || port.name || 'Sensor';
+    lblEl.textContent = connected ? baseName : `${baseName} — Disconnected`;
+    lblEl.className = `text-sm font-semibold ${connected ? 'opacity-60' : 'text-error opacity-80'}`;
+  }
 
   if (_sectionPortNum[numId] !== port.port) {
     _sectionPortNum[numId] = port.port;
@@ -1633,11 +1921,28 @@ function addToHistory(arr, val) {
   if (arr.length > MAX_HISTORY_POINTS) arr.shift();
 }
 
-function updateChart(chart, data) {
+// Throttle chart renders to max once per 2 s — live value displays still update every 500 ms.
+// This cuts Chart.js canvas re-draws from 10/s down to 2.5/s across all 5 charts.
+const CHART_FLUSH_INTERVAL_MS = 2000;
+let _chartFlushTimer = null;
+const _dirtyCharts = new Set();
+
+function updateChart(chart, data, force = false) {
   if (!chart) return;
   chart.data.labels = data.map((_, i) => `-${data.length - i}s`);
-  chart.data.datasets[0].data = data;
-  chart.update('none');
+  chart.data.datasets[0].data = [...data];
+  if (force) {
+    chart.update('none');
+    return;
+  }
+  _dirtyCharts.add(chart);
+  if (!_chartFlushTimer) {
+    _chartFlushTimer = setTimeout(() => {
+      _chartFlushTimer = null;
+      _dirtyCharts.forEach(c => c.update('none'));
+      _dirtyCharts.clear();
+    }, CHART_FLUSH_INTERVAL_MS);
+  }
 }
 
 function updateTempStats() {
@@ -1680,27 +1985,54 @@ const LED_COLOR_CSS = {
   'sky blue': '#38bdf8', violet: '#8b5cf6', magenta: '#ec4899',
 };
 
+// CL50 Pro color index → label (matches datasheet subindex 1/2 values 0–15)
+const CL50_COLORS = [
+  'Green', 'Red', 'Orange', 'Amber', 'Yellow', 'Lime Green', 'Spring Green',
+  'Cyan', 'Sky Blue', 'Blue', 'Violet', 'Magenta', 'Rose', 'White', 'Custom 1', 'Custom 2',
+];
+
+function buildCl50Pdout(color1, color2, animation, pulse, speed, c1i, c2i, audible) {
+  const octet2 = ((color2 & 0xF) << 4) | (color1 & 0xF);
+  const octet1 = ((speed & 0x3) << 6) | ((pulse & 0x7) << 3) | (animation & 0x7);
+  const octet0 = ((audible & 0x3) << 6) | ((c2i & 0x7) << 3) | (c1i & 0x7);
+  return [octet0, octet1, octet2].map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
 function ledColorToCss(name) {
   return LED_COLOR_CSS[(name || '').toLowerCase()] || '#6b7280';
 }
 
 function updateLedStatePanel(decoded) {
-  const color     = decoded.color     || decoded.color1 || '—';
+  const color1    = decoded.color1    || decoded.color || '—';
+  const color2    = decoded.color2    || '';
   const animation = decoded.animation || '—';
-  const intensity = decoded.intensity || decoded.color1_intensity || '—';
+  const intensity = decoded.color1_intensity || decoded.intensity || '—';
+  const speed     = decoded.speed     || '';
+  const isTwoColor = animation === 'Two Color Flash';
 
-  const set = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
-  set('led-state-color',     color);
-  set('led-state-animation', animation);
-  set('led-state-intensity', intensity);
+  const set = (id, v) => { const el = document.getElementById(id); if (el && el.textContent !== v) el.textContent = v; };
+  const show = (id, vis) => { const el = document.getElementById(id); if (el) el.classList.toggle('hidden', !vis); };
 
-  const dot = document.getElementById('led-color-dot');
-  if (dot) dot.style.background = ledColorToCss(color);
+  set('led-state-color',     color1);
+  set('led-state-color2',    color2 || '—');
+  set('led-state-animation', animation + (speed && animation !== 'Off' && animation !== '—' ? ` · ${speed}` : ''));
+  set('led-state-intensity', intensity !== 'High' ? intensity : '');
+  show('led-state-color2-row', isTwoColor && !!color2);
 
-  const stateKey = `${color}|${animation}|${intensity}`;
+  const dot1 = document.getElementById('led-color-dot');
+  const dot2 = document.getElementById('led-color2-dot');
+  const css1 = ledColorToCss(color1);
+  const css2 = isTwoColor && color2 ? ledColorToCss(color2) : '#374151';
+  if (dot1 && dot1.style.background !== css1) dot1.style.background = css1;
+  if (dot2) {
+    if (dot2.style.background !== css2) dot2.style.background = css2;
+    dot2.classList.toggle('hidden', !isTwoColor);
+  }
+
+  const stateKey = `${color1}|${color2}|${animation}|${intensity}`;
   if (stateKey !== _lastLedState) {
     _lastLedState = stateKey;
-    ledStateLog.unshift({ time: new Date().toLocaleTimeString(), color, animation, intensity });
+    ledStateLog.unshift({ time: new Date().toLocaleTimeString(), color1, color2, animation, intensity });
     if (ledStateLog.length > MAX_LED_LOG) ledStateLog.pop();
     renderLedStateLog();
   }
@@ -1714,11 +2046,14 @@ function renderLedStateLog() {
     return;
   }
   body.innerHTML = ledStateLog.map(e => {
-    const dotStyle = `display:inline-block;width:7px;height:7px;border-radius:50%;background:${ledColorToCss(e.color)};flex-shrink:0;`;
+    const dot1Style = `display:inline-block;width:7px;height:7px;border-radius:50%;background:${ledColorToCss(e.color1)};flex-shrink:0;`;
+    const dot2 = e.color2 && e.animation === 'Two Color Flash'
+      ? `<span style="display:inline-block;width:5px;height:5px;border-radius:50%;background:${ledColorToCss(e.color2)};flex-shrink:0;"></span>`
+      : '';
     return `<div class="flex items-center gap-1.5 text-xs font-mono">
-      <span style="${dotStyle}"></span>
+      <span style="${dot1Style}"></span>${dot2}
       <span class="opacity-40">${e.time}</span>
-      <span class="font-semibold">${e.color}</span>
+      <span class="font-semibold">${e.color1}${e.color2 && e.animation === 'Two Color Flash' ? ` ↔ ${e.color2}` : ''}</span>
       <span class="opacity-30">·</span>
       <span class="opacity-70">${e.animation}</span>
     </div>`;

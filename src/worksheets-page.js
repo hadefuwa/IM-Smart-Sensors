@@ -51,6 +51,7 @@ function stopLiveData() {
   });
   if (_ws3FaultCleanup) { _ws3FaultCleanup(); _ws3FaultCleanup = null; }
   if (_ws4FaultCleanup) { _ws4FaultCleanup(); _ws4FaultCleanup = null; }
+  if (_ws5CalCleanup) { _ws5CalCleanup(); _ws5CalCleanup = null; }
 }
 
 function makeChart(canvasId, type, datasets, yMin, yMax, yLabel) {
@@ -1144,8 +1145,8 @@ const WORKSHEETS = [
       <div class="divider my-2"></div>
 
       <div class="space-y-2 mt-4">
-        <p class="font-bold text-base-content text-base">🔧 Maintenance Scenario — Replacement Sensor Not Commissioned</p>
-        <p class="text-sm text-base-content/80">A very common real-world fault: a sensor fails, a technician swaps it for a spare from stores, and the line restarts — but the replacement has factory-default parameters that don't match the installation. SP1 is wrong for the environment, and because no one ran a teach procedure, the sensor has no site-specific calibration. QoT will be zero or very low, meaning the sensor has no confidence in its own threshold. Your job is to diagnose both problems via IO-Link and put the sensor back into service correctly.</p>
+        <p class="font-bold text-base-content text-base">🔧 Commissioning Scenario — Replacement Sensor Not Configured</p>
+        <p class="text-sm text-base-content/80">A very common real-world task: a colleague has fitted a new spare sensor, but stores sensors arrive with factory-default parameters and no site-specific calibration. The line cannot restart until the sensor is properly commissioned. Your job is to read the factory state, run a teach procedure at the correct detection point, and sign off the sensor ready for service.</p>
       </div>
 
       <div class="rounded-xl border-2 border-warning/50 bg-warning/5 p-4 mt-3 space-y-3" id="ws4-challenge-box">
@@ -1153,14 +1154,14 @@ const WORKSHEETS = [
         <!-- Title bar -->
         <div class="flex items-center gap-2">
           <div id="ws4-hdr-dot" class="w-3 h-3 rounded-full bg-base-300 flex-shrink-0 transition-all"></div>
-          <p class="font-bold text-base-content text-sm">Maintenance Scenario</p>
+          <p class="font-bold text-base-content text-sm">Commissioning Scenario</p>
           <span id="ws4-hdr-status" class="text-xs font-mono ml-auto text-base-content/50"></span>
         </div>
 
         <!-- Job context -->
         <div class="rounded-lg bg-base-300/50 p-3 text-sm text-base-content/80 border border-base-300 space-y-1">
-          <p><strong>Job ticket #WO-4412:</strong> Line 3 hopper sensor (Port 2) was replaced yesterday after physical damage. Since reinstatement it reports continuous object detected with the hopper empty. Production has bypassed the sensor and is running unprotected. Attend, diagnose, and restore to service.</p>
-          <p class="text-xs text-base-content/60 mt-1"><strong>Background:</strong> The spare sensor came from stores with factory-default parameters. There is no record of a teach procedure being carried out after fitting.</p>
+          <p><strong>Job ticket #WO-4412:</strong> New capacitive sensor fitted on Port 2 by day shift to replace a failed unit. Sensor has factory defaults only — line 3 cannot restart until it is commissioned and signed off. Teach the sensor for this hopper installation.</p>
+          <p class="text-xs text-base-content/60 mt-1"><strong>Engineer's note:</strong> Teach with the target material at the detection point — just within sensing range, not pressed against the sensor face. Teaching at full contact (100% dielectric) sets SP1 too low and risks false triggers from the container wall. Teaching too far away (very low dielectric) risks missed detections. A good commission gives QoT above 150 and QoR above 100 during normal detection.</p>
         </div>
 
         <!-- Always-visible HMI live panel -->
@@ -1172,117 +1173,113 @@ const WORKSHEETS = [
           </div>
         </div>
 
-        <!-- Step 0: idle -->
-        <div id="ws4-ms-setup">
-          <p class="text-sm text-base-content/70 mb-2">Click <strong>Start Scenario</strong> to simulate the fault. The system writes a very low SP1 value to the sensor via ISDU — the threshold drops below the ambient capacitive field, causing continuous false detection, exactly as an incorrectly commissioned replacement sensor would behave.</p>
-          <div class="flex items-center gap-3 flex-wrap">
-            <button type="button" id="ws4-ms-inject-btn" class="btn btn-warning btn-sm font-mono">▶ Start Scenario</button>
-            <span id="ws4-ms-inject-status" class="text-xs font-mono"></span>
-          </div>
-        </div>
+        <!-- Step cards — always visible, locked/unlocked by JS -->
+        <div class="space-y-2">
 
-        <!-- Step 1: observe (hidden) -->
-        <div id="ws4-ms-observe" class="hidden space-y-3">
-          <div class="rounded-lg bg-warning/10 border border-warning/30 p-3">
-            <p class="text-sm font-semibold text-warning mb-1">⚠ Fault condition active — observe the sensor behaviour</p>
-            <p class="text-sm text-base-content/80">SP1 has been forced to a very low value. The threshold is now below the ambient capacitive field, so the detection output is <strong>continuously ON</strong> even with nothing near the sensor face. This matches the false trigger the operators reported.</p>
-          </div>
-          <div class="rounded-lg bg-base-200 border border-base-300 p-3">
-            <p class="text-xs font-semibold text-base-content/60 uppercase tracking-wide mb-2">Live sensor output during fault</p>
+          <!-- Step 1: Read factory state -->
+          <div id="ws4-ms-step1" class="rounded-lg border border-warning/50 bg-warning/5 p-3 space-y-2 transition-all">
             <div class="flex items-center gap-2">
-              <div id="ws4-obs-dot" class="w-3 h-3 rounded-full bg-base-300 flex-shrink-0 transition-all"></div>
-              <span class="text-xs text-base-content/60">Detection:</span>
-              <span id="ws4-obs-det" class="font-bold font-mono text-xs">—</span>
+              <span class="ws4-snum w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 bg-warning text-warning-content">1</span>
+              <p class="font-semibold text-sm">Read Factory State</p>
+              <span class="ws4-sbadge ml-auto hidden text-xs font-mono text-success font-bold">✓ done</span>
             </div>
+            <p class="text-sm text-base-content/70">Before touching anything, document the before-state. Read the current SP1 and QoT values from the sensor — this confirms it arrived from stores uncalibrated (QoT = 0, SP1 at factory default).</p>
+            <button type="button" id="ws4-ms-read-btn" class="btn btn-info btn-sm font-mono">📖 Read SP1 &amp; QoT from device</button>
+            <div id="ws4-ms-read-result" class="hidden rounded bg-base-200 border border-base-300 p-3 space-y-1 font-mono text-xs">
+              <p class="text-base-content/50 uppercase tracking-widest mb-1">ISDU READ — Port 2 · factory state</p>
+              <p>SP1 (Index 0x3C / Sub 1): <span id="ws4-ms-read-sp1" class="text-warning font-bold">—</span></p>
+              <p>QoT (Index 0x4B / Sub 0): <span id="ws4-ms-read-qot" class="text-warning font-bold">—</span></p>
+              <p id="ws4-ms-read-interp" class="text-base-content/60 font-sans mt-1">—</p>
+            </div>
+            <button type="button" id="ws4-ms-read-next" class="hidden btn btn-primary btn-sm w-full font-mono">Factory state documented — proceed to teach →</button>
           </div>
-          <button type="button" id="ws4-ms-observe-next" class="btn btn-primary btn-sm w-full font-mono">I have observed the false trigger →</button>
-        </div>
 
-        <!-- Step 2: diagnose via ISDU read (hidden) -->
-        <div id="ws4-ms-read" class="hidden space-y-3">
-          <div class="rounded-lg bg-info/10 border border-info/30 p-3">
-            <p class="text-sm font-semibold text-info mb-1">🔍 Step: Diagnose — read the parameters</p>
-            <p class="text-sm text-base-content/80">Before touching anything, read the evidence. A field engineer never guesses — they document the before state. Read SP1 below, then also hit <strong>↺ Refresh from sensor</strong> in the Teach &amp; Run Quality panel above to pull the live QoT and QoR values. Both together tell the full story.</p>
-            <p class="text-xs font-mono text-base-content/50 mt-1">SP1: Index 60 (0x3C) / Subindex 1 — SSC1 Setpoint 1</p>
-          </div>
-          <button type="button" id="ws4-ms-read-btn" class="btn btn-info btn-sm font-mono">📖 Read SP1 from device</button>
-          <div id="ws4-ms-read-result" class="hidden rounded-lg bg-base-200 border border-base-300 p-3 space-y-1 font-mono text-xs">
-            <p class="text-base-content/50 uppercase tracking-widest mb-1">ISDU READ RESPONSE — Port 2 · Index 0x3C · Sub 1</p>
-            <p>Raw hex: <span id="ws4-ms-read-hex" class="text-warning">—</span></p>
-            <p>Decoded: SP1 = <span id="ws4-ms-read-val" class="text-warning font-bold">—</span></p>
-            <p id="ws4-ms-read-interp" class="text-base-content/60 font-sans mt-1">—</p>
-          </div>
-          <div class="rounded-lg bg-base-300/50 border border-base-300 p-2 text-xs text-base-content/70 space-y-1">
-            <p class="font-semibold text-base-content">Now check QoT and QoR above (↺ Refresh):</p>
-            <p>QoT near zero confirms the replacement sensor was <strong>never taught</strong> for this installation — it has no calibrated reference point, so its SP1 is a factory guess rather than a measured threshold. QoR will also be unreliable until the sensor is properly commissioned.</p>
-          </div>
-          <button type="button" id="ws4-ms-read-next" class="hidden btn btn-primary btn-sm w-full font-mono">Root cause confirmed — proceed to fix →</button>
-        </div>
-
-        <!-- Step 3: write fix (hidden) -->
-        <div id="ws4-ms-write" class="hidden space-y-3">
-          <div class="rounded-lg bg-success/10 border border-success/30 p-3">
-            <p class="text-sm font-semibold text-success mb-1">🔧 Step: Commission the replacement sensor</p>
-            <p class="text-sm text-base-content/80">Two valid approaches — choose one:</p>
-            <div class="mt-2 space-y-2 text-sm text-base-content/80">
-              <div class="rounded bg-success/10 border border-success/20 p-2">
-                <p class="font-semibold text-success text-xs mb-1">Option A — Teach Mode (recommended for new installations)</p>
-                <p class="text-xs">Use the <strong>Teach Mode</strong> panel above. Hold the target at the detection point, click Start Teach, wait 2–3 seconds, then Stop Teach. The sensor sets SP1 from a real measurement. QoT will rise above 150, confirming a good commission. Hit ↺ Refresh to verify.</p>
+          <!-- Step 2: Commission — Teach -->
+          <div id="ws4-ms-step2" class="rounded-lg border border-base-300 bg-base-200/50 p-3 space-y-2 opacity-50 pointer-events-none transition-all">
+            <div class="flex items-center gap-2">
+              <span class="ws4-snum w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 bg-base-300 text-base-content/40">2</span>
+              <p class="font-semibold text-sm">Commission — Teach the Sensor</p>
+              <span class="ws4-sbadge ml-auto hidden text-xs font-mono text-success font-bold">✓ done</span>
+            </div>
+            <p class="text-sm text-base-content/80">Hold the target material at the correct detection point, then click <strong>Teach Start</strong>. Keep it steady for 2–3 seconds, then click <strong>Teach Stop</strong>. The sensor samples the dielectric field and sets SP1 automatically. Check QoT afterwards — it should be above 150.</p>
+            <!-- Live dielectric bar -->
+            <div class="rounded bg-base-300/60 p-2">
+              <p class="text-xs font-semibold text-base-content/60 uppercase tracking-wide mb-2">Live Dielectric Level</p>
+              <div class="relative w-full h-4 rounded-full bg-base-300 overflow-hidden mb-1">
+                <div id="ws4-diel-fill" class="absolute top-0 left-0 h-full rounded-full bg-secondary" style="width:0%;transition:width 0.3s"></div>
+                <div id="ws4-diel-sp1-line" class="absolute top-0 bottom-0 w-0.5 bg-warning hidden" style="left:50%"></div>
               </div>
-              <div class="rounded bg-base-300/40 border border-base-300 p-2">
-                <p class="font-semibold text-xs mb-1">Option B — Manual SP1 (quicker but less precise)</p>
-                <p class="text-xs">Set the <strong>SP1 slider</strong> above to 800–2000 and click Apply to sensor. This raises the threshold above the ambient noise floor. QoT will remain low — the sensor has no teach reference — but detection will be stable for free-air operation.</p>
+              <div class="flex justify-between text-xs font-mono">
+                <span class="text-base-content/40">0</span>
+                <span class="text-base-content/70">Dielectric: <span id="ws4-diel-val" class="font-bold text-secondary">—</span> &nbsp;·&nbsp; SP1: <span id="ws4-diel-sp1-val" class="font-bold text-warning">—</span></span>
+                <span class="text-base-content/40">10000</span>
               </div>
             </div>
-            <p class="text-xs text-base-content/60 mt-2">Whichever method you use, click <strong>Apply Fix</strong> below when the new SP1 value has been written to the device.</p>
+            <div class="flex gap-2 flex-wrap">
+              <button type="button" id="ws4-teach-start" class="btn btn-warning btn-sm flex-1 font-mono">▶ Teach Start</button>
+              <button type="button" id="ws4-teach-stop"  class="btn btn-success btn-sm flex-1 font-mono">■ Teach Stop</button>
+              <button type="button" id="ws4-teach-cancel" class="btn btn-ghost btn-sm flex-1 font-mono">✕ Cancel</button>
+            </div>
+            <div id="ws4-teach-status" class="text-xs font-mono text-base-content/50"></div>
+            <div id="ws4-teach-result" class="hidden rounded bg-base-200 border border-base-300 p-3 space-y-1 font-mono text-xs">
+              <p class="text-base-content/50 uppercase tracking-widest mb-1">ISDU READ — post-teach</p>
+              <p>New SP1: <span id="ws4-teach-sp1-val" class="font-bold">—</span></p>
+              <p>QoT: <span id="ws4-teach-qot-val" class="font-bold">—</span></p>
+              <p id="ws4-teach-interp" class="text-base-content/60 font-sans mt-1">—</p>
+            </div>
+            <button type="button" id="ws4-ms-teach-next" class="hidden btn btn-primary btn-sm w-full font-mono">Teach complete — proceed to function test →</button>
           </div>
-          <button type="button" id="ws4-ms-write-btn" class="btn btn-success btn-sm font-mono">✓ Apply Fix — SP1 written to sensor</button>
-          <span id="ws4-ms-write-status" class="text-xs font-mono"></span>
-        </div>
 
-        <!-- Step 4: verify (hidden) -->
-        <div id="ws4-ms-verify" class="hidden space-y-3">
-          <div class="rounded-lg bg-success/10 border border-success/30 p-3">
-            <p class="text-sm font-semibold text-success mb-1">✅ Step: Verify — hold sensor clear for 3 seconds</p>
-            <p class="text-sm text-base-content/80">With nothing near the sensor, confirm the output stays OFF. A 3-second continuous clear reading is required before the fix is accepted.</p>
-          </div>
-          <div class="rounded-lg bg-base-200 border border-base-300 p-3">
-            <p class="text-xs font-semibold text-base-content/60 uppercase tracking-wide mb-2">Live sensor output after fix</p>
+          <!-- Step 3: Function test -->
+          <div id="ws4-ms-step3" class="rounded-lg border border-base-300 bg-base-200/50 p-3 space-y-2 opacity-50 pointer-events-none transition-all">
             <div class="flex items-center gap-2">
-              <div id="ws4-vfy-dot" class="w-3 h-3 rounded-full bg-base-300 flex-shrink-0 transition-all"></div>
-              <span class="text-xs text-base-content/60">Detection:</span>
-              <span id="ws4-vfy-det" class="font-bold font-mono text-xs">—</span>
+              <span class="ws4-snum w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 bg-base-300 text-base-content/40">3</span>
+              <p class="font-semibold text-sm">Function Test</p>
+              <span class="ws4-sbadge ml-auto hidden text-xs font-mono text-success font-bold">✓ done</span>
+            </div>
+            <p class="text-sm text-base-content/80">Two-part test: first hold the target at the detection point for 3 seconds to confirm the output triggers, then remove it and hold clear for 3 seconds to confirm it resets.</p>
+            <div class="rounded bg-base-300/60 p-2">
+              <p class="text-xs font-semibold text-base-content/60 uppercase tracking-wide mb-1.5">Live output</p>
+              <div class="flex items-center gap-2">
+                <div id="ws4-vfy-dot" class="w-3 h-3 rounded-full bg-base-300 flex-shrink-0 transition-all"></div>
+                <span class="text-xs text-base-content/60">Detection:</span>
+                <span id="ws4-vfy-det" class="font-bold font-mono text-xs">—</span>
+              </div>
+            </div>
+            <div class="space-y-1">
+              <div class="flex justify-between text-xs text-base-content/60">
+                <span id="ws4-ms-vfy-bar-label">Part 1 of 2: bring target to detection point…</span>
+                <span id="ws4-ms-vfy-pct">0%</span>
+              </div>
+              <progress id="ws4-ms-vfy-bar" class="progress progress-success w-full" value="0" max="100"></progress>
+              <p class="text-xs font-mono text-base-content/50 text-right"><span id="ws4-ms-vfy-timer">0.0</span>s / 3.0s</p>
             </div>
           </div>
-          <div class="space-y-1">
-            <div class="flex justify-between text-xs text-base-content/60">
-              <span id="ws4-ms-vfy-bar-label">Waiting for clear output…</span>
-              <span id="ws4-ms-vfy-pct">0%</span>
-            </div>
-            <progress id="ws4-ms-vfy-bar" class="progress progress-success w-full" value="0" max="100"></progress>
-            <p class="text-xs font-mono text-base-content/50 text-right"><span id="ws4-ms-vfy-timer">0.0</span>s / 3.0s</p>
-          </div>
-        </div>
 
-        <!-- Sign-off (hidden) -->
-        <div id="ws4-ms-signoff" class="hidden space-y-3">
-          <p class="text-sm font-semibold text-success">✓ Fix verified — complete the sign-off checklist before closing.</p>
-          <div class="space-y-2">
-            <label class="flex items-start gap-2 cursor-pointer text-sm">
-              <input type="checkbox" id="ws4-ms-ck1" class="checkbox checkbox-success checkbox-sm mt-0.5 flex-shrink-0">
-              <span>SP1 confirmed incorrect via ISDU acyclic read (Index 0x3C / Sub 1) — documented the before value as evidence</span>
-            </label>
-            <label class="flex items-start gap-2 cursor-pointer text-sm">
-              <input type="checkbox" id="ws4-ms-ck2" class="checkbox checkbox-success checkbox-sm mt-0.5 flex-shrink-0">
-              <span>QoT checked — confirmed sensor had no valid teach calibration for this installation (low QoT = factory default, not site-specific)</span>
-            </label>
-            <label class="flex items-start gap-2 cursor-pointer text-sm">
-              <input type="checkbox" id="ws4-ms-ck3" class="checkbox checkbox-success checkbox-sm mt-0.5 flex-shrink-0">
-              <span>New SP1 written via IO-Link (manual or teach), output verified clear for 3 seconds, sensor returned to service without physical removal</span>
-            </label>
+          <!-- Step 4: Sign-off -->
+          <div id="ws4-ms-step4" class="rounded-lg border border-base-300 bg-base-200/50 p-3 space-y-2 opacity-50 pointer-events-none transition-all">
+            <div class="flex items-center gap-2">
+              <span class="ws4-snum w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 bg-base-300 text-base-content/40">4</span>
+              <p class="font-semibold text-sm">Sign-Off &amp; Close Job Ticket</p>
+            </div>
+            <div class="space-y-2">
+              <label class="flex items-start gap-2 cursor-pointer text-sm">
+                <input type="checkbox" id="ws4-ms-ck1" class="checkbox checkbox-success checkbox-sm mt-0.5 flex-shrink-0">
+                <span>Factory state read and documented — SP1 at default, QoT = 0 (no prior teach)</span>
+              </label>
+              <label class="flex items-start gap-2 cursor-pointer text-sm">
+                <input type="checkbox" id="ws4-ms-ck2" class="checkbox checkbox-success checkbox-sm mt-0.5 flex-shrink-0">
+                <span>Teach completed with target at detection point — QoT above 150, SP1 set for this installation</span>
+              </label>
+              <label class="flex items-start gap-2 cursor-pointer text-sm">
+                <input type="checkbox" id="ws4-ms-ck3" class="checkbox checkbox-success checkbox-sm mt-0.5 flex-shrink-0">
+                <span>Function test passed — output ON for 3 s with target present, output OFF for 3 s when clear</span>
+              </label>
+            </div>
+            <button type="button" id="ws4-ms-close-btn" class="btn btn-success btn-sm w-full font-mono" disabled>✓ Close &amp; Complete — Work Order #WO-4412</button>
           </div>
-          <button type="button" id="ws4-ms-close-btn" class="btn btn-success btn-sm w-full font-mono" disabled>✓ Close &amp; Complete Scenario</button>
-        </div>
+
+        </div><!-- end step cards -->
 
         <!-- Completion message -->
         <div id="ws4-ch-result" class="hidden"></div>
@@ -1304,47 +1301,157 @@ const WORKSHEETS = [
     relatedDashboard: 'Dashboard: Port 3 — IFM TV7105',
     prerequisites: 'Complete Worksheet 1 first',
     contentHtml: `
-      <p class="text-base-content/90 leading-relaxed">The IFM TV7105 sends the actual temperature reading (in °C) back through IO-Link every second — a live number you can graph and trend.</p>
+      <p class="text-base-content/90 leading-relaxed">The IFM TV7105 is a PT100 temperature sensor. PT100 stands for a platinum sensing element with a resistance of 100 Ω at 0 °C — that resistance changes with temperature, and the sensor converts it into a live °C reading sent through IO-Link every second.</p>
+
+      <!-- Three-way comparison -->
+      <div class="rounded-xl border border-base-300 bg-base-200 p-4 mt-3 space-y-3">
+        <p class="text-xs font-semibold text-base-content/60 uppercase tracking-wide">Temperature sensing — three approaches</p>
+        <div class="grid grid-cols-1 gap-3 sm:grid-cols-3 text-sm">
+          <div class="rounded-lg border border-base-300 bg-base-100 p-3 space-y-1">
+            <p class="font-bold text-base-content">Digital switch</p>
+            <p class="text-xs text-base-content/60 font-mono">e.g. bimetallic thermostat</p>
+            <p class="text-base-content/70 mt-1">One bit — ON or OFF. Tells you when a threshold is crossed, nothing more. No actual temperature value, no remote adjustment.</p>
+          </div>
+          <div class="rounded-lg border border-base-300 bg-base-100 p-3 space-y-1">
+            <p class="font-bold text-base-content">Analogue (4–20 mA)</p>
+            <p class="text-xs text-base-content/60 font-mono">e.g. 4–20 mA PT100 transmitter</p>
+            <p class="text-base-content/70 mt-1">Sends the actual temperature as a current signal. Better — but one-way only. You can read the value, but you cannot write setpoints, read diagnostics, or identify the sensor remotely.</p>
+          </div>
+          <div class="rounded-lg border border-success/30 bg-success/5 p-3 space-y-1">
+            <p class="font-bold text-base-content">IO-Link (TV7105)</p>
+            <p class="text-xs text-success/70 font-mono">bidirectional digital</p>
+            <p class="text-base-content/70 mt-1">Sends the actual temperature <em>and</em> lets you read alarm setpoints, write calibration corrections, check device identity, and retrieve diagnostics — all over the same standard 3-wire cable, without wiring changes.</p>
+          </div>
+        </div>
+      </div>
 
       <!-- WS5 SVG diagram -->
       <div class="rounded-xl border border-base-300 bg-base-200 p-3 mt-3">
-        <p class="text-xs font-semibold text-base-content/60 uppercase tracking-wide mb-2">How it works</p>
-        <svg viewBox="0 0 570 185" xmlns="http://www.w3.org/2000/svg" class="w-full" style="font-family:system-ui,sans-serif">
-          <!-- Thermometer body -->
-          <rect x="420" y="20" width="32" height="140" rx="12" fill="#1e293b" stroke="#475569" stroke-width="1.5"/>
-          <!-- Temperature fill (gradient orange) -->
-          <rect x="424" y="70" width="24" height="86" rx="8" fill="#f97316"/>
-          <!-- Bulb -->
-          <circle cx="436" cy="155" r="14" fill="#ef4444"/>
+        <p class="text-xs font-semibold text-base-content/60 uppercase tracking-wide mb-2">How it works — from resistance to live reading</p>
+        <svg viewBox="0 0 580 205" xmlns="http://www.w3.org/2000/svg" class="w-full" style="font-family:system-ui,sans-serif">
 
-          <!-- SP1 line (amber dashed) -->
-          <line x1="80" y1="110" x2="420" y2="110" stroke="#f59e0b" stroke-width="1.5" stroke-dasharray="6,3"/>
-          <text x="85" y="106" fill="#f59e0b" font-size="9" font-weight="600">SP1 — first alarm</text>
+          <!-- Step labels -->
+          <text x="57"  y="11" text-anchor="middle" fill="#64748b" font-size="7" font-weight="600">1. PT100 ELEMENT</text>
+          <text x="212" y="11" text-anchor="middle" fill="#64748b" font-size="7" font-weight="600">2. INSIDE THE SENSOR</text>
+          <text x="390" y="11" text-anchor="middle" fill="#64748b" font-size="7" font-weight="600">3. IO-LINK</text>
+          <text x="506" y="11" text-anchor="middle" fill="#64748b" font-size="7" font-weight="600">4. DASHBOARD</text>
 
-          <!-- SP2 line (red dashed) -->
-          <line x1="80" y1="68" x2="420" y2="68" stroke="#ef4444" stroke-width="1.5" stroke-dasharray="6,3"/>
-          <text x="85" y="64" fill="#ef4444" font-size="9" font-weight="600">SP2 — second alarm</text>
+          <!-- ── 1. PT100 element ── -->
+          <rect x="4" y="16" width="108" height="152" rx="7" fill="#0f172a" stroke="#334155" stroke-width="1.2"/>
+          <rect x="14" y="28" width="88" height="30" rx="4" fill="#1e293b" stroke="#3b82f6" stroke-width="1.5"/>
+          <text x="58" y="42" text-anchor="middle" fill="#93c5fd" font-size="9" font-weight="700">PT100</text>
+          <text x="58" y="53" text-anchor="middle" fill="#60a5fa" font-size="6.5">platinum element</text>
+          <text x="58" y="75" text-anchor="middle" fill="#475569" font-size="6.5">Temperature → Resistance</text>
+          <text x="18" y="89"  fill="#94a3b8" font-size="7.5">  0 °C</text><text x="100" y="89"  fill="#94a3b8" font-size="7.5" text-anchor="end">100.0 Ω</text>
+          <text x="18" y="101" fill="#94a3b8" font-size="7.5"> 25 °C</text><text x="100" y="101" fill="#94a3b8" font-size="7.5" text-anchor="end">109.6 Ω</text>
+          <text x="18" y="113" fill="#94a3b8" font-size="7.5"> 60 °C</text><text x="100" y="113" fill="#94a3b8" font-size="7.5" text-anchor="end">123.1 Ω</text>
+          <text x="18" y="125" fill="#94a3b8" font-size="7.5">100 °C</text><text x="100" y="125" fill="#94a3b8" font-size="7.5" text-anchor="end">138.5 Ω</text>
+          <text x="58" y="148" text-anchor="middle" fill="#334155" font-size="6.5">+0.385 Ω per °C</text>
+          <!-- Arrow to section 2 -->
+          <polygon points="112,84 122,89 112,94" fill="#3b82f6"/>
 
-          <!-- Current temp pointer -->
-          <polygon points="400,130 412,124 412,136" fill="white"/>
-          <text x="320" y="134" fill="white" font-size="11" font-weight="700" text-anchor="end">23.4 °C</text>
+          <!-- Divider 1 -->
+          <line x1="123" y1="13" x2="123" y2="173" stroke="#334155" stroke-width="0.8" stroke-dasharray="3,3"/>
 
-          <!-- Colour zones -->
-          <!-- Green zone (below SP1) -->
-          <rect x="30" y="110" width="45" height="50" rx="3" fill="#16a34a" opacity="0.7"/>
-          <text x="52" y="140" text-anchor="middle" fill="white" font-size="8" font-weight="600">Normal</text>
+          <!-- ── 2. Inside the sensor ── -->
+          <rect x="126" y="16" width="242" height="152" rx="7" fill="#0f172a" stroke="#334155" stroke-width="1.2"/>
 
-          <!-- Amber zone (SP1 to SP2) -->
-          <rect x="30" y="68" width="45" height="42" rx="3" fill="#d97706" opacity="0.7"/>
-          <text x="52" y="93" text-anchor="middle" fill="white" font-size="8" font-weight="600">Warning</text>
+          <!-- Sub-box: R → °C conversion -->
+          <rect x="134" y="26" width="94" height="34" rx="5" fill="#1e293b" stroke="#7c3aed" stroke-width="1.2"/>
+          <text x="181" y="40" text-anchor="middle" fill="#c4b5fd" font-size="8" font-weight="700">R → °C</text>
+          <text x="181" y="52" text-anchor="middle" fill="#8b5cf6" font-size="6.5">linearise + convert</text>
 
-          <!-- Red zone (above SP2) -->
-          <rect x="30" y="20" width="45" height="48" rx="3" fill="#dc2626" opacity="0.7"/>
-          <text x="52" y="48" text-anchor="middle" fill="white" font-size="8" font-weight="600">Danger</text>
+          <!-- Mini arrow between sub-boxes -->
+          <polygon points="228,40 238,44 228,48" fill="#475569"/>
 
-          <!-- Bottom label -->
-          <text x="285" y="175" text-anchor="middle" fill="#64748b" font-size="8">IO-Link sends the actual temperature every second — not just an ON/OFF alarm</text>
+          <!-- Sub-box: SP alarm check -->
+          <rect x="240" y="22" width="118" height="98" rx="5" fill="#1e293b" stroke="#475569" stroke-width="1.2"/>
+          <text x="299" y="34" text-anchor="middle" fill="#64748b" font-size="6.5">Compare vs SP1 / SP2</text>
+
+          <!-- Compact thermometer -->
+          <rect x="248" y="40" width="12" height="68" rx="6" fill="#0f172a" stroke="#475569" stroke-width="1"/>
+          <!-- Fill (current temp in normal zone, below SP1) -->
+          <rect x="251" y="86" width="6" height="18" rx="3" fill="#f97316"/>
+          <circle cx="254" cy="112" r="7" fill="#ef4444"/>
+          <!-- SP2 line at boundary of danger/warning -->
+          <line x1="247" y1="56" x2="260" y2="56" stroke="#ef4444" stroke-width="0.9" stroke-dasharray="2,2"/>
+          <!-- SP1 line at boundary of warning/normal -->
+          <line x1="247" y1="74" x2="260" y2="74" stroke="#f59e0b" stroke-width="0.9" stroke-dasharray="2,2"/>
+          <!-- Current temp tick -->
+          <line x1="247" y1="86" x2="261" y2="86" stroke="white" stroke-width="1.5"/>
+
+          <!-- Zone colour bands -->
+          <rect x="262" y="40" width="30" height="16" rx="2" fill="#dc2626" opacity="0.85"/>
+          <text x="277" y="50" text-anchor="middle" fill="white" font-size="6" font-weight="700">Danger</text>
+          <rect x="262" y="57" width="30" height="17" rx="2" fill="#d97706" opacity="0.85"/>
+          <text x="277" y="68" text-anchor="middle" fill="white" font-size="6" font-weight="700">Warning</text>
+          <rect x="262" y="75" width="30" height="17" rx="2" fill="#16a34a" opacity="0.85"/>
+          <text x="277" y="86" text-anchor="middle" fill="white" font-size="6" font-weight="700">Normal</text>
+
+          <!-- SP labels -->
+          <text x="295" y="59" fill="#ef4444" font-size="6.5" font-weight="600">← SP2</text>
+          <text x="295" y="77" fill="#f59e0b" font-size="6.5" font-weight="600">← SP1</text>
+          <!-- Current value -->
+          <text x="295" y="92" fill="#f97316" font-size="7.5" font-weight="700">23.4 °C ✓</text>
+          <text x="295" y="103" fill="#4ade80" font-size="6.5">below SP1</text>
+          <text x="295" y="113" fill="#4ade80" font-size="6.5">no alarm</text>
+
+          <!-- PDin assembled row -->
+          <text x="247" y="134" text-anchor="middle" fill="#475569" font-size="6.5">PDin payload assembled inside sensor:</text>
+          <rect x="134" y="138" width="224" height="20" rx="4" fill="#1e3a5f" stroke="#3b82f6" stroke-width="0.8"/>
+          <text x="175" y="152" fill="#93c5fd" font-size="9" font-weight="700">23.4 °C</text>
+          <text x="252" y="152" fill="#475569" font-size="7"> | OUT1: 0  | OUT2: 0</text>
+
+          <!-- Arrow to IO-Link -->
+          <polygon points="368,84 378,89 368,94" fill="#3b82f6"/>
+
+          <!-- Divider 2 -->
+          <line x1="370" y1="13" x2="370" y2="173" stroke="#334155" stroke-width="0.8" stroke-dasharray="3,3"/>
+
+          <!-- ── 3. IO-Link cable ── -->
+          <line x1="370" y1="83" x2="432" y2="83" stroke="#3b82f6" stroke-width="2.5"/>
+          <line x1="370" y1="90" x2="432" y2="90" stroke="#334155" stroke-width="2.5"/>
+          <line x1="370" y1="97" x2="432" y2="97" stroke="#dc2626" stroke-width="2.5"/>
+          <text x="401" y="78" text-anchor="middle" fill="#475569" font-size="6.5">3-wire M12</text>
+          <!-- Data packet -->
+          <rect x="374" y="68" width="54" height="19" rx="5" fill="#ea580c"/>
+          <text x="401" y="82" text-anchor="middle" fill="white" font-size="9.5" font-weight="800">23.4 °C</text>
+          <!-- Arrow to dashboard -->
+          <polygon points="422,83 434,90 422,97" fill="#ea580c"/>
+          <text x="401" y="112" text-anchor="middle" fill="#f97316" font-size="7" font-weight="600">every second</text>
+
+          <!-- Divider 3 -->
+          <line x1="436" y1="13" x2="436" y2="173" stroke="#334155" stroke-width="0.8" stroke-dasharray="3,3"/>
+
+          <!-- ── 4. Dashboard ── -->
+          <rect x="439" y="16" width="137" height="152" rx="8" fill="#0f172a" stroke="#1e3a5f" stroke-width="1.5"/>
+          <text x="507" y="68" text-anchor="middle" fill="#f97316" font-size="30" font-weight="900">23.4</text>
+          <text x="507" y="86" text-anchor="middle" fill="#64748b" font-size="10">°C</text>
+          <circle cx="450" cy="106" r="5" fill="#16a34a"/>
+          <text x="460" y="110" fill="#4ade80" font-size="8">SP1 — clear</text>
+          <circle cx="450" cy="122" r="5" fill="#16a34a"/>
+          <text x="460" y="126" fill="#4ade80" font-size="8">SP2 — clear</text>
+          <rect x="506" y="100" width="58" height="14" rx="5" fill="#16a34a"/>
+          <text x="535" y="111" text-anchor="middle" fill="white" font-size="8" font-weight="700">● LIVE</text>
+          <text x="507" y="157" text-anchor="middle" fill="#1e3a5f" font-size="7">IO-Link Master + Dashboard</text>
+
+          <!-- Bottom captions -->
+          <text x="57"  y="194" text-anchor="middle" fill="#475569" font-size="7">resistance changes with temp</text>
+          <text x="247" y="194" text-anchor="middle" fill="#475569" font-size="7">sensor converts R→°C, checks alarms — all internally</text>
+          <text x="401" y="194" text-anchor="middle" fill="#475569" font-size="7">transmits live</text>
+          <text x="507" y="194" text-anchor="middle" fill="#475569" font-size="7">shows on dashboard</text>
         </svg>
+      </div>
+
+      <!-- TV7105 info box -->
+      <div class="rounded-lg border border-info/30 bg-info/5 p-3 mt-3 text-sm space-y-1">
+        <p class="font-bold text-base-content">What IO-Link adds to a temperature sensor</p>
+        <ul class="list-disc list-inside mt-1 space-y-1 text-base-content/80">
+          <li><strong>Live °C value every second</strong> — not just an alarm output. You can see exactly how hot the asset is running.</li>
+          <li><strong>Two alarm setpoints (SP1 and SP2)</strong> stored inside the sensor — they stay set even when the power is off or the sensor is unplugged.</li>
+          <li><strong>Calibration offset</strong> — if the reading is slightly off compared to a reference thermometer, you can trim it remotely via IO-Link without removing the sensor.</li>
+          <li><strong>−40 °C reading at normal temperature</strong> — this means the sensing element is broken or the cable is open. Check the connector before ordering a replacement.</li>
+        </ul>
       </div>
 
       <!-- Live section -->
@@ -1379,34 +1486,92 @@ const WORKSHEETS = [
           <div style="height:100px; position:relative;"><canvas id="ws4-chart"></canvas></div>
         </div>
 
-        <!-- Alarm threshold slider (local simulation + real SP1 write) -->
+        <!-- Hysteresis explainer -->
         <div class="rounded-lg bg-base-200 border border-base-300 p-3 space-y-2">
-          <div class="flex items-center justify-between flex-wrap gap-2">
-            <p class="text-sm font-semibold text-base-content">SP1 Alarm Setpoint</p>
-            <span id="ws4-slider-val" class="font-mono font-bold text-warning text-sm">40°C</span>
+          <p class="text-sm font-semibold text-base-content">Switch Points, Reset Points and Hysteresis</p>
+          <p class="text-xs text-base-content/70 leading-relaxed">Each output has two values: a <strong>Switch Point (SP)</strong> and a <strong>Reset Point (RP)</strong>. The temperature must rise <em>above</em> SP to turn the output ON. The output then stays ON even as the temperature drops — it won't turn OFF again until the temperature falls <em>below</em> RP.</p>
+          <div class="grid grid-cols-3 gap-2 text-xs text-center mt-1">
+            <div class="rounded bg-success/10 border border-success/30 p-2">
+              <p class="font-bold text-success">Below RP</p>
+              <p class="text-base-content/60 mt-1">Output OFF<br>Normal running</p>
+            </div>
+            <div class="rounded bg-warning/10 border border-warning/30 p-2">
+              <p class="font-bold text-warning">RP → SP zone</p>
+              <p class="text-base-content/60 mt-1">Output holds its state<br>(hysteresis zone)</p>
+            </div>
+            <div class="rounded bg-error/10 border border-error/30 p-2">
+              <p class="font-bold text-error">Above SP</p>
+              <p class="text-base-content/60 mt-1">Output ON<br>Alarm active</p>
+            </div>
           </div>
-          <input type="range" id="ws4-alarm-slider" min="15" max="80" value="40" step="1" class="range range-warning range-sm w-full">
-          <div class="flex justify-between text-xs text-base-content/40"><span>15°C</span><span>80°C</span></div>
+          <p class="text-xs text-base-content/50 leading-relaxed">The gap between RP and SP is called <strong>hysteresis</strong>. It prevents the alarm chattering ON and OFF if the temperature hovers near the setpoint. <strong>SP must always be set above RP</strong> — the sensor will reject any write that violates this rule.</p>
+        </div>
+
+        <!-- SP1 / RP1 -->
+        <div class="rounded-lg bg-base-200 border border-error/30 p-3 space-y-2">
+          <div class="flex items-center justify-between flex-wrap gap-2">
+            <div class="flex items-center gap-2">
+              <p class="text-sm font-semibold text-base-content">OUT1 — Switch Point (SP1)</p>
+              <span class="badge badge-error badge-sm font-bold">ALARM</span>
+            </div>
+            <span id="ws4-slider-val" class="font-mono font-bold text-error text-sm">—</span>
+          </div>
+          <p class="text-xs text-base-content/50">OUT1 switches ON when temperature rises above SP1. Must be set above RP1.</p>
+          <input type="range" id="ws4-alarm-slider" min="-50" max="150" value="80" step="1" class="range range-error range-sm w-full">
+          <div class="flex justify-between text-xs text-base-content/40"><span>−50°C</span><span>150°C</span></div>
           <p id="ws4-alarm-state" class="text-sm font-bold text-base-content/60">Set a threshold above, then warm the sensor</p>
           <div class="flex items-center gap-2 mt-1 flex-wrap">
-            <button type="button" id="ws4-sp1-write" class="btn btn-xs btn-warning">Write SP1 to sensor</button>
-            <span id="ws4-sp1-device-val" class="text-xs text-base-content/60">Device SP1: <span class="font-mono" id="ws4-sp1-actual">reading…</span></span>
+            <button type="button" id="ws4-sp1-write" class="btn btn-xs btn-error">Write SP1</button>
             <span id="ws4-sp1-status" class="text-xs"></span>
           </div>
-          <p class="text-xs text-base-content/40">Write SP1 to persist the alarm point in the sensor — it stays even after power-off.</p>
-        </div>
-        <!-- SP2 quick set -->
-        <div class="rounded-lg bg-base-200 border border-base-300 p-3 space-y-2">
+          <p class="text-xs text-base-content/40 font-mono">Device SP1: <span id="ws4-sp1-actual" class="text-base-content/60">reading…</span></p>
+
+          <div class="divider my-1 text-xs text-base-content/30">Reset Point</div>
+
           <div class="flex items-center justify-between flex-wrap gap-2">
-            <p class="text-sm font-semibold text-base-content">SP2 Second Setpoint</p>
-            <span id="ws4-sp2-slider-val" class="font-mono font-bold text-base-content/70 text-sm">120°C</span>
+            <p class="text-xs font-semibold text-base-content/70">RP1 — Reset Point</p>
+            <span id="ws4-rp1-slider-val" class="font-mono text-xs text-base-content/60">—</span>
           </div>
-          <input type="range" id="ws4-sp2-slider" min="15" max="149" value="120" step="1" class="range range-sm w-full">
-          <div class="flex justify-between text-xs text-base-content/40"><span>15°C</span><span>149°C</span></div>
+          <p class="text-xs text-base-content/50">OUT1 switches OFF when temperature falls back below RP1. Always set below SP1.</p>
+          <input type="range" id="ws4-rp1-slider" min="-50" max="150" value="50" step="1" class="range range-sm w-full">
           <div class="flex items-center gap-2 flex-wrap">
-            <button type="button" id="ws4-sp2-write" class="btn btn-xs btn-ghost">Write SP2 to sensor</button>
+            <button type="button" id="ws4-rp1-write" class="btn btn-xs btn-outline btn-error">Write RP1</button>
+            <span id="ws4-rp1-status" class="text-xs"></span>
+          </div>
+          <p class="text-xs text-base-content/40 font-mono">Device RP1: <span id="ws4-rp1-actual" class="text-base-content/60">reading…</span></p>
+        </div>
+
+        <!-- SP2 / RP2 -->
+        <div class="rounded-lg bg-base-200 border border-warning/30 p-3 space-y-2">
+          <div class="flex items-center justify-between flex-wrap gap-2">
+            <div class="flex items-center gap-2">
+              <p class="text-sm font-semibold text-base-content">OUT2 — Switch Point (SP2)</p>
+              <span class="badge badge-warning badge-sm font-bold">PRE-WARNING</span>
+            </div>
+            <span id="ws4-sp2-slider-val" class="font-mono font-bold text-warning text-sm">—</span>
+          </div>
+          <p class="text-xs text-base-content/50">OUT2 switches ON when temperature rises above SP2. Must be set above RP2.</p>
+          <input type="range" id="ws4-sp2-slider" min="-50" max="150" value="50" step="1" class="range range-warning range-sm w-full">
+          <div class="flex justify-between text-xs text-base-content/40"><span>−50°C</span><span>150°C</span></div>
+          <div class="flex items-center gap-2 flex-wrap">
+            <button type="button" id="ws4-sp2-write" class="btn btn-xs btn-warning">Write SP2</button>
             <span id="ws4-sp2-status" class="text-xs"></span>
           </div>
+          <p class="text-xs text-base-content/40 font-mono">Device SP2: <span id="ws4-sp2-actual" class="text-base-content/60">reading…</span></p>
+
+          <div class="divider my-1 text-xs text-base-content/30">Reset Point</div>
+
+          <div class="flex items-center justify-between flex-wrap gap-2">
+            <p class="text-xs font-semibold text-base-content/70">RP2 — Reset Point</p>
+            <span id="ws4-rp2-slider-val" class="font-mono text-xs text-base-content/60">—</span>
+          </div>
+          <p class="text-xs text-base-content/50">OUT2 switches OFF when temperature falls back below RP2. Always set below SP2.</p>
+          <input type="range" id="ws4-rp2-slider" min="-50" max="150" value="40" step="1" class="range range-sm w-full">
+          <div class="flex items-center gap-2 flex-wrap">
+            <button type="button" id="ws4-rp2-write" class="btn btn-xs btn-outline btn-warning">Write RP2</button>
+            <span id="ws4-rp2-status" class="text-xs"></span>
+          </div>
+          <p class="text-xs text-base-content/40 font-mono">Device RP2: <span id="ws4-rp2-actual" class="text-base-content/60">reading…</span></p>
         </div>
       </div>
 
@@ -1467,6 +1632,197 @@ const WORKSHEETS = [
           </button>
         </div>
       </div>
+
+      <div class="divider my-2"></div>
+
+      <!-- Calibration drift scenario -->
+      <div class="space-y-2 mt-4">
+        <p class="font-bold text-base-content text-base">Maintenance Scenario — Calibration Drift</p>
+        <p class="text-sm text-base-content/80">Calibration drift is a real maintenance issue — temperature sensors can shift by a degree or two over years of service, or be installed with a slight offset against the process. IO-Link gives you a calibration offset parameter (Index 681) that lets you fine-trim the sensor reading without removing it from the installation. Your job is to diagnose and correct a miscalibrated sensor using acyclic ISDU read and write.</p>
+      </div>
+
+      <div class="rounded-xl overflow-hidden mt-3 border border-neutral/60" id="ws5-cal-box">
+
+        <!-- Title bar -->
+        <div class="flex items-center justify-between px-3 py-2 bg-neutral border-b border-neutral/40">
+          <div class="flex items-center gap-2">
+            <div id="ws5-cal-hdr-dot" class="w-2.5 h-2.5 rounded-full bg-base-300 flex-shrink-0"></div>
+            <span id="ws5-cal-hdr-status" class="font-mono text-xs font-bold text-neutral-content/50 tracking-widest uppercase">Ready</span>
+          </div>
+          <span class="font-mono text-xs text-neutral-content/50 hidden sm:block">MOTOR HOUSING — TEMPERATURE — PORT 3</span>
+          <span class="font-mono text-xs text-neutral-content/40">CAL-0189</span>
+        </div>
+
+        <!-- Job ticket -->
+        <div class="bg-neutral/60 px-3 py-3 border-b border-neutral/40">
+          <p class="font-mono text-xs text-neutral-content/40 uppercase tracking-widest mb-2">Calibration Work Order — Engineering Dept</p>
+          <div class="rounded-lg border border-neutral/40 bg-black/30 p-3 font-mono text-xs space-y-1.5">
+            <p class="text-neutral-content/50">REF: CAL-0189 &nbsp;&nbsp; ASSET: TV7105 Port 3 &nbsp;&nbsp; TYPE: Quarterly verification</p>
+            <p class="text-neutral-content/30 border-t border-neutral/20 pt-1.5">CALIBRATION CHECK RESULT — FAIL</p>
+            <p class="text-neutral-content/80">Sensor checked against Fluke 561 reference at ambient temperature (stable, no draught). TV7105 reads consistently 3.0 °C above reference across three readings. Max permissible error: ±0.5 °C. Sensor fails acceptance criteria.</p>
+            <p class="text-neutral-content/80 mt-1">Sensor cannot be removed — it is potted into the motor housing. Correct via IO-Link calibration offset parameter (Index 681, Sub 0). IFM datasheet confirms offset range: −10 °C to +10 °C. Correction required: −3.0 °C.</p>
+            <p class="text-warning mt-1">Record before and after values. Update calibration log on completion.</p>
+          </div>
+        </div>
+
+        <!-- Calibration history table -->
+        <div class="bg-neutral px-3 py-2 border-b border-neutral/40">
+          <p class="font-mono text-xs text-neutral-content/40 uppercase tracking-widest mb-1.5">Calibration History — Port 3</p>
+          <table class="w-full font-mono text-xs border-collapse">
+            <tbody>
+              <tr class="border-b border-neutral/20">
+                <td class="py-1 pr-3 text-neutral-content/40 whitespace-nowrap">Last quarter</td>
+                <td class="pr-3 text-success whitespace-nowrap">CAL-PASS</td>
+                <td class="text-neutral-content/70">Offset 0.0 °C — within ±0.5 °C of reference</td>
+                <td class="pl-2 text-success text-right">✓</td>
+              </tr>
+              <tr>
+                <td class="py-1 pr-3 text-neutral-content/40 whitespace-nowrap">This quarter</td>
+                <td class="pr-3 text-error font-semibold whitespace-nowrap">CAL-FAIL</td>
+                <td class="text-neutral-content/70">Reads 3.0 °C above Fluke reference — offset correction required</td>
+                <td class="pl-2 text-error text-right">✕</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Live process values -->
+        <div class="bg-neutral px-3 py-2 border-b border-neutral/40">
+          <p class="font-mono text-xs text-neutral-content/40 uppercase tracking-widest mb-1.5">Live Process Values — Port 3</p>
+          <div class="grid grid-cols-2 gap-x-6 gap-y-1 font-mono text-xs">
+            <div class="flex items-center justify-between gap-2">
+              <span class="text-neutral-content/40">Temperature</span>
+              <span id="ws5-cal-live-temp" class="font-bold text-neutral-content">—</span>
+            </div>
+            <div class="flex items-center justify-between gap-2">
+              <span class="text-neutral-content/40">Cal Offset</span>
+              <span id="ws5-cal-live-offset" class="font-bold text-neutral-content">—</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Step 0: Start Scenario -->
+        <div class="bg-neutral px-3 py-3 border-b border-neutral/40 space-y-3" id="ws5-cal-setup">
+          <p class="font-mono text-xs text-neutral-content/40 uppercase tracking-widest">Ready to Investigate</p>
+          <p class="text-sm text-neutral-content/80">You have been assigned work order CAL-0189. Click <strong class="text-neutral-content">Start Scenario</strong> to load the calibration fault into the sensor — the calibration offset will be set to +3.0 °C, replicating the drifted sensor described in the work order.</p>
+          <div class="flex items-center gap-3 flex-wrap">
+            <button type="button" id="ws5-cal-inject-btn" class="btn btn-warning btn-sm gap-2">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+              Start Scenario
+            </button>
+            <span id="ws5-cal-inject-status" class="text-xs font-mono text-neutral-content/40"></span>
+          </div>
+        </div>
+
+        <!-- Step 1: Read offset (revealed after inject) -->
+        <div id="ws5-cal-observe" class="hidden bg-neutral px-3 py-3 border-b border-neutral/40 space-y-3">
+          <p class="font-mono text-xs text-success uppercase tracking-widest">Scenario Active — Step 1: Read the Calibration Offset</p>
+          <p class="text-sm text-neutral-content/80">The fault is now live — watch the Live Process Values panel above. Before making any change, read the calibration offset from the sensor via ISDU acyclic read. This documents the before-state for the work order.</p>
+          <div class="rounded border border-neutral/40 bg-black/30 p-2 text-xs font-mono text-neutral-content/50 space-y-0.5">
+            <p>ISDU READ — Port 3 — Index 681 (0x2A9) / Subindex 0 — Calibration Offset</p>
+            <p class="text-neutral-content/30">Range: −10.0 °C to +10.0 °C &nbsp;·&nbsp; Factory default: 0.0 °C &nbsp;·&nbsp; Scale: ×0.1</p>
+          </div>
+          <div class="flex items-center gap-3 flex-wrap">
+            <button type="button" id="ws5-cal-read-btn" class="btn btn-sm font-mono" style="border:1px solid rgba(59,130,246,0.5);color:#60a5fa;background:transparent">Read Calibration Offset →</button>
+            <span id="ws5-cal-read-status" class="text-xs font-mono text-neutral-content/40"></span>
+          </div>
+          <div id="ws5-cal-read-result" class="hidden rounded border border-neutral/40 bg-black/30 p-3 font-mono text-xs space-y-1.5">
+            <p class="text-neutral-content/40 uppercase tracking-widest text-xs">ISDU READ RESPONSE</p>
+            <p class="text-neutral-content/50">Port: 3 &nbsp;·&nbsp; Index: 0x2A9 &nbsp;·&nbsp; Subindex: 0</p>
+            <p>Raw hex: <span id="ws5-cal-read-hex" class="text-warning">—</span></p>
+            <p>Decoded: Calibration Offset = <span id="ws5-cal-read-val" class="text-warning font-bold">—</span> °C</p>
+            <p id="ws5-cal-read-interp" class="mt-1 text-neutral-content/50">—</p>
+          </div>
+          <button type="button" id="ws5-cal-read-next" class="hidden btn btn-sm font-mono" style="border:1px solid rgba(255,255,255,0.2);color:rgba(255,255,255,0.5);background:transparent">Before value documented — proceed to diagnosis →</button>
+        </div>
+
+        <!-- Step 2: Diagnose (revealed after read) -->
+        <div id="ws5-cal-diag" class="hidden bg-neutral px-3 py-3 border-b border-neutral/40 space-y-3">
+          <p class="font-mono text-xs text-neutral-content/40 uppercase tracking-widest">Step 2 — Diagnosis</p>
+          <p class="text-sm text-neutral-content/80">ISDU read confirms the calibration offset is <strong class="text-warning">+3.0 °C</strong>. The sensor is reporting 3 degrees higher than the true temperature. The work order requires correction to bring the sensor within ±0.5 °C of reference.</p>
+          <p class="text-sm font-semibold text-neutral-content">What value do you write to the calibration offset to correct this sensor?</p>
+          <div class="flex flex-col gap-2">
+            <button type="button" data-ans="wrong-add" class="ws5-cal-diag-btn btn btn-sm font-mono text-left justify-start" style="border:1px solid rgba(255,255,255,0.15);color:rgba(255,255,255,0.5);background:transparent">Write +3.0 °C — add 3 degrees to the existing offset</button>
+            <button type="button" data-ans="correct" class="ws5-cal-diag-btn btn btn-sm font-mono text-left justify-start" style="border:1px solid rgba(255,255,255,0.15);color:rgba(255,255,255,0.5);background:transparent">Write 0.0 °C — restore factory default (no offset)</button>
+            <button type="button" data-ans="wrong-neg" class="ws5-cal-diag-btn btn btn-sm font-mono text-left justify-start" style="border:1px solid rgba(255,255,255,0.15);color:rgba(255,255,255,0.5);background:transparent">Write −6.0 °C — apply a negative 6-degree correction</button>
+          </div>
+          <p id="ws5-cal-diag-fb" class="hidden text-sm font-semibold"></p>
+        </div>
+
+        <!-- Step 3: Write fix (revealed after correct diagnosis) -->
+        <div id="ws5-cal-write" class="hidden bg-neutral px-3 py-3 border-b border-neutral/40 space-y-3">
+          <p class="font-mono text-xs text-success uppercase tracking-widest">Diagnosis Confirmed ✓ — Step 3: Write Correction</p>
+          <p class="text-sm text-neutral-content/80">Correct. The offset is <strong class="text-warning">+3.0 °C</strong> — the sensor has a 3-degree positive error. Writing <strong class="text-success">0.0 °C</strong> restores the factory default and removes the offset entirely. The sensor will report the true measured temperature.</p>
+          <div class="rounded border border-neutral/40 bg-black/30 p-2 text-xs font-mono text-neutral-content/50 space-y-0.5">
+            <p>ISDU WRITE — Port 3 — Index 681 (0x2A9) / Subindex 0 — Calibration Offset</p>
+            <p class="text-success">Target value: 0.0 °C (restores factory default)</p>
+          </div>
+          <div class="flex items-center gap-3 flex-wrap">
+            <button type="button" id="ws5-cal-write-btn" class="btn btn-sm font-mono" style="border:1px solid rgba(74,222,128,0.5);color:#4ade80;background:transparent">Write 0.0 °C to sensor →</button>
+            <span id="ws5-cal-write-status" class="text-xs font-mono text-neutral-content/40"></span>
+          </div>
+        </div>
+
+        <!-- Step 4: Verify (revealed after write) -->
+        <div id="ws5-cal-verify" class="hidden bg-neutral px-3 py-3 border-b border-neutral/40 space-y-3">
+          <p class="font-mono text-xs text-success uppercase tracking-widest">Write Complete ✓ — Step 4: Verify Corrected Reading</p>
+          <p class="text-sm text-neutral-content/80">Offset written. The temperature reading should now drop by approximately 3 °C back to the true ambient value. Hold a stable reading for 3 continuous seconds to confirm the correction is in effect.</p>
+          <div class="grid grid-cols-2 gap-x-6 gap-y-1 font-mono text-xs rounded border border-neutral/40 bg-black/20 px-3 py-2">
+            <div class="flex items-center justify-between gap-2">
+              <span class="text-neutral-content/40">Temperature now</span>
+              <span id="ws5-cal-vfy-temp" class="font-bold text-neutral-content">—</span>
+            </div>
+            <div class="flex items-center justify-between gap-2">
+              <span class="text-neutral-content/40">Expected (±1.5 °C)</span>
+              <span id="ws5-cal-vfy-expected" class="font-bold text-neutral-content/50">—</span>
+            </div>
+          </div>
+          <div class="space-y-1.5">
+            <div class="flex items-center justify-between font-mono text-xs">
+              <span class="text-neutral-content/40">Stable hold</span>
+              <span id="ws5-cal-vfy-timer" class="text-neutral-content">0.0 s / 3.0 s</span>
+            </div>
+            <div class="w-full rounded-full h-3 overflow-hidden" style="background:rgba(255,255,255,0.08)">
+              <div id="ws5-cal-vfy-tbar" class="h-3 rounded-full transition-all duration-300 bg-success" style="width:0%"></div>
+            </div>
+            <div class="flex justify-between font-mono text-xs text-neutral-content/30 px-0.5">
+              <span id="ws5-cal-vfy-label">Waiting for stable reading…</span><span>Hold 3 s →</span><span>✓ Verified</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Sign-off (revealed after verify) -->
+        <div id="ws5-cal-signoff" class="hidden bg-neutral px-3 py-3 border-b border-neutral/40 space-y-3">
+          <p class="font-mono text-xs text-success uppercase tracking-widest">Verification Passed ✓ — Close Work Order</p>
+          <p class="text-sm text-neutral-content/80">Before closing the work order, confirm the following:</p>
+          <div class="space-y-2">
+            <label class="flex items-center gap-3 cursor-pointer font-mono text-xs">
+              <input type="checkbox" class="checkbox checkbox-xs checkbox-success" id="ws5-cal-ck1">
+              <span class="text-neutral-content/70">Before value confirmed via ISDU read: Calibration Offset was +3.0 °C (positive drift above reference)</span>
+            </label>
+            <label class="flex items-center gap-3 cursor-pointer font-mono text-xs">
+              <input type="checkbox" class="checkbox checkbox-xs checkbox-success" id="ws5-cal-ck2">
+              <span class="text-neutral-content/70">Correction applied via ISDU write: Offset restored to 0.0 °C — no physical removal required</span>
+            </label>
+            <label class="flex items-center gap-3 cursor-pointer font-mono text-xs">
+              <input type="checkbox" class="checkbox checkbox-xs checkbox-success" id="ws5-cal-ck3">
+              <span class="text-neutral-content/70">Post-correction reading verified stable for 3 seconds — temperature returned to expected ambient value</span>
+            </label>
+          </div>
+          <button type="button" id="ws5-cal-close-btn" class="btn btn-xs btn-outline w-full font-mono tracking-wider" style="color:#4ade80;border-color:#4ade80" disabled>CLOSE WORK ORDER — CAL-0189</button>
+        </div>
+
+        <!-- Completion banner -->
+        <div id="ws5-cal-result" class="hidden px-3 py-2 font-mono text-xs border-t border-success/30 bg-success/10 text-success"></div>
+
+        <!-- Reset row -->
+        <div class="bg-neutral px-3 py-2 border-t border-neutral/40 flex justify-end">
+          <button type="button" id="ws5-cal-reset" class="btn btn-ghost btn-xs gap-1 font-mono text-neutral-content/20 opacity-40 hover:opacity-70">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+            RESET
+          </button>
+        </div>
+      </div>
     `
   },
   {
@@ -1478,53 +1834,102 @@ const WORKSHEETS = [
     relatedDashboard: 'Dashboard: Port 4 — CL50 Light Stack',
     prerequisites: 'Complete Worksheet 1 first',
     contentHtml: `
-      <p class="text-base-content/90 leading-relaxed">The IFM CL50 is a multi-colour status light. Each colour segment can be off, on solid, or flashing. IO-Link tells you exactly which colour is showing and how.</p>
+      <p class="text-base-content/90 leading-relaxed">The Banner CL50 Pro RGB is unlike the other sensors in this kit — it is a <strong>PDout-only</strong> device. Instead of sending measurement data <em>to</em> the master, the master sends commands <em>to</em> it. Every colour, animation, intensity, and speed you see on the light is encoded into a single 3-byte hex value that the controller writes out.</p>
 
-      <!-- WS6 SVG diagram -->
+      <!-- PDout direction diagram -->
       <div class="rounded-xl border border-base-300 bg-base-200 p-3 mt-3">
-        <p class="text-xs font-semibold text-base-content/60 uppercase tracking-wide mb-2">How it works</p>
-        <svg viewBox="0 0 570 195" xmlns="http://www.w3.org/2000/svg" class="w-full" style="font-family:system-ui,sans-serif">
-          <!-- CL50 tower -->
-          <rect x="230" y="15" width="70" height="155" rx="8" fill="#1e293b" stroke="#334155" stroke-width="1.5"/>
-          <!-- Red segment (top) -->
-          <rect x="234" y="19" width="62" height="45" rx="5" fill="#dc2626"/>
-          <text x="265" y="38" text-anchor="middle" fill="white" font-size="8" font-weight="600">Red</text>
-          <text x="265" y="50" text-anchor="middle" fill="#fca5a5" font-size="7">Fault / Stopped</text>
-          <!-- Amber segment (middle) -->
-          <rect x="234" y="67" width="62" height="45" rx="5" fill="#f59e0b"/>
-          <text x="265" y="86" text-anchor="middle" fill="white" font-size="8" font-weight="600">Amber</text>
-          <text x="265" y="98" text-anchor="middle" fill="#fde68a" font-size="7">Warning / Attention</text>
-          <!-- Green segment (bottom) -->
-          <rect x="234" y="115" width="62" height="45" rx="5" fill="#16a34a"/>
-          <text x="265" y="134" text-anchor="middle" fill="white" font-size="8" font-weight="600">Green</text>
-          <text x="265" y="146" text-anchor="middle" fill="#bbf7d0" font-size="7">Running OK</text>
-
-          <!-- IO-Link master (right) -->
-          <rect x="390" y="70" width="80" height="50" rx="6" fill="#ea580c"/>
-          <text x="430" y="91" text-anchor="middle" fill="white" font-size="9" font-weight="700">IO-Link</text>
-          <text x="430" y="104" text-anchor="middle" fill="#fed7aa" font-size="8">Master</text>
-
-          <!-- Arrow from tower to master -->
-          <line x1="300" y1="92" x2="388" y2="92" stroke="#94a3b8" stroke-width="2"/>
-          <polygon points="388,88 388,96 396,92" fill="#94a3b8"/>
-          <text x="344" y="85" text-anchor="middle" fill="#94a3b8" font-size="8">IO-Link</text>
-
-          <!-- IO-Link data label -->
-          <text x="430" y="138" text-anchor="middle" fill="#64748b" font-size="8">colour + flash/solid</text>
-
-          <!-- Bottom label -->
-          <text x="285" y="183" text-anchor="middle" fill="#64748b" font-size="8">IO-Link tells you exactly which colour is on, whether it is flashing, and the raw hex value</text>
+        <p class="text-xs font-semibold text-base-content/60 uppercase tracking-wide mb-2">PDout — master commands the light</p>
+        <svg viewBox="0 0 580 145" xmlns="http://www.w3.org/2000/svg" class="w-full" style="font-family:system-ui,sans-serif">
+          <!-- PLC box -->
+          <rect x="10" y="47" width="100" height="52" rx="6" fill="#1e3a5f"/>
+          <text x="60" y="67" text-anchor="middle" fill="white" font-size="9" font-weight="700">PLC / HMI</text>
+          <text x="60" y="80" text-anchor="middle" fill="#93c5fd" font-size="8">Controller</text>
+          <text x="60" y="93" text-anchor="middle" fill="#93c5fd" font-size="7">"go green"</text>
+          <!-- Arrow PLC → Master -->
+          <line x1="110" y1="73" x2="149" y2="73" stroke="#64748b" stroke-width="2"/>
+          <polygon points="149,69 149,77 157,73" fill="#64748b"/>
+          <!-- IO-Link Master box -->
+          <rect x="157" y="47" width="112" height="52" rx="6" fill="#ea580c"/>
+          <text x="213" y="67" text-anchor="middle" fill="white" font-size="9" font-weight="700">IO-Link Master</text>
+          <text x="213" y="80" text-anchor="middle" fill="#fed7aa" font-size="7.5">AL1350 · Port 4</text>
+          <text x="213" y="93" text-anchor="middle" fill="#fed7aa" font-size="7">encodes PDout hex</text>
+          <!-- Arrow Master → CL50 (green, thicker — PDout) -->
+          <line x1="269" y1="73" x2="317" y2="73" stroke="#22c55e" stroke-width="2.5"/>
+          <polygon points="317,69 317,77 325,73" fill="#22c55e"/>
+          <text x="292" y="63" text-anchor="middle" fill="#22c55e" font-size="7" font-weight="600">PDout</text>
+          <text x="292" y="86" text-anchor="middle" fill="#22c55e" font-size="7" font-weight="600">000100</text>
+          <!-- CL50 light stack tower -->
+          <rect x="325" y="15" width="60" height="115" rx="8" fill="#1e293b" stroke="#334155" stroke-width="1.5"/>
+          <rect x="329" y="19" width="52" height="33" rx="4" fill="#dc2626"/>
+          <text x="355" y="39" text-anchor="middle" fill="white" font-size="7" font-weight="600">Red</text>
+          <rect x="329" y="55" width="52" height="33" rx="4" fill="#f59e0b"/>
+          <text x="355" y="75" text-anchor="middle" fill="white" font-size="7" font-weight="600">Amber</text>
+          <rect x="329" y="91" width="52" height="33" rx="4" fill="#16a34a"/>
+          <text x="355" y="111" text-anchor="middle" fill="white" font-size="7" font-weight="600">Green</text>
+          <text x="355" y="140" text-anchor="middle" fill="#22c55e" font-size="7" font-weight="600">CL50 Pro</text>
+          <!-- Annotations: no PDin -->
+          <text x="420" y="53" fill="#f87171" font-size="7.5" font-weight="600">✗ No PDin</text>
+          <text x="420" y="65" fill="#f87171" font-size="7">(no data back to master)</text>
+          <text x="420" y="82" fill="#86efac" font-size="7.5" font-weight="600">✓ PDout only</text>
+          <text x="420" y="94" fill="#86efac" font-size="7">(master writes to light)</text>
         </svg>
       </div>
 
-      <!-- Live section -->
+      <!-- PDout byte layout reference -->
+      <div class="rounded-xl border border-base-300 bg-base-200 p-4 mt-4">
+        <p class="text-xs font-semibold text-base-content/60 uppercase tracking-wide mb-3">PDout 3-byte layout — how the hex is built</p>
+        <div class="grid grid-cols-3 gap-2">
+          <div class="rounded-lg border border-base-300 bg-base-100 p-2 space-y-1">
+            <p class="text-xs font-bold text-primary text-center">Octet 0 — Intensity</p>
+            <p class="text-xs font-mono text-center text-base-content/50">[7:6] Audible</p>
+            <p class="text-xs font-mono text-center text-base-content/50">[5:3] C2 Intensity</p>
+            <p class="text-xs font-mono text-center text-base-content/70 font-bold">[2:0] C1 Intensity</p>
+            <div class="divider my-0.5"></div>
+            <p class="text-xs text-center text-base-content/60">0=High  1=Low</p>
+            <p class="text-xs text-center text-base-content/60">2=Med   3=Off</p>
+          </div>
+          <div class="rounded-lg border border-base-300 bg-base-100 p-2 space-y-1">
+            <p class="text-xs font-bold text-secondary text-center">Octet 1 — Animation</p>
+            <p class="text-xs font-mono text-center text-base-content/50">[7:6] Speed</p>
+            <p class="text-xs font-mono text-center text-base-content/50">[5:3] Pattern</p>
+            <p class="text-xs font-mono text-center text-base-content/70 font-bold">[2:0] Animation</p>
+            <div class="divider my-0.5"></div>
+            <p class="text-xs text-center text-base-content/60">0=Off  1=Steady</p>
+            <p class="text-xs text-center text-base-content/60">2=Flash  3=2-Colour</p>
+          </div>
+          <div class="rounded-lg border border-base-300 bg-base-100 p-2 space-y-1">
+            <p class="text-xs font-bold text-accent text-center">Octet 2 — Colours</p>
+            <p class="text-xs font-mono text-center text-base-content/50">[7:4] Colour 2</p>
+            <p class="text-xs font-mono text-center text-base-content/70 font-bold">[3:0] Colour 1</p>
+            <div class="divider my-0.5"></div>
+            <p class="text-xs text-center text-base-content/60">0=Green  1=Red</p>
+            <p class="text-xs text-center text-base-content/60">3=Amber  9=Blue</p>
+          </div>
+        </div>
+        <p class="text-xs text-base-content/50 text-center mt-2 font-mono">Example: <strong>18 01 01</strong> → Octet0=0x18 (C2I=Off, C1I=High) · Octet1=0x01 (Steady) · Octet2=0x01 (Red)</p>
+      </div>
+
+      <!-- Animation modes reference -->
+      <div class="overflow-x-auto rounded-lg border border-base-300 mt-3">
+        <table class="table table-zebra text-sm">
+          <thead><tr><th>Animation value</th><th>Name</th><th>What it does</th></tr></thead>
+          <tbody>
+            <tr><td class="font-mono">0</td><td>Off</td><td>Light is dark — no output</td></tr>
+            <tr><td class="font-mono">1</td><td>Steady</td><td>Colour 1 solid on at the set intensity</td></tr>
+            <tr><td class="font-mono">2</td><td>Flash</td><td>Colour 1 flashes at the set speed and pattern</td></tr>
+            <tr><td class="font-mono">3</td><td>Two Colour Flash</td><td>Colour 1 and Colour 2 alternate at the set speed</td></tr>
+            <tr><td class="font-mono">4</td><td>Intensity Sweep</td><td>Colour 1 cycles 0%→100%→0% at the set speed <span class="badge badge-xs badge-warning ml-1">firmware v1.0.2 bug — use SW sweep</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Live section — all decoded fields -->
       <div class="rounded-xl border-2 border-accent/30 bg-accent/5 p-4 mt-3 space-y-3" id="ws5-live-panel">
         <div class="flex items-center justify-between flex-wrap gap-2">
-          <span class="font-semibold text-base-content text-sm">Port 4 — Live CL50 State</span>
+          <span class="font-semibold text-base-content text-sm">Port 4 — Live CL50 State (PDout read-back)</span>
           <span id="ws5-live-badge" class="badge badge-xs badge-ghost font-mono">OFFLINE</span>
         </div>
 
-        <!-- Colour display -->
         <div class="flex items-center justify-center gap-8 py-2">
           <div class="flex flex-col items-center gap-2">
             <div id="ws5-c1-circle" class="w-14 h-14 rounded-full bg-base-300 border-4 border-base-300 transition-all duration-300 shadow-md"></div>
@@ -1538,56 +1943,104 @@ const WORKSHEETS = [
           </div>
         </div>
 
-        <!-- State details -->
-        <div class="grid grid-cols-2 gap-2 text-sm">
+        <div class="grid grid-cols-3 gap-2 text-sm">
           <div class="rounded bg-base-200 border border-base-300 p-2">
             <p class="text-base-content/50 text-xs">Animation</p>
             <p id="ws5-animation" class="font-semibold text-base-content">—</p>
           </div>
           <div class="rounded bg-base-200 border border-base-300 p-2">
-            <p class="text-base-content/50 text-xs">Raw hex</p>
+            <p class="text-base-content/50 text-xs">Speed</p>
+            <p id="ws5-speed" class="font-semibold text-base-content">—</p>
+          </div>
+          <div class="rounded bg-base-200 border border-base-300 p-2">
+            <p class="text-base-content/50 text-xs">Pulse Pattern</p>
+            <p id="ws5-pattern" class="font-semibold text-base-content">—</p>
+          </div>
+          <div class="rounded bg-base-200 border border-base-300 p-2">
+            <p class="text-base-content/50 text-xs">C1 Intensity</p>
+            <p id="ws5-c1-intensity" class="font-semibold text-base-content">—</p>
+          </div>
+          <div class="rounded bg-base-200 border border-base-300 p-2">
+            <p class="text-base-content/50 text-xs">C2 Intensity</p>
+            <p id="ws5-c2-intensity" class="font-semibold text-base-content">—</p>
+          </div>
+          <div class="rounded bg-base-200 border border-base-300 p-2">
+            <p class="text-base-content/50 text-xs">Raw PDout hex</p>
             <p id="ws5-raw-hex" class="font-mono font-semibold text-base-content">—</p>
           </div>
         </div>
       </div>
 
+      <!-- Colour meanings table -->
       <div class="overflow-x-auto rounded-lg border border-base-300 mt-4">
         <table class="table table-zebra text-sm">
-          <thead><tr><th>Colour</th><th>Typical meaning</th></tr></thead>
+          <thead><tr><th>Colour</th><th>Typical factory meaning</th><th>Steady hex</th></tr></thead>
           <tbody>
-            <tr><td><span class="inline-block w-3 h-3 rounded-full bg-green-500 mr-2"></span>Green</td><td>Machine running OK</td></tr>
-            <tr><td><span class="inline-block w-3 h-3 rounded-full bg-amber-400 mr-2"></span>Amber</td><td>Warning — attention needed soon</td></tr>
-            <tr><td><span class="inline-block w-3 h-3 rounded-full bg-red-500 mr-2"></span>Red</td><td>Fault — machine stopped or needs repair</td></tr>
+            <tr><td><span class="inline-block w-3 h-3 rounded-full bg-green-500 mr-2"></span>Green</td><td>Machine running OK — normal production</td><td class="font-mono">000100</td></tr>
+            <tr><td><span class="inline-block w-3 h-3 rounded-full bg-amber-400 mr-2"></span>Amber</td><td>Warning — attention needed soon</td><td class="font-mono">180103</td></tr>
+            <tr><td><span class="inline-block w-3 h-3 rounded-full bg-red-500 mr-2"></span>Red</td><td>Fault — machine stopped or needs repair</td><td class="font-mono">180101</td></tr>
+            <tr><td><span class="inline-block w-3 h-3 rounded-full bg-blue-500 mr-2"></span>Blue</td><td>Maintenance mode or setup in progress</td><td class="font-mono">180109</td></tr>
           </tbody>
         </table>
       </div>
 
-      <p class="mt-4 font-medium text-base-content"><strong>Q1.</strong> Look at the live display above. The CL50 is showing solid green. What would that mean on a real factory machine?</p>
+      <p class="mt-4 font-medium text-base-content"><strong>Q1.</strong> The CL50 is described as a "PDout-only" device. What does that mean?</p>
       <div class="space-y-2 mt-1">
-        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="ws5-q1" value="a" class="radio radio-sm radio-accent"> Machine has a fault and has stopped</label>
-        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="ws5-q1" value="b" class="radio radio-sm radio-accent"> Machine is running normally — all good</label>
-        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="ws5-q1" value="c" class="radio radio-sm radio-accent"> Machine is in standby waiting for an operator</label>
+        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="ws5-q1" value="a" class="radio radio-sm radio-accent"> It only works with certain IO-Link masters</label>
+        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="ws5-q1" value="b" class="radio radio-sm radio-accent"> The master sends a command value TO the light — no measurement data comes back from the device to the master</label>
+        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="ws5-q1" value="c" class="radio radio-sm radio-accent"> It uses a separate digital output wire for each colour segment</label>
       </div>
 
-      <p class="mt-3 font-medium text-base-content"><strong>Q2.</strong> The light stack shows flashing red. What should a maintenance technician do first?</p>
+      <p class="mt-3 font-medium text-base-content"><strong>Q2.</strong> The hex value <code class="font-mono bg-base-300 px-1 rounded text-sm">180101</code> is sent to the CL50. Which colour will it show?</p>
       <div class="space-y-2 mt-1">
-        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="ws5-q2" value="a" class="radio radio-sm radio-accent"> Immediately restart the machine and see if it goes away</label>
-        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="ws5-q2" value="b" class="radio radio-sm radio-accent"> Check the fault log or HMI for the cause — do not reset without knowing why</label>
-        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="ws5-q2" value="c" class="radio radio-sm radio-accent"> Replace the light stack — a flashing light means the unit is faulty</label>
+        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="ws5-q2" value="a" class="radio radio-sm radio-accent"> Green — Octet2 low nibble = 0x00</label>
+        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="ws5-q2" value="b" class="radio radio-sm radio-accent"> Red — Octet2 low nibble = 0x01 = Red (index 1)</label>
+        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="ws5-q2" value="c" class="radio radio-sm radio-accent"> Amber — 0x18 in Octet0 indicates Amber</label>
       </div>
 
-      <p class="mt-3 font-medium text-base-content"><strong>Q3.</strong> Why is it useful that IO-Link tells you the exact colour and whether it is flashing or solid — rather than just a "light is on" alarm?</p>
+      <p class="mt-3 font-medium text-base-content"><strong>Q3.</strong> The flashing red segment will not turn off even after the operator says the fault is cleared. What is the most likely cause?</p>
       <div class="space-y-2 mt-1">
-        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="ws5-q3" value="a" class="radio radio-sm radio-accent"> It is not useful — a simple alarm is all you need</label>
-        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="ws5-q3" value="b" class="radio radio-sm radio-accent"> The exact state can be logged — knowing it flashed amber three times before going red is a clue you would miss with a basic alarm</label>
-        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="ws5-q3" value="c" class="radio radio-sm radio-accent"> It looks nicer on the dashboard</label>
+        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="ws5-q3" value="a" class="radio radio-sm radio-accent"> The light stack hardware is broken</label>
+        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="ws5-q3" value="b" class="radio radio-sm radio-accent"> The PLC is still sending a "red on" PDout command — the fault state is held in the controller, not the light itself</label>
+        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="ws5-q3" value="c" class="radio radio-sm radio-accent"> IO-Link has lost connection to the light stack</label>
+      </div>
+
+      <p class="mt-3 font-medium text-base-content"><strong>Q4.</strong> Why is IO-Link PDout control better than wiring a traditional 3-wire digital light stack (one wire per segment)?</p>
+      <div class="space-y-2 mt-1">
+        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="ws5-q4" value="a" class="radio radio-sm radio-accent"> It is always cheaper per unit due to IO-Link certification reducing manufacturing costs</label>
+        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="ws5-q4" value="b" class="radio radio-sm radio-accent"> Full control of colour, animation, intensity, and speed over a single 3-pin cable — plus the HMI can read back the exact state without a separate feedback wire</label>
+        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="ws5-q4" value="c" class="radio radio-sm radio-accent"> The colour cannot be changed once wired — it is safer</label>
       </div>
 
       <div class="divider my-2"></div>
 
+      <!-- Hands-on: command the CL50 -->
+      <div class="rounded-xl border-2 border-primary/40 bg-primary/5 p-4 mt-4 space-y-3">
+        <p class="font-bold text-base-content text-base">🔧 Hands-on: Command the CL50</p>
+        <p class="text-sm text-base-content/80">Write a PDout value directly to the light stack. Watch the live panel above update and observe the physical light change on the bench. Each button shows the hex value it sends so you can verify it against the byte layout table.</p>
+        <div class="grid grid-cols-2 gap-2 sm:grid-cols-4">
+          <button type="button" class="ws6-write-btn btn btn-sm flex-col h-auto py-2" data-hex="000100" style="background:#16a34a;color:white;border-color:#16a34a">
+            <span>Green Steady</span><span class="text-xs opacity-70 font-mono">000100</span>
+          </button>
+          <button type="button" class="ws6-write-btn btn btn-sm flex-col h-auto py-2" data-hex="184203" style="background:#f59e0b;color:white;border-color:#f59e0b">
+            <span>Amber Flash</span><span class="text-xs opacity-70 font-mono">184203</span>
+          </button>
+          <button type="button" class="ws6-write-btn btn btn-sm flex-col h-auto py-2" data-hex="180101" style="background:#dc2626;color:white;border-color:#dc2626">
+            <span>Red Steady</span><span class="text-xs opacity-70 font-mono">180101</span>
+          </button>
+          <button type="button" class="ws6-write-btn btn btn-sm flex-col h-auto py-2" data-hex="180109" style="background:#2563eb;color:white;border-color:#2563eb">
+            <span>Blue Steady</span><span class="text-xs opacity-70 font-mono">180109</span>
+          </button>
+        </div>
+        <p id="ws6-write-status" class="text-xs text-center text-base-content/60 font-mono min-h-[1rem]"></p>
+      </div>
+
+      <div class="divider my-2"></div>
+
+      <!-- Colour prediction challenge -->
       <div class="rounded-xl border-2 border-warning/50 bg-warning/5 p-4 mt-4 space-y-3" id="ws6-challenge-box">
         <p class="font-bold text-base-content text-base">🎯 Challenge</p>
-        <p class="text-sm text-base-content/80">WITHOUT looking at the physical light stack — use only the dashboard data above to predict what colour it is currently showing. Make your guess, then turn around and check.</p>
+        <p class="text-sm text-base-content/80">WITHOUT looking at the physical light stack — use only the live panel above to predict what colour it is currently showing. Make your guess, then turn around and check.</p>
         <div class="grid grid-cols-4 gap-2">
           <button type="button" class="ws6-colour-btn btn btn-sm" data-colour="Green" style="background:#16a34a;color:white;border-color:#16a34a">Green</button>
           <button type="button" class="ws6-colour-btn btn btn-sm" data-colour="Amber" style="background:#f59e0b;color:white;border-color:#f59e0b">Amber</button>
@@ -2048,15 +2501,23 @@ let _ws2ChDone = false;
 // WS3 (proximity) challenge — stability confirmation
 let _ws3ChDone = false;
 
-// WS4 (capacitive) challenge — injected false trigger scenario
-let _ws4ChDone = false; let _ws4SpWritten = false;
-let _ws4Step = 0; // 0=idle,1=injected,2=observed,3=diagnosed,4=written,5=verified,6=complete
+// WS4 (capacitive) challenge — commissioning scenario
+let _ws4ChDone = false;
+let _ws4Step = 0; // 0=read,1=teach,2=vfy-detect,3=vfy-clear,4=signoff,5=complete
 let _ws4VerifyStart = null;
 let _ws4VerifyDone = false;
-let _ws4FaultCleanup = null; // restores SP1 on navigation if scenario is active mid-run
+let _ws4FaultCleanup = null; // kept for stopLiveData cleanup guard (always null now)
+let _ws4CurrentSp1 = null;
 
 // WS5 (temperature) challenge — trigger alarm
 let _ws5ChDone = false;
+
+// WS5 (temperature) calibration scenario
+let _ws5CalStep = 0;  // 0=idle,1=injected,2=read,3=fixed,4=signoff
+let _ws5CalVerifyStart = null;
+let _ws5CalVerifyDone = false;
+let _ws5CalCleanup = null;
+let _ws5PreInjectTemp = null;
 
 // WS6 (light stack) challenge — colour prediction
 let _ws6ChGuess = null; let _ws6ChSubmitted = false; let _ws6ChColor = null;
@@ -3288,8 +3749,8 @@ function initLiveWs2(container) {
 function initLiveWs3(container) {
   _lastCapState = false;
   _capTaskCount = 0;
-  _ws4ChDone = false; _ws4SpWritten = false;
-  _ws4Step = 0; _ws4VerifyStart = null; _ws4VerifyDone = false;
+  _ws4ChDone = false;
+  _ws4Step = 0; _ws4VerifyStart = null; _ws4VerifyDone = false; _ws4CurrentSp1 = null;
 
   let chart = null;
 
@@ -3330,111 +3791,150 @@ function initLiveWs3(container) {
 
     pushToChart(chart, det ? 1 : 0);
 
-    // ── WS4 scenario: multi-panel live value updates ──────────────────────────
+    // ── WS4 scenario: live value updates ──────────────────────────────────────
     // HMI panel (always visible)
     const hmiDet = container.querySelector('#ws4-hmi-det');
     if (hmiDet) {
       hmiDet.textContent = det ? 'DETECTED' : 'CLEAR';
       hmiDet.className = det ? 'font-bold font-mono text-xs text-error' : 'font-bold font-mono text-xs text-success';
     }
-    // Observe panel (step 1)
-    const obsDot = container.querySelector('#ws4-obs-dot');
-    const obsDet = container.querySelector('#ws4-obs-det');
-    if (obsDot) obsDot.className = det ? 'w-3 h-3 rounded-full bg-error flex-shrink-0 transition-all' : 'w-3 h-3 rounded-full bg-base-300 flex-shrink-0 transition-all';
-    if (obsDet) { obsDet.textContent = det ? 'DETECTED' : 'CLEAR'; obsDet.className = det ? 'font-bold font-mono text-xs text-error' : 'font-bold font-mono text-xs text-success'; }
-    // Verify panel (step 4)
+    // Dielectric bar (step 2 — always update so it's live when step unlocks)
+    const analogue = port.pdin_decoded.analogue_value;
+    if (analogue !== null && analogue !== undefined) {
+      const dielFill = container.querySelector('#ws4-diel-fill');
+      const dielVal  = container.querySelector('#ws4-diel-val');
+      if (dielFill) dielFill.style.width = `${Math.min(analogue / 10000 * 100, 100).toFixed(1)}%`;
+      if (dielVal)  dielVal.textContent = analogue;
+    }
+    if (_ws4CurrentSp1 !== null) {
+      const dielSp1Line = container.querySelector('#ws4-diel-sp1-line');
+      const dielSp1Val  = container.querySelector('#ws4-diel-sp1-val');
+      if (dielSp1Line) { dielSp1Line.style.left = `${Math.min(_ws4CurrentSp1 / 10000 * 100, 100).toFixed(1)}%`; dielSp1Line.classList.remove('hidden'); }
+      if (dielSp1Val)  dielSp1Val.textContent = _ws4CurrentSp1;
+    }
+    // Verify panel (step 3)
     const vfyDot = container.querySelector('#ws4-vfy-dot');
     const vfyDet = container.querySelector('#ws4-vfy-det');
     if (vfyDot) vfyDot.className = det ? 'w-3 h-3 rounded-full bg-error flex-shrink-0 transition-all' : 'w-3 h-3 rounded-full bg-success flex-shrink-0 transition-all';
     if (vfyDet) { vfyDet.textContent = det ? 'DETECTED' : 'CLEAR'; vfyDet.className = det ? 'font-bold font-mono text-xs text-error' : 'font-bold font-mono text-xs text-success'; }
 
-    // Verify countdown (step 4 — 3s clear hold)
-    if (_ws4Step === 4 && !_ws4VerifyDone) {
+    // Function test — Part 1: detect hold (3s with target present)
+    if (_ws4Step === 2 && !_ws4VerifyDone) {
+      const bar    = container.querySelector('#ws4-ms-vfy-bar');
+      const pctEl  = container.querySelector('#ws4-ms-vfy-pct');
+      const timer  = container.querySelector('#ws4-ms-vfy-timer');
+      const barLbl = container.querySelector('#ws4-ms-vfy-bar-label');
+      if (det) {
+        if (!_ws4VerifyStart) _ws4VerifyStart = Date.now();
+        const elapsed = (Date.now() - _ws4VerifyStart) / 1000;
+        const pct = Math.min(elapsed / 3 * 100, 100);
+        if (bar)    bar.value = pct;
+        if (pctEl)  pctEl.textContent = `${Math.round(pct)}%`;
+        if (timer)  timer.textContent = elapsed.toFixed(1);
+        if (barLbl) barLbl.textContent = 'Part 1 of 2: holding DETECTED…';
+        if (elapsed >= 3) {
+          _ws4VerifyStart = null;
+          _ws4Step = 3;
+          if (bar)    bar.value = 0;
+          if (pctEl)  pctEl.textContent = '0%';
+          if (timer)  timer.textContent = '0.0';
+          if (barLbl) barLbl.textContent = 'Part 2 of 2: remove target — hold CLEAR…';
+        }
+      } else {
+        _ws4VerifyStart = null;
+        if (bar)    bar.value = 0;
+        if (pctEl)  pctEl.textContent = '0%';
+        if (timer)  timer.textContent = '0.0';
+        if (barLbl) barLbl.textContent = 'Part 1 of 2: bring target to detection point…';
+      }
+    }
+
+    // Function test — Part 2: clear hold (3s with nothing present)
+    if (_ws4Step === 3 && !_ws4VerifyDone) {
+      const bar    = container.querySelector('#ws4-ms-vfy-bar');
+      const pctEl  = container.querySelector('#ws4-ms-vfy-pct');
+      const timer  = container.querySelector('#ws4-ms-vfy-timer');
+      const barLbl = container.querySelector('#ws4-ms-vfy-bar-label');
       if (!det) {
         if (!_ws4VerifyStart) _ws4VerifyStart = Date.now();
         const elapsed = (Date.now() - _ws4VerifyStart) / 1000;
         const pct = Math.min(elapsed / 3 * 100, 100);
-        const bar   = container.querySelector('#ws4-ms-vfy-bar');
-        const pctEl = container.querySelector('#ws4-ms-vfy-pct');
-        const timer = container.querySelector('#ws4-ms-vfy-timer');
-        const barLbl = container.querySelector('#ws4-ms-vfy-bar-label');
         if (bar)    bar.value = pct;
         if (pctEl)  pctEl.textContent = `${Math.round(pct)}%`;
         if (timer)  timer.textContent = elapsed.toFixed(1);
-        if (barLbl) barLbl.textContent = 'Holding clear…';
+        if (barLbl) barLbl.textContent = 'Part 2 of 2: holding CLEAR…';
         if (elapsed >= 3) {
           _ws4VerifyDone = true;
-          _ws4Step = 5;
+          _ws4Step = 4;
           _ws4ChDone = true;
-          container.querySelector('#ws4-ms-verify')?.classList.add('hidden');
-          container.querySelector('#ws4-ms-signoff')?.classList.remove('hidden');
+          _ws4ShowStep(4);
+          if (bar)    bar.value = 100;
+          if (pctEl)  pctEl.textContent = '100%';
+          if (timer)  timer.textContent = '3.0';
+          if (barLbl) barLbl.textContent = 'Function test passed ✓';
           const hdrDot    = container.querySelector('#ws4-hdr-dot');
           const hdrStatus = container.querySelector('#ws4-hdr-status');
-          if (hdrDot)    hdrDot.className = 'w-3 h-3 rounded-full bg-success flex-shrink-0 transition-all';
-          if (hdrStatus) { hdrStatus.textContent = 'Scenario Complete'; hdrStatus.className = 'text-xs font-mono ml-auto text-success'; }
+          if (hdrDot)    hdrDot.className = 'w-3 h-3 rounded-full bg-warning flex-shrink-0 transition-all';
+          if (hdrStatus) { hdrStatus.textContent = 'Sign-Off Required'; hdrStatus.className = 'text-xs font-mono ml-auto text-warning'; }
         }
       } else {
-        // detection came back — reset timer
         _ws4VerifyStart = null;
-        const bar   = container.querySelector('#ws4-ms-vfy-bar');
-        const pctEl = container.querySelector('#ws4-ms-vfy-pct');
-        const timer = container.querySelector('#ws4-ms-vfy-timer');
-        const barLbl = container.querySelector('#ws4-ms-vfy-bar-label');
         if (bar)    bar.value = 0;
         if (pctEl)  pctEl.textContent = '0%';
         if (timer)  timer.textContent = '0.0';
-        if (barLbl) barLbl.textContent = 'Detection resumed — keep sensor clear…';
+        if (barLbl) barLbl.textContent = 'Part 2 of 2: remove target — hold CLEAR…';
       }
     }
   });
 
-  // ── Step 0: inject fault ──────────────────────────────────────────────────
-  const injectBtn    = container.querySelector('#ws4-ms-inject-btn');
-  const injectStatus = container.querySelector('#ws4-ms-inject-status');
-  if (injectBtn) {
-    injectBtn.addEventListener('click', async () => {
-      injectBtn.disabled = true;
-      if (injectStatus) { injectStatus.textContent = 'Injecting fault…'; injectStatus.className = 'text-xs font-mono text-base-content/60'; }
-      const ok = await isduWrite(2, 60, 1, 10, 'int16', 1, null);
-      if (ok) {
-        _ws4Step = 1;
-        _ws4FaultCleanup = () => isduWrite(2, 60, 1, 1000, 'int16', 1, null);
-        injectBtn.textContent = 'Scenario Active ✓';
-        injectBtn.className = 'btn btn-success btn-sm font-mono btn-disabled';
-        if (injectStatus) injectStatus.textContent = '';
-        container.querySelector('#ws4-ms-observe')?.classList.remove('hidden');
-        const hdrDot    = container.querySelector('#ws4-hdr-dot');
-        const hdrStatus = container.querySelector('#ws4-hdr-status');
-        if (hdrDot)    hdrDot.className = 'w-3 h-3 rounded-full bg-error flex-shrink-0 transition-all animate-pulse';
-        if (hdrStatus) { hdrStatus.textContent = 'Active Fault'; hdrStatus.className = 'text-xs font-mono ml-auto text-error'; }
+  // ── Step visibility helper ────────────────────────────────────────────────
+  function _ws4ShowStep(activeStep) {
+    for (let i = 1; i <= 4; i++) {
+      const el = container.querySelector(`#ws4-ms-step${i}`);
+      if (!el) continue;
+      const numEl   = el.querySelector('.ws4-snum');
+      const badgeEl = el.querySelector('.ws4-sbadge');
+      if (i < activeStep) {
+        el.classList.remove('opacity-50', 'pointer-events-none', 'border-warning/50', 'bg-warning/5', 'border-base-300', 'bg-base-200/50');
+        el.classList.add('border-success/40', 'bg-success/5');
+        if (numEl)   { numEl.textContent = '✓'; numEl.className = 'ws4-snum w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 bg-success text-success-content'; }
+        if (badgeEl) badgeEl.classList.remove('hidden');
+      } else if (i === activeStep) {
+        el.classList.remove('opacity-50', 'pointer-events-none', 'border-base-300', 'bg-base-200/50', 'border-success/40', 'bg-success/5');
+        el.classList.add('border-warning/50', 'bg-warning/5');
+        if (numEl)   { numEl.textContent = String(i); numEl.className = 'ws4-snum w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 bg-warning text-warning-content'; }
+        if (badgeEl) badgeEl.classList.add('hidden');
       } else {
-        injectBtn.disabled = false;
-        if (injectStatus) { injectStatus.textContent = 'Failed — is the sensor connected?'; injectStatus.className = 'text-xs font-mono text-error'; }
+        el.classList.add('opacity-50', 'pointer-events-none');
+        el.classList.remove('border-warning/50', 'bg-warning/5', 'border-success/40', 'bg-success/5');
+        el.classList.add('border-base-300', 'bg-base-200/50');
+        if (numEl)   { numEl.textContent = String(i); numEl.className = 'ws4-snum w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 bg-base-300 text-base-content/40'; }
+        if (badgeEl) badgeEl.classList.add('hidden');
       }
-    });
+    }
   }
 
-  // ── Step 1 → 2: observed anomaly ─────────────────────────────────────────
-  container.querySelector('#ws4-ms-observe-next')?.addEventListener('click', () => {
-    _ws4Step = 2;
-    container.querySelector('#ws4-ms-observe')?.classList.add('hidden');
-    container.querySelector('#ws4-ms-read')?.classList.remove('hidden');
-  });
-
-  // ── Step 2: explicit ISDU read ────────────────────────────────────────────
+  // ── Step 1: Read factory state ────────────────────────────────────────────
   container.querySelector('#ws4-ms-read-btn')?.addEventListener('click', async () => {
     const readBtn = container.querySelector('#ws4-ms-read-btn');
     if (readBtn) { readBtn.disabled = true; readBtn.textContent = 'Reading…'; }
-    const val = await isduRead(2, 60, 1, 'int16', 1);
-    if (readBtn) { readBtn.disabled = false; readBtn.textContent = '📖 Read SP1 from device'; }
-    if (val !== null) {
-      _ws4Step = 3;
-      const hexEl  = container.querySelector('#ws4-ms-read-hex');
-      const valEl  = container.querySelector('#ws4-ms-read-val');
+    const [sp1, qot] = await Promise.all([
+      isduRead(2, 60, 1, 'int16', 1),
+      isduRead(2, 75, 0, 'uint8', 1),
+    ]);
+    if (readBtn) { readBtn.disabled = false; readBtn.textContent = '📖 Read SP1 & QoT from device'; }
+    if (sp1 !== null && qot !== null) {
+      _ws4CurrentSp1 = sp1;
+      const sp1El  = container.querySelector('#ws4-ms-read-sp1');
+      const qotEl  = container.querySelector('#ws4-ms-read-qot');
       const interp = container.querySelector('#ws4-ms-read-interp');
-      if (hexEl)  hexEl.textContent = `0x${val.toString(16).padStart(4, '0').toUpperCase()}`;
-      if (valEl)  valEl.textContent = val;
-      if (interp) interp.textContent = `SP1 = ${val} — this is far below a typical detection threshold (normally 500–2000). The sensor is tripping on ambient capacitive field noise because the threshold is set too low. Increasing SP1, or running a teach procedure, will restore normal operation.`;
+      if (sp1El) sp1El.textContent = sp1;
+      if (qotEl) qotEl.textContent = qot;
+      const qotDesc = qot === 0 ? 'QoT = 0 — no teach performed (factory default)' :
+                      qot <= 80  ? `QoT = ${qot} — poor quality of teach` :
+                      qot <= 200 ? `QoT = ${qot} — good quality of teach` :
+                                   `QoT = ${qot} — excellent quality of teach`;
+      if (interp) interp.textContent = `SP1 = ${sp1} (factory default). ${qotDesc}. Sensor not yet commissioned for this installation.`;
       container.querySelector('#ws4-ms-read-result')?.classList.remove('hidden');
       container.querySelector('#ws4-ms-read-next')?.classList.remove('hidden');
     } else {
@@ -3443,40 +3943,69 @@ function initLiveWs3(container) {
     }
   });
 
-  // ── Step 3 → 4: proceed to write ─────────────────────────────────────────
   container.querySelector('#ws4-ms-read-next')?.addEventListener('click', () => {
-    container.querySelector('#ws4-ms-read')?.classList.add('hidden');
-    container.querySelector('#ws4-ms-write')?.classList.remove('hidden');
+    _ws4Step = 1;
+    _ws4ShowStep(2);
+    const hdrDot    = container.querySelector('#ws4-hdr-dot');
+    const hdrStatus = container.querySelector('#ws4-hdr-status');
+    if (hdrDot)    hdrDot.className = 'w-3 h-3 rounded-full bg-warning flex-shrink-0 transition-all animate-pulse';
+    if (hdrStatus) { hdrStatus.textContent = 'Commissioning'; hdrStatus.className = 'text-xs font-mono ml-auto text-warning'; }
   });
 
-  // ── Step 4: write fix ─────────────────────────────────────────────────────
-  container.querySelector('#ws4-ms-write-btn')?.addEventListener('click', async () => {
-    const writeBtn    = container.querySelector('#ws4-ms-write-btn');
-    const writeStatus = container.querySelector('#ws4-ms-write-status');
-    const val = parseInt(container.querySelector('#ws3-sp1-slider')?.value ?? 1000);
-    if (writeBtn) { writeBtn.disabled = true; writeBtn.textContent = 'Applying…'; }
-    const ok = await isduWrite(2, 60, 1, val, 'int16', 1, null);
+  // ── Step 2: Teach ─────────────────────────────────────────────────────────
+  container.querySelector('#ws4-teach-start')?.addEventListener('click', async () => {
+    const status = container.querySelector('#ws4-teach-status');
+    if (status) { status.textContent = 'Teach started — hold target at detection point…'; status.className = 'text-xs font-mono text-warning'; }
+    await isduCommand(2, 'teach_sp1_start', null);
+  });
+
+  container.querySelector('#ws4-teach-stop')?.addEventListener('click', async () => {
+    const status = container.querySelector('#ws4-teach-status');
+    if (status) { status.textContent = 'Stopping teach and reading result…'; status.className = 'text-xs font-mono text-base-content/60'; }
+    const ok = await isduCommand(2, 'teach_sp1_stop', null);
     if (ok) {
-      _ws4SpWritten = true;
-      _ws4Step = 4;
-      _ws4FaultCleanup = null; // sensor is now corrected — no cleanup needed
-      if (writeBtn) { writeBtn.textContent = '✓ Fix Applied'; writeBtn.style.color = '#4ade80'; }
-      if (writeStatus) writeStatus.textContent = '';
-      container.querySelector('#ws4-ms-write')?.classList.add('hidden');
-      container.querySelector('#ws4-ms-verify')?.classList.remove('hidden');
-      // also update the ISDU panel slider to reflect the written value
-      const sp1Slider = container.querySelector('#ws3-sp1-slider');
-      const sp1ValEl  = container.querySelector('#ws3-sp1-val');
-      if (sp1Slider) sp1Slider.value = val;
-      if (sp1ValEl)  sp1ValEl.textContent = val;
-      const hdrDot    = container.querySelector('#ws4-hdr-dot');
-      const hdrStatus = container.querySelector('#ws4-hdr-status');
-      if (hdrDot)    hdrDot.className = 'w-3 h-3 rounded-full bg-warning flex-shrink-0 transition-all';
-      if (hdrStatus) { hdrStatus.textContent = 'Verifying Fix'; hdrStatus.className = 'text-xs font-mono ml-auto text-warning'; }
+      await new Promise(r => setTimeout(r, 800));
+      const [sp1, qot] = await Promise.all([
+        isduRead(2, 60, 1, 'int16', 1),
+        isduRead(2, 75, 0, 'uint8', 1),
+      ]);
+      if (sp1 !== null) _ws4CurrentSp1 = sp1;
+      const sp1El  = container.querySelector('#ws4-teach-sp1-val');
+      const qotEl  = container.querySelector('#ws4-teach-qot-val');
+      const interp = container.querySelector('#ws4-teach-interp');
+      if (sp1El) { sp1El.textContent = sp1 !== null ? sp1 : '—'; sp1El.className = sp1 !== null ? 'font-bold text-success' : 'font-bold text-error'; }
+      if (qotEl) {
+        qotEl.textContent = qot !== null ? qot : '—';
+        qotEl.className = qot !== null && qot > 150 ? 'font-bold text-success' : qot !== null && qot > 80 ? 'font-bold text-warning' : 'font-bold text-error';
+      }
+      const qotMsg = qot === null ? 'Read failed.' :
+                     qot > 150   ? `QoT = ${qot} — good quality of teach. SP1 set to ${sp1}. Ready for function test.` :
+                     qot > 80    ? `QoT = ${qot} — marginal. Consider re-teaching with target closer to the detection point.` :
+                                   `QoT = ${qot} — poor quality. Re-run teach with target at the correct detection point.`;
+      if (interp) { interp.textContent = qotMsg; interp.className = qot !== null && qot > 150 ? 'text-success font-sans mt-1' : 'text-warning font-sans mt-1'; }
+      container.querySelector('#ws4-teach-result')?.classList.remove('hidden');
+      if (status) { status.textContent = 'Teach complete.'; status.className = 'text-xs font-mono text-success'; }
+      if (qot !== null && qot > 80) {
+        container.querySelector('#ws4-ms-teach-next')?.classList.remove('hidden');
+      }
     } else {
-      if (writeBtn) { writeBtn.disabled = false; writeBtn.textContent = '✓ Apply Fix — Write SP1 to sensor'; }
-      if (writeStatus) { writeStatus.textContent = 'Write failed — try again'; writeStatus.className = 'text-xs font-mono text-error'; }
+      if (status) { status.textContent = 'Teach stop failed — try again'; status.className = 'text-xs font-mono text-error'; }
     }
+  });
+
+  container.querySelector('#ws4-teach-cancel')?.addEventListener('click', async () => {
+    const status = container.querySelector('#ws4-teach-status');
+    if (status) { status.textContent = 'Teach cancelled.'; status.className = 'text-xs font-mono text-base-content/50'; }
+    await isduCommand(2, 'teach_cancel', null);
+  });
+
+  container.querySelector('#ws4-ms-teach-next')?.addEventListener('click', () => {
+    _ws4Step = 2;
+    _ws4ShowStep(3);
+    const hdrDot    = container.querySelector('#ws4-hdr-dot');
+    const hdrStatus = container.querySelector('#ws4-hdr-status');
+    if (hdrDot)    hdrDot.className = 'w-3 h-3 rounded-full bg-warning flex-shrink-0 transition-all animate-pulse';
+    if (hdrStatus) { hdrStatus.textContent = 'Function Test'; hdrStatus.className = 'text-xs font-mono ml-auto text-warning'; }
   });
 
   // ── Sign-off checkboxes ───────────────────────────────────────────────────
@@ -3490,29 +4019,44 @@ function initLiveWs3(container) {
   });
 
   container.querySelector('#ws4-ms-close-btn')?.addEventListener('click', () => {
-    _ws4Step = 6;
-    container.querySelector('#ws4-ms-signoff')?.classList.add('hidden');
+    _ws4Step = 5;
+    _ws4ShowStep(5);
     const r = container.querySelector('#ws4-ch-result');
     if (r) {
       r.className = 'rounded-lg p-3 text-center font-bold text-base bg-success/20 text-success border border-success/40';
-      r.textContent = '✓ Scenario complete — SP1 and QoT diagnosed via IO-Link, replacement sensor commissioned correctly, output verified clear. Work order #WO-4412 closed.';
+      r.textContent = '✓ Scenario complete — factory state documented, teach performed with QoT confirmed, function test passed. Work order #WO-4412 closed.';
       r.classList.remove('hidden');
     }
+    const hdrDot    = container.querySelector('#ws4-hdr-dot');
+    const hdrStatus = container.querySelector('#ws4-hdr-status');
+    if (hdrDot)    hdrDot.className = 'w-3 h-3 rounded-full bg-success flex-shrink-0 transition-all';
+    if (hdrStatus) { hdrStatus.textContent = 'Scenario Complete'; hdrStatus.className = 'text-xs font-mono ml-auto text-success'; }
   });
 
   // ── Reset ─────────────────────────────────────────────────────────────────
-  container.querySelector('#ws4-ch-reset')?.addEventListener('click', async () => {
-    if (_ws4FaultCleanup) { await _ws4FaultCleanup(); _ws4FaultCleanup = null; }
-    _ws4ChDone = false; _ws4SpWritten = false;
-    _ws4Step = 0; _ws4VerifyStart = null; _ws4VerifyDone = false;
-    ['ws4-ms-observe','ws4-ms-read','ws4-ms-write','ws4-ms-verify','ws4-ms-signoff','ws4-ch-result','ws4-ms-read-result'].forEach(id => {
-      container.querySelector(`#${id}`)?.classList.add('hidden');
-    });
+  container.querySelector('#ws4-ch-reset')?.addEventListener('click', () => {
+    _ws4ChDone = false;
+    _ws4Step = 0; _ws4VerifyStart = null; _ws4VerifyDone = false; _ws4CurrentSp1 = null;
+    _ws4ShowStep(1);
+    container.querySelector('#ws4-ch-result')?.classList.add('hidden');
+    container.querySelector('#ws4-ms-read-result')?.classList.add('hidden');
     container.querySelector('#ws4-ms-read-next')?.classList.add('hidden');
-    const injectBtn    = container.querySelector('#ws4-ms-inject-btn');
-    const injectStatus = container.querySelector('#ws4-ms-inject-status');
-    if (injectBtn) { injectBtn.disabled = false; injectBtn.textContent = '▶ Start Scenario'; injectBtn.className = 'btn btn-warning btn-sm font-mono'; injectBtn.style.color = ''; }
-    if (injectStatus) injectStatus.textContent = '';
+    container.querySelector('#ws4-teach-result')?.classList.add('hidden');
+    container.querySelector('#ws4-ms-teach-next')?.classList.add('hidden');
+    const teachStatus = container.querySelector('#ws4-teach-status');
+    if (teachStatus) teachStatus.textContent = '';
+    const dielSp1Line = container.querySelector('#ws4-diel-sp1-line');
+    const dielSp1Val  = container.querySelector('#ws4-diel-sp1-val');
+    if (dielSp1Line) dielSp1Line.classList.add('hidden');
+    if (dielSp1Val)  dielSp1Val.textContent = '—';
+    const bar    = container.querySelector('#ws4-ms-vfy-bar');
+    const pctEl  = container.querySelector('#ws4-ms-vfy-pct');
+    const timer  = container.querySelector('#ws4-ms-vfy-timer');
+    const barLbl = container.querySelector('#ws4-ms-vfy-bar-label');
+    if (bar)    bar.value = 0;
+    if (pctEl)  pctEl.textContent = '0%';
+    if (timer)  timer.textContent = '0.0';
+    if (barLbl) barLbl.textContent = 'Part 1 of 2: bring target to detection point…';
     const hdrDot    = container.querySelector('#ws4-hdr-dot');
     const hdrStatus = container.querySelector('#ws4-hdr-status');
     if (hdrDot)    hdrDot.className = 'w-3 h-3 rounded-full bg-base-300 flex-shrink-0 transition-all';
@@ -3561,10 +4105,24 @@ function initLiveWs3(container) {
   container.querySelector('#ws3-teach-cancel')?.addEventListener('click', () => isduCommand(2, 'teach_cancel',     'ws3-teach-status'));
 }
 
+// Default SP/RP values for the finger-trigger demo (ambient ~27°C, max ~32°C)
+const _WS5_DEFAULTS = { sp1: 31, rp1: 28, sp2: 29, rp2: 26 };
+
 function initLiveWs4(container) {
   _tempBaseline = null;
-  _alarmThreshold = 40;
+  _alarmThreshold = _WS5_DEFAULTS.sp1;
   _ws5ChDone = false;
+  _ws5CalStep = 0; _ws5CalVerifyStart = null; _ws5CalVerifyDone = false;
+  _ws5CalCleanup = null; _ws5PreInjectTemp = null;
+
+  // Reset SP/RP to known demo values — write RPs first, then SPs
+  Promise.all([
+    isduWrite(3, 584, 0, _WS5_DEFAULTS.rp1, 'int16', 0.1, null),
+    isduWrite(3, 594, 0, _WS5_DEFAULTS.rp2, 'int16', 0.1, null),
+  ]).then(() => Promise.all([
+    isduWrite(3, 583, 0, _WS5_DEFAULTS.sp1, 'int16', 0.1, null),
+    isduWrite(3, 593, 0, _WS5_DEFAULTS.sp2, 'int16', 0.1, null),
+  ]));
 
   let chart = null;
 
@@ -3651,6 +4209,46 @@ function initLiveWs4(container) {
         ws5Result.classList.remove('hidden');
       }
     }
+
+    // ── WS5 calibration scenario: live panel + verify countdown ──────────────
+    const calLiveTempEl = container.querySelector('#ws5-cal-live-temp');
+    if (calLiveTempEl) calLiveTempEl.textContent = `${temp.toFixed(1)} °C`;
+
+    if (_ws5CalStep === 4 && !_ws5CalVerifyDone) {
+      const vfyTempEl    = container.querySelector('#ws5-cal-vfy-temp');
+      const vfyExpected  = container.querySelector('#ws5-cal-vfy-expected');
+      const vfyTimer     = container.querySelector('#ws5-cal-vfy-timer');
+      const vfyTbar      = container.querySelector('#ws5-cal-vfy-tbar');
+      const vfyLabel     = container.querySelector('#ws5-cal-vfy-label');
+      if (vfyTempEl)    vfyTempEl.textContent    = `${temp.toFixed(1)} °C`;
+      if (vfyExpected && _ws5PreInjectTemp !== null) {
+        vfyExpected.textContent = `${_ws5PreInjectTemp.toFixed(1)} ±1.5 °C`;
+      }
+      const inRange = _ws5PreInjectTemp !== null && Math.abs(temp - _ws5PreInjectTemp) < 1.5;
+      if (inRange) {
+        if (!_ws5CalVerifyStart) _ws5CalVerifyStart = Date.now();
+        const elapsed = (Date.now() - _ws5CalVerifyStart) / 1000;
+        const pct = Math.min(100, (elapsed / 3) * 100);
+        if (vfyTbar)  vfyTbar.style.width = `${pct.toFixed(1)}%`;
+        if (vfyTimer) vfyTimer.textContent = `${Math.min(elapsed, 3).toFixed(1)} s / 3.0 s`;
+        if (vfyLabel) vfyLabel.textContent = 'Reading stable — hold…';
+        if (elapsed >= 3) {
+          _ws5CalVerifyDone = true;
+          _ws5CalStep = 5;
+          if (vfyTbar) vfyTbar.style.width = '100%';
+          container.querySelector('#ws5-cal-signoff')?.classList.remove('hidden');
+          const calHdrDot    = container.querySelector('#ws5-cal-hdr-dot');
+          const calHdrStatus = container.querySelector('#ws5-cal-hdr-status');
+          if (calHdrDot)    calHdrDot.className = 'w-2.5 h-2.5 rounded-full bg-success flex-shrink-0';
+          if (calHdrStatus) { calHdrStatus.textContent = 'Verified — Sign Off'; calHdrStatus.className = 'font-mono text-xs font-bold text-success tracking-widest uppercase'; }
+        }
+      } else {
+        _ws5CalVerifyStart = null;
+        if (vfyTbar)  vfyTbar.style.width = '0%';
+        if (vfyTimer) vfyTimer.textContent = '0.0 s / 3.0 s';
+        if (vfyLabel) vfyLabel.textContent = 'Waiting for stable reading…';
+      }
+    }
   });
 
   // WS5 challenge reset
@@ -3667,49 +4265,257 @@ function initLiveWs4(container) {
     });
   }
 
-  // ── ISDU: read current SP1/SP2 from device, wire write buttons ───────────
+  // ── ISDU: read SP1/RP1/SP2/RP2, wire sliders and write buttons ───────────
   const sp1Slider   = container.querySelector('#ws4-alarm-slider');
   const sp2Slider   = container.querySelector('#ws4-sp2-slider');
+  const rp1Slider   = container.querySelector('#ws4-rp1-slider');
+  const rp2Slider   = container.querySelector('#ws4-rp2-slider');
+  const sp1ValEl    = container.querySelector('#ws4-slider-val');
   const sp2ValEl    = container.querySelector('#ws4-sp2-slider-val');
+  const rp1ValEl    = container.querySelector('#ws4-rp1-slider-val');
+  const rp2ValEl    = container.querySelector('#ws4-rp2-slider-val');
 
-  isduRead(3, 583, 0, 'int16', 0.1).then(sp1 => {
-    if (sp1 !== null) {
-      const actualEl = container.querySelector('#ws4-sp1-actual');
-      if (actualEl) actualEl.textContent = `${sp1}°C`;
-      if (sp1Slider) { sp1Slider.value = Math.min(80, Math.max(15, sp1)); }
-      const sliderVal = container.querySelector('#ws4-slider-val');
-      if (sliderVal) sliderVal.textContent = `${sp1Slider?.value ?? sp1}°C`;
-      _alarmThreshold = parseFloat(sp1Slider?.value ?? sp1);
-    }
-  });
-  isduRead(3, 593, 0, 'int16', 0.1).then(sp2 => {
-    if (sp2 !== null && sp2Slider) {
-      sp2Slider.value = Math.min(149, Math.max(15, sp2));
-      if (sp2ValEl) sp2ValEl.textContent = `${sp2}°C`;
-    }
-  });
-
-  if (sp2Slider && sp2ValEl) {
-    sp2Slider.addEventListener('input', () => { sp2ValEl.textContent = `${sp2Slider.value}°C`; });
+  function _setSlider(slider, valEl, v) {
+    if (slider) slider.value = Math.min(parseFloat(slider.max), Math.max(parseFloat(slider.min), v));
+    if (valEl)  valEl.textContent = `${v}°C`;
   }
+
+  isduRead(3, 583, 0, 'int16', 0.1).then(v => {
+    if (v === null) return;
+    _setSlider(sp1Slider, sp1ValEl, v);
+    _alarmThreshold = v;
+    const el = container.querySelector('#ws4-sp1-actual');
+    if (el) el.textContent = `${v} °C`;
+  });
+  isduRead(3, 584, 0, 'int16', 0.1).then(v => {
+    if (v === null) return;
+    _setSlider(rp1Slider, rp1ValEl, v);
+    const el = container.querySelector('#ws4-rp1-actual');
+    if (el) el.textContent = `${v} °C`;
+  });
+  isduRead(3, 593, 0, 'int16', 0.1).then(v => {
+    if (v === null) return;
+    _setSlider(sp2Slider, sp2ValEl, v);
+    const el = container.querySelector('#ws4-sp2-actual');
+    if (el) el.textContent = `${v} °C`;
+  });
+  isduRead(3, 594, 0, 'int16', 0.1).then(v => {
+    if (v === null) return;
+    _setSlider(rp2Slider, rp2ValEl, v);
+    const el = container.querySelector('#ws4-rp2-actual');
+    if (el) el.textContent = `${v} °C`;
+  });
+
+  if (sp1Slider && sp1ValEl) sp1Slider.addEventListener('input', () => { sp1ValEl.textContent = `${sp1Slider.value}°C`; });
+  if (sp2Slider && sp2ValEl) sp2Slider.addEventListener('input', () => { sp2ValEl.textContent = `${sp2Slider.value}°C`; });
+  if (rp1Slider && rp1ValEl) rp1Slider.addEventListener('input', () => { rp1ValEl.textContent = `${rp1Slider.value}°C`; });
+  if (rp2Slider && rp2ValEl) rp2Slider.addEventListener('input', () => { rp2ValEl.textContent = `${rp2Slider.value}°C`; });
 
   container.querySelector('#ws4-sp1-write')?.addEventListener('click', async () => {
     const val = parseFloat(sp1Slider?.value ?? _alarmThreshold);
     const ok = await isduWrite(3, 583, 0, val, 'int16', 0.1, 'ws4-sp1-status');
+    if (ok) { const el = container.querySelector('#ws4-sp1-actual'); if (el) el.textContent = `${val} °C`; }
+  });
+  container.querySelector('#ws4-rp1-write')?.addEventListener('click', async () => {
+    const val = parseFloat(rp1Slider?.value ?? 50);
+    const ok = await isduWrite(3, 584, 0, val, 'int16', 0.1, 'ws4-rp1-status');
+    if (ok) { const el = container.querySelector('#ws4-rp1-actual'); if (el) el.textContent = `${val} °C`; }
+  });
+  container.querySelector('#ws4-sp2-write')?.addEventListener('click', async () => {
+    const val = parseFloat(sp2Slider?.value ?? 50);
+    const ok = await isduWrite(3, 593, 0, val, 'int16', 0.1, 'ws4-sp2-status');
+    if (ok) { const el = container.querySelector('#ws4-sp2-actual'); if (el) el.textContent = `${val} °C`; }
+  });
+  container.querySelector('#ws4-rp2-write')?.addEventListener('click', async () => {
+    const val = parseFloat(rp2Slider?.value ?? 40);
+    const ok = await isduWrite(3, 594, 0, val, 'int16', 0.1, 'ws4-rp2-status');
+    if (ok) { const el = container.querySelector('#ws4-rp2-actual'); if (el) el.textContent = `${val} °C`; }
+  });
+
+  // ── Calibration scenario ─────────────────────────────────────────────────
+  function _ws5CalReset() {
+    _ws5CalStep = 0; _ws5CalVerifyStart = null; _ws5CalVerifyDone = false; _ws5PreInjectTemp = null;
+    container.querySelector('#ws5-cal-setup')?.classList.remove('hidden');
+    ['ws5-cal-observe','ws5-cal-diag','ws5-cal-write','ws5-cal-verify','ws5-cal-signoff','ws5-cal-result'].forEach(id => {
+      container.querySelector(`#${id}`)?.classList.add('hidden');
+    });
+    container.querySelector('#ws5-cal-read-result')?.classList.add('hidden');
+    container.querySelector('#ws5-cal-read-next')?.classList.add('hidden');
+    container.querySelector('#ws5-cal-diag-fb')?.classList.add('hidden');
+    const injectStatus = container.querySelector('#ws5-cal-inject-status');
+    if (injectStatus) injectStatus.textContent = '';
+    const vfyTbar  = container.querySelector('#ws5-cal-vfy-tbar');
+    const vfyTimer = container.querySelector('#ws5-cal-vfy-timer');
+    const vfyLabel = container.querySelector('#ws5-cal-vfy-label');
+    if (vfyTbar)  vfyTbar.style.width = '0%';
+    if (vfyTimer) vfyTimer.textContent = '0.0 s / 3.0 s';
+    if (vfyLabel) vfyLabel.textContent = 'Waiting for stable reading…';
+    ['ws5-cal-ck1','ws5-cal-ck2','ws5-cal-ck3'].forEach(id => {
+      const el = container.querySelector(`#${id}`); if (el) el.checked = false;
+    });
+    const closeBtn = container.querySelector('#ws5-cal-close-btn');
+    if (closeBtn) closeBtn.disabled = true;
+    const hdrDot    = container.querySelector('#ws5-cal-hdr-dot');
+    const hdrStatus = container.querySelector('#ws5-cal-hdr-status');
+    if (hdrDot)    hdrDot.className = 'w-2.5 h-2.5 rounded-full bg-base-300 flex-shrink-0';
+    if (hdrStatus) { hdrStatus.textContent = 'Ready'; hdrStatus.className = 'font-mono text-xs font-bold text-neutral-content/50 tracking-widest uppercase'; }
+    isduRead(3, 681, 0, 'int16', 0.1).then(v => {
+      const el = container.querySelector('#ws5-cal-live-offset');
+      if (el && v !== null) el.textContent = `${v.toFixed(1)} °C`;
+    });
+  }
+
+  container.querySelector('#ws5-cal-inject-btn')?.addEventListener('click', async () => {
+    const statusEl = container.querySelector('#ws5-cal-inject-status');
+    if (statusEl) statusEl.textContent = 'Injecting…';
+    const disp = container.querySelector('#ws4-temp-display');
+    if (disp && disp.textContent !== '—') _ws5PreInjectTemp = parseFloat(disp.textContent) || null;
+    const ok = await isduWrite(3, 681, 0, 3.0, 'int16', 0.1, null);
     if (ok) {
-      const actualEl = container.querySelector('#ws4-sp1-actual');
-      if (actualEl) actualEl.textContent = `${val}°C`;
+      _ws5CalCleanup = () => isduWrite(3, 681, 0, 0.0, 'int16', 0.1, null);
+      _ws5CalStep = 1;
+      if (statusEl) statusEl.textContent = 'Fault injected — offset now +3.0 °C';
+      const calLiveOffset = container.querySelector('#ws5-cal-live-offset');
+      if (calLiveOffset) calLiveOffset.textContent = '+3.0 °C';
+      container.querySelector('#ws5-cal-setup')?.classList.add('hidden');
+      container.querySelector('#ws5-cal-observe')?.classList.remove('hidden');
+      const hdrDot    = container.querySelector('#ws5-cal-hdr-dot');
+      const hdrStatus = container.querySelector('#ws5-cal-hdr-status');
+      if (hdrDot)    hdrDot.className = 'w-2.5 h-2.5 rounded-full bg-warning flex-shrink-0 animate-pulse';
+      if (hdrStatus) { hdrStatus.textContent = 'Scenario Active'; hdrStatus.className = 'font-mono text-xs font-bold text-warning tracking-widest uppercase'; }
+    } else {
+      if (statusEl) statusEl.textContent = 'Write failed — check connection';
     }
   });
 
-  container.querySelector('#ws4-sp2-write')?.addEventListener('click', async () => {
-    const val = parseFloat(sp2Slider?.value ?? 120);
-    await isduWrite(3, 593, 0, val, 'int16', 0.1, 'ws4-sp2-status');
+  container.querySelector('#ws5-cal-read-btn')?.addEventListener('click', async () => {
+    const statusEl = container.querySelector('#ws5-cal-read-status');
+    if (statusEl) statusEl.textContent = 'Reading…';
+    const val = await isduRead(3, 681, 0, 'int16', 0.1);
+    if (val !== null) {
+      const hexRaw = Math.round(val / 0.1) & 0xFFFF;
+      const hexStr = hexRaw.toString(16).toUpperCase().padStart(4, '0');
+      if (statusEl) statusEl.textContent = '';
+      const hexEl    = container.querySelector('#ws5-cal-read-hex');
+      const valEl    = container.querySelector('#ws5-cal-read-val');
+      const interpEl = container.querySelector('#ws5-cal-read-interp');
+      if (hexEl)    hexEl.textContent    = hexStr;
+      if (valEl)    valEl.textContent    = val.toFixed(1);
+      if (interpEl) interpEl.textContent = val > 0.5
+        ? `Positive offset — sensor reading is ${val.toFixed(1)} °C ABOVE true temperature. Matches the +3.0 °C drift described in work order CAL-0189.`
+        : `Offset at or near zero — sensor reporting accurately.`;
+      container.querySelector('#ws5-cal-read-result')?.classList.remove('hidden');
+      container.querySelector('#ws5-cal-read-next')?.classList.remove('hidden');
+    } else {
+      if (statusEl) statusEl.textContent = 'Read failed — check connection';
+    }
   });
+
+  container.querySelector('#ws5-cal-read-next')?.addEventListener('click', () => {
+    _ws5CalStep = 2;
+    container.querySelector('#ws5-cal-diag')?.classList.remove('hidden');
+  });
+
+  container.querySelectorAll('.ws5-cal-diag-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const ans  = btn.dataset.ans;
+      const fbEl = container.querySelector('#ws5-cal-diag-fb');
+      if (ans === 'correct') {
+        if (fbEl) {
+          fbEl.textContent = '✓ Correct. Writing 0.0 °C removes the offset entirely and restores the sensor to its factory-calibrated state.';
+          fbEl.className = 'text-sm font-semibold text-success';
+          fbEl.classList.remove('hidden');
+        }
+        _ws5CalStep = 3;
+        setTimeout(() => container.querySelector('#ws5-cal-write')?.classList.remove('hidden'), 500);
+      } else {
+        const msg = ans === 'wrong-add'
+          ? '✕ Incorrect. Adding +3.0 °C on top of the existing +3.0 °C offset would produce +6.0 °C total error — twice as wrong. The offset needs to return to zero.'
+          : '✕ Incorrect. Writing −6.0 °C would over-correct and cause the sensor to read 6 degrees too low. The goal is 0.0 °C — no offset, no error.';
+        if (fbEl) { fbEl.textContent = msg; fbEl.className = 'text-sm font-semibold text-error'; fbEl.classList.remove('hidden'); }
+      }
+    });
+  });
+
+  container.querySelector('#ws5-cal-write-btn')?.addEventListener('click', async () => {
+    const statusEl = container.querySelector('#ws5-cal-write-status');
+    if (statusEl) statusEl.textContent = 'Writing…';
+    const ok = await isduWrite(3, 681, 0, 0.0, 'int16', 0.1, null);
+    if (ok) {
+      _ws5CalCleanup = null;
+      _ws5CalStep = 4;
+      if (statusEl) statusEl.textContent = 'Write successful — offset restored to 0.0 °C';
+      const calLiveOffset = container.querySelector('#ws5-cal-live-offset');
+      if (calLiveOffset) calLiveOffset.textContent = '0.0 °C';
+      container.querySelector('#ws5-cal-verify')?.classList.remove('hidden');
+      const hdrDot    = container.querySelector('#ws5-cal-hdr-dot');
+      const hdrStatus = container.querySelector('#ws5-cal-hdr-status');
+      if (hdrDot)    hdrDot.className = 'w-2.5 h-2.5 rounded-full bg-info flex-shrink-0 animate-pulse';
+      if (hdrStatus) { hdrStatus.textContent = 'Verifying…'; hdrStatus.className = 'font-mono text-xs font-bold text-info tracking-widest uppercase'; }
+    } else {
+      if (statusEl) statusEl.textContent = 'Write failed — check connection';
+    }
+  });
+
+  ['ws5-cal-ck1','ws5-cal-ck2','ws5-cal-ck3'].forEach(id => {
+    container.querySelector(`#${id}`)?.addEventListener('change', () => {
+      const allChecked = ['ws5-cal-ck1','ws5-cal-ck2','ws5-cal-ck3']
+        .every(cid => container.querySelector(`#${cid}`)?.checked);
+      const closeBtn = container.querySelector('#ws5-cal-close-btn');
+      if (closeBtn) closeBtn.disabled = !allChecked;
+    });
+  });
+
+  container.querySelector('#ws5-cal-close-btn')?.addEventListener('click', () => {
+    _ws5CalStep = 6;
+    const r = container.querySelector('#ws5-cal-result');
+    if (r) {
+      r.textContent = '✓ Work order CAL-0189 closed — Calibration Offset corrected from +3.0 °C to 0.0 °C via ISDU acyclic write. No physical sensor removal required.';
+      r.classList.remove('hidden');
+    }
+    const hdrDot    = container.querySelector('#ws5-cal-hdr-dot');
+    const hdrStatus = container.querySelector('#ws5-cal-hdr-status');
+    if (hdrDot)    hdrDot.className = 'w-2.5 h-2.5 rounded-full bg-success flex-shrink-0';
+    if (hdrStatus) { hdrStatus.textContent = 'Closed'; hdrStatus.className = 'font-mono text-xs font-bold text-success tracking-widest uppercase'; }
+  });
+
+  container.querySelector('#ws5-cal-reset')?.addEventListener('click', () => {
+    if (_ws5CalCleanup) { _ws5CalCleanup(); _ws5CalCleanup = null; }
+    _ws5CalReset();
+  });
+
+  _ws5CalReset();
 }
 
 function initLiveWs5(container) {
   _ws6ChGuess = null; _ws6ChSubmitted = false; _ws6ChColor = null;
+
+  async function ws6WritePdout(hex) {
+    const base = window.IO_LINK_API_BASE || '';
+    const statusEl = container.querySelector('#ws6-write-status');
+    if (statusEl) statusEl.textContent = 'Writing…';
+    try {
+      const res = await fetch(`${base}/api/io-link/port/4/pdout`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ value: hex }),
+      });
+      const d = await res.json();
+      if (statusEl) {
+        statusEl.textContent = d.success ? `✓ Written ${hex}` : '✗ Write failed';
+        setTimeout(() => { if (statusEl) statusEl.textContent = ''; }, 2500);
+      }
+    } catch (e) {
+      if (statusEl) {
+        statusEl.textContent = '✗ Network error — is the backend running?';
+        setTimeout(() => { if (statusEl) statusEl.textContent = ''; }, 3000);
+      }
+    }
+  }
+
+  container.querySelectorAll('.ws6-write-btn').forEach(btn => {
+    btn.addEventListener('click', () => ws6WritePdout(btn.getAttribute('data-hex')));
+  });
 
   startLiveData(data => {
     const port = getPort(data, 4);
@@ -3722,7 +4528,6 @@ function initLiveWs5(container) {
     const anim = d.animation || 'off';
     const hex  = d.raw_hex || '—';
 
-    // Store live colour for challenge
     _ws6ChColor = c1;
 
     const c1El  = container.querySelector('#ws5-c1-circle');
@@ -3750,10 +4555,14 @@ function initLiveWs5(container) {
     applyColour(c2El, c2);
     if (c1Lbl) c1Lbl.textContent = c1;
     if (c2Lbl) c2Lbl.textContent = c2;
-    const animEl = container.querySelector('#ws5-animation');
-    if (animEl) animEl.textContent = anim;
-    const hexEl = container.querySelector('#ws5-raw-hex');
-    if (hexEl) hexEl.textContent = hex || '—';
+
+    const setText = (id, val) => { const el = container.querySelector(`#${id}`); if (el) el.textContent = val || '—'; };
+    setText('ws5-animation', anim);
+    setText('ws5-speed', d.speed);
+    setText('ws5-pattern', d.pulse_pattern);
+    setText('ws5-c1-intensity', d.color1_intensity);
+    setText('ws5-c2-intensity', d.color2_intensity);
+    setText('ws5-raw-hex', hex);
   });
 
   // ── WS6 challenge: colour prediction ─────────────────────────────────────

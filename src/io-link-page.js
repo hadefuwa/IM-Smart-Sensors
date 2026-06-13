@@ -51,7 +51,7 @@ function _portCardHtml(n) {
         <div class="grid grid-cols-[auto_1fr] gap-x-3 gap-y-0.5 text-xs font-mono">
           <span class="opacity-40">Vendor</span><span id="pc-${n}-vendor">—</span>
           <span class="opacity-40">Device</span><span id="pc-${n}-device">—</span>
-          <span class="opacity-40">PDin</span><span id="pc-${n}-pdin" class="font-mono truncate">—</span>
+          <span class="opacity-40" id="pc-${n}-pdin-label">PDin</span><span id="pc-${n}-pdin" class="font-mono truncate">—</span>
         </div>
         <div id="pc-${n}-events" class="flex flex-wrap gap-1"></div>
         <div id="pc-${n}-nodev" class="hidden text-xs text-warning font-medium">⚠ IO-Link mode — no device detected</div>
@@ -330,9 +330,35 @@ function updatePortCards(ports) {
       actionEl.classList.toggle('hidden', !showSwitch);
     }
 
-    // PDin hex — show up to 10 hex chars (5 bytes)
-    const pdinHex = p.pdin_hex || p.pdin || '';
-    set(`pc-${n}-pdin`, pdinHex ? (pdinHex.length > 10 ? pdinHex.substring(0, 10) + '…' : pdinHex) : '—');
+    // PDin hex / PDout decoded (CL50 is PDout-only)
+    const pdinLabelEl = document.getElementById(`pc-${n}-pdin-label`);
+    if ((p.device_type || '') === 'status_led') {
+      if (pdinLabelEl) pdinLabelEl.textContent = 'PDout';
+      const d = p.pdout_decoded || {};
+      if (d.color1 && d.color1 !== 'off') {
+        const CL_HEX = {
+          'Green':'#22c55e','Red':'#ef4444','Orange':'#f97316','Amber':'#f59e0b',
+          'Yellow':'#eab308','Lime Green':'#84cc16','Spring Green':'#10b981',
+          'Cyan':'#06b6d4','Sky Blue':'#38bdf8','Blue':'#3b82f6','Violet':'#8b5cf6',
+          'Magenta':'#ec4899','Rose':'#f43f5e','White':'#f8fafc',
+        };
+        const hex = CL_HEX[d.color1] || '#64748b';
+        const anim = d.animation && d.animation !== 'Steady' ? ` · ${d.animation}` : '';
+        const intensity = d.color1_intensity && d.color1_intensity !== 'High' ? ` · ${d.color1_intensity}` : '';
+        setHtml(`pc-${n}-pdin`,
+          `<span style="display:inline-flex;align-items:center;gap:4px">` +
+          `<span style="width:8px;height:8px;border-radius:50%;background:${hex};box-shadow:0 0 5px ${hex};flex-shrink:0"></span>` +
+          `${escapeHtml(d.color1)}${escapeHtml(anim)}${escapeHtml(intensity)}` +
+          `</span>`
+        );
+      } else {
+        set(`pc-${n}-pdin`, d.raw_hex ? d.raw_hex : '—');
+      }
+    } else {
+      if (pdinLabelEl) pdinLabelEl.textContent = 'PDin';
+      const pdinHex = p.pdin_hex || p.pdin || '';
+      set(`pc-${n}-pdin`, pdinHex ? (pdinHex.length > 10 ? pdinHex.substring(0, 10) + '…' : pdinHex) : '—');
+    }
 
     // Data source badge
     const srcEl = document.getElementById(`pc-${n}-source`);

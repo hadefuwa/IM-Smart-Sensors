@@ -113,7 +113,7 @@ Keyed by `(vendor_id_int, device_id_int)`. Three devices registered:
 
 | Key | Device | Label |
 |-----|--------|-------|
-| `(310, 733)` | IFM TV7105 | Temperature sensor — SP1/SP2 setpoints (index 583/593, int16, scale 0.1), teach commands, calibration offset |
+| `(310, 733)` | IFM TV7105 | Temperature sensor — SP1 (583), RP1 (584), SP2 (593), RP2 (594) all int16 scale 0.1; calibration offset (681); teach commands. SP must always be above its own RP — no cross-constraint between SP1 and SP2. |
 | `(1586, 1052673)` or `(896, 1069056)` | Carlo Gavazzi / RS PRO capacitive M18 | SSC1 SP1 (index 60/sub1, int16), QoT (75), QoR (76), teach start/stop/cancel commands |
 | `(342, 131842)` | Contrinex LTR-M18PA-PMS-603 photoelectric | SSC1 SP1 (index 0x3C/sub1, uint32), output logic (0x3D/sub1), sensor mode (0x40/sub2), teach/cancel/reset commands |
 
@@ -270,6 +270,60 @@ Fields per panel: `det` (DETECTED / NO OBJECT), `instab` (ACTIVE / CLEAR), `over
 
 Registered in `backend/device_parameters.py` at key `(612, 131094)` under `output_logic`.
 
+## CP0001 Worksheet 5 — Temperature Sensor (IFM TV7105)
+
+Driven by `initLiveWs4` (naming offset — WS5 is `initLiveWs4`, WS4 is `initLiveWs3`, etc.).
+
+### TV7105 Setpoint / Reset Point System
+
+The TV7105 has two independent switching outputs. Each has its own Switch Point (SP) and Reset Point (RP):
+
+| Index | Param | dtype | scale | Role |
+|-------|-------|-------|-------|------|
+| 583 | SP1 | int16 | 0.1 | OUT1 switches ON when temp rises above SP1 |
+| 584 | RP1 | int16 | 0.1 | OUT1 switches OFF when temp falls below RP1 |
+| 593 | SP2 | int16 | 0.1 | OUT2 switches ON when temp rises above SP2 |
+| 594 | RP2 | int16 | 0.1 | OUT2 switches OFF when temp falls below RP2 |
+
+**SP1 and SP2 are completely independent** — there is no ordering constraint between them at the hardware level. Each output can be at any temperature. The only enforced constraint is **SP must be above its own RP** (same output). The sensor will silently reject an ISDU write that violates SP > RP.
+
+**Hysteresis:** the gap between SP and RP prevents chattering when temperature hovers near the setpoint. The worksheet includes an explanation card with a three-column diagram (Below RP → holds OFF | RP→SP zone → holds state | Above SP → ON).
+
+### Demo Setpoints — Auto-Reset on Load
+
+`_WS5_DEFAULTS = { sp1: 31, rp1: 28, sp2: 29, rp2: 26 }` — chosen for ambient ~27°C, max finger-warmth ~32°C:
+
+- **SP2=29°C** — pre-warning fires at +2°C above ambient, easy first trigger
+- **SP1=31°C** — main alarm fires near the limit of finger warmth
+- **RP1=28°C** — resets in the middle zone, clearly demonstrates hysteresis
+- **RP2=26°C** — resets well below ambient so OUT2 clears quickly
+
+On every WS5 load, `initLiveWs4` writes these values in the correct order: RP1 and RP2 first (parallel), then SP1 and SP2 (parallel). This ensures students always start from a known state regardless of what the previous student changed.
+
+**Write order is critical** — always lower the RP before lowering the SP. Writing SP below the current RP will be rejected by the sensor.
+
+### Calibration Drift Scenario (work order CAL-0189)
+
+State machine — `_ws5CalStep`:
+
+| Value | Meaning |
+|-------|---------|
+| 0 | Idle |
+| 1 | Fault injected — calibration offset +3.0°C written to index 681 |
+| 2 | Student observed the drift |
+| 3 | Correct diagnosis selected |
+| 4 | ISDU read confirmed offset value |
+| 5 | Fix written (offset → 0.0°C) — verify step visible |
+| 6 | Verified (3-second hold within ±1.5°C of pre-inject reading) — sign-off |
+
+`_ws5CalCleanup` — set to `() => isduWrite(3, 681, 0, 0.0, 'int16', 0.1, null)` on inject, cleared after student fix write. Called in `stopLiveData()` so navigating away mid-scenario always restores the sensor.
+
+Calibration offset: index 681, subindex 0, int16, scale 0.1, range ±10°C. Index 583 default for SP1 in device_parameters.py is 60.0°C.
+
+### CP0002 Worksheet 9 — PT100 Technical Deep-Dive
+
+Technical PT100 content (resistance curve, IEC 60751 accuracy, PDin hex decode exercises, two's complement) lives in `src/cp0002-page.js` as worksheet index 9. The live panel `#cp2-ws9-live-panel` is wired by `initLiveCp2Ws9()` — called from `initWorksheetInteractivity` when the panel element is present.
+
 ## CP0001 Worksheet 1 — Capacitive Challenge Tolerance
 
 The WS1 challenge (trigger proximity, keep capacitive clean) uses `_chCapTolerance` (default 30) as the raw capacitive value threshold before failure, instead of `> 0`. A slider below the challenge box lets the student adjust from 0–10000. The slider is wired in `initLiveIntro` and resets to 30 on each page load.
@@ -336,6 +390,87 @@ Touch events on X11 (WaveShare on Debian/Openbox) are emulated as mouse events �
 - `port_labels` — display label and device-type hint per port number. The label overrides the raw device product name in the UI; the hint fills in when auto-detection returns `unknown`.
 
 The Settings page UI writes `io_link` fields via `PUT /api/io-link/config`. `port_labels` and `mqtt` must be edited in the file directly.
+
+## Banner CL50 Pro (Port 4) — PDout Control
+
+The CL50 Pro RGB is a PDout-only device (`device_type = 'status_led'`, vendor_id=451, device_id=393229). It has no PDin; control is write-only via the AL1350 pdout/setdata service call.
+
+**PDout 3-byte layout** (from official Banner CL50PKQ datasheet):
+
+| Byte | Bits | Field |
+|------|------|-------|
+| Octet0 | [7:6] | Audible (0=Off, 1=On, 2=Pulsed, 3=SOS) |
+| Octet0 | [5:3] | Color 2 Intensity (C2I) |
+| Octet0 | [2:0] | Color 1 Intensity (C1I) |
+| Octet1 | [7:6] | Speed (0=Medium, 1=Fast, 2=Slow) |
+| Octet1 | [5:3] | Pulse Pattern (0=Normal, 1=Strobe, 2=Three Pulse, 3=SOS, 4=Random) |
+| Octet1 | [2:0] | Animation (0=Off, 1=Steady, 2=Flash, 3=Two Color Flash, 4=Intensity Sweep) |
+| Octet2 | [7:4] | Color 2 index |
+| Octet2 | [3:0] | Color 1 index |
+
+**Intensity values:** 0=High, 1=Low, 2=Medium, 3=Off, 4=Custom.
+**Color indices:** 0=Green, 1=Red, 2=Orange, 3=Amber, 4=Yellow, 5=Lime, 6=Spring Green, 7=Cyan, 8=Sky Blue, 9=Blue, 10=Violet, 11=Magenta, 12=Rose, 13=White, 14=Custom1, 15=Custom2.
+
+**Startup default:** `write_pdout(4, "000100")` — Green, Steady, High intensity. Written in `start_background_polling()`.
+
+**AL1350 write endpoint:** POST `http://<ip>/` with `{"code":"request","cid":-1,"adr":"/iolinkmaster/port[4]/iolinkdevice/pdout/setdata","data":{"newvalue":"hex"}}`.
+
+**Frontend:** `_cl50WritePdout(hex, statusElId)` and `_cl50StartSweep(color1, color2, speed, statusElId)` in `src/home-page.js`. The Port 4 card contains quick-colour buttons and a full control grid. The CL50 config modal (`#modal-led-config`) shows all fields and a live hex preview (`#led-modal-hex-preview`) that updates on every dropdown change.
+
+### Intensity Sweep — Firmware Bug (v1.0.2)
+
+**CL50 firmware 1.0.2 does not execute animation=4 (Intensity Sweep) from PDout.** The AL1350 accepts the write (returns code 200), but the light shows a static colour at the specified C1I intensity — it does not cycle. All other animation values (0–3) work correctly.
+
+Attempted workarounds that did NOT fix it:
+- Setting C1I=Off(3) while sending animation=4 — light simply turned off.
+- Writing sweep configuration to ISDU preset indices 0x40–0x44 — writes accepted but had no effect on PDout behaviour.
+- Issuing animation=4 directly via AL1350 HTTP bypassing the backend — same static result.
+
+**Software sweep workaround:** `io_link_fastapi.py` runs a background asyncio task (`_run_sweep_loop`) that cycles C1I through Low→Medium→High→Medium→Low at configurable intervals using animation=Steady. This produces a visible breathing effect.
+
+Sweep step sequence (never reaches Off so the light stays dimly lit at the bottom):
+```python
+SEQ = [
+    (1, 2),  # Low    — 2 holds (dim floor)
+    (2, 2),  # Medium — 2 holds (ramp up)
+    (0, 4),  # High   — 4 holds (linger at peak)
+    (2, 2),  # Medium — 2 holds (ramp down)
+    (1, 2),  # Low    — 2 holds (dim floor)
+]
+# step_ms: 40 = fast, 100 = medium, 250 = slow
+```
+
+**Backend sweep endpoints:**
+
+| Endpoint | Method | Body | Action |
+|----------|--------|------|--------|
+| `/api/io-link/port/{n}/pdout/sweep` | POST | `{color1, color2, speed}` | Start software sweep task |
+| `/api/io-link/port/{n}/pdout/sweep/stop` | POST | — | Cancel sweep task |
+
+Any write to `/api/io-link/port/{n}/pdout` also cancels the running sweep first (via `_stop_sweep(port_num)` at the top of `write_port_pdout`).
+
+**Frontend routing:** In `_initCl50Controls()` and the modal save handler, if `animation === 4` the write button calls `_cl50StartSweep()` instead of `_cl50WritePdout()`. Any other animation write stops the sweep implicitly via the backend's `_stop_sweep` call in `write_port_pdout`.
+
+### CL50 Modal Improvements
+
+- **No auto-close:** Modal no longer closes after Write. The DaisyUI `<form method="dialog">` was triggering an implicit submit — Save button was moved outside the form and the `setTimeout close()` was removed.
+- **Live hex preview:** `_modalHexPreview()` recalculates and updates `#led-modal-hex-preview` whenever any of the 6 modal selects change. Shows the exact 6-character hex that will be written (or displays "sweep" label if animation=4).
+
+## Pi Performance Optimisations
+
+Renderer CPU typically ~97% after these changes (was ~119% before).
+
+**Chart.js flush throttle:** Chart `update()` is throttled to once per 2 seconds via a `_chartFlushPending` dirty flag in the WebSocket handler. Data points are still appended every push but redraws are batched.
+
+**Mimic component dirty-key guards (`src/components/mimic-components.js`):** All 5 components (temp gauge, capacitive indicator, proximity LED, counter, light stack) compare a stringified dirty key before calling `innerHTML =` or canvas draw. Components skip re-render when sensor values haven't changed between 500 ms pushes.
+
+**Chromium kiosk flags (`/home/pi/kiosk.sh`):**
+```
+--disable-accelerated-2d-canvas
+--num-raster-threads=2
+--disable-gpu-compositing
+```
+These reduce CPU overhead from GPU-acceleration paths that don't benefit on the Pi's framebuffer configuration.
 
 ## Pi Infrastructure
 

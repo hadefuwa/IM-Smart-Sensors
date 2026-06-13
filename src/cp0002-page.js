@@ -1174,6 +1174,197 @@ const WORKSHEETS = [
       <button type="button" class="btn btn-ghost btn-sm ws-suggested-btn" data-target="cp2-ws7-suggested">Show suggested answers</button>
       <div id="cp2-ws7-suggested" class="hidden p-4 rounded-lg border border-base-300 bg-base-300/50 text-base-content/80 text-sm leading-relaxed ws-suggested">Q1: b — Vendor ID 612 is shown on the Port 1 card on the IO-Link Master page. Q2: c — 612 is registered to OMRON Corporation in the IO-Link Community vendor table. Q3: b — the Device ID uniquely identifies the model; the master can use it to restore IODD parameters automatically after a swap. Q4: b — instability alarm means the target is at the sensing range boundary; adjust alignment before considering replacement. Q5: c — Vendor 1586 (RS Pro) Device 1052673 = the M18 capacitive sensor (Carlo Gavazzi OEM, RS Pro part 2377240).</div>
     `
+  },
+  {
+    id: 9,
+    title: 'PT100 Temperature Sensors — From Resistance to Process Data',
+    shortDesc: 'Physics, PDin encoding, hex decode calculations, and calibration offset engineering.',
+    estimatedTime: 'About 25 min',
+    whyItMatters: 'Understanding how the PT100 element works — and how the sensor encodes its reading into IO-Link PDin — lets you decode raw data without a datasheet, calculate expected resistance values to fault-find wiring, and properly engineer calibration offset corrections rather than guessing.',
+    relatedDashboard: 'CP0001 Worksheet 5 — Temperature Sensor',
+    prerequisites: 'CP0001 Worksheet 5 recommended',
+    contentHtml: `
+      <p class="text-base-content/90 leading-relaxed text-base">The IFM TV7105 on Port 3 is built around a PT100 resistance temperature detector. The "PT" means platinum, the "100" means its resistance is exactly 100 Ω at 0 °C. Everything the sensor transmits via IO-Link traces back to how that resistance changes with temperature — and how the sensor encodes that number into a compact binary PDin payload.</p>
+
+      <!-- Resistance curve section -->
+      <div class="rounded-xl border border-base-300 bg-base-200 p-4 mt-4 space-y-3">
+        <p class="text-xs font-semibold text-base-content/60 uppercase tracking-wide">The PT100 Resistance Curve</p>
+        <p class="text-sm text-base-content/80">Platinum has a very stable and predictable relationship between resistance and temperature, described by the <strong>Callendar–Van Dusen equation</strong>. For the working temperature range of industrial sensors, a simplified linear approximation is accurate enough:</p>
+        <div class="rounded-lg border border-primary/30 bg-primary/5 p-3 text-center">
+          <p class="font-mono text-base font-bold text-base-content">R(T) = 100 × (1 + α × T)</p>
+          <p class="text-xs text-base-content/60 mt-1">where α = 0.00385 °C⁻¹ &nbsp;(IEC 60751 standard coefficient)</p>
+        </div>
+        <p class="text-sm text-base-content/80">This means for every 1 °C rise, resistance increases by approximately <strong>0.385 Ω</strong>.</p>
+        <div class="overflow-x-auto mt-2">
+          <table class="table table-zebra table-sm text-sm w-full">
+            <thead><tr><th>Temperature (°C)</th><th>Calculation</th><th>Resistance (Ω)</th></tr></thead>
+            <tbody>
+              <tr><td>−40 °C</td><td>100 × (1 + 0.00385 × −40)</td><td class="font-mono font-semibold">84.6 Ω</td></tr>
+              <tr><td>0 °C</td><td>100 × (1 + 0.00385 × 0)</td><td class="font-mono font-semibold">100.0 Ω</td></tr>
+              <tr><td>25 °C</td><td>100 × (1 + 0.00385 × 25)</td><td class="font-mono font-semibold">109.6 Ω</td></tr>
+              <tr><td>60 °C</td><td>100 × (1 + 0.00385 × 60)</td><td class="font-mono font-semibold">123.1 Ω</td></tr>
+              <tr><td>100 °C</td><td>100 × (1 + 0.00385 × 100)</td><td class="font-mono font-semibold">138.5 Ω</td></tr>
+              <tr><td>150 °C</td><td>100 × (1 + 0.00385 × 150)</td><td class="font-mono font-semibold">157.8 Ω</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="text-sm text-base-content/80"><strong>Why this matters for fault-finding:</strong> If you suspect a wiring fault rather than a sensor fault, measure the element resistance with a multimeter and use the formula to verify it matches the expected temperature. A reading of 0 Ω is a short; ∞ Ω (open circuit) decodes to −40 °C on the IO-Link dashboard — the classic broken-element diagnostic.</p>
+      </div>
+
+      <!-- IEC 60751 accuracy -->
+      <div class="rounded-lg border border-secondary/30 bg-secondary/5 p-3 mt-3 text-sm space-y-2">
+        <p class="font-bold text-base-content">IEC 60751 Accuracy Classes</p>
+        <p class="text-base-content/80">The standard defines tolerance classes for PT100 elements. The TV7105 achieves <strong>Class B</strong> (the most common industrial grade):</p>
+        <div class="overflow-x-auto">
+          <table class="table table-sm text-xs w-full">
+            <thead><tr><th>Class</th><th>Tolerance formula</th><th>At 0 °C</th><th>At 25 °C</th><th>At 100 °C</th></tr></thead>
+            <tbody>
+              <tr class="text-base-content/50"><td>AA</td><td>±(0.10 + 0.0017·|T|)</td><td>±0.10 °C</td><td>±0.14 °C</td><td>±0.27 °C</td></tr>
+              <tr class="text-base-content/50"><td>A</td><td>±(0.15 + 0.0020·|T|)</td><td>±0.15 °C</td><td>±0.20 °C</td><td>±0.35 °C</td></tr>
+              <tr class="font-semibold"><td>B ✓</td><td>±(0.30 + 0.0050·|T|)</td><td>±0.30 °C</td><td>±0.43 °C</td><td>±0.80 °C</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="text-base-content/70 text-xs">This is the <em>element</em> tolerance — the sensing platinum film. The complete instrument (sensor + electronics) may add further error. A calibration offset (Index 681) can compensate for both element tolerance and installation-induced error.</p>
+      </div>
+
+      <!-- PDin encoding section -->
+      <div class="rounded-xl border border-base-300 bg-base-200 p-4 mt-4 space-y-3">
+        <p class="text-xs font-semibold text-base-content/60 uppercase tracking-wide">PDin Encoding — How °C becomes bytes</p>
+        <p class="text-sm text-base-content/80">The TV7105 PDin is 4 bytes. The temperature is carried in bytes 0–1 as a <strong>signed 16-bit integer (int16)</strong> with a scale factor of <strong>×0.1</strong>. Bytes 2–3 carry SP1/SP2 switching outputs and error flags.</p>
+
+        <!-- Byte layout visual -->
+        <div class="rounded-lg bg-base-300/50 p-3 font-mono text-xs overflow-x-auto">
+          <div class="flex gap-1 min-w-max">
+            <div class="flex flex-col items-center gap-1">
+              <div class="w-20 h-9 rounded flex items-center justify-center bg-primary/20 border border-primary/40 font-bold text-primary text-sm">Byte 0</div>
+              <span class="text-base-content/50 text-center leading-tight">temp<br>MSB</span>
+            </div>
+            <div class="flex flex-col items-center gap-1">
+              <div class="w-20 h-9 rounded flex items-center justify-center bg-primary/20 border border-primary/40 font-bold text-primary text-sm">Byte 1</div>
+              <span class="text-base-content/50 text-center leading-tight">temp<br>LSB</span>
+            </div>
+            <div class="flex flex-col items-center gap-1 ml-2">
+              <div class="w-20 h-9 rounded flex items-center justify-center bg-base-300 border border-base-content/20 text-sm">Byte 2</div>
+              <span class="text-base-content/40 text-center leading-tight">SP1<br>flags</span>
+            </div>
+            <div class="flex flex-col items-center gap-1">
+              <div class="w-20 h-9 rounded flex items-center justify-center bg-base-300 border border-base-content/20 text-sm">Byte 3</div>
+              <span class="text-base-content/40 text-center leading-tight">SP2<br>flags</span>
+            </div>
+          </div>
+        </div>
+
+        <p class="text-sm text-base-content/80"><strong>Encoding steps:</strong></p>
+        <ol class="list-decimal list-inside text-sm text-base-content/80 space-y-1 ml-2">
+          <li>Take the temperature in °C, multiply by 10 (to remove the decimal): 25.4 °C → <strong>254</strong></li>
+          <li>Store as a 16-bit signed integer (big-endian, MSB first): 254 decimal = <strong>0x00FE</strong></li>
+          <li>Bytes 0–1 of PDin = <strong>00 FE</strong></li>
+        </ol>
+        <p class="text-sm text-base-content/80">For negative temperatures, the int16 wraps into two's complement: −10.0 °C → −100 decimal → <strong>0xFF9C</strong> (since 65536 − 100 = 65436 = 0xFF9C).</p>
+      </div>
+
+      <!-- Hex decode exercises -->
+      <div class="rounded-xl border-2 border-secondary/30 bg-secondary/5 p-4 mt-4 space-y-4">
+        <p class="font-bold text-base-content text-base">Hex Decode Exercises — calculate the temperature</p>
+        <p class="text-sm text-base-content/80">For each PDin hex value below: extract bytes 0–1, interpret as a signed int16, then divide by 10 to get °C. Use the two's complement rule for values above 0x7FFF.</p>
+
+        <div class="space-y-3">
+          <div class="rounded-lg border border-base-300 bg-base-200 p-3 text-sm space-y-2">
+            <p><strong>Exercise 1:</strong> PDin = <code class="font-mono bg-base-300 px-1 rounded">01 2C FF 00</code></p>
+            <p class="text-base-content/70">Bytes 0–1 = <code class="font-mono">01 2C</code> → 0x012C in decimal = <span class="blur-sm hover:blur-none transition-all cursor-pointer select-none text-success font-mono">300</span> → ÷10 = <span class="blur-sm hover:blur-none transition-all cursor-pointer select-none text-success font-bold">30.0 °C</span> <em class="text-base-content/40">(hover to reveal)</em></p>
+          </div>
+          <div class="rounded-lg border border-base-300 bg-base-200 p-3 text-sm space-y-2">
+            <p><strong>Exercise 2:</strong> PDin = <code class="font-mono bg-base-300 px-1 rounded">01 96 FF 00</code></p>
+            <p class="text-base-content/70">Bytes 0–1 = <code class="font-mono">01 96</code> → 0x0196 = <span class="blur-sm hover:blur-none transition-all cursor-pointer select-none text-success font-mono">406</span> → ÷10 = <span class="blur-sm hover:blur-none transition-all cursor-pointer select-none text-success font-bold">40.6 °C</span> <em class="text-base-content/40">(hover to reveal)</em></p>
+          </div>
+          <div class="rounded-lg border border-base-300 bg-base-200 p-3 text-sm space-y-2">
+            <p><strong>Exercise 3:</strong> PDin = <code class="font-mono bg-base-300 px-1 rounded">FF 9C FF 00</code></p>
+            <p class="text-base-content/70">Bytes 0–1 = <code class="font-mono">FF 9C</code> → 0xFF9C as signed int16: <span class="blur-sm hover:blur-none transition-all cursor-pointer select-none text-success font-mono">0xFF9C = 65436 unsigned; 65436 − 65536 = −100</span> → ÷10 = <span class="blur-sm hover:blur-none transition-all cursor-pointer select-none text-success font-bold">−10.0 °C</span> <em class="text-base-content/40">(hover to reveal)</em></p>
+          </div>
+          <div class="rounded-lg border border-base-300 bg-base-200 p-3 text-sm space-y-2">
+            <p><strong>Exercise 4:</strong> PDin = <code class="font-mono bg-base-300 px-1 rounded">FE 70 00 00</code> &nbsp;<em class="text-base-content/50 text-xs">(this is the −40 °C disconnection default)</em></p>
+            <p class="text-base-content/70">Bytes 0–1 = <code class="font-mono">FE 70</code> → 0xFE70 as signed int16: <span class="blur-sm hover:blur-none transition-all cursor-pointer select-none text-success font-mono">0xFE70 = 65136 unsigned; 65136 − 65536 = −400</span> → ÷10 = <span class="blur-sm hover:blur-none transition-all cursor-pointer select-none text-success font-bold">−40.0 °C — open-circuit default</span> <em class="text-base-content/40">(hover to reveal)</em></p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Live raw PDin panel -->
+      <div class="rounded-xl border-2 border-warning/40 bg-warning/5 p-4 mt-4 space-y-3" id="cp2-ws9-live-panel">
+        <div class="flex items-center justify-between flex-wrap gap-2">
+          <span class="font-semibold text-base-content text-sm">Port 3 — Live PDin Decode</span>
+          <span id="cp2-ws9-badge" class="badge badge-xs badge-ghost font-mono">OFFLINE</span>
+        </div>
+        <p class="text-xs text-base-content/60">The raw PDin hex updates live from the sensor. Watch how the int16 value tracks the temperature.</p>
+        <div class="overflow-x-auto">
+          <table class="table table-sm text-sm w-full font-mono">
+            <tbody>
+              <tr>
+                <td class="text-base-content/50 w-40">PDin raw (hex)</td>
+                <td id="cp2-ws9-pdin-hex" class="font-bold text-base-content">—</td>
+              </tr>
+              <tr>
+                <td class="text-base-content/50">Bytes 0–1</td>
+                <td id="cp2-ws9-bytes01" class="font-bold text-primary">—</td>
+              </tr>
+              <tr>
+                <td class="text-base-content/50">int16 value</td>
+                <td id="cp2-ws9-int16" class="font-bold text-base-content">—</td>
+              </tr>
+              <tr>
+                <td class="text-base-content/50">÷ 10</td>
+                <td id="cp2-ws9-temp-calc" class="font-bold text-warning text-base">—</td>
+              </tr>
+              <tr>
+                <td class="text-base-content/50">Equivalent resistance</td>
+                <td id="cp2-ws9-resistance" class="font-bold text-base-content/70">—</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="text-xs text-base-content/50">Resistance = 100 × (1 + 0.00385 × T) — calculated from live temperature</p>
+      </div>
+
+      <!-- Calibration offset engineering -->
+      <div class="rounded-xl border border-base-300 bg-base-200 p-4 mt-4 space-y-3">
+        <p class="text-xs font-semibold text-base-content/60 uppercase tracking-wide">Calibration Offset Engineering (Index 681)</p>
+        <p class="text-sm text-base-content/80">The calibration offset (ISDU Index 681, Sub 0, int16, ×0.1) is a signed trim value added to the sensor's decoded temperature before it is reported in PDin. Range: −10.0 °C to +10.0 °C. Default: 0.0 °C.</p>
+        <p class="text-sm text-base-content/80"><strong>When you need it:</strong></p>
+        <ul class="list-disc list-inside text-sm text-base-content/80 space-y-1 ml-2">
+          <li><strong>Installation offset:</strong> The sensor is installed in a hot enclosure that causes a +2 °C offset from self-heating. Write −2.0 °C to Index 681 to compensate.</li>
+          <li><strong>Comparison against a reference:</strong> Your calibrated Fluke thermometer reads 24.1 °C; the TV7105 reads 24.7 °C. Drift = +0.6 °C. Write −0.6 °C to correct.</li>
+          <li><strong>Element tolerance:</strong> A Class B element at 100 °C can be up to ±0.80 °C out. If a reference calibration shows consistent positive error, trim it out at installation.</li>
+        </ul>
+        <div class="rounded-lg border border-warning/30 bg-warning/5 p-3 text-sm space-y-1">
+          <p class="font-semibold text-base-content">Worked example — engineering the correction</p>
+          <p class="text-base-content/80">Reference reads 50.0 °C. Sensor reads 53.0 °C. Error = +3.0 °C.</p>
+          <p class="text-base-content/80">Required offset = <strong>−3.0 °C</strong>. But writing −3.0 °C (factory default 0.0 °C) resets the offset entirely to the correct value.</p>
+          <p class="text-base-content/80">ISDU write: Index 681, Sub 0, int16 value = −30 (raw = −3.0 × 10), transmitted as two's complement <code class="font-mono bg-base-100 px-1 rounded text-xs">FFE2</code>.</p>
+        </div>
+      </div>
+
+      <!-- SP1/SP2 engineering notes -->
+      <div class="rounded-lg border border-base-300 bg-base-200 p-3 mt-3 text-sm space-y-2">
+        <p class="font-bold text-base-content">SP1 &amp; SP2 — Engineering Notes</p>
+        <ul class="list-disc list-inside space-y-1 text-base-content/80 ml-2">
+          <li><strong>Stored in sensor EEPROM</strong> (not in the master). Survive power-off, master replacement, and firmware updates. A direct consequence of IO-Link's device-centric architecture.</li>
+          <li><strong>SP1 (Index 583) and SP2 (Index 593)</strong> are signed int16, ×0.1. Range −49.8 to 150.0 °C. SP1 is typically the warning threshold; SP2 is the critical/shutdown threshold.</li>
+          <li><strong>Hysteresis</strong> (RP1/RP2, Index 584/594) sets the return-to-normal point. Without hysteresis, output would chatter at the setpoint. Rule of thumb: set RP at least 2–3 °C below SP.</li>
+          <li><strong>Parameter restore on sensor swap:</strong> The IO-Link master can automatically write SP1, SP2, and calibration offset back to a replacement sensor if the Device ID matches — no manual re-configuration needed.</li>
+        </ul>
+      </div>
+
+      <div class="divider my-2"></div>
+      <button type="button" class="btn btn-ghost btn-sm ws-suggested-btn" data-target="cp2-ws9-answers">Show calculation reference</button>
+      <div id="cp2-ws9-answers" class="hidden p-4 rounded-lg border border-base-300 bg-base-300/50 text-base-content/80 text-sm leading-relaxed ws-suggested">
+        <p><strong>Resistance at 25 °C:</strong> 100 × (1 + 0.00385 × 25) = 100 × 1.09625 = 109.625 Ω ≈ 109.6 Ω</p>
+        <p class="mt-1"><strong>Exercise 1 (0x012C):</strong> 0x01 = 1, 0x2C = 44 → (1×256)+44 = 300 → 300÷10 = 30.0 °C</p>
+        <p class="mt-1"><strong>Exercise 2 (0x0196):</strong> 0x01 = 1, 0x96 = 150 → (1×256)+150 = 406 → 406÷10 = 40.6 °C</p>
+        <p class="mt-1"><strong>Exercise 3 (0xFF9C):</strong> 0xFF9C = 65436 unsigned. Since &gt;32767, subtract 65536: 65436−65536 = −100 → −100÷10 = −10.0 °C</p>
+        <p class="mt-1"><strong>Exercise 4 (0xFE70):</strong> 0xFE70 = 65136 unsigned → 65136−65536 = −400 → −400÷10 = −40.0 °C — the open-circuit default.</p>
+        <p class="mt-1"><strong>Calibration offset raw encode:</strong> −3.0 °C → −3.0×10 = −30 → two's complement 16-bit: 65536−30 = 65506 = 0xFFE2</p>
+      </div>
+    `
   }
 ];
 
@@ -1315,6 +1506,36 @@ function initLiveCp2Intro(container) {
   });
 }
 
+function initLiveCp2Ws9(container) {
+  startCp2LiveData(function (data) {
+    const port = data && Array.isArray(data.ports) ? data.ports.find(function (p) { return p.port === 3; }) : null;
+    const badge = container.querySelector('#cp2-ws9-badge');
+    if (badge) {
+      badge.textContent = port ? 'LIVE' : 'OFFLINE';
+      badge.className = port ? 'badge badge-xs badge-success font-mono' : 'badge badge-xs badge-ghost font-mono';
+    }
+    if (!port || !port.pdin_decoded) return;
+    var temp = port.pdin_decoded.temperature_c;
+    if (temp === null || temp === undefined) return;
+    var raw = Math.round(temp * 10);
+    var rawHex = (raw & 0xFFFF).toString(16).toUpperCase().padStart(4, '0');
+    var b0 = rawHex.slice(0, 2);
+    var b1 = rawHex.slice(2, 4);
+    var resistance = (100 * (1 + 0.00385 * temp)).toFixed(2);
+
+    var pdEl   = container.querySelector('#cp2-ws9-pdin-hex');
+    var byEl   = container.querySelector('#cp2-ws9-bytes01');
+    var i16El  = container.querySelector('#cp2-ws9-int16');
+    var tcEl   = container.querySelector('#cp2-ws9-temp-calc');
+    var resEl  = container.querySelector('#cp2-ws9-resistance');
+    if (pdEl)  pdEl.textContent  = b0 + ' ' + b1 + ' FF 00';
+    if (byEl)  byEl.textContent  = b0 + ' ' + b1 + '  (0x' + rawHex + ')';
+    if (i16El) i16El.textContent = raw + ' decimal';
+    if (tcEl)  tcEl.textContent  = raw + ' ÷ 10 = ' + temp.toFixed(1) + ' °C';
+    if (resEl) resEl.textContent = resistance + ' Ω';
+  });
+}
+
 function initWorksheetInteractivity(container) {
   if (!container) container = document.getElementById('cp0002-root');
   if (!container) return;
@@ -1327,6 +1548,7 @@ function initWorksheetInteractivity(container) {
   });
   if (container.querySelector('.cp2-kit-item')) initCp2KitChecklist(container);
   if (container.querySelector('#cp2-sys-panel')) initLiveCp2Intro(container);
+  if (container.querySelector('#cp2-ws9-live-panel')) initLiveCp2Ws9(container);
 
   const ws2Correct = { 'ws2-1': 'events', 'ws2-2': 'params', 'ws2-3': 'events', 'ws2-4': 'events' };
   const ws2Btn = container.querySelector('#ws2-check-btn');

@@ -247,6 +247,14 @@ class AL1350ClientManager:
         )
         return result is not None and result.get("code") == 200
 
+    async def write_pdout(self, port: int, value_hex: str) -> bool:
+        """Write cyclic process data output to an IO-Link device. value_hex is a hex string."""
+        result = await self._service_request(
+            f"/iolinkmaster/port[{port}]/iolinkdevice/pdout/setdata",
+            data={"newvalue": value_hex}
+        )
+        return result is not None and result.get("code") in (200, 204)
+
     async def refresh_gettree(self, force: bool = False) -> Optional[Dict[str, Any]]:
         now = time.time()
         if not force and self.tree_cache and (now - self.tree_last_refresh_ts) < self.tree_refresh_interval_sec:

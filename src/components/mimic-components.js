@@ -40,10 +40,13 @@ export function createTemperatureGauge(containerId, value = 0, options = {}) {
   };
 
   // Initial render
+  let _lastTempKey = null;
   const render = (temp) => {
     const percentage = calculatePercentage(temp);
     const colorClass = getColor(temp);
-    
+    const key = `${temp.toFixed(1)}|${colorClass}`;
+    if (key === _lastTempKey) return;
+    _lastTempKey = key;
     container.innerHTML = `
       <div class="temp-gauge-wrapper flex flex-col items-center justify-center p-4 cursor-pointer hover:bg-base-300/50 rounded-lg transition-all">
         <div class="relative">
@@ -110,33 +113,39 @@ export function createLEDIndicator(containerId, state = {}, options = {}) {
   };
 
   // Render the LED indicator
+  let _lastLedKey = null;
   const render = (ledState) => {
-    const color = ledState.color1 || 'Off';
-    const cssColor = colorToCSS[color] || '#374151';
-    const isOn = ledState.led_on || false;
+    const color1 = ledState.color1 || 'Off';
+    const color2 = ledState.color2 || 'Off';
+    const css1 = colorToCSS[color1] || '#374151';
+    const css2 = colorToCSS[color2] || '#374151';
+    const isOn = ledState.animation !== 'Off' && ledState.color1_intensity !== 'Off';
     const animation = ledState.animation || 'Off';
-    
-    // Animation class
-    let animationClass = '';
-    if (isOn && animation === 'Flash') {
-      animationClass = 'led-flash';
-    } else if (isOn && animation === 'Two Color Flash') {
-      animationClass = 'led-pulse';
-    }
+    const isTwoColor = animation === 'Two Color Flash';
+    const speed = ledState.speed || '';
+    const intensity = ledState.color1_intensity || '';
 
+    let animClass = '';
+    if (isOn && (animation === 'Flash' || isTwoColor)) animClass = 'led-flash';
+    else if (isOn && animation === 'Intensity Sweep') animClass = 'led-pulse';
+
+    const key = `${color1}|${isOn}|${animation}|${animClass}|${isTwoColor}|${color2}|${speed}|${intensity}`;
+    if (key === _lastLedKey) return;
+    _lastLedKey = key;
     container.innerHTML = `
       <div class="led-indicator-wrapper flex flex-col items-center justify-center p-4 cursor-pointer hover:bg-base-300/50 rounded-lg transition-all">
-        <div class="relative">
-          <!-- LED Stack representation (3 segments) -->
-          <div class="flex flex-col gap-1">
-            <div class="led-segment w-16 h-16 rounded-full border-4 border-base-content/20 flex items-center justify-center ${animationClass}" style="background-color: ${isOn ? cssColor : '#374151'}; box-shadow: ${isOn ? `0 0 20px ${cssColor}, 0 0 40px ${cssColor}` : 'none'};">
-              <div class="w-8 h-8 rounded-full bg-white/30"></div>
-            </div>
+        <div class="flex items-center gap-2">
+          <div class="led-segment w-14 h-14 rounded-full border-4 border-base-content/20 flex items-center justify-center ${animClass}"
+               style="background-color:${isOn ? css1 : '#374151'};box-shadow:${isOn ? `0 0 18px ${css1},0 0 36px ${css1}40` : 'none'};">
+            <div class="w-6 h-6 rounded-full bg-white/20"></div>
           </div>
+          ${isTwoColor ? `<div class="w-7 h-7 rounded-full border-2 border-base-content/20 led-flash"
+               style="background-color:${isOn ? css2 : '#374151'};box-shadow:${isOn ? `0 0 10px ${css2}` : 'none'};animation-delay:0.5s"></div>` : ''}
         </div>
         <div class="mt-3 text-center">
-          <div class="text-sm font-semibold">Status LED</div>
-          <div class="text-xs opacity-60">${color} - ${animation}</div>
+          <div class="text-sm font-semibold">CL50 Pro</div>
+          <div class="text-xs opacity-60">${color1}${isTwoColor ? ` ↔ ${color2}` : ''} · ${animation}${speed && animation !== 'Off' ? ` (${speed})` : ''}</div>
+          ${intensity && intensity !== 'High' ? `<div class="text-xs opacity-40">${intensity} intensity</div>` : ''}
         </div>
       </div>
     `;
@@ -175,6 +184,7 @@ export function createCounterDisplay(containerId, state = {}, options = {}) {
   let currentCount = 0;
 
   // Render the counter display
+  let _lastCountKey = null;
   const render = (sensorState) => {
     // Support both proximity (object_present) and legacy photoelectric (object_detected)
     const isDetected = sensorState.object_present || sensorState.object_detected || false;
@@ -184,6 +194,9 @@ export function createCounterDisplay(containerId, state = {}, options = {}) {
     }
     render.lastDetected = isDetected;
 
+    const key = `${isDetected}|${currentCount}`;
+    if (key === _lastCountKey) return;
+    _lastCountKey = key;
     container.innerHTML = `
       <div class="counter-display-wrapper flex flex-col items-center justify-center p-4 cursor-pointer hover:bg-base-300/50 rounded-lg transition-all">
         <div class="mb-3">
@@ -234,11 +247,15 @@ export function createCapacitiveIndicator(containerId, state = {}, options = {})
     return null;
   }
 
+  let _lastCapKey = null;
   const render = (sensorState) => {
     const isDetected = sensorState.object_detected || false;
     const analogue = sensorState.analogue_value != null ? sensorState.analogue_value : null;
     const pct = analogue != null ? Math.min(100, Math.round((analogue / 10000) * 100)) : null;
 
+    const key = `${isDetected}|${pct}`;
+    if (key === _lastCapKey) return;
+    _lastCapKey = key;
     container.innerHTML = `
       <div class="capacitive-indicator-wrapper flex flex-col items-center justify-center p-4 cursor-pointer hover:bg-base-300/50 rounded-lg transition-all">
         <div class="mb-3 relative">
@@ -290,30 +307,40 @@ export function createMasterStatusDisplay(containerId, state = {}, options = {})
   }
 
   // Render the master status
+  let _lastMasterKey = null;
   const render = (masterState) => {
     const deviceName = masterState.device_name || 'IO-Link Master AL1350';
     const ports = masterState.ports || [];
     const isConnected = masterState.success || false;
+    const masterKey = `${isConnected}|${ports.map(p => `${p.port}:${p.mode}:${p.vendor_id||''}`).join('|')}`;
+    if (masterKey === _lastMasterKey) return;
+    _lastMasterKey = masterKey;
 
     const portCards = [1, 2, 3, 4].map(portNum => {
       const port = ports.find(p => p.port === portNum);
       const mode = String(port && port.mode ? port.mode : '').toLowerCase();
       const isIoLink = mode.includes('io-link');
+      const hasDevice = isIoLink && !!(port && port.vendor_id);
+      const isNoDevice = isIoLink && !(port && port.vendor_id);
       const isDigital = mode.includes('digital_in') || mode.includes('digital_out');
-      const modeLabel = isIoLink ? 'IO-Link' : isDigital ? (mode.includes('digital_in') ? 'DI' : 'DO') : 'Inactive';
+      const modeLabel = hasDevice ? 'IO-Link' : isNoDevice ? 'No Device' : isDigital ? (mode.includes('digital_in') ? 'DI' : 'DO') : 'Inactive';
       const portName = (port && (port.label || port.name)) || `Port ${portNum}`;
 
-      const dotStyle = isIoLink
+      const dotStyle = hasDevice
         ? 'background:#22c55e;box-shadow:0 0 4px #22c55e'
-        : isDigital
-          ? 'background:#f59e0b'
-          : 'background:rgba(255,255,255,0.2)';
-      const borderClass = isIoLink
+        : isNoDevice
+          ? 'background:rgba(239,68,68,0.5)'
+          : isDigital
+            ? 'background:#f59e0b'
+            : 'background:rgba(255,255,255,0.2)';
+      const borderClass = hasDevice
         ? 'border-success/40 bg-success/5'
-        : isDigital
-          ? 'border-warning/40 bg-warning/5'
-          : 'border-base-content/10 bg-base-content/5';
-      const labelClass = isIoLink ? 'text-success' : isDigital ? 'text-warning' : 'text-base-content/40';
+        : isNoDevice
+          ? 'border-error/30 bg-error/5'
+          : isDigital
+            ? 'border-warning/40 bg-warning/5'
+            : 'border-base-content/10 bg-base-content/5';
+      const labelClass = hasDevice ? 'text-success' : isNoDevice ? 'text-error/70' : isDigital ? 'text-warning' : 'text-base-content/40';
 
       return `
         <div class="flex-1 flex items-center gap-1.5 px-1.5 py-1 rounded border ${borderClass}" style="min-width:0">

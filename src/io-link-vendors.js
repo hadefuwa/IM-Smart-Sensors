@@ -293,6 +293,7 @@ export const DEVICE_NAMES = {
   '612/131090':   'E2E-X16MB1T12 Proximity',
   '896/1069056':  'M18 Capacitive (RS Pro)',
   '1586/1052673': 'M18 Capacitive',
+  '451/393229':   'CL50 Pro RGB Light Stack',
 };
 
 export function resolveVendorName(vendorId) {

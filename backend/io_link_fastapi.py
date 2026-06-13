@@ -281,6 +281,50 @@ def save_config(io_link_updates: dict):
 # Shared AL1350 client manager (single AsyncClient + retries/circuit/diagnostics)
 al1350 = AL1350ClientManager(config_loader=load_config, logger=logger)
 
+# Software intensity sweep state (firmware 1.0.2 doesn't execute PDout animation=4)
+_sweep_task: Optional[asyncio.Task] = None
+_sweep_port: Optional[int] = None
+
+async def _run_sweep_loop(port: int, octet2: int, step_ms: int):
+    """Cycle C1I to create a breathing effect. C1I values: 3=Off, 1=Low, 2=Medium, 0=High.
+    Sequence spends more time at peak (High) to mimic a natural breathing curve."""
+    # Weighted sequence: ramp up quickly, hold at peak, ramp down
+    # Pairs of (c1i_value, hold_steps) — hold_steps × step_ms = time at that level
+    SEQ = [
+        (1, 2),  # Low    — dim floor
+        (2, 2),  # Medium — ramp up
+        (0, 4),  # High   — linger at peak
+        (2, 2),  # Medium — ramp down
+        (1, 2),  # Low    — dim floor
+    ]
+    step_s = step_ms / 1000.0
+    try:
+        while True:
+            for c1i, holds in SEQ:
+                octet0 = (3 << 3) | c1i   # C2I=Off, audible=Off
+                octet1 = 0x01              # animation=Steady
+                hex_val = f"{octet0:02x}{octet1:02x}{octet2:02x}"
+                for _ in range(holds):
+                    await al1350.write_pdout(port, hex_val)
+                    await asyncio.sleep(step_s)
+    except asyncio.CancelledError:
+        pass
+    except Exception as e:
+        logger.warning(f"Sweep loop error on port {port}: {e}")
+
+async def _stop_sweep(port: int = None):
+    """Cancel any running sweep task, optionally checking port match."""
+    global _sweep_task, _sweep_port
+    if _sweep_task and not _sweep_task.done():
+        if port is None or _sweep_port == port:
+            _sweep_task.cancel()
+            try:
+                await _sweep_task
+            except Exception:
+                pass
+            _sweep_task = None
+            _sweep_port = None
+
 
 def append_supervision_history(supervision_dict):
     """Append processdatamaster supervision snapshot to the history buffer.
@@ -379,7 +423,10 @@ async def poll_io_link_master():
                     if not prev:
                         continue
                     for key in ('vendor_id', 'device_id', 'name', 'serial'):
-                        if not port_data.get(key):
+                        # Only carry forward stale static identity on lightweight cycles that
+                        # skipped static fields. On full static refreshes (include_static=True)
+                        # an empty value from the AL1350 means the device is genuinely gone.
+                        if not port_data.get(key) and not include_static:
                             port_data[key] = prev.get(key, '')
 
             # Enrich each port with decoded pdin/pdout and device_type
@@ -433,6 +480,15 @@ async def poll_io_link_master():
                                         'detection_counter', 'detection_counter_delta'):
                                 val = port_map[pn].get(key)
                                 if val:
+                                    port[key] = val
+                                elif include_static and key in ('vendor_id', 'device_id', 'name', 'serial'):
+                                    # Full static refresh returned empty — device disconnected, clear stale identity.
+                                    port[key] = ''
+                            # pdout is not carried by MQTT — always merge from HTTP poll so
+                            # PDout-only devices (e.g. CL50 Pro light stack) show live state.
+                            for key in ('pdout', 'pdout_hex', 'pdout_decoded', 'device_type', 'label'):
+                                val = port_map[pn].get(key)
+                                if val is not None:
                                     port[key] = val
             else:
                 system_state = {
@@ -628,6 +684,19 @@ async def start_background_polling():
             logger.warning(f"Port 4 mode enforce returned code {code}")
     except Exception as e:
         logger.warning(f"Port 4 mode enforce failed: {e}")
+
+    # Write green steady to the CL50 Pro light stack on startup.
+    # PDout bytes: Octet0=0x00 (intensities High, no audible),
+    #              Octet1=0x01 (Animation=Steady, Pulse=Normal, Speed=Medium),
+    #              Octet2=0x00 (Color1=Green, Color2=Green)
+    try:
+        ok = await al1350.write_pdout(4, "000100")
+        if ok:
+            logger.info("CL50 Pro set to green steady on startup")
+        else:
+            logger.warning("CL50 Pro green startup write returned non-200")
+    except Exception as e:
+        logger.warning(f"CL50 Pro green startup write failed: {e}")
     if polling_task is None or polling_task.done():
         polling_task = asyncio.create_task(poll_io_link_master())
         logger.info("IO-Link HTTP polling task started")
@@ -1122,6 +1191,47 @@ async def execute_port_command(port_num: int, request: Request):
     if not ok:
         return JSONResponse({'success': False, 'error': 'Command write failed'})
     return JSONResponse({'success': True, 'command': cmd_key, 'label': cmd['label']})
+
+
+@app.post("/api/io-link/port/{port_num}/pdout")
+async def write_port_pdout(port_num: int, request: Request):
+    """Write cyclic PDout to an IO-Link device. Body: {value: '000100'} (hex string)."""
+    if port_num < 1 or port_num > 4:
+        raise HTTPException(status_code=400, detail="Port must be 1–4")
+    body = await request.json()
+    hex_val = body.get('value', '')
+    if not hex_val:
+        return JSONResponse({'success': False, 'error': 'Missing value'})
+    await _stop_sweep(port_num)
+    ok = await al1350.write_pdout(port_num, hex_val)
+    return JSONResponse({'success': ok, 'port': port_num, 'value': hex_val})
+
+
+@app.post("/api/io-link/port/{port_num}/pdout/sweep")
+async def start_pdout_sweep(port_num: int, request: Request):
+    """Start software intensity sweep. Body: {color1, color2, speed: 'fast'|'medium'|'slow'}"""
+    global _sweep_task, _sweep_port
+    if port_num < 1 or port_num > 4:
+        raise HTTPException(status_code=400, detail="Port must be 1–4")
+    body = await request.json()
+    color1 = int(body.get('color1', 0)) & 0xF
+    color2 = int(body.get('color2', 0)) & 0xF
+    speed = body.get('speed', 'fast')
+    step_ms = {'fast': 40, 'medium': 100, 'slow': 250}.get(speed, 40)
+    octet2 = ((color2 << 4) | color1)
+    await _stop_sweep()
+    _sweep_port = port_num
+    _sweep_task = asyncio.create_task(_run_sweep_loop(port_num, octet2, step_ms))
+    logger.info(f"Software sweep started on port {port_num} color1={color1} speed={speed}")
+    return JSONResponse({'success': True, 'port': port_num, 'color1': color1, 'color2': color2, 'speed': speed})
+
+
+@app.post("/api/io-link/port/{port_num}/pdout/sweep/stop")
+async def stop_pdout_sweep(port_num: int):
+    """Stop any running software sweep on this port."""
+    was_running = _sweep_task is not None and not _sweep_task.done() and _sweep_port == port_num
+    await _stop_sweep(port_num)
+    return JSONResponse({'success': True, 'stopped': was_running})
 
 
 @app.get("/learn", response_class=HTMLResponse)
