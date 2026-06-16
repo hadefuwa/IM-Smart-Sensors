@@ -6,7 +6,7 @@ import { renderIOLinkMaster, initIOLinkPage, destroyIOLinkPage } from './io-link
 import { renderLearnPage, initLearnPage } from './learn-page.js';
 import { renderWorksheetsPage, initWorksheetsPage, destroyWorksheetsPage } from './worksheets-page.js';
 import { renderCp0002Page, initCp0002Page, destroyCp0002Page } from './cp0002-page.js';
-import { renderSettingsPage, initSettingsPage, applySavedAppSettings } from './settings-page.js';
+import { renderSettingsPage, initSettingsPage, applySavedAppSettings, applySavedZoom } from './settings-page.js';
 import { renderAdminPage, initAdminPage, destroyAdminPage } from './admin-page.js';
 import { renderEdgeDevicePage, initEdgeDevicePage, destroyEdgeDevicePage } from './edge-device-page.js';
 import { renderProgressPage, initProgressPage } from './progress-page.js';
@@ -7300,6 +7300,7 @@ themeSelect.addEventListener('change', () => {
 
 // Apply saved app settings (e.g. hide connection bar if user turned it off in Settings)
 applySavedAppSettings();
+applySavedZoom();
 
 // ================================================================
 // SIDEBAR COLLAPSE/EXPAND FUNCTIONALITY

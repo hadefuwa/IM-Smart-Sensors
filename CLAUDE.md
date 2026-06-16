@@ -38,6 +38,12 @@ bash scripts/pi/post_deploy_health.sh   # Post-deploy health checks
 
 Pi credentials and network details are in `docs/PI_SSH.md`.
 
+**After every frontend deploy, always restart both the backend service AND the Chromium kiosk — changes are invisible until the kiosk relaunches:**
+```powershell
+& "C:\Program Files\PuTTY\plink.exe" -pw ummah123 -hostkey "SHA256:Gyckco2TVF3FhcbSzy9vVDS6Sg0pS54p+gxLo+tuFNc" -batch hamed@iolink.local "sudo systemctl restart im-sensors-backend.service && systemctl is-active im-sensors-backend.service"
+& "C:\Program Files\PuTTY\plink.exe" -pw ummah123 -hostkey "SHA256:Gyckco2TVF3FhcbSzy9vVDS6Sg0pS54p+gxLo+tuFNc" -batch hamed@iolink.local "nohup sudo -u pi DISPLAY=:0 XAUTHORITY=/home/pi/.Xauthority bash /home/pi/kiosk.sh </dev/null >/tmp/kiosk.log 2>&1 &"
+```
+
 ### Backend-only deploy (Python files, no frontend rebuild needed)
 
 ```powershell
@@ -69,7 +75,7 @@ Pi credentials and network details are in `docs/PI_SSH.md`.
 | `src/progress-page.js` | Student Progress page — session-based visit tracking for CP0001 and CP0002; JSON export and reset |
 | `src/learn-page.js` | CP0001 — 8 chapters: sensor fundamentals through device identity |
 | `src/cp0002-page.js` | CP0002 — 8 engineering worksheets: IO-Link deep-dive and maintenance scenarios |
-| `src/settings-page.js` | Theme selector and IO-Link connection config UI |
+| `src/settings-page.js` | Theme selector, IO-Link connection config, and global display zoom |
 | `src/admin-page.js` | Connection Diagnostics — IO-Link latency graph, circuit breaker, log viewer |
 | `src/edge-device-page.js` | Edge Device page — Pi CPU/memory charts, service status, Chromium health |
 | `src/components/mimic-components.js` | Reusable industrial UI components (temp gauge, capacitive indicator, LED, counters) |
@@ -289,18 +295,23 @@ The TV7105 has two independent switching outputs. Each has its own Switch Point 
 
 **Hysteresis:** the gap between SP and RP prevents chattering when temperature hovers near the setpoint. The worksheet includes an explanation card with a three-column diagram (Below RP → holds OFF | RP→SP zone → holds state | Above SP → ON).
 
-### Demo Setpoints — Auto-Reset on Load
+### Dynamic Setpoints — Set from Live Temperature on Load
 
-`_WS5_DEFAULTS = { sp1: 31, rp1: 28, sp2: 29, rp2: 26 }` — chosen for ambient ~27°C, max finger-warmth ~32°C:
+On every WS5 load, `initLiveWs4` waits for the **first live WebSocket temperature reading** and then calculates setpoints relative to it:
 
-- **SP2=29°C** — pre-warning fires at +2°C above ambient, easy first trigger
-- **SP1=31°C** — main alarm fires near the limit of finger warmth
-- **RP1=28°C** — resets in the middle zone, clearly demonstrates hysteresis
-- **RP2=26°C** — resets well below ambient so OUT2 clears quickly
+```
+base = Math.ceil(temp)   // round up for a safe gap
+SP2  = base + 1          // OUT2 pre-warning fires ~1°C above current temp
+SP1  = base + 3          // OUT1 main alarm fires ~3°C above current temp
+RP1  = base              // OUT1 resets at current ambient (3°C hysteresis below SP1)
+RP2  = temp              // OUT2 resets at the exact room temperature when the worksheet opened
+```
 
-On every WS5 load, `initLiveWs4` writes these values in the correct order: RP1 and RP2 first (parallel), then SP1 and SP2 (parallel). This ensures students always start from a known state regardless of what the previous student changed.
+Example at ambient 27.3°C: base=28, SP2=29, SP1=31, RP1=28, RP2=26.
 
-**Write order is critical** — always lower the RP before lowering the SP. Writing SP below the current RP will be rejected by the sensor.
+This replaces the previous hardcoded `_WS5_DEFAULTS`. `_spWritten` flag prevents double-writes on subsequent WS pushes.
+
+**Write order is critical** — always write RP before SP. Writing SP below the current RP will be rejected by the sensor.
 
 ### Calibration Drift Scenario (work order CAL-0189)
 
@@ -340,6 +351,18 @@ The WS1 challenge (trigger proximity, keep capacitive clean) uses `_chCapToleran
 ## IO-Link Master Page — Port Details Stability Fix
 
 `_lastPortDetailKey` tracks a string of `port:mode` pairs. `loadActivePortDetails` is only called when that key changes (i.e., a sensor is plugged in or its mode changes). This prevents the IODD parameter panel from collapsing and re-expanding on every 500 ms WebSocket push.
+
+## Global Display Zoom (`src/settings-page.js`)
+
+Zoom is persisted in `localStorage` key `matrix-zoom` and applied via `applySavedZoom()` (called from `main.js` on startup alongside `applySavedAppSettings()`).
+
+**Implementation constraints — do not simplify these away:**
+
+- `html { zoom: X% }` shrinks the rendered page but does NOT expand the CSS viewport, so two compensations are needed:
+  1. `document.body.style.minWidth = Math.ceil(screen.width / factor) + 'px'` — fixes white space on the right. Works because body naturally fills its width.
+  2. A `<style id="_zoom_style">` tag injected into `<head>` with `#app > div { height: ${hPx}px !important }` — fixes white space at the bottom. **Cannot use `body.minHeight`** because the root wrapper `<div class="h-screen overflow-hidden flex flex-col">` in `#app` has a fixed `height: 100vh` and `overflow: hidden` that clips the layout regardless of body height.
+- `vh` units behave unexpectedly under `html { zoom }` on the Pi's Chromium (they track the shrunken visual viewport, not the physical screen). Always use `screen.width` / `screen.height` for pixel calculations — these always return physical screen dimensions.
+- `#app > div` is the root layout wrapper. It is stable across page navigations (only `<main>` inside it is swapped).
 
 ## Frontend Conventions
 

@@ -18,6 +18,7 @@ let _wsReconnectTimer = null;
 const _activeCharts = {};
 let _canvasAnimCancellers = [];
 let _ws3FaultCleanup = null; // fires on navigation away if fault was injected but not corrected
+let _ws3LightCleanup = null; // restores CL50 to default on navigation away from WS3
 
 function startLiveData(callback) {
   stopLiveData();
@@ -50,7 +51,10 @@ function stopLiveData() {
     delete _activeCharts[k];
   });
   if (_ws3FaultCleanup) { _ws3FaultCleanup(); _ws3FaultCleanup = null; }
+  if (_ws3LightCleanup) { _ws3LightCleanup(); _ws3LightCleanup = null; }
   if (_ws4FaultCleanup) { _ws4FaultCleanup(); _ws4FaultCleanup = null; }
+  if (_ws4LightCleanup) { _ws4LightCleanup(); _ws4LightCleanup = null; }
+  if (_ws5LightCleanup) { _ws5LightCleanup(); _ws5LightCleanup = null; }
   if (_ws5CalCleanup) { _ws5CalCleanup(); _ws5CalCleanup = null; }
 }
 
@@ -1610,26 +1614,50 @@ const WORKSHEETS = [
       <div class="divider my-2"></div>
 
       <div class="rounded-xl border-2 border-warning/50 bg-warning/5 p-4 mt-4 space-y-3" id="ws5-challenge-box">
-        <p class="font-bold text-base-content text-base">🎯 Challenge</p>
-        <p class="text-sm text-base-content/80">Set the SP1 slider to just 1–2°C above the current temperature, write it to the sensor, then hold the sensor in your palms until the SP1 alarm output activates.</p>
-        <div class="grid grid-cols-2 gap-3">
-          <div class="rounded-lg bg-base-200 border border-base-300 p-3 text-center space-y-1">
-            <p class="text-xs text-base-content/50 font-medium uppercase tracking-wide">Current Temp</p>
-            <p id="ws5-ch-temp" class="text-2xl font-black font-mono text-warning">—</p>
-            <p class="text-xs text-base-content/50">°C</p>
-          </div>
-          <div class="rounded-lg bg-base-200 border border-base-300 p-3 text-center space-y-1">
-            <p class="text-xs text-base-content/50 font-medium uppercase tracking-wide">SP1 Output</p>
-            <div id="ws5-ch-out-dot" class="w-8 h-8 rounded-full bg-base-300 mx-auto transition-all duration-150 shadow-md"></div>
-            <p id="ws5-ch-out-label" class="text-xs font-bold text-base-content/60">inactive</p>
-          </div>
+        <div class="flex items-center justify-between flex-wrap gap-2">
+          <p class="font-bold text-base-content text-base">🎯 Challenge</p>
+          <button type="button" id="ws5-ch-start" class="btn btn-warning btn-sm">Start Challenge</button>
         </div>
-        <div id="ws5-ch-result" class="hidden rounded-lg p-3 text-center font-bold text-sm"></div>
-        <div class="flex justify-center">
-          <button type="button" id="ws5-ch-reset" class="btn btn-warning btn-sm gap-2">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
-            Reset Challenge
-          </button>
+        <p class="text-sm text-base-content/80">Set the SP1 alarm setpoint to just 1–2°C above the current temperature, write it to the sensor, then warm the sensor in your palms until the SP1 output activates.</p>
+
+        <!-- Challenge body — hidden until Start is clicked -->
+        <div id="ws5-ch-body" class="hidden space-y-3">
+
+          <!-- Inline SP1 slider -->
+          <div class="rounded-lg bg-base-200 border border-error/30 p-3 space-y-2">
+            <div class="flex items-center justify-between">
+              <p class="text-xs font-semibold text-base-content">SP1 <span class="badge badge-error badge-xs">ALARM</span></p>
+              <span id="ws5-ch-sp1-val" class="font-mono font-bold text-error text-sm">—</span>
+            </div>
+            <input type="range" id="ws5-ch-sp1-slider" min="-50" max="150" value="31" step="1" class="range range-error range-xs w-full">
+            <div class="flex justify-between text-xs text-base-content/40"><span>−50°C</span><span>150°C</span></div>
+            <div class="flex items-center gap-2 flex-wrap">
+              <button type="button" id="ws5-ch-sp1-write" class="btn btn-xs btn-error">Write SP1 to sensor</button>
+              <span id="ws5-ch-sp1-status" class="text-xs"></span>
+            </div>
+          </div>
+
+          <!-- Live readout -->
+          <div class="grid grid-cols-2 gap-3">
+            <div class="rounded-lg bg-base-200 border border-base-300 p-3 text-center space-y-1">
+              <p class="text-xs text-base-content/50 font-medium uppercase tracking-wide">Current Temp</p>
+              <p id="ws5-ch-temp" class="text-2xl font-black font-mono text-warning">—</p>
+              <p class="text-xs text-base-content/50">°C</p>
+            </div>
+            <div class="rounded-lg bg-base-200 border border-base-300 p-3 text-center space-y-1">
+              <p class="text-xs text-base-content/50 font-medium uppercase tracking-wide">SP1 Output</p>
+              <div id="ws5-ch-out-dot" class="w-8 h-8 rounded-full bg-base-300 mx-auto transition-all duration-150 shadow-md"></div>
+              <p id="ws5-ch-out-label" class="text-xs font-bold text-base-content/60">inactive</p>
+            </div>
+          </div>
+
+          <div id="ws5-ch-result" class="hidden rounded-lg p-3 text-center font-bold text-sm"></div>
+          <div class="flex justify-center">
+            <button type="button" id="ws5-ch-reset" class="btn btn-ghost btn-sm gap-2">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+              Reset Challenge
+            </button>
+          </div>
         </div>
       </div>
 
@@ -1686,17 +1714,22 @@ const WORKSHEETS = [
           </table>
         </div>
 
-        <!-- Live process values -->
-        <div class="bg-neutral px-3 py-2 border-b border-neutral/40">
-          <p class="font-mono text-xs text-neutral-content/40 uppercase tracking-widest mb-1.5">Live Process Values — Port 3</p>
-          <div class="grid grid-cols-2 gap-x-6 gap-y-1 font-mono text-xs">
-            <div class="flex items-center justify-between gap-2">
-              <span class="text-neutral-content/40">Temperature</span>
-              <span id="ws5-cal-live-temp" class="font-bold text-neutral-content">—</span>
+        <!-- Live process values — HMI panel -->
+        <div class="bg-black/50 px-3 py-3 border-b border-neutral/40">
+          <div class="flex items-center justify-between mb-2">
+            <p class="font-mono text-xs text-neutral-content/40 uppercase tracking-widest">Live Process — Port 3</p>
+            <span class="flex items-center gap-1.5 font-mono text-xs text-success"><span class="w-1.5 h-1.5 rounded-full bg-success animate-pulse inline-block"></span>LIVE</span>
+          </div>
+          <div class="grid grid-cols-2 gap-3">
+            <div class="rounded-lg border border-warning/30 bg-warning/5 p-3 text-center">
+              <p class="font-mono text-xs text-neutral-content/40 uppercase tracking-wider mb-1">Temperature</p>
+              <p id="ws5-cal-live-temp" class="text-3xl font-black font-mono text-warning leading-none">—</p>
+              <p class="font-mono text-xs text-neutral-content/30 mt-1">°C</p>
             </div>
-            <div class="flex items-center justify-between gap-2">
-              <span class="text-neutral-content/40">Cal Offset</span>
-              <span id="ws5-cal-live-offset" class="font-bold text-neutral-content">—</span>
+            <div class="rounded-lg border border-base-content/10 bg-base-content/5 p-3 text-center" id="ws5-cal-offset-card">
+              <p class="font-mono text-xs text-neutral-content/40 uppercase tracking-wider mb-1">Cal Offset</p>
+              <p id="ws5-cal-live-offset" class="text-3xl font-black font-mono text-neutral-content/40 leading-none">—</p>
+              <p class="font-mono text-xs text-neutral-content/30 mt-1">°C</p>
             </div>
           </div>
         </div>
@@ -1726,12 +1759,18 @@ const WORKSHEETS = [
             <button type="button" id="ws5-cal-read-btn" class="btn btn-sm font-mono" style="border:1px solid rgba(59,130,246,0.5);color:#60a5fa;background:transparent">Read Calibration Offset →</button>
             <span id="ws5-cal-read-status" class="text-xs font-mono text-neutral-content/40"></span>
           </div>
-          <div id="ws5-cal-read-result" class="hidden rounded border border-neutral/40 bg-black/30 p-3 font-mono text-xs space-y-1.5">
-            <p class="text-neutral-content/40 uppercase tracking-widest text-xs">ISDU READ RESPONSE</p>
-            <p class="text-neutral-content/50">Port: 3 &nbsp;·&nbsp; Index: 0x2A9 &nbsp;·&nbsp; Subindex: 0</p>
-            <p>Raw hex: <span id="ws5-cal-read-hex" class="text-warning">—</span></p>
-            <p>Decoded: Calibration Offset = <span id="ws5-cal-read-val" class="text-warning font-bold">—</span> °C</p>
-            <p id="ws5-cal-read-interp" class="mt-1 text-neutral-content/50">—</p>
+          <div id="ws5-cal-read-result" class="hidden rounded-lg border border-info/40 bg-info/10 p-3 font-mono text-xs space-y-2">
+            <p class="text-info font-bold uppercase tracking-widest">ISDU Read Response</p>
+            <p class="text-neutral-content/70">Port 3 &nbsp;·&nbsp; Index 0x2A9 &nbsp;·&nbsp; Subindex 0</p>
+            <div class="flex items-center justify-between border-t border-white/10 pt-2">
+              <span class="text-neutral-content/50">Raw hex</span>
+              <span id="ws5-cal-read-hex" class="text-warning font-bold">—</span>
+            </div>
+            <div class="flex items-center justify-between">
+              <span class="text-neutral-content/50">Calibration Offset</span>
+              <span class="text-warning font-bold text-base"><span id="ws5-cal-read-val">—</span> °C</span>
+            </div>
+            <p id="ws5-cal-read-interp" class="text-neutral-content/80 border-t border-white/10 pt-2 leading-relaxed">—</p>
           </div>
           <button type="button" id="ws5-cal-read-next" class="hidden btn btn-sm font-mono" style="border:1px solid rgba(255,255,255,0.2);color:rgba(255,255,255,0.5);background:transparent">Before value documented — proceed to diagnosis →</button>
         </div>
@@ -1766,29 +1805,13 @@ const WORKSHEETS = [
         <!-- Step 4: Verify (revealed after write) -->
         <div id="ws5-cal-verify" class="hidden bg-neutral px-3 py-3 border-b border-neutral/40 space-y-3">
           <p class="font-mono text-xs text-success uppercase tracking-widest">Write Complete ✓ — Step 4: Verify Corrected Reading</p>
-          <p class="text-sm text-neutral-content/80">Offset written. The temperature reading should now drop by approximately 3 °C back to the true ambient value. Hold a stable reading for 3 continuous seconds to confirm the correction is in effect.</p>
-          <div class="grid grid-cols-2 gap-x-6 gap-y-1 font-mono text-xs rounded border border-neutral/40 bg-black/20 px-3 py-2">
-            <div class="flex items-center justify-between gap-2">
-              <span class="text-neutral-content/40">Temperature now</span>
-              <span id="ws5-cal-vfy-temp" class="font-bold text-neutral-content">—</span>
-            </div>
-            <div class="flex items-center justify-between gap-2">
-              <span class="text-neutral-content/40">Expected (±1.5 °C)</span>
-              <span id="ws5-cal-vfy-expected" class="font-bold text-neutral-content/50">—</span>
-            </div>
+          <p class="text-sm text-neutral-content/80">The offset has been reset to 0.0 °C. The temperature reading should now have dropped by approximately 3 °C back to the true ambient value. Check it looks right, then confirm below.</p>
+          <div class="rounded-lg border border-warning/30 bg-warning/5 p-4 text-center">
+            <p class="font-mono text-xs text-neutral-content/40 uppercase tracking-wider mb-1">Temperature now</p>
+            <p id="ws5-cal-vfy-temp" class="text-4xl font-black font-mono text-warning leading-none">—</p>
+            <p class="font-mono text-xs text-neutral-content/40 mt-2">Expected ~<span id="ws5-cal-vfy-expected" class="text-neutral-content/60">—</span></p>
           </div>
-          <div class="space-y-1.5">
-            <div class="flex items-center justify-between font-mono text-xs">
-              <span class="text-neutral-content/40">Stable hold</span>
-              <span id="ws5-cal-vfy-timer" class="text-neutral-content">0.0 s / 3.0 s</span>
-            </div>
-            <div class="w-full rounded-full h-3 overflow-hidden" style="background:rgba(255,255,255,0.08)">
-              <div id="ws5-cal-vfy-tbar" class="h-3 rounded-full transition-all duration-300 bg-success" style="width:0%"></div>
-            </div>
-            <div class="flex justify-between font-mono text-xs text-neutral-content/30 px-0.5">
-              <span id="ws5-cal-vfy-label">Waiting for stable reading…</span><span>Hold 3 s →</span><span>✓ Verified</span>
-            </div>
-          </div>
+          <button type="button" id="ws5-cal-vfy-confirm" class="btn btn-success btn-sm w-full font-mono">Temperature reading looks correct — confirm ✓</button>
         </div>
 
         <!-- Sign-off (revealed after verify) -->
@@ -2507,16 +2530,19 @@ let _ws4Step = 0; // 0=read,1=teach,2=vfy-detect,3=vfy-clear,4=signoff,5=complet
 let _ws4VerifyStart = null;
 let _ws4VerifyDone = false;
 let _ws4FaultCleanup = null; // kept for stopLiveData cleanup guard (always null now)
+let _ws4LightCleanup = null; // restores CL50 to default on navigation away from WS4
 let _ws4CurrentSp1 = null;
 
 // WS5 (temperature) challenge — trigger alarm
-let _ws5ChDone = false;
+let _ws5ChDone    = false;
+let _ws5ChSeenOff = false; // must see out1=false before challenge can complete
 
 // WS5 (temperature) calibration scenario
 let _ws5CalStep = 0;  // 0=idle,1=injected,2=read,3=fixed,4=signoff
 let _ws5CalVerifyStart = null;
 let _ws5CalVerifyDone = false;
 let _ws5CalCleanup = null;
+let _ws5LightCleanup = null; // restores CL50 to default on navigation away from WS5
 let _ws5PreInjectTemp = null;
 
 // WS6 (light stack) challenge — colour prediction
@@ -3356,6 +3382,7 @@ function initLiveWs2(container) {
   let _ws3SdActive = false;
   let _ws3SdDone = false;
   let _ws3SdStableStart = null;
+  let _ws3SdCelebEnd = 0; // timestamp until which the celebration flash runs
   let ws3SdChart = null;
   let ws3SdSigChart = null;
 
@@ -3363,6 +3390,42 @@ function initLiveWs2(container) {
   let _msStep = 0; // 0=idle, 1=injected, 2=observed, 3=diagnosed, 4=read-done, 5=written, 6=verified
   let _msVerifyStart = null;
   let _msVerifyDone = false;
+
+  // ── CL50 light stack control ─────────────────────────────────────────────────
+  // Hex values: octet0=intensities, octet1=speed+pulse+anim, octet2=color2|color1
+  // Colors: 0=Green 1=Red 3=Amber 4=Yellow 9=Blue  Anim: 1=Steady 2=Flash 3=TwoColorFlash
+  const CL50 = {
+    STANDBY:     '000109', // Steady Blue    — worksheet loaded, no scenario
+    FAULT_ON:    '004201', // Fast Flash Red  — NC fault: output ON with no object
+    FAULT_OBJ:   '000103', // Steady Amber    — object present suppresses inverted output
+    DIAGNOSING:  '004203', // Fast Flash Amber — investigating fault
+    READING:     '000109', // Steady Blue     — ISDU read step
+    LIVE_DET:    '000100', // Steady Green    — object detected (step 0, normal mode)
+    DETECT_OK:   '004200', // Fast Flash Green — correct detection after fix
+    WAIT_DETECT: '000109', // Steady Blue     — fixed, waiting for object
+    UNSTABLE:    '004201', // Fast Flash Red   — instability alarm
+    SUCCESS:     '004340', // Two-Color Green+Yellow flash — scenario complete!
+    DEFAULT:     '000100', // Steady Green    — app default
+  };
+  let _lastLightHex = null;
+  function lightSet(hex) {
+    if (hex === _lastLightHex) return;
+    const prev = _lastLightHex;
+    _lastLightHex = hex;
+    const base = window.IO_LINK_API_BASE || '';
+    fetch(`${base}/api/io-link/port/4/pdout`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ value: hex }),
+    }).catch(() => { _lastLightHex = prev; }); // reset on failure so next tick retries
+  }
+  lightSet(CL50.STANDBY);
+  _ws3LightCleanup = () => {
+    const base = window.IO_LINK_API_BASE || '';
+    fetch(`${base}/api/io-link/port/4/pdout`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ value: CL50.DEFAULT }),
+    }).catch(() => {});
+  };
 
   startLiveData(data => {
     if (!chart) chart = makeChart('ws2-chart', 'line',
@@ -3477,6 +3540,7 @@ function initLiveWs2(container) {
         if (sdTimer) sdTimer.textContent = `${elapsed.toFixed(1)} s / 10.0 s`;
         if (elapsed >= 10) {
           _ws3SdDone = true;
+          _ws3SdCelebEnd = Date.now() + 5000; // 5 seconds of celebration flash
           const sdResult = container.querySelector('#ws3-sd-result');
           if (sdResult) {
             sdResult.className = 'rounded-lg p-3 text-center font-bold text-sm bg-success/20 text-success border border-success/40';
@@ -3499,6 +3563,24 @@ function initLiveWs2(container) {
       }
       pushToChart(ws3SdChart, det ? 1 : 0);
       pushToChart(ws3SdSigChart, instab ? 1 : 0);
+    }
+
+    // ── CL50 light reaction to scenario state ───────────────────────────────────
+    if (Date.now() < _ws3SdCelebEnd) {
+      lightSet(CL50.SUCCESS); // celebration flash after 10s challenge complete
+    } else if (_msStep === 0) {
+      lightSet(instab ? CL50.UNSTABLE : (det ? CL50.LIVE_DET : CL50.STANDBY));
+    } else if (_msStep === 1) {
+      // NC fault active: OUT1 ON when no object (det=true = nothing there in NC mode)
+      lightSet(det ? CL50.FAULT_ON : CL50.FAULT_OBJ);
+    } else if (_msStep === 2 || _msStep === 3) {
+      lightSet(CL50.DIAGNOSING);
+    } else if (_msStep === 4) {
+      lightSet(CL50.READING);
+    } else if (_msStep === 5) {
+      lightSet(instab ? CL50.UNSTABLE : (det ? CL50.DETECT_OK : CL50.WAIT_DETECT));
+    } else {
+      lightSet(CL50.SUCCESS);
     }
 
     pushToChart(chart, det ? 1 : 0);
@@ -3706,6 +3788,7 @@ function initLiveWs2(container) {
       _msVerifyStart = null;
       _msVerifyDone = false;
       if (_ws3FaultCleanup) { _ws3FaultCleanup(); _ws3FaultCleanup = null; }
+      _lastLightHex = null; lightSet(CL50.STANDBY); // force re-apply standby blue
       ['ws3-ms-observe', 'ws3-ms-diag', 'ws3-ms-read', 'ws3-ms-write', 'ws3-ms-verify', 'ws3-ms-signoff', 'ws3-ch-result', 'ws3-ms-read-result'].forEach(id => {
         container.querySelector(`#${id}`)?.classList.add('hidden');
       });
@@ -3754,6 +3837,56 @@ function initLiveWs3(container) {
 
   let chart = null;
 
+  // ── CL50 light stack control (violet = capacitive sensor theme) ──────────────
+  // Colors: 0=Green 1=Red 3=Amber 4=Yellow 9=Blue 10=Violet(A)
+  const CL50 = {
+    STANDBY:    '000109', // Steady Blue       — worksheet loaded
+    CAP_IDLE:   '00010A', // Steady Violet     — commissioning ready / bring target
+    CAP_DET:    '00420A', // Flash Violet      — target detected! (teach / fn-test pt1)
+    TEACHING:   '004104', // Flash Yellow fast — teach command active, hold target
+    WRONG_DET:  '004201', // Flash Red         — should be CLEAR, remove target!
+    HOLD_CLEAR: '004200', // Flash Green       — holding clear (fn-test pt2)
+    PASSED:     '000100', // Steady Green      — tests passed
+    SUCCESS:    '004340', // Two-Color Green+Yellow — scenario complete!
+    DEFAULT:    '000100',
+  };
+  let _lastLightHex = null;
+  let _ws4TeachActive = false;
+  function lightSet(hex) {
+    if (hex === _lastLightHex) return;
+    const prev = _lastLightHex;
+    _lastLightHex = hex;
+    const base = window.IO_LINK_API_BASE || '';
+    fetch(`${base}/api/io-link/port/4/pdout`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ value: hex }),
+    }).catch(() => { _lastLightHex = prev; });
+  }
+  function teachLightStart() {
+    const base = window.IO_LINK_API_BASE || '';
+    // Yellow intensity sweep (breathing) — signals "learning in progress"
+    fetch(`${base}/api/io-link/port/4/pdout/sweep`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ color1: 4, speed: 'medium' }), // color1=4=Yellow
+    }).catch(() => {});
+  }
+  function teachLightStop() {
+    const base = window.IO_LINK_API_BASE || '';
+    fetch(`${base}/api/io-link/port/4/pdout/sweep/stop`, { method: 'POST' }).catch(() => {});
+    _lastLightHex = null; // force re-apply on next WS tick
+  }
+
+  lightSet(CL50.CAP_IDLE);
+  _ws4LightCleanup = () => {
+    const base = window.IO_LINK_API_BASE || '';
+    // Stop any active sweep before restoring default
+    fetch(`${base}/api/io-link/port/4/pdout/sweep/stop`, { method: 'POST' }).catch(() => {});
+    fetch(`${base}/api/io-link/port/4/pdout`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ value: CL50.DEFAULT }),
+    }).catch(() => {});
+  };
+
   startLiveData(data => {
     if (!chart) chart = makeChart('ws3-chart', 'line',
       [{ data: Array(60).fill(0), borderColor: '#8b5cf6', backgroundColor: 'rgba(139,92,246,0.15)',
@@ -3790,6 +3923,26 @@ function initLiveWs3(container) {
     _lastCapState = det;
 
     pushToChart(chart, det ? 1 : 0);
+
+    // ── CL50 light reaction ──────────────────────────────────────────────────
+    // While teach sweep is running on the backend, skip lightSet (it would cancel the sweep)
+    if (_ws4TeachActive) {
+      // sweep running — do nothing
+    } else if (_ws4Step === 0) {
+      lightSet(det ? CL50.CAP_DET : CL50.CAP_IDLE);
+    } else if (_ws4Step === 1) {
+      lightSet(det ? CL50.CAP_DET : CL50.CAP_IDLE);
+    } else if (_ws4Step === 2) {
+      // fn-test part 1: hold detection for 3s
+      lightSet(det ? CL50.CAP_DET : CL50.CAP_IDLE);
+    } else if (_ws4Step === 3) {
+      // fn-test part 2: hold clear for 3s
+      lightSet(det ? CL50.WRONG_DET : CL50.HOLD_CLEAR);
+    } else if (_ws4Step === 4) {
+      lightSet(CL50.PASSED);
+    } else {
+      lightSet(CL50.SUCCESS);
+    }
 
     // ── WS4 scenario: live value updates ──────────────────────────────────────
     // HMI panel (always visible)
@@ -3956,12 +4109,16 @@ function initLiveWs3(container) {
   container.querySelector('#ws4-teach-start')?.addEventListener('click', async () => {
     const status = container.querySelector('#ws4-teach-status');
     if (status) { status.textContent = 'Teach started — hold target at detection point…'; status.className = 'text-xs font-mono text-warning'; }
+    _ws4TeachActive = true;
+    teachLightStart();
     await isduCommand(2, 'teach_sp1_start', null);
   });
 
   container.querySelector('#ws4-teach-stop')?.addEventListener('click', async () => {
     const status = container.querySelector('#ws4-teach-status');
     if (status) { status.textContent = 'Stopping teach and reading result…'; status.className = 'text-xs font-mono text-base-content/60'; }
+    _ws4TeachActive = false;
+    teachLightStop();
     const ok = await isduCommand(2, 'teach_sp1_stop', null);
     if (ok) {
       await new Promise(r => setTimeout(r, 800));
@@ -3996,6 +4153,8 @@ function initLiveWs3(container) {
   container.querySelector('#ws4-teach-cancel')?.addEventListener('click', async () => {
     const status = container.querySelector('#ws4-teach-status');
     if (status) { status.textContent = 'Teach cancelled.'; status.className = 'text-xs font-mono text-base-content/50'; }
+    _ws4TeachActive = false;
+    teachLightStop();
     await isduCommand(2, 'teach_cancel', null);
   });
 
@@ -4037,6 +4196,8 @@ function initLiveWs3(container) {
   container.querySelector('#ws4-ch-reset')?.addEventListener('click', () => {
     _ws4ChDone = false;
     _ws4Step = 0; _ws4VerifyStart = null; _ws4VerifyDone = false; _ws4CurrentSp1 = null;
+    _ws4TeachActive = false;
+    _lastLightHex = null; lightSet(CL50.CAP_IDLE);
     _ws4ShowStep(1);
     container.querySelector('#ws4-ch-result')?.classList.add('hidden');
     container.querySelector('#ws4-ms-read-result')?.classList.add('hidden');
@@ -4105,24 +4266,49 @@ function initLiveWs3(container) {
   container.querySelector('#ws3-teach-cancel')?.addEventListener('click', () => isduCommand(2, 'teach_cancel',     'ws3-teach-status'));
 }
 
-// Default SP/RP values for the finger-trigger demo (ambient ~27°C, max ~32°C)
-const _WS5_DEFAULTS = { sp1: 31, rp1: 28, sp2: 29, rp2: 26 };
+// SP/RP setpoints are now calculated dynamically from live temperature on first WS reading.
 
 function initLiveWs4(container) {
   _tempBaseline = null;
-  _alarmThreshold = _WS5_DEFAULTS.sp1;
+  _alarmThreshold = 35; // temporary until first live temp reading
+
+  // ── CL50 light stack control (mirrors OUT1/OUT2 + temperature proximity) ────
+  // React to temperature gradient: green → amber as temp rises toward SP1
+  // Calibration fault (steps 2-4): amber flash override to show "investigating"
+  const CL50 = {
+    NORMAL:     '000100', // Steady Green   — below both SPs
+    WARMING:    '000103', // Steady Amber   — within 2°C of SP1 (or OUT2 active)
+    ALARM:      '004201', // Flash Red fast — OUT1 SP1 alarm active!
+    DIAGNOSING: '004203', // Flash Amber    — calibration investigation
+    SUCCESS:    '004340', // Two-Color Green+Yellow — calibration scenario complete!
+    DEFAULT:    '000100',
+  };
+  let _lastLightHex = null;
+  function lightSet(hex) {
+    if (hex === _lastLightHex) return;
+    const prev = _lastLightHex;
+    _lastLightHex = hex;
+    const base = window.IO_LINK_API_BASE || '';
+    fetch(`${base}/api/io-link/port/4/pdout`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ value: hex }),
+    }).catch(() => { _lastLightHex = prev; });
+  }
+  lightSet(CL50.NORMAL);
+  _ws5LightCleanup = () => {
+    const base = window.IO_LINK_API_BASE || '';
+    fetch(`${base}/api/io-link/port/4/pdout`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ value: CL50.DEFAULT }),
+    }).catch(() => {});
+  };
   _ws5ChDone = false;
+  _ws5ChSeenOff = false;
   _ws5CalStep = 0; _ws5CalVerifyStart = null; _ws5CalVerifyDone = false;
   _ws5CalCleanup = null; _ws5PreInjectTemp = null;
 
-  // Reset SP/RP to known demo values — write RPs first, then SPs
-  Promise.all([
-    isduWrite(3, 584, 0, _WS5_DEFAULTS.rp1, 'int16', 0.1, null),
-    isduWrite(3, 594, 0, _WS5_DEFAULTS.rp2, 'int16', 0.1, null),
-  ]).then(() => Promise.all([
-    isduWrite(3, 583, 0, _WS5_DEFAULTS.sp1, 'int16', 0.1, null),
-    isduWrite(3, 593, 0, _WS5_DEFAULTS.sp2, 'int16', 0.1, null),
-  ]));
+  let _spWritten = false; // triggers on first temp reading
+  let _spReady   = false; // true only after ISDU writes have completed
 
   let chart = null;
 
@@ -4151,6 +4337,38 @@ function initLiveWs4(container) {
 
     // set baseline on first reading
     if (_tempBaseline === null) _tempBaseline = temp;
+
+    // write dynamic SP/RP on first reading: SP1 = ceil(temp)+3, SP2 = ceil(temp)+1
+    if (!_spWritten) {
+      _spWritten = true;
+      const base = Math.ceil(temp);
+      const sp1 = base + 3, rp1 = base, sp2 = base + 1, rp2 = temp;
+      _alarmThreshold = sp1;
+      // write RPs first so the sensor never sees SP < RP
+      Promise.all([
+        isduWrite(3, 584, 0, rp1, 'int16', 0.1, null),
+        isduWrite(3, 594, 0, rp2, 'int16', 0.1, null),
+      ]).then(() => Promise.all([
+        isduWrite(3, 583, 0, sp1, 'int16', 0.1, null),
+        isduWrite(3, 593, 0, sp2, 'int16', 0.1, null),
+      ])).then(() => {
+        _spReady = true;
+        // update slider UI to reflect the written values
+        _setSlider(sp1Slider, sp1ValEl, sp1);
+        _setSlider(sp2Slider, sp2ValEl, sp2);
+        _setSlider(rp1Slider, rp1ValEl, rp1);
+        _setSlider(rp2Slider, rp2ValEl, rp2);
+        _setSlider(chSp1Slider, chSp1ValEl, sp1);
+        const sp1El = container.querySelector('#ws4-sp1-actual');
+        const rp1El = container.querySelector('#ws4-rp1-actual');
+        const sp2El = container.querySelector('#ws4-sp2-actual');
+        const rp2El = container.querySelector('#ws4-rp2-actual');
+        if (sp1El) sp1El.textContent = `${sp1} °C`;
+        if (rp1El) rp1El.textContent = `${rp1} °C`;
+        if (sp2El) sp2El.textContent = `${sp2} °C`;
+        if (rp2El) rp2El.textContent = `${rp2} °C`;
+      });
+    }
 
     // big display
     const disp = container.querySelector('#ws4-temp-display');
@@ -4189,6 +4407,21 @@ function initLiveWs4(container) {
 
     pushToChart(chart, temp);
 
+    // ── CL50 light reaction to temperature + calibration scenario ──────────────
+    if (!_spReady) {
+      lightSet(CL50.NORMAL); // hold green until setpoints are committed to sensor
+    } else if (_ws5CalStep >= 6) {
+      lightSet(CL50.SUCCESS);
+    } else if (_ws5CalStep >= 2 && _ws5CalStep <= 4) {
+      lightSet(CL50.DIAGNOSING);
+    } else if (out1) {
+      lightSet(CL50.ALARM);
+    } else if (out2 || temp >= _alarmThreshold - 2) {
+      lightSet(CL50.WARMING);
+    } else {
+      lightSet(CL50.NORMAL);
+    }
+
     // ── WS5 challenge: trigger SP1 alarm ─────────────────────────────────────
     const chTempEl = container.querySelector('#ws5-ch-temp');
     const chOutDot = container.querySelector('#ws5-ch-out-dot');
@@ -4201,7 +4434,8 @@ function initLiveWs4(container) {
         : 'w-8 h-8 rounded-full bg-base-300 mx-auto transition-all duration-150 shadow-md';
     }
     if (chOutLbl) chOutLbl.textContent = out1 ? 'ACTIVE ●' : 'inactive';
-    if (!_ws5ChDone && out1) {
+    if (!out1) _ws5ChSeenOff = true;
+    if (!_ws5ChDone && _ws5ChSeenOff && out1) {
       _ws5ChDone = true;
       if (ws5Result) {
         ws5Result.className = 'rounded-lg p-3 text-center font-bold text-base bg-success/20 text-success border border-success/40';
@@ -4214,48 +4448,34 @@ function initLiveWs4(container) {
     const calLiveTempEl = container.querySelector('#ws5-cal-live-temp');
     if (calLiveTempEl) calLiveTempEl.textContent = `${temp.toFixed(1)} °C`;
 
-    if (_ws5CalStep === 4 && !_ws5CalVerifyDone) {
-      const vfyTempEl    = container.querySelector('#ws5-cal-vfy-temp');
-      const vfyExpected  = container.querySelector('#ws5-cal-vfy-expected');
-      const vfyTimer     = container.querySelector('#ws5-cal-vfy-timer');
-      const vfyTbar      = container.querySelector('#ws5-cal-vfy-tbar');
-      const vfyLabel     = container.querySelector('#ws5-cal-vfy-label');
-      if (vfyTempEl)    vfyTempEl.textContent    = `${temp.toFixed(1)} °C`;
+    if (_ws5CalStep === 4) {
+      const vfyTempEl   = container.querySelector('#ws5-cal-vfy-temp');
+      const vfyExpected = container.querySelector('#ws5-cal-vfy-expected');
+      if (vfyTempEl)   vfyTempEl.textContent = `${temp.toFixed(1)}`;
       if (vfyExpected && _ws5PreInjectTemp !== null) {
-        vfyExpected.textContent = `${_ws5PreInjectTemp.toFixed(1)} ±1.5 °C`;
-      }
-      const inRange = _ws5PreInjectTemp !== null && Math.abs(temp - _ws5PreInjectTemp) < 1.5;
-      if (inRange) {
-        if (!_ws5CalVerifyStart) _ws5CalVerifyStart = Date.now();
-        const elapsed = (Date.now() - _ws5CalVerifyStart) / 1000;
-        const pct = Math.min(100, (elapsed / 3) * 100);
-        if (vfyTbar)  vfyTbar.style.width = `${pct.toFixed(1)}%`;
-        if (vfyTimer) vfyTimer.textContent = `${Math.min(elapsed, 3).toFixed(1)} s / 3.0 s`;
-        if (vfyLabel) vfyLabel.textContent = 'Reading stable — hold…';
-        if (elapsed >= 3) {
-          _ws5CalVerifyDone = true;
-          _ws5CalStep = 5;
-          if (vfyTbar) vfyTbar.style.width = '100%';
-          container.querySelector('#ws5-cal-signoff')?.classList.remove('hidden');
-          const calHdrDot    = container.querySelector('#ws5-cal-hdr-dot');
-          const calHdrStatus = container.querySelector('#ws5-cal-hdr-status');
-          if (calHdrDot)    calHdrDot.className = 'w-2.5 h-2.5 rounded-full bg-success flex-shrink-0';
-          if (calHdrStatus) { calHdrStatus.textContent = 'Verified — Sign Off'; calHdrStatus.className = 'font-mono text-xs font-bold text-success tracking-widest uppercase'; }
-        }
-      } else {
-        _ws5CalVerifyStart = null;
-        if (vfyTbar)  vfyTbar.style.width = '0%';
-        if (vfyTimer) vfyTimer.textContent = '0.0 s / 3.0 s';
-        if (vfyLabel) vfyLabel.textContent = 'Waiting for stable reading…';
+        vfyExpected.textContent = `${_ws5PreInjectTemp.toFixed(1)} °C ±1.5 °C`;
       }
     }
   });
+
+  // WS5 challenge — Start button reveals the challenge body and arms the check
+  const ws5ChStart = container.querySelector('#ws5-ch-start');
+  const ws5ChBody  = container.querySelector('#ws5-ch-body');
+  if (ws5ChStart && ws5ChBody) {
+    ws5ChStart.addEventListener('click', () => {
+      _ws5ChDone = false;
+      _ws5ChSeenOff = false;
+      ws5ChBody.classList.remove('hidden');
+      ws5ChStart.classList.add('hidden');
+    });
+  }
 
   // WS5 challenge reset
   const ws5Reset = container.querySelector('#ws5-ch-reset');
   if (ws5Reset) {
     ws5Reset.addEventListener('click', () => {
       _ws5ChDone = false;
+      _ws5ChSeenOff = false;
       const r = container.querySelector('#ws5-ch-result');
       if (r) r.classList.add('hidden');
       const dot = container.querySelector('#ws5-ch-out-dot');
@@ -4306,10 +4526,42 @@ function initLiveWs4(container) {
     if (el) el.textContent = `${v} °C`;
   });
 
-  if (sp1Slider && sp1ValEl) sp1Slider.addEventListener('input', () => { sp1ValEl.textContent = `${sp1Slider.value}°C`; });
+  // Challenge box mirrored SP1 slider — stays in sync with the main SP1 slider
+  const chSp1Slider = container.querySelector('#ws5-ch-sp1-slider');
+  const chSp1ValEl  = container.querySelector('#ws5-ch-sp1-val');
+
+  // Sync both sliders from the ISDU read
+  isduRead(3, 583, 0, 'int16', 0.1).then(v => {
+    if (v === null) return;
+    _setSlider(chSp1Slider, chSp1ValEl, v);
+  });
+
+  if (sp1Slider && sp1ValEl) sp1Slider.addEventListener('input', () => {
+    sp1ValEl.textContent = `${sp1Slider.value}°C`;
+    if (chSp1Slider) { chSp1Slider.value = sp1Slider.value; }
+    if (chSp1ValEl)  { chSp1ValEl.textContent = `${sp1Slider.value}°C`; }
+  });
+  if (chSp1Slider) chSp1Slider.addEventListener('input', () => {
+    if (chSp1ValEl) chSp1ValEl.textContent = `${chSp1Slider.value}°C`;
+    if (sp1Slider)  { sp1Slider.value = chSp1Slider.value; }
+    if (sp1ValEl)   { sp1ValEl.textContent = `${chSp1Slider.value}°C`; }
+  });
+
   if (sp2Slider && sp2ValEl) sp2Slider.addEventListener('input', () => { sp2ValEl.textContent = `${sp2Slider.value}°C`; });
   if (rp1Slider && rp1ValEl) rp1Slider.addEventListener('input', () => { rp1ValEl.textContent = `${rp1Slider.value}°C`; });
   if (rp2Slider && rp2ValEl) rp2Slider.addEventListener('input', () => { rp2ValEl.textContent = `${rp2Slider.value}°C`; });
+
+  container.querySelector('#ws5-ch-sp1-write')?.addEventListener('click', async () => {
+    const val = parseFloat(chSp1Slider?.value ?? _alarmThreshold);
+    const ok = await isduWrite(3, 583, 0, val, 'int16', 0.1, 'ws5-ch-sp1-status');
+    if (ok) {
+      if (sp1Slider) { sp1Slider.value = val; }
+      if (sp1ValEl)  { sp1ValEl.textContent = `${val}°C`; }
+      const el = container.querySelector('#ws4-sp1-actual');
+      if (el) el.textContent = `${val} °C`;
+      _alarmThreshold = val;
+    }
+  });
 
   container.querySelector('#ws4-sp1-write')?.addEventListener('click', async () => {
     const val = parseFloat(sp1Slider?.value ?? _alarmThreshold);
@@ -4335,6 +4587,7 @@ function initLiveWs4(container) {
   // ── Calibration scenario ─────────────────────────────────────────────────
   function _ws5CalReset() {
     _ws5CalStep = 0; _ws5CalVerifyStart = null; _ws5CalVerifyDone = false; _ws5PreInjectTemp = null;
+    _lastLightHex = null; // allow light to re-sync to OUT1/OUT2 state on next WS push
     container.querySelector('#ws5-cal-setup')?.classList.remove('hidden');
     ['ws5-cal-observe','ws5-cal-diag','ws5-cal-write','ws5-cal-verify','ws5-cal-signoff','ws5-cal-result'].forEach(id => {
       container.querySelector(`#${id}`)?.classList.add('hidden');
@@ -4344,12 +4597,6 @@ function initLiveWs4(container) {
     container.querySelector('#ws5-cal-diag-fb')?.classList.add('hidden');
     const injectStatus = container.querySelector('#ws5-cal-inject-status');
     if (injectStatus) injectStatus.textContent = '';
-    const vfyTbar  = container.querySelector('#ws5-cal-vfy-tbar');
-    const vfyTimer = container.querySelector('#ws5-cal-vfy-timer');
-    const vfyLabel = container.querySelector('#ws5-cal-vfy-label');
-    if (vfyTbar)  vfyTbar.style.width = '0%';
-    if (vfyTimer) vfyTimer.textContent = '0.0 s / 3.0 s';
-    if (vfyLabel) vfyLabel.textContent = 'Waiting for stable reading…';
     ['ws5-cal-ck1','ws5-cal-ck2','ws5-cal-ck3'].forEach(id => {
       const el = container.querySelector(`#${id}`); if (el) el.checked = false;
     });
@@ -4360,8 +4607,14 @@ function initLiveWs4(container) {
     if (hdrDot)    hdrDot.className = 'w-2.5 h-2.5 rounded-full bg-base-300 flex-shrink-0';
     if (hdrStatus) { hdrStatus.textContent = 'Ready'; hdrStatus.className = 'font-mono text-xs font-bold text-neutral-content/50 tracking-widest uppercase'; }
     isduRead(3, 681, 0, 'int16', 0.1).then(v => {
-      const el = container.querySelector('#ws5-cal-live-offset');
-      if (el && v !== null) el.textContent = `${v.toFixed(1)} °C`;
+      const el   = container.querySelector('#ws5-cal-live-offset');
+      const card = container.querySelector('#ws5-cal-offset-card');
+      if (el && v !== null) {
+        el.textContent = `${v >= 0 ? '+' : ''}${v.toFixed(1)}`;
+        const isZero = Math.abs(v) < 0.05;
+        el.className   = `text-3xl font-black font-mono leading-none ${isZero ? 'text-success' : 'text-error'}`;
+        if (card) card.className = `rounded-lg border p-3 text-center ${isZero ? 'border-success/30 bg-success/5' : 'border-error/30 bg-error/5'}`;
+      }
     });
   }
 
@@ -4376,7 +4629,9 @@ function initLiveWs4(container) {
       _ws5CalStep = 1;
       if (statusEl) statusEl.textContent = 'Fault injected — offset now +3.0 °C';
       const calLiveOffset = container.querySelector('#ws5-cal-live-offset');
-      if (calLiveOffset) calLiveOffset.textContent = '+3.0 °C';
+      const calOffsetCard = container.querySelector('#ws5-cal-offset-card');
+      if (calLiveOffset) { calLiveOffset.textContent = '+3.0'; calLiveOffset.className = 'text-3xl font-black font-mono leading-none text-error'; }
+      if (calOffsetCard) calOffsetCard.className = 'rounded-lg border border-error/30 bg-error/5 p-3 text-center';
       container.querySelector('#ws5-cal-setup')?.classList.add('hidden');
       container.querySelector('#ws5-cal-observe')?.classList.remove('hidden');
       const hdrDot    = container.querySelector('#ws5-cal-hdr-dot');
@@ -4446,7 +4701,9 @@ function initLiveWs4(container) {
       _ws5CalStep = 4;
       if (statusEl) statusEl.textContent = 'Write successful — offset restored to 0.0 °C';
       const calLiveOffset = container.querySelector('#ws5-cal-live-offset');
-      if (calLiveOffset) calLiveOffset.textContent = '0.0 °C';
+      const calOffsetCard = container.querySelector('#ws5-cal-offset-card');
+      if (calLiveOffset) { calLiveOffset.textContent = '+0.0'; calLiveOffset.className = 'text-3xl font-black font-mono leading-none text-success'; }
+      if (calOffsetCard) calOffsetCard.className = 'rounded-lg border border-success/30 bg-success/5 p-3 text-center';
       container.querySelector('#ws5-cal-verify')?.classList.remove('hidden');
       const hdrDot    = container.querySelector('#ws5-cal-hdr-dot');
       const hdrStatus = container.querySelector('#ws5-cal-hdr-status');
@@ -4455,6 +4712,16 @@ function initLiveWs4(container) {
     } else {
       if (statusEl) statusEl.textContent = 'Write failed — check connection';
     }
+  });
+
+  container.querySelector('#ws5-cal-vfy-confirm')?.addEventListener('click', () => {
+    _ws5CalVerifyDone = true;
+    _ws5CalStep = 5;
+    container.querySelector('#ws5-cal-signoff')?.classList.remove('hidden');
+    const calHdrDot    = container.querySelector('#ws5-cal-hdr-dot');
+    const calHdrStatus = container.querySelector('#ws5-cal-hdr-status');
+    if (calHdrDot)    calHdrDot.className = 'w-2.5 h-2.5 rounded-full bg-success flex-shrink-0';
+    if (calHdrStatus) { calHdrStatus.textContent = 'Verified — Sign Off'; calHdrStatus.className = 'font-mono text-xs font-bold text-success tracking-widest uppercase'; }
   });
 
   ['ws5-cal-ck1','ws5-cal-ck2','ws5-cal-ck3'].forEach(id => {

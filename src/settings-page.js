@@ -6,6 +6,11 @@ import { loadMasterConfig, saveMasterConfig, testConnection } from './io-link-pa
 
 const APP_THEME_KEY = 'matrix-theme';
 const APP_CONNECTION_BAR_KEY = 'matrix-show-connection-bar';
+const APP_ZOOM_KEY = 'matrix-zoom';
+const ZOOM_MIN = 70;
+const ZOOM_MAX = 150;
+const ZOOM_STEP = 5;
+const ZOOM_DEFAULT = 100;
 
 function getBaseUrl() {
   return (typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.BASE_URL) ? import.meta.env.BASE_URL : '';
@@ -20,6 +25,46 @@ function applyTheme(theme) {
   if (headerSelect) headerSelect.value = theme;
   const logo = document.getElementById('header-matrix-logo');
   if (logo) logo.src = getBaseUrl() + (theme === 'light' ? 'matrix2.png' : 'matrix.png');
+}
+
+function _setZoomStyles(clamped) {
+  const factor = clamped / 100;
+  let styleEl = document.getElementById('_zoom_style');
+  if (!styleEl) {
+    styleEl = document.createElement('style');
+    styleEl.id = '_zoom_style';
+    document.head.appendChild(styleEl);
+  }
+  if (clamped !== 100) {
+    const wPx = Math.ceil(screen.width  / factor);
+    const hPx = Math.ceil(screen.height / factor);
+    document.documentElement.style.zoom = clamped + '%';
+    document.body.style.minWidth = wPx + 'px';
+    document.body.style.minHeight = '';
+    // The root layout div has h-screen + overflow-hidden, so its height dictates
+    // how tall the app looks. Override it to fill the physical screen at this zoom level.
+    styleEl.textContent = `#app > div { height: ${hPx}px !important; }`;
+  } else {
+    document.documentElement.style.zoom = '';
+    document.body.style.minWidth  = '';
+    document.body.style.minHeight = '';
+    styleEl.textContent = '';
+  }
+}
+
+function applyZoom(level) {
+  const clamped = Math.min(ZOOM_MAX, Math.max(ZOOM_MIN, Math.round(level / ZOOM_STEP) * ZOOM_STEP));
+  _setZoomStyles(clamped);
+  localStorage.setItem(APP_ZOOM_KEY, clamped);
+  const label = document.getElementById('settings-zoom-label');
+  if (label) label.textContent = clamped + '%';
+  const slider = document.getElementById('settings-zoom-slider');
+  if (slider) slider.value = clamped;
+}
+
+export function applySavedZoom() {
+  const saved = parseInt(localStorage.getItem(APP_ZOOM_KEY), 10);
+  if (!isNaN(saved)) _setZoomStyles(saved);
 }
 
 function applyConnectionBarVisible(visible) {
@@ -55,6 +100,24 @@ export function renderSettingsPage() {
               <span class="label-text font-medium text-base-content">Show connection status bar</span>
             </label>
             <p class="text-xs text-base-content/60">The bar below the header with connection status and Settings link.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="card bg-base-200 shadow-xl border border-base-300">
+        <div class="card-body gap-4">
+          <h2 class="card-title text-lg text-base-content border-b border-base-300 pb-2">Display Zoom</h2>
+          <p class="text-xs text-base-content/60">Scale the entire interface. Useful for high-DPI screens or kiosk accessibility.</p>
+          <div class="flex items-center gap-3">
+            <button type="button" id="settings-zoom-down" class="btn btn-square btn-sm btn-outline text-lg font-bold select-none" aria-label="Zoom out">−</button>
+            <input type="range" id="settings-zoom-slider"
+              min="${ZOOM_MIN}" max="${ZOOM_MAX}" step="${ZOOM_STEP}"
+              class="range range-primary range-sm flex-1" />
+            <button type="button" id="settings-zoom-up" class="btn btn-square btn-sm btn-outline text-lg font-bold select-none" aria-label="Zoom in">+</button>
+            <span id="settings-zoom-label" class="font-mono text-sm text-base-content w-12 text-right">${ZOOM_DEFAULT}%</span>
+          </div>
+          <div>
+            <button type="button" id="settings-zoom-reset" class="btn btn-ghost btn-xs text-base-content/50">Reset to 100%</button>
           </div>
         </div>
       </div>
@@ -194,6 +257,18 @@ export function initSettingsPage() {
     const el = document.getElementById(id);
     if (el) el.addEventListener('focus', () => showVK(el));
   });
+
+  // Zoom controls
+  const savedZoom = parseInt(localStorage.getItem(APP_ZOOM_KEY), 10);
+  const currentZoom = isNaN(savedZoom) ? ZOOM_DEFAULT : savedZoom;
+  const zoomSlider = document.getElementById('settings-zoom-slider');
+  const zoomLabel  = document.getElementById('settings-zoom-label');
+  if (zoomSlider) { zoomSlider.value = currentZoom; }
+  if (zoomLabel)  { zoomLabel.textContent = currentZoom + '%'; }
+  zoomSlider?.addEventListener('input', () => applyZoom(parseInt(zoomSlider.value, 10)));
+  document.getElementById('settings-zoom-down')?.addEventListener('click', () => applyZoom(parseInt(zoomSlider?.value || currentZoom, 10) - ZOOM_STEP));
+  document.getElementById('settings-zoom-up')?.addEventListener('click',   () => applyZoom(parseInt(zoomSlider?.value || currentZoom, 10) + ZOOM_STEP));
+  document.getElementById('settings-zoom-reset')?.addEventListener('click', () => applyZoom(ZOOM_DEFAULT));
 
   const connectionBarCheck = document.getElementById('settings-show-connection-bar');
   if (connectionBarCheck) {
