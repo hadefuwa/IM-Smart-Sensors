@@ -207,31 +207,31 @@ const WORKSHEETS = [
       </div>
 
       <p class="mt-4 font-medium text-base-content"><strong>Q1.</strong> From the checklist above, what is the IP address of the AL1350 IO-Link Master?</p>
-      <div class="space-y-2 mt-1">
-        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="cp2-ws0-q1" value="a" class="radio radio-sm radio-secondary"> 192.168.7.2</label>
-        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="cp2-ws0-q1" value="b" class="radio radio-sm radio-secondary"> 192.168.1.1</label>
-        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="cp2-ws0-q1" value="c" class="radio radio-sm radio-secondary"> 192.168.7.4</label>
+      <div class="space-y-2 mt-1" data-correct="a">
+        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="cp2-ws0-q1" value="a" class="radio radio-sm radio-secondary"> 192.168.7.4</label>
+        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="cp2-ws0-q1" value="b" class="radio radio-sm radio-secondary"> 192.168.7.2</label>
+        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="cp2-ws0-q1" value="c" class="radio radio-sm radio-secondary"> 192.168.1.1</label>
       </div>
 
       <p class="mt-3 font-medium text-base-content"><strong>Q2.</strong> The AL1350 pushes data to Mosquitto every 500 ms. Approximately how many WebSocket messages should arrive at the browser each second?</p>
-      <div class="space-y-2 mt-1">
+      <div class="space-y-2 mt-1" data-correct="b">
         <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="cp2-ws0-q2" value="a" class="radio radio-sm radio-secondary"> 20 messages per second</label>
-        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="cp2-ws0-q2" value="b" class="radio radio-sm radio-secondary"> 0.1 messages per second</label>
-        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="cp2-ws0-q2" value="c" class="radio radio-sm radio-secondary"> 2 messages per second</label>
+        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="cp2-ws0-q2" value="b" class="radio radio-sm radio-secondary"> 2 messages per second</label>
+        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="cp2-ws0-q2" value="c" class="radio radio-sm radio-secondary"> 500 messages per second — 500 ms equals 500 per second</label>
       </div>
 
       <p class="mt-3 font-medium text-base-content"><strong>Q3.</strong> The Raspberry Pi has two network interfaces (eth0 and wlan0). Why does this matter for the system architecture?</p>
-      <div class="space-y-2 mt-1">
+      <div class="space-y-2 mt-1" data-correct="c">
         <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="cp2-ws0-q3" value="a" class="radio radio-sm radio-secondary"> It allows two IO-Link masters to be connected simultaneously</label>
         <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="cp2-ws0-q3" value="b" class="radio radio-sm radio-secondary"> It doubles bandwidth by bonding eth0 and wlan0 together for MQTT traffic</label>
         <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="cp2-ws0-q3" value="c" class="radio radio-sm radio-secondary"> It bridges the isolated IO-Link subnet to the building LAN</label>
       </div>
 
       <p class="mt-3 font-medium text-base-content"><strong>Q4.</strong> According to the hardware table, how many IO-Link ports have a sensor connected in this system?</p>
-      <div class="space-y-2 mt-1">
-        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="cp2-ws0-q4" value="a" class="radio radio-sm radio-secondary"> 8 — every port on the AL1350 is populated</label>
-        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="cp2-ws0-q4" value="b" class="radio radio-sm radio-secondary"> 2 — only the photoelectric and capacitive sensors</label>
-        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="cp2-ws0-q4" value="c" class="radio radio-sm radio-secondary"> 4 — Ports 1 through 4 each have a sensor</label>
+      <div class="space-y-2 mt-1" data-correct="a">
+        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="cp2-ws0-q4" value="a" class="radio radio-sm radio-secondary"> 4 — Ports 1 through 4 each have a sensor</label>
+        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="cp2-ws0-q4" value="b" class="radio radio-sm radio-secondary"> 8 — every port on the AL1350 is populated</label>
+        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="cp2-ws0-q4" value="c" class="radio radio-sm radio-secondary"> 2 — only the photoelectric and capacitive sensors</label>
       </div>
 
       <!-- Verification challenge -->
@@ -260,7 +260,7 @@ const WORKSHEETS = [
 
       <div class="divider my-2"></div>
       <button type="button" class="btn btn-ghost btn-sm ws-suggested-btn" data-target="cp2-ws0-suggested">Show answers</button>
-      <div id="cp2-ws0-suggested" class="hidden p-4 rounded-lg border border-base-300 bg-base-300/50 text-base-content/80 text-sm leading-relaxed ws-suggested">Q1: c — 192.168.7.4 (listed on the IO-Link Master checklist item). Q2: c — 500 ms interval = 2 messages per second. Q3: c — bridges the private 192.168.7.x subnet to the building LAN so browsers do not need to be on the IO-Link subnet. Q4: c — Ports 1–4 are used (proximity, capacitive, temperature, light stack).</div>
+      <div id="cp2-ws0-suggested" class="hidden p-4 rounded-lg border border-base-300 bg-base-300/50 text-base-content/80 text-sm leading-relaxed ws-suggested">Q1: a — 192.168.7.4 (listed on the IO-Link Master checklist item). Q2: b — 500 ms interval = 1000 ÷ 500 = 2 messages per second (not 500 — that would confuse the period in ms with the rate per second). Q3: c — bridges the private 192.168.7.x subnet to the building LAN so browsers do not need to be on the IO-Link subnet. Q4: a — Ports 1–4 are used (proximity, capacitive, temperature, light stack).</div>
     `
   },
   {
@@ -353,31 +353,31 @@ const WORKSHEETS = [
       </div>
 
       <p class="mt-4 font-medium text-base-content"><strong>Q1.</strong> Why is MQTT better suited than HTTP polling for delivering sensor data every 500 ms?</p>
-      <div class="space-y-2 mt-1">
-        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="cp2-ws1-q1" value="a" class="radio radio-sm radio-secondary"> HTTP is push-based and uses persistent connections that the broker manages, while MQTT requires a new TCP request each cycle and cannot handle high-frequency data without overloading both devices</label>
-        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="cp2-ws1-q1" value="b" class="radio radio-sm radio-secondary"> MQTT uses publish/subscribe so the AL1350 pushes data the moment it is ready, without the Pi having to request each cycle</label>
+      <div class="space-y-2 mt-1" data-correct="a">
+        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="cp2-ws1-q1" value="a" class="radio radio-sm radio-secondary"> MQTT uses publish/subscribe so the AL1350 pushes data the moment it is ready, without the Pi having to request each cycle</label>
+        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="cp2-ws1-q1" value="b" class="radio radio-sm radio-secondary"> HTTP is push-based and uses persistent connections that the broker manages, while MQTT requires a new TCP request each cycle and cannot handle high-frequency data without overloading both devices</label>
         <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="cp2-ws1-q1" value="c" class="radio radio-sm radio-secondary"> MQTT guarantees delivery of every message in all network conditions by queuing messages until the subscriber acknowledges receipt</label>
       </div>
 
       <p class="mt-3 font-medium text-base-content"><strong>Q2.</strong> The AL1350 loses its MQTT subscriptions when it power-cycles. How does the backend handle this?</p>
-      <div class="space-y-2">
+      <div class="space-y-2" data-correct="c">
         <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="cp2-ws1-q2" value="a" class="radio radio-sm radio-secondary"> It waits for the user to manually re-subscribe</label>
-        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="cp2-ws1-q2" value="b" class="radio radio-sm radio-secondary"> It calls ensure_mqtt_subscription() on every backend startup, re-registering the push subscription automatically</label>
-        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="cp2-ws1-q2" value="c" class="radio radio-sm radio-secondary"> It switches permanently to HTTP polling</label>
+        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="cp2-ws1-q2" value="b" class="radio radio-sm radio-secondary"> It switches permanently to HTTP polling</label>
+        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="cp2-ws1-q2" value="c" class="radio radio-sm radio-secondary"> It calls ensure_mqtt_subscription() on every backend startup, re-registering the push subscription automatically</label>
       </div>
 
       <p class="mt-3 font-medium text-base-content"><strong>Q3.</strong> If the FastAPI backend service on the Pi crashed, what would you expect to observe?</p>
-      <div class="space-y-2 mt-1">
-        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="cp2-ws1-q3" value="a" class="radio radio-sm radio-secondary"> The WebSocket message counter on this page would continue to increment at the normal rate</label>
-        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="cp2-ws1-q3" value="b" class="radio radio-sm radio-secondary"> The AL1350 would automatically restart the backend service via its own built-in watchdog</label>
-        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="cp2-ws1-q3" value="c" class="radio radio-sm radio-secondary"> Live data would stop and the WebSocket would disconnect</label>
+      <div class="space-y-2 mt-1" data-correct="a">
+        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="cp2-ws1-q3" value="a" class="radio radio-sm radio-secondary"> Live data would stop and the WebSocket would disconnect</label>
+        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="cp2-ws1-q3" value="b" class="radio radio-sm radio-secondary"> The WebSocket message counter on this page would continue to increment at the normal rate</label>
+        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="cp2-ws1-q3" value="c" class="radio radio-sm radio-secondary"> The AL1350 would automatically restart the backend service via its own built-in watchdog</label>
       </div>
 
       <p class="mt-3 font-medium text-base-content"><strong>Q4.</strong> What does a consistently high round-trip latency value on the Connection Diagnostics page indicate?</p>
-      <div class="space-y-2 mt-1">
+      <div class="space-y-2 mt-1" data-correct="b">
         <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="cp2-ws1-q4" value="a" class="radio radio-sm radio-secondary"> The browser's chart rendering pipeline cannot keep up with the WebSocket update rate</label>
-        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="cp2-ws1-q4" value="b" class="radio radio-sm radio-secondary"> The Pi's Wi-Fi interface is saturated by other traffic on the building network</label>
-        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="cp2-ws1-q4" value="c" class="radio radio-sm radio-secondary"> The AL1350 is under load or there is congestion on the IO-Link subnet</label>
+        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="cp2-ws1-q4" value="b" class="radio radio-sm radio-secondary"> The AL1350 is under load or there is congestion on the IO-Link subnet</label>
+        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="cp2-ws1-q4" value="c" class="radio radio-sm radio-secondary"> The Pi's Wi-Fi interface is saturated by other traffic on the building network</label>
       </div>
 
       <!-- Challenge -->
@@ -406,7 +406,7 @@ const WORKSHEETS = [
 
       <div class="divider my-2"></div>
       <button type="button" class="btn btn-ghost btn-sm ws-suggested-btn" data-target="cp2-ws1-suggested">Show suggested answers</button>
-      <div id="cp2-ws1-suggested" class="hidden p-4 rounded-lg border border-base-300 bg-base-300/50 text-base-content/80 text-sm leading-relaxed ws-suggested">Q1: b — MQTT push/subscribe means the AL1350 sends data immediately without the Pi polling each cycle; HTTP adds per-request overhead. Q2: b — ensure_mqtt_subscription() registers the push subscription on every backend startup. Q3: c — live data stops when the backend crashes and the WebSocket disconnects. Q4: c — high latency points to AL1350 load or subnet congestion.</div>
+      <div id="cp2-ws1-suggested" class="hidden p-4 rounded-lg border border-base-300 bg-base-300/50 text-base-content/80 text-sm leading-relaxed ws-suggested">Q1: a — MQTT push/subscribe means the AL1350 sends data immediately without the Pi polling each cycle; HTTP adds per-request overhead. Q2: c — ensure_mqtt_subscription() registers the push subscription on every backend startup. Q3: a — live data stops when the backend crashes and the WebSocket disconnects. Q4: b — high latency points to AL1350 load or subnet congestion.</div>
     `
   },
   {
@@ -488,9 +488,9 @@ const WORKSHEETS = [
           <p class="font-semibold text-base-content">Port 1 — Proximity Sensor (OMRON E2E-X16MB1T12, IO-Link V1.1)</p>
           <p class="text-base-content/80 text-sm mt-1">PDin is 2 bytes (16-bit). Bit 0 of byte 0 = switching output (object present: 1, absent: 0). Bit 4 = instability alarm. Bit 5 = over-approach alarm (target too close). Byte 1 = monitor output. Full ISDU access — output logic, timer mode, and diagnosis mode are all writable over IO-Link.</p>
           <p class="mt-2 font-medium text-base-content text-sm"><strong>Q:</strong> If the raw PDin hex is <code class="font-mono bg-base-300 px-1 rounded">0x01</code>, what is the switching output state?</p>
-          <div class="space-y-1 mt-1">
-            <label class="flex items-center gap-2 cursor-pointer text-sm"><input type="radio" name="cp2-ws2-q1" value="a" class="radio radio-xs radio-secondary"> No object detected</label>
-            <label class="flex items-center gap-2 cursor-pointer text-sm"><input type="radio" name="cp2-ws2-q1" value="b" class="radio radio-xs radio-secondary"> Object detected (bit 0 = 1)</label>
+          <div class="space-y-1 mt-1" data-correct="a">
+            <label class="flex items-center gap-2 cursor-pointer text-sm"><input type="radio" name="cp2-ws2-q1" value="a" class="radio radio-xs radio-secondary"> Object detected (bit 0 = 1)</label>
+            <label class="flex items-center gap-2 cursor-pointer text-sm"><input type="radio" name="cp2-ws2-q1" value="b" class="radio radio-xs radio-secondary"> No object detected</label>
             <label class="flex items-center gap-2 cursor-pointer text-sm"><input type="radio" name="cp2-ws2-q1" value="c" class="radio radio-xs radio-secondary"> Sensor fault</label>
           </div>
         </div>
@@ -499,10 +499,10 @@ const WORKSHEETS = [
           <p class="font-semibold text-base-content">Port 2 — Capacitive Sensor</p>
           <p class="text-base-content/80 text-sm mt-1">PDin carries the switching output (bit 0) and optionally a detection count (increments on each rising edge). The backend accumulates the count in a session counter displayed on the Dashboard.</p>
           <p class="mt-2 font-medium text-base-content text-sm"><strong>Q:</strong> Why is a detection count more useful than just the current switching state for a capacitive level sensor on a filling line?</p>
-          <div class="space-y-1 mt-1">
+          <div class="space-y-1 mt-1" data-correct="c">
             <label class="flex items-center gap-2 cursor-pointer text-sm"><input type="radio" name="cp2-ws2-q2" value="a" class="radio radio-xs radio-secondary"> It gives a continuous analogue level reading rather than a binary on/off output</label>
-            <label class="flex items-center gap-2 cursor-pointer text-sm"><input type="radio" name="cp2-ws2-q2" value="b" class="radio radio-xs radio-secondary"> A running count tracks how many containers have been filled without a separate counter sensor</label>
-            <label class="flex items-center gap-2 cursor-pointer text-sm"><input type="radio" name="cp2-ws2-q2" value="c" class="radio radio-xs radio-secondary"> It prevents false positives caused by water or foam near the sensor face</label>
+            <label class="flex items-center gap-2 cursor-pointer text-sm"><input type="radio" name="cp2-ws2-q2" value="b" class="radio radio-xs radio-secondary"> It prevents false positives caused by water or foam near the sensor face</label>
+            <label class="flex items-center gap-2 cursor-pointer text-sm"><input type="radio" name="cp2-ws2-q2" value="c" class="radio radio-xs radio-secondary"> A running count tracks how many containers have been filled without a separate counter sensor</label>
           </div>
         </div>
 
@@ -513,7 +513,7 @@ const WORKSHEETS = [
             raw = 0x00F5  → 245 → 245 / 10 = <strong>24.5 °C</strong>
           </div>
           <p class="mt-2 font-medium text-base-content text-sm"><strong>Q:</strong> A raw PDin of <code class="font-mono bg-base-300 px-1 rounded">0x02EE</code> decodes to what temperature in °C? (0x02EE = 750 decimal; temperature = raw ÷ 10)</p>
-          <div class="space-y-1 mt-1">
+          <div class="space-y-1 mt-1" data-correct="c">
             <label class="flex items-center gap-2 cursor-pointer text-sm"><input type="radio" name="cp2-ws2-q3" value="a" class="radio radio-xs radio-secondary"> 7.5 °C</label>
             <label class="flex items-center gap-2 cursor-pointer text-sm"><input type="radio" name="cp2-ws2-q3" value="b" class="radio radio-xs radio-secondary"> 750.0 °C</label>
             <label class="flex items-center gap-2 cursor-pointer text-sm"><input type="radio" name="cp2-ws2-q3" value="c" class="radio radio-xs radio-secondary"> 75.0 °C</label>
@@ -522,11 +522,11 @@ const WORKSHEETS = [
 
         <div class="rounded-lg border border-base-300 bg-base-200 p-4">
           <p class="font-semibold text-base-content">Port 4 — CL50 Light Stack</p>
-          <p class="text-base-content/80 text-sm mt-1">The CL50 PDin encodes each colour segment's state (off / on / flash) across multiple bits. The backend's CL50 decoder maps bit fields to a human-readable state object: <code class="font-mono text-xs bg-base-300 px-1 rounded">&#123; red: 'flash', amber: 'off', green: 'on' &#125;</code>.</p>
-          <p class="mt-2 font-medium text-base-content text-sm"><strong>Q:</strong> Why does the CL50 need a more complex decode than the proximity sensor?</p>
-          <div class="space-y-1 mt-1">
-            <label class="flex items-center gap-2 cursor-pointer text-sm"><input type="radio" name="cp2-ws2-q4" value="a" class="radio radio-xs radio-secondary"> It uses a completely different IO-Link variant that the standard binary decoder cannot process</label>
-            <label class="flex items-center gap-2 cursor-pointer text-sm"><input type="radio" name="cp2-ws2-q4" value="b" class="radio radio-xs radio-secondary"> Each colour channel (red, amber, green) has three states (on/flash/off) encoded in separate bit fields</label>
+          <p class="text-base-content/80 text-sm mt-1">The CL50 is a PDout-only device — it receives commands rather than sending sensor data. A 3-byte PDout payload controls colour, animation, intensity, and speed, with each field packed into specific bit positions. One incorrect bit changes the entire visual output.</p>
+          <p class="mt-2 font-medium text-base-content text-sm"><strong>Q:</strong> Why does building a PDout command for the CL50 require more care than reading the proximity sensor's PDin?</p>
+          <div class="space-y-1 mt-1" data-correct="a">
+            <label class="flex items-center gap-2 cursor-pointer text-sm"><input type="radio" name="cp2-ws2-q4" value="a" class="radio radio-xs radio-secondary"> Multiple fields — colour, animation, intensity, and speed — must be packed into specific bit positions across 3 bytes. One wrong bit changes the entire behaviour</label>
+            <label class="flex items-center gap-2 cursor-pointer text-sm"><input type="radio" name="cp2-ws2-q4" value="b" class="radio radio-xs radio-secondary"> It uses a completely different IO-Link variant that the standard binary decoder cannot process</label>
             <label class="flex items-center gap-2 cursor-pointer text-sm"><input type="radio" name="cp2-ws2-q4" value="c" class="radio radio-xs radio-secondary"> The CL50 PDin arrives as a plain text string rather than binary bytes</label>
           </div>
         </div>
@@ -558,7 +558,7 @@ const WORKSHEETS = [
 
       <div class="divider my-2"></div>
       <button type="button" class="btn btn-ghost btn-sm ws-suggested-btn" data-target="cp2-ws2-suggested">Show suggested answers</button>
-      <div id="cp2-ws2-suggested" class="hidden p-4 rounded-lg border border-base-300 bg-base-300/50 text-base-content/80 text-sm leading-relaxed ws-suggested">Q1 (proximity): b — bit 0 = 1 means object present (metal target within sensing range). Q2 (capacitive): b — a running count tracks how many containers have been filled. Q3 (temperature): c — 0x02EE = 750 → 750/10 = 75.0 °C. Q4 (CL50): b — multiple colour channels each with on/flash/off states require separate bit fields.</div>
+      <div id="cp2-ws2-suggested" class="hidden p-4 rounded-lg border border-base-300 bg-base-300/50 text-base-content/80 text-sm leading-relaxed ws-suggested">Q1 (proximity): a — bit 0 = 1 means object present (metal target within sensing range). Q2 (capacitive): c — a running count tracks how many containers have been filled. Q3 (temperature): c — 0x02EE = 750 → 750/10 = 75.0 °C. Q4 (CL50): a — multiple fields (colour, animation, intensity, speed) must be packed into specific bit positions across 3 bytes; one wrong bit changes the entire behaviour.</div>
     `
   },
   {
@@ -706,6 +706,194 @@ const WORKSHEETS = [
   },
   {
     id: 5,
+    title: 'Decoding IO-Link Data',
+    shortDesc: 'Read raw hex bytes, apply data types and scale factors.',
+    estimatedTime: 'About 20 min',
+    whyItMatters: 'Every ISDU read returns raw hex. Without knowing the data type and scale, the number is meaningless. This is the skill that makes parameter access useful rather than just possible.',
+    prerequisites: 'CP0002 Worksheets 1–4',
+    contentHtml: `
+      <p class="text-base-content/90 leading-relaxed text-base">When you read a parameter via IO-Link acyclic access (ISDU), the device returns raw bytes in hexadecimal. This worksheet explains how to interpret those bytes — from hex digits to decimal to an engineering value with units.</p>
+
+      <!-- Three components -->
+      <div class="grid grid-cols-3 gap-2 mt-3">
+        <div class="rounded-lg p-3 text-center space-y-1" style="background:#0f172a;border:1px solid #334155">
+          <p class="text-xs font-bold" style="color:#3b82f6">Raw hex</p>
+          <p class="font-mono font-bold text-lg" style="color:#f59e0b">01 F4</p>
+          <p class="text-xs" style="color:#475569">Bytes from device</p>
+        </div>
+        <div class="rounded-lg p-3 text-center space-y-1" style="background:#0f172a;border:1px solid #334155">
+          <p class="text-xs font-bold" style="color:#8b5cf6">Data type</p>
+          <p class="font-mono font-bold text-lg" style="color:#a78bfa">int16</p>
+          <p class="text-xs" style="color:#475569">How to interpret</p>
+        </div>
+        <div class="rounded-lg p-3 text-center space-y-1" style="background:#0f172a;border:1px solid #334155">
+          <p class="text-xs font-bold" style="color:#22c55e">Scale factor</p>
+          <p class="font-mono font-bold text-lg" style="color:#4ade80">×0.1</p>
+          <p class="text-xs" style="color:#475569">Converts to °C</p>
+        </div>
+      </div>
+
+      <!-- Hex digits -->
+      <div class="rounded-xl border border-base-300 bg-base-200 p-4 mt-4 space-y-3">
+        <p class="text-xs font-semibold text-base-content/60 uppercase tracking-wide">Part 1 — Hex digits (0–F)</p>
+        <p class="text-sm text-base-content/80">Decimal counts 0–9 before rolling over. Hexadecimal counts 0–9, then uses the letters A–F for values 10–15, giving 16 symbols total (base 16):</p>
+        <div class="rounded-lg overflow-hidden" style="border:1px solid #334155">
+          <table class="w-full text-xs text-center font-mono">
+            <tbody>
+              <tr style="background:#1e293b">
+                <td class="py-1.5 px-1 font-semibold" style="color:#475569">Hex</td>
+                <td style="color:#94a3b8">0</td><td style="color:#94a3b8">1</td><td style="color:#94a3b8">2</td><td style="color:#94a3b8">3</td>
+                <td style="color:#94a3b8">4</td><td style="color:#94a3b8">5</td><td style="color:#94a3b8">6</td><td style="color:#94a3b8">7</td>
+                <td style="color:#94a3b8">8</td><td style="color:#94a3b8">9</td>
+                <td style="color:#f59e0b;font-weight:700">A</td><td style="color:#f59e0b;font-weight:700">B</td>
+                <td style="color:#f59e0b;font-weight:700">C</td><td style="color:#f59e0b;font-weight:700">D</td>
+                <td style="color:#f59e0b;font-weight:700">E</td><td style="color:#f59e0b;font-weight:700">F</td>
+              </tr>
+              <tr style="background:#0f172a">
+                <td class="py-1.5 px-1 font-semibold" style="color:#475569">Dec</td>
+                <td style="color:#64748b">0</td><td style="color:#64748b">1</td><td style="color:#64748b">2</td><td style="color:#64748b">3</td>
+                <td style="color:#64748b">4</td><td style="color:#64748b">5</td><td style="color:#64748b">6</td><td style="color:#64748b">7</td>
+                <td style="color:#64748b">8</td><td style="color:#64748b">9</td>
+                <td style="color:#f59e0b;font-weight:700">10</td><td style="color:#f59e0b;font-weight:700">11</td>
+                <td style="color:#f59e0b;font-weight:700">12</td><td style="color:#f59e0b;font-weight:700">13</td>
+                <td style="color:#f59e0b;font-weight:700">14</td><td style="color:#f59e0b;font-weight:700">15</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="text-sm text-base-content/80">A single byte is two hex digits. To convert one byte: <span class="font-semibold">left digit × 16 + right digit</span>.</p>
+        <div class="rounded-lg px-4 py-3 text-sm font-mono" style="background:#0f172a;border:1px solid #334155;color:#94a3b8">
+          Example: <span style="color:#f59e0b;font-weight:700">F4</span> → F=15, so  15 × 16 + 4 = 240 + 4 = <span style="color:#22c55e;font-weight:700">244</span>
+        </div>
+      </div>
+
+      <!-- Two-byte values -->
+      <div class="rounded-xl border border-base-300 bg-base-200 p-4 mt-3 space-y-3">
+        <p class="text-xs font-semibold text-base-content/60 uppercase tracking-wide">Part 2 — Two-byte (16-bit) values</p>
+        <p class="text-sm text-base-content/80">Many parameters return two bytes. The first (high) byte is worth 256× the second (low) byte. Write all four hex digits together and apply positional values:</p>
+        <div class="overflow-x-auto">
+          <table class="text-xs font-mono text-center" style="border-collapse:separate;border-spacing:3px;width:100%">
+            <thead>
+              <tr>
+                <td class="text-left text-base-content/50 pr-3 pb-1 text-xs">Position</td>
+                <td class="px-3 py-1.5 rounded" style="background:#1e293b;color:#64748b;font-weight:600">×4096</td>
+                <td class="px-3 py-1.5 rounded" style="background:#1e293b;color:#64748b;font-weight:600">×256</td>
+                <td class="px-3 py-1.5 rounded" style="background:#1e293b;color:#64748b;font-weight:600">×16</td>
+                <td class="px-3 py-1.5 rounded" style="background:#1e293b;color:#64748b;font-weight:600">×1</td>
+                <td></td>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td class="text-left text-base-content/50 pr-3 text-xs">Hex: 01 F4</td>
+                <td class="px-3 py-1.5 rounded" style="background:#1e293b;color:#94a3b8">0</td>
+                <td class="px-3 py-1.5 rounded" style="background:#1e293b;color:#94a3b8">1</td>
+                <td class="px-3 py-1.5 rounded" style="background:#1e293b;color:#f59e0b">F (=15)</td>
+                <td class="px-3 py-1.5 rounded" style="background:#1e293b;color:#94a3b8">4</td>
+                <td></td>
+              </tr>
+              <tr>
+                <td class="text-left text-base-content/50 pr-3 text-xs">Calculation</td>
+                <td class="px-2 py-1.5 rounded text-xs" style="background:#0f172a;color:#475569">0×4096=0</td>
+                <td class="px-2 py-1.5 rounded text-xs" style="background:#0f172a;color:#94a3b8">1×256=256</td>
+                <td class="px-2 py-1.5 rounded text-xs" style="background:#0f172a;color:#22c55e">15×16=240</td>
+                <td class="px-2 py-1.5 rounded text-xs" style="background:#0f172a;color:#94a3b8">4×1=4</td>
+                <td class="text-left pl-3 font-bold" style="color:#22c55e;font-size:1.1em">= 500</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="text-sm text-base-content/80">Then apply the scale: 500 × 0.1 = <span class="font-bold text-success">50.0 °C</span>.</p>
+      </div>
+
+      <!-- Data types -->
+      <div class="rounded-xl border border-base-300 bg-base-200 p-4 mt-3 space-y-3">
+        <p class="text-xs font-semibold text-base-content/60 uppercase tracking-wide">Part 3 — Data types</p>
+        <p class="text-sm text-base-content/80">The IODD file specifies the dtype for each parameter. This tells you how many bytes to read and whether the value can be negative:</p>
+        <div class="overflow-x-auto rounded-lg" style="border:1px solid #334155">
+          <table class="w-full text-sm" style="border-collapse:collapse">
+            <thead>
+              <tr class="text-xs" style="background:#1e293b;color:#475569">
+                <td class="px-3 py-2 font-semibold">Type</td>
+                <td class="px-3 py-2">Bytes</td>
+                <td class="px-3 py-2">Range</td>
+                <td class="px-3 py-2">Typical use in this kit</td>
+              </tr>
+            </thead>
+            <tbody class="text-xs text-base-content/80" style="font-family:'Courier New',monospace">
+              <tr style="border-top:1px solid #1e293b">
+                <td class="px-3 py-2 font-bold" style="color:#3b82f6">uint8</td>
+                <td class="px-3 py-2">1</td>
+                <td class="px-3 py-2">0–255</td>
+                <td class="px-3 py-2" style="font-family:inherit">Output logic (NO=0, NC=1), teach commands</td>
+              </tr>
+              <tr style="border-top:1px solid #1e293b">
+                <td class="px-3 py-2 font-bold" style="color:#8b5cf6">uint16</td>
+                <td class="px-3 py-2">2</td>
+                <td class="px-3 py-2">0–65535</td>
+                <td class="px-3 py-2" style="font-family:inherit">Capacitive SP1 (raw count, always positive)</td>
+              </tr>
+              <tr style="border-top:1px solid #1e293b">
+                <td class="px-3 py-2 font-bold" style="color:#f97316">int16</td>
+                <td class="px-3 py-2">2</td>
+                <td class="px-3 py-2">−32768 to +32767</td>
+                <td class="px-3 py-2" style="font-family:inherit">Temperature SP1/RP1 and calibration offset</td>
+              </tr>
+              <tr style="border-top:1px solid #1e293b">
+                <td class="px-3 py-2 font-bold" style="color:#22c55e">int32</td>
+                <td class="px-3 py-2">4</td>
+                <td class="px-3 py-2">±2 billion</td>
+                <td class="px-3 py-2" style="font-family:inherit">Photoelectric SP1 (wide sensing range)</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="text-sm text-base-content/80">Negative int16 values use two's complement encoding — covered in detail in Worksheet 10 alongside the PT100 sensor.</p>
+      </div>
+
+      <!-- Scale factors -->
+      <div class="rounded-xl border border-base-300 bg-base-200 p-4 mt-3 space-y-3">
+        <p class="text-xs font-semibold text-base-content/60 uppercase tracking-wide">Part 4 — Scale factors in this kit</p>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div class="rounded-lg p-3 space-y-1.5" style="background:#0f172a;border:1px solid #334155">
+            <p class="text-xs font-semibold text-base-content/50">TV7105 — SP1 (Index 583, int16, ×0.1)</p>
+            <p class="font-mono text-sm" style="color:#94a3b8">Raw <span style="color:#f59e0b">0118</span> hex = 280 decimal</p>
+            <p class="font-mono text-sm font-bold" style="color:#22c55e">280 × 0.1 = 28.0 °C</p>
+          </div>
+          <div class="rounded-lg p-3 space-y-1.5" style="background:#0f172a;border:1px solid #334155">
+            <p class="text-xs font-semibold text-base-content/50">TV7105 — Cal Offset (Index 681, int16, ×0.1)</p>
+            <p class="font-mono text-sm" style="color:#94a3b8">Raw <span style="color:#f59e0b">FFD0</span> hex = −48 (signed)</p>
+            <p class="font-mono text-sm font-bold" style="color:#22c55e">−48 × 0.1 = −4.8 °C</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Practice -->
+      <div class="rounded-xl border-2 border-secondary/30 bg-secondary/5 p-4 mt-3 space-y-4">
+        <p class="text-xs font-semibold text-secondary uppercase tracking-wide">Practice Exercises</p>
+        <div class="space-y-1">
+          <p class="text-sm font-semibold text-base-content">Q1 — An ISDU read of TV7105 RP1 (Index 584, Sub 0) returns <span class="font-mono font-bold">00 E6</span>. dtype = int16, scale = ×0.1. What is RP1 in °C?</p>
+          <p class="text-xs text-base-content/60">Hint: E = 14 in decimal.</p>
+        </div>
+        <div class="space-y-1">
+          <p class="text-sm font-semibold text-base-content">Q2 — A capacitive sensor returns <span class="font-mono font-bold">00 64</span> for SP1 (uint16, no scale). What is the setpoint count?</p>
+          <p class="text-xs text-base-content/60">Hint: 6 × 16 + 4 = ?</p>
+        </div>
+        <div class="space-y-1">
+          <p class="text-sm font-semibold text-base-content">Q3 — The TV7105 SP1 returns <span class="font-mono font-bold">01 F4</span> (int16, ×0.1). Show your full working to find the setpoint in °C.</p>
+        </div>
+        <div class="divider my-2"></div>
+        <button type="button" class="btn btn-ghost btn-sm ws-suggested-btn" data-target="cp2-decode-suggested">Show suggested answers</button>
+        <div id="cp2-decode-suggested" class="hidden p-4 rounded-lg border border-base-300 bg-base-300/50 text-base-content/80 text-sm leading-relaxed ws-suggested">
+          Q1: 00 E6 → 0 + 0 + (14×16) + 6 = 224 + 6 = 230. Then 230 × 0.1 = 23.0 °C.<br><br>
+          Q2: 00 64 → 0 + 0 + (6×16) + 4 = 96 + 4 = 100. Scale = ×1 so SP1 = 100 counts.<br><br>
+          Q3: 01 F4 → (0×4096) + (1×256) + (15×16) + 4 = 0 + 256 + 240 + 4 = 500. Then 500 × 0.1 = 50.0 °C.
+        </div>
+      </div>
+    `
+  },
+  {
+    id: 6,
     title: 'Diagnostics: Process, Service, and Event Data',
     shortDesc: 'Classify IO-Link data types and where they go.',
     estimatedTime: 'About 15 min',
@@ -771,9 +959,9 @@ const WORKSHEETS = [
       <button type="button" class="btn btn-sm btn-secondary mt-2" id="ws6-check-btn">Check answers</button>
 
       <p class="mt-4 font-medium text-base-content"><strong>Q2.</strong> In this app, which data type does the WebSocket stream deliver to the browser on every tick?</p>
-      <div class="space-y-2">
-        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="cp2-ws4-q2" value="a" class="radio radio-sm radio-secondary"> Service data only (parameters)</label>
-        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="cp2-ws4-q2" value="b" class="radio radio-sm radio-secondary"> Process data (sensor values) + event data (faults/warnings) merged into a single JSON payload</label>
+      <div class="space-y-2" data-correct="a">
+        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="cp2-ws4-q2" value="a" class="radio radio-sm radio-secondary"> Process data (sensor values) + event data (faults/warnings) merged into a single JSON payload</label>
+        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="cp2-ws4-q2" value="b" class="radio radio-sm radio-secondary"> Service data only (parameters)</label>
         <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="cp2-ws4-q2" value="c" class="radio radio-sm radio-secondary"> Raw binary PDin only</label>
       </div>
 
@@ -803,11 +991,11 @@ const WORKSHEETS = [
 
       <div class="divider my-2"></div>
       <button type="button" class="btn btn-ghost btn-sm ws-suggested-btn" data-target="cp2-ws4-suggested">Show suggested answers</button>
-      <div id="cp2-ws4-suggested" class="hidden p-4 rounded-lg border border-base-300 bg-base-300/50 text-base-content/80 text-sm leading-relaxed ws-suggested">Classification: Temperature 23.5°C = Process; Device replacement = Event; Filter time parameter = Service; Object present flag = Process; Short circuit fault = Event. Q2: b — WebSocket delivers process data + event data merged into one JSON payload each tick; service data is only read on demand via separate ISDU calls.</div>
+      <div id="cp2-ws4-suggested" class="hidden p-4 rounded-lg border border-base-300 bg-base-300/50 text-base-content/80 text-sm leading-relaxed ws-suggested">Classification: Temperature 23.5°C = Process; Device replacement = Event; Filter time parameter = Service; Object present flag = Process; Short circuit fault = Event. Q2: a — WebSocket delivers process data + event data merged into one JSON payload each tick; service data is only read on demand via separate ISDU calls.</div>
     `
   },
   {
-    id: 6,
+    id: 7,
     title: 'PLC and HMI Integration',
     shortDesc: 'Mapping IO-Link data into control systems.',
     estimatedTime: 'About 15 min',
@@ -875,10 +1063,10 @@ const WORKSHEETS = [
       </div>
 
       <p class="text-base-content/90 leading-relaxed"><strong>1.</strong> How does IO-Link process data from a sensor reach a PLC I/O scan cycle?</p>
-      <div class="space-y-2 mt-1">
+      <div class="space-y-2 mt-1" data-correct="c">
         <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="cp2-ws5-q1" value="a" class="radio radio-sm radio-secondary"> The sensor connects directly to a PLC input card using its IO-Link cable, with the master acting only as a power supply and forwarding no data to the fieldbus network</label>
-        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="cp2-ws5-q1" value="b" class="radio radio-sm radio-secondary"> The IO-Link master maps each port's PDin into its process image; the PLC reads this via a fieldbus on every scan cycle</label>
-        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="cp2-ws5-q1" value="c" class="radio radio-sm radio-secondary"> The sensor transmits binary frames over Wi-Fi directly to the PLC's memory address</label>
+        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="cp2-ws5-q1" value="b" class="radio radio-sm radio-secondary"> The sensor transmits binary frames over Wi-Fi directly to the PLC's memory address</label>
+        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="cp2-ws5-q1" value="c" class="radio radio-sm radio-secondary"> The IO-Link master maps each port's PDin into its process image; the PLC reads this via a fieldbus on every scan cycle</label>
       </div>
 
       <p class="mt-3 font-medium text-base-content"><strong>2.</strong> In this app, the backend acts as the "PLC equivalent" — it receives IO-Link data and exposes it to the browser. Which backend component is responsible for:</p>
@@ -895,7 +1083,7 @@ const WORKSHEETS = [
       <button type="button" class="btn btn-primary btn-sm mt-2" id="ws5-comp-check-btn">Check answers</button>
 
       <p class="mt-3 font-medium text-base-content"><strong>3.</strong> What is the key advantage of a web HMI like this app over walking to the machine?</p>
-      <div class="space-y-2 mt-1">
+      <div class="space-y-2 mt-1" data-correct="c">
         <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="cp2-ws5-q3" value="a" class="radio radio-sm radio-secondary"> Walking to the machine is always preferred because it provides a physical inspection opportunity that remote tools cannot replicate</label>
         <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="cp2-ws5-q3" value="b" class="radio radio-sm radio-secondary"> A web HMI only functions when the machine has a stable internet connection</label>
         <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="cp2-ws5-q3" value="c" class="radio radio-sm radio-secondary"> Faster fault identification, multi-machine monitoring, and historical trends without a site visit</label>
@@ -904,9 +1092,9 @@ const WORKSHEETS = [
       <div class="alert bg-secondary/10 border border-secondary/30 rounded-lg text-base-content mt-3">
         <strong>Do this:</strong> Open <a href="#" data-page="admin" class="link link-secondary">Connection Diagnostics</a>. The latency graph shows round-trip time to the AL1350 over HTTP. What does a spike in this graph tell you about the health of the IO-Link network?
       </div>
-      <div class="space-y-2 mt-2">
-        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="cp2-ws5-q4" value="a" class="radio radio-sm radio-secondary"> The dashboard browser tab is consuming too much memory and slowing the chart rendering</label>
-        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="cp2-ws5-q4" value="b" class="radio radio-sm radio-secondary"> High latency on the IO-Link subnet or the AL1350 being overloaded</label>
+      <div class="space-y-2 mt-2" data-correct="a">
+        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="cp2-ws5-q4" value="a" class="radio radio-sm radio-secondary"> High latency on the IO-Link subnet or the AL1350 being overloaded</label>
+        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="cp2-ws5-q4" value="b" class="radio radio-sm radio-secondary"> The dashboard browser tab is consuming too much memory and slowing the chart rendering</label>
         <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="cp2-ws5-q4" value="c" class="radio radio-sm radio-secondary"> The Pi's MQTT broker has stopped forwarding messages and is queueing them internally until the buffer limit is reached</label>
       </div>
 
@@ -936,11 +1124,11 @@ const WORKSHEETS = [
 
       <div class="divider my-2"></div>
       <button type="button" class="btn btn-ghost btn-sm ws-suggested-btn" data-target="cp2-ws5-suggested">Show suggested answers</button>
-      <div id="cp2-ws5-suggested" class="hidden p-4 rounded-lg border border-base-300 bg-base-300/50 text-base-content/80 text-sm leading-relaxed ws-suggested">Q1: b — the IO-Link master maps PDin into its process image; the PLC reads this via fieldbus each scan cycle. Q2: io_link_fastapi.py (MQTT subscription, rows 1 and 3); decoder.py (PDin decode, row 2). Q3: c — faster fault identification, multi-machine monitoring, and trend history. Latency spike: b — points to IO-Link subnet congestion or AL1350 load.</div>
+      <div id="cp2-ws5-suggested" class="hidden p-4 rounded-lg border border-base-300 bg-base-300/50 text-base-content/80 text-sm leading-relaxed ws-suggested">Q1: c — the IO-Link master maps PDin into its process image; the PLC reads this via fieldbus each scan cycle. Q2: io_link_fastapi.py (MQTT subscription, rows 1 and 3); decoder.py (PDin decode, row 2). Q3: c — faster fault identification, multi-machine monitoring, and trend history. Latency spike: a — points to IO-Link subnet congestion or AL1350 load.</div>
     `
   },
   {
-    id: 7,
+    id: 8,
     title: 'Case Study — Standard vs IO-Link: The Numbers',
     shortDesc: 'MTTR calculation and business case.',
     estimatedTime: 'About 20 min',
@@ -995,30 +1183,30 @@ const WORKSHEETS = [
       </div>
 
       <p class="mt-4 font-medium text-base-content"><strong>Q1.</strong> Using the scenario figures, what is the annual downtime saving when switching to IO-Link? (Standard: 40 × 35 min = 1,400 min = 23.3 h; IO-Link: 40 × 8 min = 320 min = 5.3 h)</p>
-      <div class="space-y-2 mt-1">
-        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="cp2-ws6-q1" value="a" class="radio radio-sm radio-secondary"> 5.3 hours per year</label>
-        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="cp2-ws6-q1" value="b" class="radio radio-sm radio-secondary"> 23.3 hours per year</label>
-        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="cp2-ws6-q1" value="c" class="radio radio-sm radio-secondary"> 18 hours per year</label>
+      <div class="space-y-2 mt-1" data-correct="a">
+        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="cp2-ws6-q1" value="a" class="radio radio-sm radio-secondary"> 18 hours per year</label>
+        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="cp2-ws6-q1" value="b" class="radio radio-sm radio-secondary"> 5.3 hours per year</label>
+        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="cp2-ws6-q1" value="c" class="radio radio-sm radio-secondary"> 23.3 hours per year</label>
       </div>
 
       <p class="mt-3 font-medium text-base-content"><strong>Q2.</strong> If the production line generates £5,000 of value per hour, what is the annual financial saving from IO-Link? (Saving = 18 hours × £5,000)</p>
-      <div class="space-y-2 mt-1">
+      <div class="space-y-2 mt-1" data-correct="c">
         <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="cp2-ws6-q2" value="a" class="radio radio-sm radio-secondary"> £175,000</label>
-        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="cp2-ws6-q2" value="b" class="radio radio-sm radio-secondary"> £90,000</label>
-        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="cp2-ws6-q2" value="c" class="radio radio-sm radio-secondary"> £26,500</label>
+        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="cp2-ws6-q2" value="b" class="radio radio-sm radio-secondary"> £26,500</label>
+        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="cp2-ws6-q2" value="c" class="radio radio-sm radio-secondary"> £90,000</label>
       </div>
 
       <p class="mt-3 font-medium text-base-content"><strong>Q3.</strong> Beyond MTTR, which pair of benefits contributes most to lower total cost of ownership for IO-Link sensors?</p>
-      <div class="space-y-2 mt-1">
+      <div class="space-y-2 mt-1" data-correct="b">
         <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="cp2-ws6-q3" value="a" class="radio radio-sm radio-secondary"> Built-in wireless backup channel that activates on master power loss, and automatic IP address provisioning for all sensors</label>
-        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="cp2-ws6-q3" value="b" class="radio radio-sm radio-secondary"> Lower per-unit sensor cost due to IO-Link certification subsidising manufacturing overheads across the supply chain</label>
-        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="cp2-ws6-q3" value="c" class="radio radio-sm radio-secondary"> Automatic parameter restore on sensor swap and remote diagnostics via the HMI</label>
+        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="cp2-ws6-q3" value="b" class="radio radio-sm radio-secondary"> Automatic parameter restore on sensor swap and remote diagnostics via the HMI</label>
+        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="cp2-ws6-q3" value="c" class="radio radio-sm radio-secondary"> Lower per-unit sensor cost due to IO-Link certification subsidising manufacturing overheads across the supply chain</label>
       </div>
 
       <p class="mt-3 font-medium text-base-content"><strong>Q4.</strong> In this app's architecture, which data would you export to a CMMS (Computerised Maintenance Management System) to automate maintenance work orders?</p>
-      <div class="space-y-2">
-        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="cp2-ws6-q4" value="a" class="radio radio-sm radio-secondary"> Only process data (sensor values)</label>
-        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="cp2-ws6-q4" value="b" class="radio radio-sm radio-secondary"> Event data (faults and warnings) — these are the triggers for maintenance actions</label>
+      <div class="space-y-2" data-correct="a">
+        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="cp2-ws6-q4" value="a" class="radio radio-sm radio-secondary"> Event data (faults and warnings) — these are the triggers for maintenance actions</label>
+        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="cp2-ws6-q4" value="b" class="radio radio-sm radio-secondary"> Only process data (sensor values)</label>
         <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="cp2-ws6-q4" value="c" class="radio radio-sm radio-secondary"> Service data only (parameters)</label>
       </div>
 
@@ -1048,11 +1236,11 @@ const WORKSHEETS = [
 
       <div class="divider my-2"></div>
       <button type="button" class="btn btn-ghost btn-sm ws-suggested-btn" data-target="cp2-ws6-suggested">Show suggested answers</button>
-      <div id="cp2-ws6-suggested" class="hidden p-4 rounded-lg border border-base-300 bg-base-300/50 text-base-content/80 text-sm leading-relaxed ws-suggested">Q1: c — Standard: 40×35=1,400 min=23.3 h. IO-Link: 40×8=320 min=5.3 h. Saving = 18 h/year. Q2: b — 18 × £5,000 = £90,000/year. Q3: c — automatic parameter restore (no re-commissioning cost) and remote diagnostics (no site visit needed). Q4: b — event data (faults and warnings) triggers maintenance work orders.</div>
+      <div id="cp2-ws6-suggested" class="hidden p-4 rounded-lg border border-base-300 bg-base-300/50 text-base-content/80 text-sm leading-relaxed ws-suggested">Q1: a — Standard: 40×35=1,400 min=23.3 h. IO-Link: 40×8=320 min=5.3 h. Saving = 18 h/year. Q2: c — 18 × £5,000 = £90,000/year. Q3: b — automatic parameter restore (no re-commissioning cost) and remote diagnostics (no site visit needed). Q4: a — event data (faults and warnings) triggers maintenance work orders.</div>
     `
   },
   {
-    id: 8,
+    id: 9,
     title: 'Device Identity — Vendor ID, Device ID &amp; PDin',
     shortDesc: 'Identify an unknown sensor using IO-Link device identity fields.',
     estimatedTime: 'About 15 min',
@@ -1093,35 +1281,35 @@ const WORKSHEETS = [
 
       <!-- Questions -->
       <p class="mt-4 font-medium text-base-content"><strong>Q1.</strong> Open the <a href="#" data-page="io-link-master" class="link link-secondary">IO-Link Master page</a>. What Vendor ID does Port 1 report?</p>
-      <div class="space-y-2 mt-1">
-        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="cp2-ws7-q1" value="a" class="radio radio-sm radio-secondary"> 310</label>
-        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="cp2-ws7-q1" value="b" class="radio radio-sm radio-secondary"> 612</label>
+      <div class="space-y-2 mt-1" data-correct="a">
+        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="cp2-ws7-q1" value="a" class="radio radio-sm radio-secondary"> 612</label>
+        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="cp2-ws7-q1" value="b" class="radio radio-sm radio-secondary"> 310</label>
         <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="cp2-ws7-q1" value="c" class="radio radio-sm radio-secondary"> 1586</label>
       </div>
 
       <p class="mt-4 font-medium text-base-content"><strong>Q2.</strong> The IO-Link Master page shows the Vendor ID resolved to a company name. Which manufacturer does Vendor ID 612 identify?</p>
-      <div class="space-y-2 mt-1">
+      <div class="space-y-2 mt-1" data-correct="b">
         <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="cp2-ws7-q2" value="a" class="radio radio-sm radio-secondary"> ifm electronic</label>
-        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="cp2-ws7-q2" value="b" class="radio radio-sm radio-secondary"> Balluff</label>
-        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="cp2-ws7-q2" value="c" class="radio radio-sm radio-secondary"> OMRON Corporation</label>
+        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="cp2-ws7-q2" value="b" class="radio radio-sm radio-secondary"> OMRON Corporation</label>
+        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="cp2-ws7-q2" value="c" class="radio radio-sm radio-secondary"> Balluff</label>
       </div>
 
       <p class="mt-4 font-medium text-base-content"><strong>Q3.</strong> Port 1 also reports Device ID 131090, which the app resolves to <strong>E2E-X16MB1T12 Proximity</strong>. Why does knowing the Device ID matter when ordering a spare?</p>
-      <div class="space-y-2 mt-1">
+      <div class="space-y-2 mt-1" data-correct="c">
         <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="cp2-ws7-q3" value="a" class="radio radio-sm radio-secondary"> The master uses it to set the sensor's IP address on the IO-Link network</label>
-        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="cp2-ws7-q3" value="b" class="radio radio-sm radio-secondary"> It uniquely identifies the exact model, so you order the right part first time and the master can restore parameters automatically after swap</label>
-        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="cp2-ws7-q3" value="c" class="radio radio-sm radio-secondary"> It shows the sensor's remaining service life in hours</label>
+        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="cp2-ws7-q3" value="b" class="radio radio-sm radio-secondary"> It shows the sensor's remaining service life in hours</label>
+        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="cp2-ws7-q3" value="c" class="radio radio-sm radio-secondary"> It uniquely identifies the exact model, so you order the right part first time and the master can restore parameters automatically after swap</label>
       </div>
 
       <p class="mt-4 font-medium text-base-content"><strong>Q4.</strong> Port 1 currently shows PDin hex <code class="font-mono bg-base-200 px-1 rounded text-sm">5000</code>. The first byte is <code class="font-mono bg-base-200 px-1 rounded text-sm">50</code> (binary 0101 0000). Bit 4 being set indicates the instability alarm is active. What is the correct maintenance response?</p>
-      <div class="space-y-2 mt-1">
-        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="cp2-ws7-q4" value="a" class="radio radio-sm radio-secondary"> No action — an instability alarm means the sensor passed its self-test</label>
-        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="cp2-ws7-q4" value="b" class="radio radio-sm radio-secondary"> Check sensor alignment — the target is likely at the edge of the sensing range</label>
+      <div class="space-y-2 mt-1" data-correct="a">
+        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="cp2-ws7-q4" value="a" class="radio radio-sm radio-secondary"> Check sensor alignment — the target is likely at the edge of the sensing range</label>
+        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="cp2-ws7-q4" value="b" class="radio radio-sm radio-secondary"> No action — an instability alarm means the sensor passed its self-test</label>
         <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="cp2-ws7-q4" value="c" class="radio radio-sm radio-secondary"> Replace the sensor immediately — bit 4 means a permanent hardware fault</label>
       </div>
 
       <p class="mt-4 font-medium text-base-content"><strong>Q5.</strong> A sensor with a worn label is found on Port 2. The app shows Vendor ID 1586 and Device ID 1052673. Which spare should you order?</p>
-      <div class="space-y-2 mt-1">
+      <div class="space-y-2 mt-1" data-correct="c">
         <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="cp2-ws7-q5" value="a" class="radio radio-sm radio-secondary"> IFM TV7105 temperature sensor</label>
         <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="cp2-ws7-q5" value="b" class="radio radio-sm radio-secondary"> OMRON E2E-X16MB1T12 proximity sensor</label>
         <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="cp2-ws7-q5" value="c" class="radio radio-sm radio-secondary"> RS Pro M18 capacitive sensor (Carlo Gavazzi OEM, product code 2377240)</label>
@@ -1172,11 +1360,11 @@ const WORKSHEETS = [
 
       <div class="divider my-2"></div>
       <button type="button" class="btn btn-ghost btn-sm ws-suggested-btn" data-target="cp2-ws7-suggested">Show suggested answers</button>
-      <div id="cp2-ws7-suggested" class="hidden p-4 rounded-lg border border-base-300 bg-base-300/50 text-base-content/80 text-sm leading-relaxed ws-suggested">Q1: b — Vendor ID 612 is shown on the Port 1 card on the IO-Link Master page. Q2: c — 612 is registered to OMRON Corporation in the IO-Link Community vendor table. Q3: b — the Device ID uniquely identifies the model; the master can use it to restore IODD parameters automatically after a swap. Q4: b — instability alarm means the target is at the sensing range boundary; adjust alignment before considering replacement. Q5: c — Vendor 1586 (RS Pro) Device 1052673 = the M18 capacitive sensor (Carlo Gavazzi OEM, RS Pro part 2377240).</div>
+      <div id="cp2-ws7-suggested" class="hidden p-4 rounded-lg border border-base-300 bg-base-300/50 text-base-content/80 text-sm leading-relaxed ws-suggested">Q1: a — Vendor ID 612 is shown on the Port 1 card on the IO-Link Master page. Q2: b — 612 is registered to OMRON Corporation in the IO-Link Community vendor table. Q3: c — the Device ID uniquely identifies the model; the master can use it to restore IODD parameters automatically after a swap. Q4: a — instability alarm means the target is at the sensing range boundary; adjust alignment before considering replacement. Q5: c — Vendor 1586 (RS Pro) Device 1052673 = the M18 capacitive sensor (Carlo Gavazzi OEM, RS Pro part 2377240).</div>
     `
   },
   {
-    id: 9,
+    id: 10,
     title: 'PT100 Temperature Sensors — From Resistance to Process Data',
     shortDesc: 'Physics, PDin encoding, hex decode calculations, and calibration offset engineering.',
     estimatedTime: 'About 25 min',
@@ -1363,6 +1551,245 @@ const WORKSHEETS = [
         <p class="mt-1"><strong>Exercise 3 (0xFF9C):</strong> 0xFF9C = 65436 unsigned. Since &gt;32767, subtract 65536: 65436−65536 = −100 → −100÷10 = −10.0 °C</p>
         <p class="mt-1"><strong>Exercise 4 (0xFE70):</strong> 0xFE70 = 65136 unsigned → 65136−65536 = −400 → −400÷10 = −40.0 °C — the open-circuit default.</p>
         <p class="mt-1"><strong>Calibration offset raw encode:</strong> −3.0 °C → −3.0×10 = −30 → two's complement 16-bit: 65536−30 = 65506 = 0xFFE2</p>
+      </div>
+    `
+  },
+  {
+    id: 11,
+    title: 'CL50 Pro — PDout Encoding Deep-Dive',
+    shortDesc: 'How the 3-byte PDout hex is structured, what every bit field means, and how to decode or build any CL50 command by hand.',
+    estimatedTime: 'About 20 min',
+    whyItMatters: 'The CL50 exposes all its state in 24 bits. Once you can read and write those bits directly you can control any IO-Link output device — the encoding pattern repeats across all PDout-capable devices. It also prepares you for PLC integration, where you write these values in ladder logic or structured text rather than through a UI.',
+    relatedDashboard: 'CP0001 Worksheet 6 — CL50 Light Stack',
+    prerequisites: 'CP0001 Worksheet 6 required',
+    contentHtml: `
+      <p class="text-base-content/90 leading-relaxed text-base">In CP0001 Worksheet 6 the dropdown menus and preset buttons built the PDout hex for you. This worksheet tears that three-byte value apart — bit by bit — so you can decode any CL50 state you see on the dashboard and calculate the correct command for any light configuration by hand.</p>
+
+      <!-- What PDout is -->
+      <div class="rounded-xl border border-base-300 bg-base-200 p-4 mt-4 space-y-2">
+        <p class="text-xs font-semibold text-base-content/60 uppercase tracking-wide">PDout — one value encodes everything</p>
+        <p class="text-sm text-base-content/80">IO-Link process data flows in two directions. <strong>PDin</strong> is data the device sends to the master (sensor readings, status flags). <strong>PDout</strong> is data the master sends to the device (commands and setpoints). The CL50 has no PDin — it is PDout-only. Every 500 ms the AL1350 writes a 3-byte value to Port 4 and the CL50 executes it immediately.</p>
+        <p class="text-sm text-base-content/80 mt-1">Those three bytes — 24 bits — carry eight separate fields that together define the complete state of the light: two colour slots, four animation parameters, an intensity control for each colour, and an audible alarm flag. The six-character hex string you see on the dashboard is always laid out as <code class="font-mono bg-base-300 px-1 rounded">Octet0 Octet1 Octet2</code> — the first two characters are Octet 0, the middle two are Octet 1, the last two are Octet 2.</p>
+      </div>
+
+      <!-- Full 24-bit field table -->
+      <div class="rounded-xl border border-base-300 bg-base-200 p-4 mt-4">
+        <p class="text-xs font-semibold text-base-content/60 uppercase tracking-wide mb-3">The complete 24-bit PDout map</p>
+        <div class="overflow-x-auto">
+          <table class="table table-zebra table-sm text-sm w-full">
+            <thead><tr><th>Octet</th><th>Bits</th><th>Field</th><th>Values</th></tr></thead>
+            <tbody>
+              <tr>
+                <td class="font-bold text-primary" rowspan="3">0</td>
+                <td class="font-mono text-xs">[7:6]</td><td>Audible alarm</td><td class="text-xs">0=Off · 1=On · 2=Pulsed · 3=SOS</td>
+              </tr>
+              <tr>
+                <td class="font-mono text-xs">[5:3]</td><td>Colour 2 intensity (C2I)</td><td class="text-xs">0=High · 1=Low · 2=Med · 3=Off · 4=Custom</td>
+              </tr>
+              <tr>
+                <td class="font-mono text-xs">[2:0]</td><td>Colour 1 intensity (C1I)</td><td class="text-xs">0=High · 1=Low · 2=Med · 3=Off · 4=Custom</td>
+              </tr>
+              <tr>
+                <td class="font-bold text-secondary" rowspan="3">1</td>
+                <td class="font-mono text-xs">[7:6]</td><td>Speed</td><td class="text-xs">0=Medium · 1=Fast · 2=Slow</td>
+              </tr>
+              <tr>
+                <td class="font-mono text-xs">[5:3]</td><td>Pulse pattern</td><td class="text-xs">0=Normal · 1=Strobe · 2=Three Pulse · 3=SOS · 4=Random</td>
+              </tr>
+              <tr>
+                <td class="font-mono text-xs">[2:0]</td><td>Animation mode</td><td class="text-xs">0=Off · 1=Steady · 2=Flash · 3=Two Colour · 4=Intensity Sweep</td>
+              </tr>
+              <tr>
+                <td class="font-bold text-accent" rowspan="2">2</td>
+                <td class="font-mono text-xs">[7:4]</td><td>Colour 2 index</td><td class="text-xs">4-bit index 0–15 (see colour table)</td>
+              </tr>
+              <tr>
+                <td class="font-mono text-xs">[3:0]</td><td>Colour 1 index</td><td class="text-xs">4-bit index 0–15 (see colour table)</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Octet-by-octet byte diagrams -->
+      <div class="mt-4 space-y-3">
+        <p class="text-xs font-semibold text-base-content/60 uppercase tracking-wide">Octet-by-octet breakdown</p>
+
+        <!-- Octet 0 -->
+        <div class="rounded-xl border border-primary/30 bg-primary/5 p-3 space-y-2">
+          <p class="font-bold text-primary text-sm">Octet 0 — Intensity &amp; Audible</p>
+          <div class="rounded bg-base-300/60 p-2 font-mono text-xs overflow-x-auto">
+            <div class="flex min-w-max gap-px">
+              <div class="flex flex-col items-center"><div class="w-8 h-7 flex items-center justify-center bg-warning/30 border border-warning/50 rounded-sm text-warning font-bold">7</div><span class="text-base-content/40 text-center text-xs">aud</span></div>
+              <div class="flex flex-col items-center"><div class="w-8 h-7 flex items-center justify-center bg-warning/30 border border-warning/50 rounded-sm text-warning font-bold">6</div><span class="text-base-content/40 text-center text-xs">aud</span></div>
+              <div class="w-2"></div>
+              <div class="flex flex-col items-center"><div class="w-8 h-7 flex items-center justify-center bg-secondary/30 border border-secondary/50 rounded-sm text-secondary font-bold">5</div><span class="text-base-content/40 text-center text-xs">C2I</span></div>
+              <div class="flex flex-col items-center"><div class="w-8 h-7 flex items-center justify-center bg-secondary/30 border border-secondary/50 rounded-sm text-secondary font-bold">4</div><span class="text-base-content/40 text-center text-xs">C2I</span></div>
+              <div class="flex flex-col items-center"><div class="w-8 h-7 flex items-center justify-center bg-secondary/30 border border-secondary/50 rounded-sm text-secondary font-bold">3</div><span class="text-base-content/40 text-center text-xs">C2I</span></div>
+              <div class="w-2"></div>
+              <div class="flex flex-col items-center"><div class="w-8 h-7 flex items-center justify-center bg-primary/30 border border-primary/50 rounded-sm text-primary font-bold">2</div><span class="text-base-content/40 text-center text-xs">C1I</span></div>
+              <div class="flex flex-col items-center"><div class="w-8 h-7 flex items-center justify-center bg-primary/30 border border-primary/50 rounded-sm text-primary font-bold">1</div><span class="text-base-content/40 text-center text-xs">C1I</span></div>
+              <div class="flex flex-col items-center"><div class="w-8 h-7 flex items-center justify-center bg-primary/30 border border-primary/50 rounded-sm text-primary font-bold">0</div><span class="text-base-content/40 text-center text-xs">C1I</span></div>
+            </div>
+          </div>
+          <p class="text-xs text-base-content/70"><strong>Intensity values:</strong> 0 = High · 1 = Low · 2 = Medium · 3 = Off · 4 = Custom<br>
+          <strong>Audible alarm:</strong> 0 = Off · 1 = On · 2 = Pulsed · 3 = SOS<br>
+          <strong>Extract C1I:</strong> <code class="font-mono bg-base-300 px-1 rounded">Octet0 &amp; 0x07</code> &nbsp; <strong>Extract C2I:</strong> <code class="font-mono bg-base-300 px-1 rounded">(Octet0 &gt;&gt; 3) &amp; 0x07</code> &nbsp; <strong>Extract Audible:</strong> <code class="font-mono bg-base-300 px-1 rounded">(Octet0 &gt;&gt; 6) &amp; 0x03</code></p>
+          <p class="text-xs text-base-content/60"><strong>Best practice:</strong> set C2I = 3 (Off) whenever you are not using Two Colour Flash — this prevents the C2 colour from showing if the animation mode changes unexpectedly.</p>
+        </div>
+
+        <!-- Octet 1 -->
+        <div class="rounded-xl border border-secondary/30 bg-secondary/5 p-3 space-y-2">
+          <p class="font-bold text-secondary text-sm">Octet 1 — Speed, Pattern &amp; Animation</p>
+          <div class="rounded bg-base-300/60 p-2 font-mono text-xs overflow-x-auto">
+            <div class="flex min-w-max gap-px">
+              <div class="flex flex-col items-center"><div class="w-8 h-7 flex items-center justify-center bg-warning/30 border border-warning/50 rounded-sm text-warning font-bold">7</div><span class="text-base-content/40 text-center text-xs">spd</span></div>
+              <div class="flex flex-col items-center"><div class="w-8 h-7 flex items-center justify-center bg-warning/30 border border-warning/50 rounded-sm text-warning font-bold">6</div><span class="text-base-content/40 text-center text-xs">spd</span></div>
+              <div class="w-2"></div>
+              <div class="flex flex-col items-center"><div class="w-8 h-7 flex items-center justify-center bg-secondary/30 border border-secondary/50 rounded-sm text-secondary font-bold">5</div><span class="text-base-content/40 text-center text-xs">ptn</span></div>
+              <div class="flex flex-col items-center"><div class="w-8 h-7 flex items-center justify-center bg-secondary/30 border border-secondary/50 rounded-sm text-secondary font-bold">4</div><span class="text-base-content/40 text-center text-xs">ptn</span></div>
+              <div class="flex flex-col items-center"><div class="w-8 h-7 flex items-center justify-center bg-secondary/30 border border-secondary/50 rounded-sm text-secondary font-bold">3</div><span class="text-base-content/40 text-center text-xs">ptn</span></div>
+              <div class="w-2"></div>
+              <div class="flex flex-col items-center"><div class="w-8 h-7 flex items-center justify-center bg-primary/30 border border-primary/50 rounded-sm text-primary font-bold">2</div><span class="text-base-content/40 text-center text-xs">anim</span></div>
+              <div class="flex flex-col items-center"><div class="w-8 h-7 flex items-center justify-center bg-primary/30 border border-primary/50 rounded-sm text-primary font-bold">1</div><span class="text-base-content/40 text-center text-xs">anim</span></div>
+              <div class="flex flex-col items-center"><div class="w-8 h-7 flex items-center justify-center bg-primary/30 border border-primary/50 rounded-sm text-primary font-bold">0</div><span class="text-base-content/40 text-center text-xs">anim</span></div>
+            </div>
+          </div>
+          <div class="grid grid-cols-3 gap-2 text-xs text-base-content/70 mt-1">
+            <div><strong>Speed [7:6]:</strong><br>0 = Medium<br>1 = Fast<br>2 = Slow</div>
+            <div><strong>Pulse pattern [5:3]:</strong><br>0 = Normal<br>1 = Strobe<br>2 = Three Pulse<br>3 = SOS · 4 = Random</div>
+            <div><strong>Animation [2:0]:</strong><br>0 = Off<br>1 = Steady<br>2 = Flash<br>3 = Two Colour<br>4 = Intensity Sweep ⚠</div>
+          </div>
+        </div>
+
+        <!-- Octet 2 -->
+        <div class="rounded-xl border border-accent/30 bg-accent/5 p-3 space-y-2">
+          <p class="font-bold text-accent text-sm">Octet 2 — Colours</p>
+          <div class="rounded bg-base-300/60 p-2 font-mono text-xs overflow-x-auto">
+            <div class="flex min-w-max gap-px">
+              <div class="flex flex-col items-center"><div class="w-8 h-7 flex items-center justify-center bg-secondary/30 border border-secondary/50 rounded-sm text-secondary font-bold">7</div><span class="text-base-content/40 text-center text-xs">C2</span></div>
+              <div class="flex flex-col items-center"><div class="w-8 h-7 flex items-center justify-center bg-secondary/30 border border-secondary/50 rounded-sm text-secondary font-bold">6</div><span class="text-base-content/40 text-center text-xs">C2</span></div>
+              <div class="flex flex-col items-center"><div class="w-8 h-7 flex items-center justify-center bg-secondary/30 border border-secondary/50 rounded-sm text-secondary font-bold">5</div><span class="text-base-content/40 text-center text-xs">C2</span></div>
+              <div class="flex flex-col items-center"><div class="w-8 h-7 flex items-center justify-center bg-secondary/30 border border-secondary/50 rounded-sm text-secondary font-bold">4</div><span class="text-base-content/40 text-center text-xs">C2</span></div>
+              <div class="w-2"></div>
+              <div class="flex flex-col items-center"><div class="w-8 h-7 flex items-center justify-center bg-primary/30 border border-primary/50 rounded-sm text-primary font-bold">3</div><span class="text-base-content/40 text-center text-xs">C1</span></div>
+              <div class="flex flex-col items-center"><div class="w-8 h-7 flex items-center justify-center bg-primary/30 border border-primary/50 rounded-sm text-primary font-bold">2</div><span class="text-base-content/40 text-center text-xs">C1</span></div>
+              <div class="flex flex-col items-center"><div class="w-8 h-7 flex items-center justify-center bg-primary/30 border border-primary/50 rounded-sm text-primary font-bold">1</div><span class="text-base-content/40 text-center text-xs">C1</span></div>
+              <div class="flex flex-col items-center"><div class="w-8 h-7 flex items-center justify-center bg-primary/30 border border-primary/50 rounded-sm text-primary font-bold">0</div><span class="text-base-content/40 text-center text-xs">C1</span></div>
+            </div>
+          </div>
+          <p class="text-xs text-base-content/70"><strong>Colour 1</strong> = lower nibble <code class="font-mono bg-base-300 px-1 rounded">Octet2 &amp; 0x0F</code> &nbsp;&nbsp; <strong>Colour 2</strong> = upper nibble <code class="font-mono bg-base-300 px-1 rounded">(Octet2 &gt;&gt; 4) &amp; 0x0F</code></p>
+          <div class="overflow-x-auto mt-1">
+            <table class="table table-sm text-xs w-full">
+              <thead><tr><th>Index</th><th>Colour</th><th>Index</th><th>Colour</th><th>Index</th><th>Colour</th><th>Index</th><th>Colour</th></tr></thead>
+              <tbody>
+                <tr><td class="font-mono">0</td><td><span class="inline-block w-3 h-3 rounded-full bg-green-500 mr-1 align-middle"></span>Green</td><td class="font-mono">4</td><td><span class="inline-block w-3 h-3 rounded-full bg-yellow-400 mr-1 align-middle"></span>Yellow</td><td class="font-mono">8</td><td><span class="inline-block w-3 h-3 rounded-full bg-sky-400 mr-1 align-middle"></span>Sky Blue</td><td class="font-mono">12</td><td><span class="inline-block w-3 h-3 rounded-full bg-rose-400 mr-1 align-middle"></span>Rose</td></tr>
+                <tr><td class="font-mono">1</td><td><span class="inline-block w-3 h-3 rounded-full bg-red-500 mr-1 align-middle"></span>Red</td><td class="font-mono">5</td><td><span class="inline-block w-3 h-3 rounded-full bg-lime-400 mr-1 align-middle"></span>Lime Green</td><td class="font-mono">9</td><td><span class="inline-block w-3 h-3 rounded-full bg-blue-600 mr-1 align-middle"></span>Blue</td><td class="font-mono">13</td><td><span class="inline-block w-3 h-3 rounded-full bg-white border mr-1 align-middle"></span>White</td></tr>
+                <tr><td class="font-mono">2</td><td><span class="inline-block w-3 h-3 rounded-full bg-orange-500 mr-1 align-middle"></span>Orange</td><td class="font-mono">6</td><td><span class="inline-block w-3 h-3 rounded-full bg-emerald-400 mr-1 align-middle"></span>Spring Green</td><td class="font-mono">10</td><td><span class="inline-block w-3 h-3 rounded-full bg-violet-500 mr-1 align-middle"></span>Violet</td><td class="font-mono">14</td><td>Custom 1</td></tr>
+                <tr><td class="font-mono">3</td><td><span class="inline-block w-3 h-3 rounded-full bg-amber-400 mr-1 align-middle"></span>Amber</td><td class="font-mono">7</td><td><span class="inline-block w-3 h-3 rounded-full bg-cyan-400 mr-1 align-middle"></span>Cyan</td><td class="font-mono">11</td><td><span class="inline-block w-3 h-3 rounded-full bg-fuchsia-500 mr-1 align-middle"></span>Magenta</td><td class="font-mono">15</td><td>Custom 2</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- Worked decode example -->
+      <div class="rounded-xl border border-base-300 bg-base-200 p-4 mt-4 space-y-3">
+        <p class="text-xs font-semibold text-base-content/60 uppercase tracking-wide">Worked example — decoding <code class="font-mono normal-case text-base-content">184203</code></p>
+        <p class="text-sm text-base-content/80">Split the six-character string into three octets: <code class="font-mono bg-base-300 px-1 rounded">18</code> · <code class="font-mono bg-base-300 px-1 rounded">42</code> · <code class="font-mono bg-base-300 px-1 rounded">03</code></p>
+        <div class="overflow-x-auto">
+          <table class="table table-sm text-sm w-full">
+            <thead><tr><th>Octet</th><th>Hex</th><th>Binary</th><th>Field extraction</th><th>Result</th></tr></thead>
+            <tbody>
+              <tr>
+                <td class="font-bold text-primary">0</td>
+                <td class="font-mono">0x18</td>
+                <td class="font-mono">0001 1000</td>
+                <td class="text-xs">Audible = bits[7:6] = 00 = 0<br>C2I = bits[5:3] = 011 = 3<br>C1I = bits[2:0] = 000 = 0</td>
+                <td class="text-xs">Audible Off<br>C2 Intensity: Off<br>C1 Intensity: High</td>
+              </tr>
+              <tr>
+                <td class="font-bold text-secondary">1</td>
+                <td class="font-mono">0x42</td>
+                <td class="font-mono">0100 0010</td>
+                <td class="text-xs">Speed = bits[7:6] = 01 = 1<br>Pattern = bits[5:3] = 000 = 0<br>Animation = bits[2:0] = 010 = 2</td>
+                <td class="text-xs">Speed: Fast<br>Pattern: Normal<br>Animation: Flash</td>
+              </tr>
+              <tr>
+                <td class="font-bold text-accent">2</td>
+                <td class="font-mono">0x03</td>
+                <td class="font-mono">0000 0011</td>
+                <td class="text-xs">C2 = bits[7:4] = 0000 = 0<br>C1 = bits[3:0] = 0011 = 3</td>
+                <td class="text-xs">Colour 2: Green (irrelevant — C2I=Off)<br>Colour 1: Amber</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="rounded-lg border border-success/30 bg-success/5 p-2 text-center">
+          <p class="text-sm font-semibold text-base-content"><code class="font-mono bg-base-300 px-1 rounded">184203</code> = <strong>Amber Flashing, Fast, High intensity</strong></p>
+        </div>
+      </div>
+
+      <!-- Decode exercises -->
+      <div class="rounded-xl border-2 border-warning/40 bg-warning/5 p-4 mt-4 space-y-4">
+        <p class="font-bold text-base-content">Decode exercises — work these out without the UI</p>
+        <p class="text-sm text-base-content/80">For each hex value below, extract every field and state what the light will do. Use the tables above. Show your working.</p>
+
+        <div class="space-y-3">
+          <div class="rounded-lg border border-base-300 bg-base-100 p-3">
+            <p class="font-mono font-bold text-base-content">Exercise 1: <code class="bg-base-300 px-1 rounded">000100</code></p>
+            <p class="text-xs text-base-content/60 mt-1">Octet 0 = 0x00 · Octet 1 = 0x01 · Octet 2 = 0x00</p>
+          </div>
+          <div class="rounded-lg border border-base-300 bg-base-100 p-3">
+            <p class="font-mono font-bold text-base-content">Exercise 2: <code class="bg-base-300 px-1 rounded">004312</code></p>
+            <p class="text-xs text-base-content/60 mt-1">Octet 0 = 0x00 · Octet 1 = 0x43 · Octet 2 = 0x12</p>
+          </div>
+          <div class="rounded-lg border border-base-300 bg-base-100 p-3">
+            <p class="font-mono font-bold text-base-content">Exercise 3: <code class="bg-base-300 px-1 rounded">198205</code></p>
+            <p class="text-xs text-base-content/60 mt-1">Octet 0 = 0x19 · Octet 1 = 0x82 · Octet 2 = 0x05</p>
+          </div>
+        </div>
+
+        <button type="button" class="btn btn-ghost btn-sm ws-suggested-btn" data-target="cp2-ws10-decode-answers">Show decode answers</button>
+        <div id="cp2-ws10-decode-answers" class="hidden rounded-lg border border-base-300 bg-base-300/50 p-4 text-sm space-y-3 ws-suggested">
+          <p><strong>Exercise 1 — <code class="font-mono">000100</code>:</strong></p>
+          <p class="ml-4 text-base-content/80">Octet0 = 0x00 → Audible=0(Off), C2I=0(High), C1I=0(High)<br>Octet1 = 0x01 = 0b00000001 → Speed=0(Med), Pattern=0(Normal), Animation=1(Steady)<br>Octet2 = 0x00 → C2=0(Green), C1=0(Green)<br><strong>Result: Green Steady, Medium speed, High intensity.</strong> This is the AL1350 startup default.</p>
+          <p><strong>Exercise 2 — <code class="font-mono">004312</code>:</strong></p>
+          <p class="ml-4 text-base-content/80">Octet0 = 0x00 → Audible=0, C2I=0(High), C1I=0(High)<br>Octet1 = 0x43 = 0b01000011 → Speed=01=1(Fast), Pattern=000=0(Normal), Animation=011=3(Two Colour Flash)<br>Octet2 = 0x12 = 0b00010010 → C2=0001=1(Red), C1=0010=2(Orange)<br><strong>Result: Orange/Red Two Colour Flash, Fast, both High intensity.</strong></p>
+          <p><strong>Exercise 3 — <code class="font-mono">198205</code>:</strong></p>
+          <p class="ml-4 text-base-content/80">Octet0 = 0x19 = 0b00011001 → Audible=00=0(Off), C2I=011=3(Off), C1I=001=1(Low)<br>Octet1 = 0x82 = 0b10000010 → Speed=10=2(Slow), Pattern=000=0(Normal), Animation=010=2(Flash)<br>Octet2 = 0x05 = 0b00000101 → C2=0000=0(Green, irrelevant — C2I=Off), C1=0101=5(Lime Green)<br><strong>Result: Lime Green Flashing, Slow, Low intensity.</strong></p>
+        </div>
+      </div>
+
+      <!-- Encode exercises -->
+      <div class="rounded-xl border-2 border-accent/40 bg-accent/5 p-4 mt-4 space-y-4">
+        <p class="font-bold text-base-content">Encode exercises — build the hex from a specification</p>
+        <p class="text-sm text-base-content/80">For each specification below, calculate the three octets and write out the six-character hex. Set C2I = Off (3) unless the spec says Two Colour Flash. Set audible = 0.</p>
+
+        <div class="space-y-3">
+          <div class="rounded-lg border border-base-300 bg-base-100 p-3">
+            <p class="font-semibold text-base-content">Exercise A</p>
+            <p class="text-sm text-base-content/80 mt-1">Blue · Steady · Medium speed · High intensity</p>
+          </div>
+          <div class="rounded-lg border border-base-300 bg-base-100 p-3">
+            <p class="font-semibold text-base-content">Exercise B</p>
+            <p class="text-sm text-base-content/80 mt-1">Cyan / Magenta · Two Colour Flash · Fast · High intensity for both colours</p>
+          </div>
+        </div>
+
+        <button type="button" class="btn btn-ghost btn-sm ws-suggested-btn" data-target="cp2-ws10-encode-answers">Show encode answers</button>
+        <div id="cp2-ws10-encode-answers" class="hidden rounded-lg border border-base-300 bg-base-300/50 p-4 text-sm space-y-3 ws-suggested">
+          <p><strong>Exercise A — Blue Steady Medium High:</strong></p>
+          <p class="ml-4 text-base-content/80">Octet2: C2=0(n/a), C1=9(Blue) → 0x09<br>Octet1: Speed=0(Med), Pattern=0(Normal), Animation=1(Steady) → (0&lt;&lt;6)|(0&lt;&lt;3)|1 = 0x01<br>Octet0: Audible=0, C2I=3(Off), C1I=0(High) → (0&lt;&lt;6)|(3&lt;&lt;3)|0 = 24 = 0x18<br><strong>Result: <code class="font-mono bg-base-300 px-1 rounded">180109</code></strong></p>
+          <p><strong>Exercise B — Cyan/Magenta Two Colour Flash Fast High:</strong></p>
+          <p class="ml-4 text-base-content/80">Octet2: C2=11(Magenta), C1=7(Cyan) → (11&lt;&lt;4)|7 = 176+7 = 183 = 0xB7<br>Octet1: Speed=1(Fast), Pattern=0(Normal), Animation=3(Two Colour) → (1&lt;&lt;6)|(0&lt;&lt;3)|3 = 64+3 = 67 = 0x43<br>Octet0: Audible=0, C2I=0(High), C1I=0(High) → 0x00<br><strong>Result: <code class="font-mono bg-base-300 px-1 rounded">0043B7</code></strong></p>
+        </div>
+      </div>
+
+      <!-- Firmware note -->
+      <div class="rounded-lg border border-warning/40 bg-warning/5 p-3 mt-4 text-sm space-y-1">
+        <p class="font-bold text-warning">Firmware limitation — Animation mode 4 (Intensity Sweep)</p>
+        <p class="text-base-content/80">CL50 firmware v1.0.2 does not execute PDout animation=4. The AL1350 accepts the write without error but the light simply holds steady at the specified C1I intensity — it does not sweep. The HMI works around this by running a software loop in the backend that rapidly steps through intensity values (High → Medium → Low → Medium → High) using animation=1 (Steady). This produces the breathing effect you see when pressing the "Green Pulse" button in CP0001 Worksheet 6. If you calculate a hex with animation=4 (e.g. <code class="font-mono bg-base-300 px-1 rounded">180401</code>) and write it directly to the AL1350, the light will turn on steady — not sweep.</p>
       </div>
     `
   }

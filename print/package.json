@@ -1,0 +1,13 @@
+{
+  "name": "im-smart-sensors-pdf-export",
+  "version": "1.0.0",
+  "description": "Standalone PDF export for CP0001 and CP0002 worksheets",
+  "type": "module",
+  "scripts": {
+    "generate": "node generate_pdfs.mjs"
+  },
+  "dependencies": {
+    "pdf-lib": "^1.17.1",
+    "puppeteer": "^24.0.0"
+  }
+}

@@ -56,6 +56,9 @@ function stopLiveData() {
   if (_ws4LightCleanup) { _ws4LightCleanup(); _ws4LightCleanup = null; }
   if (_ws5LightCleanup) { _ws5LightCleanup(); _ws5LightCleanup = null; }
   if (_ws5CalCleanup) { _ws5CalCleanup(); _ws5CalCleanup = null; }
+  if (_ws6AnimCleanup) { _ws6AnimCleanup(); _ws6AnimCleanup = null; }
+  if (_ws6MsCleanup) { _ws6MsCleanup(); _ws6MsCleanup = null; }
+  if (_ws7MsCleanup) { _ws7MsCleanup(); _ws7MsCleanup = null; }
 }
 
 function makeChart(canvasId, type, datasets, yMin, yMax, yLabel) {
@@ -312,30 +315,30 @@ const WORKSHEETS = [
       </div>
 
       <p class="mt-4 font-medium text-base-content"><strong>Q1.</strong> What colour is the IO-Link Master, and what is it sometimes called?</p>
-      <div class="space-y-2 mt-1">
-        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="ws0-q1" value="a" class="radio radio-sm radio-primary"> Green — it is called the gateway</label>
-        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="ws0-q1" value="b" class="radio radio-sm radio-primary"> Orange — it is called the hub</label>
-        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="ws0-q1" value="c" class="radio radio-sm radio-primary"> Blue — it is called the controller</label>
+      <div class="space-y-2 mt-1" data-correct="a">
+        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="ws0-q1" value="a" class="radio radio-sm radio-primary"> Orange — it is called the hub</label>
+        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="ws0-q1" value="b" class="radio radio-sm radio-primary"> Blue — it is called the controller</label>
+        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="ws0-q1" value="c" class="radio radio-sm radio-primary"> Green — it is called the gateway</label>
       </div>
 
       <p class="mt-3 font-medium text-base-content"><strong>Q2.</strong> Which sensor on this kit detects metal objects using an electromagnetic field?</p>
-      <div class="space-y-2 mt-1">
+      <div class="space-y-2 mt-1" data-correct="c">
         <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="ws0-q2" value="a" class="radio radio-sm radio-primary"> The capacitive sensor on Port 2</label>
         <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="ws0-q2" value="b" class="radio radio-sm radio-primary"> The temperature sensor on Port 3</label>
         <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="ws0-q2" value="c" class="radio radio-sm radio-primary"> The proximity sensor on Port 1</label>
       </div>
 
       <p class="mt-3 font-medium text-base-content"><strong>Q3.</strong> What can the capacitive sensor detect that the proximity sensor cannot?</p>
-      <div class="space-y-2 mt-1">
+      <div class="space-y-2 mt-1" data-correct="b">
         <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="ws0-q3" value="a" class="radio radio-sm radio-primary"> Objects moving faster than 1 m/s</label>
         <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="ws0-q3" value="b" class="radio radio-sm radio-primary"> Materials like liquid or powder — even through a container wall</label>
         <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="ws0-q3" value="c" class="radio radio-sm radio-primary"> The exact temperature of an object</label>
       </div>
 
       <p class="mt-3 font-medium text-base-content"><strong>Q4.</strong> What is the Raspberry Pi's job in this system?</p>
-      <div class="space-y-2 mt-1">
-        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="ws0-q4" value="a" class="radio radio-sm radio-primary"> It powers the IO-Link Master via USB</label>
-        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="ws0-q4" value="b" class="radio radio-sm radio-primary"> It collects the sensor data, runs the comms, and serves up this dashboard</label>
+      <div class="space-y-2 mt-1" data-correct="a">
+        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="ws0-q4" value="a" class="radio radio-sm radio-primary"> It collects the sensor data, runs the comms, and serves up this dashboard</label>
+        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="ws0-q4" value="b" class="radio radio-sm radio-primary"> It powers the IO-Link Master via USB</label>
         <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="ws0-q4" value="c" class="radio radio-sm radio-primary"> It directly controls the light stack colours</label>
       </div>
 
@@ -383,10 +386,10 @@ const WORKSHEETS = [
       </div>
 
       <p class="mt-4 font-medium text-base-content"><strong>Q5.</strong> During the challenge, what did you notice about the capacitive sensor that a normal on/off sensor wouldn't show you?</p>
-      <div class="space-y-2 mt-1">
+      <div class="space-y-2 mt-1" data-correct="c">
         <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="ws0-q5" value="a" class="radio radio-sm radio-primary"> It only ever shows two states — on or off — same as a normal sensor</label>
-        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="ws0-q5" value="b" class="radio radio-sm radio-primary"> It showed a live level rising as your hand got close, before it fully triggered</label>
-        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="ws0-q5" value="c" class="radio radio-sm radio-primary"> It measured the exact distance between your hand and the sensor in millimetres</label>
+        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="ws0-q5" value="b" class="radio radio-sm radio-primary"> It measured the exact distance between your hand and the sensor in millimetres</label>
+        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="ws0-q5" value="c" class="radio radio-sm radio-primary"> It showed a live level rising as your hand got close, before it fully triggered</label>
       </div>
     `
   },
@@ -472,36 +475,36 @@ const WORKSHEETS = [
         </div>
       </div>
 
-      <p class="mt-4 font-medium text-base-content"><strong>Q1.</strong> A digital sensor on a conveyor stops switching. What can a maintenance technician find out from a standard digital sensor when this happens?</p>
-      <div class="space-y-2 mt-1">
-        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="ws1-q1" value="a" class="radio radio-sm radio-primary"> The exact fault code and which internal component has failed</label>
-        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="ws1-q1" value="b" class="radio radio-sm radio-primary"> Nothing — the sensor just goes silent, you have to go and test it manually</label>
+      <p class="mt-4 font-medium text-base-content"><strong>Q1.</strong> A basic digital (on/off) sensor fails and its output goes silent. What diagnostic information can a technician retrieve from it?</p>
+      <div class="space-y-2 mt-1" data-correct="a">
+        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="ws1-q1" value="a" class="radio radio-sm radio-primary"> Nothing — the sensor just goes silent, you have to go and test it manually</label>
+        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="ws1-q1" value="b" class="radio radio-sm radio-primary"> The exact fault code and which internal component has failed</label>
         <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="ws1-q1" value="c" class="radio radio-sm radio-primary"> The last reading before it failed, stored in its internal log</label>
       </div>
 
       <p class="mt-3 font-medium text-base-content"><strong>Q2.</strong> A pressure transmitter outputs 12 mA on a 4–20 mA loop calibrated to 0–100 bar. What is the current pressure reading?</p>
-      <div class="space-y-2 mt-1">
+      <div class="space-y-2 mt-1" data-correct="c">
         <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="ws1-q2" value="a" class="radio radio-sm radio-primary"> 12 bar — the mA value equals the bar reading directly</label>
-        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="ws1-q2" value="b" class="radio radio-sm radio-primary"> 50 bar — 12 mA is the midpoint of the 4–20 mA range, which maps to 50% of 100 bar</label>
-        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="ws1-q2" value="c" class="radio radio-sm radio-primary"> 0 bar — the sensor is in fault because 12 mA is below the normal 16 mA minimum</label>
+        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="ws1-q2" value="b" class="radio radio-sm radio-primary"> 0 bar — the sensor is in fault because 12 mA is below the normal 16 mA minimum</label>
+        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="ws1-q2" value="c" class="radio radio-sm radio-primary"> 50 bar — 12 mA is the midpoint of the 4–20 mA range, which maps to 50% of 100 bar</label>
       </div>
 
       <p class="mt-3 font-medium text-base-content"><strong>Q3.</strong> An IO-Link sensor still has its standard switching output (OUT1) active. What does the IO-Link communication channel add on top of that?</p>
-      <div class="space-y-2 mt-1">
-        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="ws1-q3" value="a" class="radio radio-sm radio-primary"> It replaces OUT1 entirely — you only get the data stream, not a switching output</label>
-        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="ws1-q3" value="b" class="radio radio-sm radio-primary"> Process data, fault codes, device identity, and remote parameter writes — all over the same 3-wire cable without interrupting OUT1</label>
+      <div class="space-y-2 mt-1" data-correct="a">
+        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="ws1-q3" value="a" class="radio radio-sm radio-primary"> Process data, fault codes, device identity, and remote parameter writes — all over the same 3-wire cable without interrupting OUT1</label>
+        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="ws1-q3" value="b" class="radio radio-sm radio-primary"> It replaces OUT1 entirely — you only get the data stream, not a switching output</label>
         <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="ws1-q3" value="c" class="radio radio-sm radio-primary"> A higher voltage signal so the PLC can tell it is an IO-Link device</label>
       </div>
 
       <p class="mt-3 font-medium text-base-content"><strong>Q4.</strong> Why might you choose an analogue sensor over a digital sensor for monitoring tank level?</p>
-      <div class="space-y-2 mt-1">
+      <div class="space-y-2 mt-1" data-correct="c">
         <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="ws1-q4" value="a" class="radio radio-sm radio-primary"> Analogue sensors are cheaper and easier to wire than digital sensors</label>
-        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="ws1-q4" value="b" class="radio radio-sm radio-primary"> An analogue signal gives a continuous level reading — you see exactly how full the tank is, not just "full" or "empty"</label>
-        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="ws1-q4" value="c" class="radio radio-sm radio-primary"> Analogue sensors send fault codes that digital sensors cannot</label>
+        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="ws1-q4" value="b" class="radio radio-sm radio-primary"> Analogue sensors send fault codes that digital sensors cannot</label>
+        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="ws1-q4" value="c" class="radio radio-sm radio-primary"> An analogue signal gives a continuous level reading — you see exactly how full the tank is, not just "full" or "empty"</label>
       </div>
 
       <p class="mt-3 font-medium text-base-content"><strong>Q5.</strong> Looking at the IO-Link wire animation above — what does the square wave at the bottom of the cable represent?</p>
-      <div class="space-y-2 mt-1">
+      <div class="space-y-2 mt-1" data-correct="b">
         <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="ws1-q5" value="a" class="radio radio-sm radio-primary"> The IO-Link data packets being encoded onto the wire</label>
         <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="ws1-q5" value="b" class="radio radio-sm radio-primary"> The standard switching output (OUT1) — still present and working exactly as a normal digital sensor, while the data stream runs above it</label>
         <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="ws1-q5" value="c" class="radio radio-sm radio-primary"> The power supply waveform showing 24V DC to the sensor</label>
@@ -638,23 +641,23 @@ const WORKSHEETS = [
       </div>
 
       <p class="mt-4 font-medium text-base-content"><strong>Q1.</strong> Hold a metal object close to the sensor and watch the waveform above. What does the chart do when metal is detected?</p>
-      <div class="space-y-2 mt-1">
+      <div class="space-y-2 mt-1" data-correct="a">
         <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="ws2-q1" value="a" class="radio radio-sm radio-primary"> The line jumps from 0 to 1, then drops back to 0 when the metal moves away</label>
         <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="ws2-q1" value="b" class="radio radio-sm radio-primary"> The line stays flat at 0 the whole time</label>
         <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="ws2-q1" value="c" class="radio radio-sm radio-primary"> The line drops below zero when metal is detected</label>
       </div>
 
       <p class="mt-3 font-medium text-base-content"><strong>Q2.</strong> The Instability Alarm fires while the sensor output is ON. What does this tell you about the target position?</p>
-      <div class="space-y-2 mt-1">
+      <div class="space-y-2 mt-1" data-correct="c">
         <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="ws2-q2" value="a" class="radio radio-sm radio-primary"> The sensor has detected two metal objects at the same time</label>
-        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="ws2-q2" value="b" class="radio radio-sm radio-primary"> The target is near the edge of the sensing range — detection may be unreliable</label>
-        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="ws2-q2" value="c" class="radio radio-sm radio-primary"> The sensor cable has a loose connection</label>
+        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="ws2-q2" value="b" class="radio radio-sm radio-primary"> The sensor cable has a loose connection</label>
+        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="ws2-q2" value="c" class="radio radio-sm radio-primary"> The target is near the edge of the sensing range — detection may be unreliable</label>
       </div>
 
       <p class="mt-3 font-medium text-base-content"><strong>Q3.</strong> The Over-Approach Alarm fires when the metal target is held very close to the sensor face. What is the correct response?</p>
-      <div class="space-y-2 mt-1">
-        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="ws2-q3" value="a" class="radio radio-sm radio-primary"> Replace the sensor immediately — the over-approach alarm means it has failed</label>
-        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="ws2-q3" value="b" class="radio radio-sm radio-primary"> Increase the standoff distance between the sensor face and the target</label>
+      <div class="space-y-2 mt-1" data-correct="a">
+        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="ws2-q3" value="a" class="radio radio-sm radio-primary"> Increase the standoff distance between the sensor face and the target</label>
+        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="ws2-q3" value="b" class="radio radio-sm radio-primary"> Replace the sensor immediately — the over-approach alarm means it has failed</label>
         <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="ws2-q3" value="c" class="radio radio-sm radio-primary"> Reduce sensitivity using the teach button</label>
       </div>
 
@@ -1126,21 +1129,21 @@ const WORKSHEETS = [
       </div>
 
       <p class="mt-4 font-medium text-base-content"><strong>Q1.</strong> Watch the detection counter as you touch the sensor. What triggers a new count?</p>
-      <div class="space-y-2 mt-1">
+      <div class="space-y-2 mt-1" data-correct="c">
         <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="ws3-q1" value="a" class="radio radio-sm radio-secondary"> Every second while your hand is touching</label>
-        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="ws3-q1" value="b" class="radio radio-sm radio-secondary"> The moment detection goes from off to on — one touch = one count, no matter how long you hold it</label>
-        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="ws3-q1" value="c" class="radio radio-sm radio-secondary"> Only when you pull your hand away</label>
+        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="ws3-q1" value="b" class="radio radio-sm radio-secondary"> Only when you pull your hand away</label>
+        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="ws3-q1" value="c" class="radio radio-sm radio-secondary"> The moment detection goes from off to on — one touch = one count, no matter how long you hold it</label>
       </div>
 
       <p class="mt-3 font-medium text-base-content"><strong>Q2.</strong> Which pair of materials can a capacitive sensor detect that a photoelectric sensor cannot?</p>
-      <div class="space-y-2 mt-1">
-        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="ws3-q2" value="a" class="radio radio-sm radio-secondary"> Sound and light</label>
-        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="ws3-q2" value="b" class="radio radio-sm radio-secondary"> Water and powder — even through a container wall</label>
+      <div class="space-y-2 mt-1" data-correct="a">
+        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="ws3-q2" value="a" class="radio radio-sm radio-secondary"> Water and powder — even through a container wall</label>
+        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="ws3-q2" value="b" class="radio radio-sm radio-secondary"> Sound and light</label>
         <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="ws3-q2" value="c" class="radio radio-sm radio-secondary"> Heat and pressure</label>
       </div>
 
       <p class="mt-3 font-medium text-base-content"><strong>Q3.</strong> The capacitive sensor output is always ON even when nothing is near it. What is the most likely cause?</p>
-      <div class="space-y-2 mt-1">
+      <div class="space-y-2 mt-1" data-correct="a">
         <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="ws3-q3" value="a" class="radio radio-sm radio-secondary"> Sensitivity too high — it is detecting the container wall or nearby objects</label>
         <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="ws3-q3" value="b" class="radio radio-sm radio-secondary"> The sensor needs replacing immediately</label>
         <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="ws3-q3" value="c" class="radio radio-sm radio-secondary"> The cable is the wrong colour</label>
@@ -1591,23 +1594,23 @@ const WORKSHEETS = [
       </div>
 
       <p class="mt-4 font-medium text-base-content"><strong>Q1.</strong> A basic temperature switch gives you one output — too hot = trip. What extra can you do with an IO-Link temperature sensor?</p>
-      <div class="space-y-2 mt-1">
+      <div class="space-y-2 mt-1" data-correct="c">
         <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="ws4-q1" value="a" class="radio radio-sm radio-warning"> Nothing extra — it works exactly the same as a switch</label>
-        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="ws4-q1" value="b" class="radio radio-sm radio-warning"> See the actual live temperature in °C, trend it over time, and get early warning before the trip point is reached</label>
-        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="ws4-q1" value="c" class="radio radio-sm radio-warning"> It only works at high temperatures above 100 °C</label>
+        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="ws4-q1" value="b" class="radio radio-sm radio-warning"> It only works at high temperatures above 100 °C</label>
+        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="ws4-q1" value="c" class="radio radio-sm radio-warning"> See the actual live temperature in °C, trend it over time, and get early warning before the trip point is reached</label>
       </div>
 
       <p class="mt-3 font-medium text-base-content"><strong>Q2.</strong> Move the SP1 slider just above the current temperature, then hold the sensor in your hands for 30 seconds. What should happen to the alarm state?</p>
-      <div class="space-y-2 mt-1">
+      <div class="space-y-2 mt-1" data-correct="b">
         <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="ws4-q2" value="a" class="radio radio-sm radio-warning"> Nothing changes — the alarm only activates from the main dashboard</label>
         <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="ws4-q2" value="b" class="radio radio-sm radio-warning"> The alarm state turns red and shows "ABOVE THRESHOLD" once the temperature crosses your slider value</label>
         <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="ws4-q2" value="c" class="radio radio-sm radio-warning"> The sensor turns itself off to prevent overheating</label>
       </div>
 
       <p class="mt-3 font-medium text-base-content"><strong>Q3.</strong> The temperature reading suddenly drops to −40 °C in a room-temperature lab. What is the most likely cause?</p>
-      <div class="space-y-2 mt-1">
-        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="ws4-q3" value="a" class="radio radio-sm radio-warning"> The lab is very cold</label>
-        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="ws4-q3" value="b" class="radio radio-sm radio-warning"> Broken or disconnected sensor — −40 °C is a common default error value for temperature sensors</label>
+      <div class="space-y-2 mt-1" data-correct="a">
+        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="ws4-q3" value="a" class="radio radio-sm radio-warning"> Broken or disconnected sensor — −40 °C is the bottom of the TV7105 measurement range and appears when the sensing element is open-circuit</label>
+        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="ws4-q3" value="b" class="radio radio-sm radio-warning"> The lab is very cold</label>
         <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="ws4-q3" value="c" class="radio radio-sm radio-warning"> The setpoint has been changed</label>
       </div>
 
@@ -1859,6 +1862,120 @@ const WORKSHEETS = [
     contentHtml: `
       <p class="text-base-content/90 leading-relaxed">The Banner CL50 Pro RGB is unlike the other sensors in this kit — it is a <strong>PDout-only</strong> device. Instead of sending measurement data <em>to</em> the master, the master sends commands <em>to</em> it. Every colour, animation, intensity, and speed you see on the light is encoded into a single 3-byte hex value that the controller writes out.</p>
 
+      <!-- Try-it-yourself animation demo -->
+      <div class="rounded-xl border-2 border-primary/40 bg-primary/5 p-4 mt-3 space-y-3">
+        <p class="font-semibold text-base-content">Try it yourself — press a button and watch the light react</p>
+        <p class="text-sm text-base-content/80">Each button sends a different PDout command to the physical CL50 on the bench. Try them all — you'll see the light change instantly and the live panel below will update to show exactly what was written.</p>
+        <div class="grid grid-cols-2 gap-2 sm:grid-cols-3">
+          <button type="button" class="ws6-anim-btn btn btn-sm flex-col h-auto py-2" data-action="flash-red"
+              style="background:#dc2626;color:white;border-color:#dc2626">
+            <span class="font-semibold">Flashing Red</span>
+            <span class="text-xs opacity-75">alarm · fault</span>
+          </button>
+          <button type="button" class="ws6-anim-btn btn btn-sm flex-col h-auto py-2" data-action="flash-orange"
+              style="background:#ea580c;color:white;border-color:#ea580c">
+            <span class="font-semibold">Flashing Orange</span>
+            <span class="text-xs opacity-75">warning · caution</span>
+          </button>
+          <button type="button" class="ws6-anim-btn btn btn-sm flex-col h-auto py-2" data-action="orange-red-alt"
+              style="background:linear-gradient(90deg,#ea580c 50%,#dc2626 50%);color:white;border-color:#dc2626">
+            <span class="font-semibold">Orange / Red Alt</span>
+            <span class="text-xs opacity-75">critical fault</span>
+          </button>
+          <button type="button" class="ws6-anim-btn btn btn-sm flex-col h-auto py-2" data-action="green-pulse"
+              style="background:#16a34a;color:white;border-color:#16a34a">
+            <span class="font-semibold">Green Pulse</span>
+            <span class="text-xs opacity-75">running · ok</span>
+          </button>
+          <button type="button" class="ws6-anim-btn btn btn-sm flex-col h-auto py-2" data-action="rainbow-pulse"
+              style="background:linear-gradient(90deg,#dc2626,#f59e0b,#16a34a,#2563eb,#7c3aed);color:white;border:2px solid #7c3aed">
+            <span class="font-semibold">Rainbow Pulse</span>
+            <span class="text-xs opacity-75">demo · test mode</span>
+          </button>
+          <button type="button" class="ws6-anim-btn btn btn-sm flex-col h-auto py-2" data-action="gar-loop"
+              style="background:linear-gradient(90deg,#16a34a 33%,#f59e0b 66%,#dc2626 100%);color:white;border:2px solid #dc2626">
+            <span class="font-semibold">Green → Amber → Red</span>
+            <span class="text-xs opacity-75">traffic light loop</span>
+          </button>
+        </div>
+        <div class="flex items-center justify-between gap-2 flex-wrap">
+          <p id="ws6-anim-status" class="text-xs font-mono text-base-content/60 min-h-[1rem] flex-1"></p>
+          <button type="button" id="ws6-anim-reset" class="btn btn-xs btn-ghost text-base-content/50 shrink-0">↺ Reset to green</button>
+        </div>
+      </div>
+
+      <!-- Build-your-own PDout hex — dropdowns -->
+      <p class="mt-4 text-sm text-base-content/80">Those buttons each send a fixed three-byte hex value to the CL50. Now you can build that hex yourself — change any of the six fields below and watch the PDout value recalculate in real time. When you're ready, press <strong>Write to Light</strong> to send it to the physical light stack.</p>
+
+      <div class="rounded-xl border-2 border-secondary/40 bg-secondary/5 p-4 mt-3 space-y-3">
+        <p class="font-semibold text-base-content text-sm">Build your own PDout value</p>
+        <div class="grid grid-cols-2 gap-3 sm:grid-cols-3">
+          <div class="form-control">
+            <label class="label py-0.5"><span class="label-text text-xs">Color 1</span></label>
+            <select id="ws6-led-color" class="select select-bordered select-sm">
+              <option value="0">Green</option><option value="1">Red</option><option value="2">Orange</option>
+              <option value="3">Amber</option><option value="4">Yellow</option><option value="5">Lime Green</option>
+              <option value="6">Spring Green</option><option value="7">Cyan</option><option value="8">Sky Blue</option>
+              <option value="9">Blue</option><option value="10">Violet</option><option value="11">Magenta</option>
+              <option value="12">Rose</option><option value="13">White</option>
+            </select>
+          </div>
+          <div class="form-control">
+            <label class="label py-0.5"><span class="label-text text-xs">Color 2 (Two Color Flash)</span></label>
+            <select id="ws6-led-color2" class="select select-bordered select-sm">
+              <option value="0">Green</option><option value="1">Red</option><option value="2">Orange</option>
+              <option value="3">Amber</option><option value="4">Yellow</option><option value="5">Lime Green</option>
+              <option value="6">Spring Green</option><option value="7">Cyan</option><option value="8">Sky Blue</option>
+              <option value="9">Blue</option><option value="10">Violet</option><option value="11">Magenta</option>
+              <option value="12">Rose</option><option value="13">White</option>
+            </select>
+          </div>
+          <div class="form-control">
+            <label class="label py-0.5"><span class="label-text text-xs">Animation</span></label>
+            <select id="ws6-led-animation" class="select select-bordered select-sm">
+              <option value="0">Off</option>
+              <option value="1" selected>Steady</option>
+              <option value="2">Flash</option>
+              <option value="3">Two Color Flash</option>
+              <option value="4">Intensity Sweep ⚠</option>
+            </select>
+          </div>
+          <div class="form-control">
+            <label class="label py-0.5"><span class="label-text text-xs">Pulse Pattern</span></label>
+            <select id="ws6-led-pulse" class="select select-bordered select-sm">
+              <option value="0">Normal</option>
+              <option value="1">Strobe</option>
+              <option value="2">Three Pulse</option>
+              <option value="3">SOS</option>
+              <option value="4">Random</option>
+            </select>
+          </div>
+          <div class="form-control">
+            <label class="label py-0.5"><span class="label-text text-xs">C1 Intensity</span></label>
+            <select id="ws6-led-intensity" class="select select-bordered select-sm">
+              <option value="0">High</option>
+              <option value="1">Low</option>
+              <option value="2">Medium</option>
+              <option value="3">Off</option>
+            </select>
+          </div>
+          <div class="form-control">
+            <label class="label py-0.5"><span class="label-text text-xs">Speed</span></label>
+            <select id="ws6-led-speed" class="select select-bordered select-sm">
+              <option value="0">Medium</option>
+              <option value="1">Fast</option>
+              <option value="2">Slow</option>
+            </select>
+          </div>
+        </div>
+        <div class="flex items-center gap-3 flex-wrap pt-1">
+          <span class="text-xs text-base-content/40 font-mono">PDout hex:</span>
+          <code class="text-sm font-mono font-bold bg-base-300 px-2 py-0.5 rounded tracking-widest" id="ws6-led-hex-preview">000100</code>
+          <button type="button" id="ws6-led-write" class="btn btn-sm btn-primary ml-auto">Write to Light</button>
+        </div>
+        <p id="ws6-led-status" class="text-xs font-mono text-base-content/60 min-h-[1rem]"></p>
+      </div>
+
       <!-- PDout direction diagram -->
       <div class="rounded-xl border border-base-300 bg-base-200 p-3 mt-3">
         <p class="text-xs font-semibold text-base-content/60 uppercase tracking-wide mb-2">PDout — master commands the light</p>
@@ -1898,40 +2015,6 @@ const WORKSHEETS = [
         </svg>
       </div>
 
-      <!-- PDout byte layout reference -->
-      <div class="rounded-xl border border-base-300 bg-base-200 p-4 mt-4">
-        <p class="text-xs font-semibold text-base-content/60 uppercase tracking-wide mb-3">PDout 3-byte layout — how the hex is built</p>
-        <div class="grid grid-cols-3 gap-2">
-          <div class="rounded-lg border border-base-300 bg-base-100 p-2 space-y-1">
-            <p class="text-xs font-bold text-primary text-center">Octet 0 — Intensity</p>
-            <p class="text-xs font-mono text-center text-base-content/50">[7:6] Audible</p>
-            <p class="text-xs font-mono text-center text-base-content/50">[5:3] C2 Intensity</p>
-            <p class="text-xs font-mono text-center text-base-content/70 font-bold">[2:0] C1 Intensity</p>
-            <div class="divider my-0.5"></div>
-            <p class="text-xs text-center text-base-content/60">0=High  1=Low</p>
-            <p class="text-xs text-center text-base-content/60">2=Med   3=Off</p>
-          </div>
-          <div class="rounded-lg border border-base-300 bg-base-100 p-2 space-y-1">
-            <p class="text-xs font-bold text-secondary text-center">Octet 1 — Animation</p>
-            <p class="text-xs font-mono text-center text-base-content/50">[7:6] Speed</p>
-            <p class="text-xs font-mono text-center text-base-content/50">[5:3] Pattern</p>
-            <p class="text-xs font-mono text-center text-base-content/70 font-bold">[2:0] Animation</p>
-            <div class="divider my-0.5"></div>
-            <p class="text-xs text-center text-base-content/60">0=Off  1=Steady</p>
-            <p class="text-xs text-center text-base-content/60">2=Flash  3=2-Colour</p>
-          </div>
-          <div class="rounded-lg border border-base-300 bg-base-100 p-2 space-y-1">
-            <p class="text-xs font-bold text-accent text-center">Octet 2 — Colours</p>
-            <p class="text-xs font-mono text-center text-base-content/50">[7:4] Colour 2</p>
-            <p class="text-xs font-mono text-center text-base-content/70 font-bold">[3:0] Colour 1</p>
-            <div class="divider my-0.5"></div>
-            <p class="text-xs text-center text-base-content/60">0=Green  1=Red</p>
-            <p class="text-xs text-center text-base-content/60">3=Amber  9=Blue</p>
-          </div>
-        </div>
-        <p class="text-xs text-base-content/50 text-center mt-2 font-mono">Example: <strong>18 01 01</strong> → Octet0=0x18 (C2I=Off, C1I=High) · Octet1=0x01 (Steady) · Octet2=0x01 (Red)</p>
-      </div>
-
       <!-- Animation modes reference -->
       <div class="overflow-x-auto rounded-lg border border-base-300 mt-3">
         <table class="table table-zebra text-sm">
@@ -1941,7 +2024,7 @@ const WORKSHEETS = [
             <tr><td class="font-mono">1</td><td>Steady</td><td>Colour 1 solid on at the set intensity</td></tr>
             <tr><td class="font-mono">2</td><td>Flash</td><td>Colour 1 flashes at the set speed and pattern</td></tr>
             <tr><td class="font-mono">3</td><td>Two Colour Flash</td><td>Colour 1 and Colour 2 alternate at the set speed</td></tr>
-            <tr><td class="font-mono">4</td><td>Intensity Sweep</td><td>Colour 1 cycles 0%→100%→0% at the set speed <span class="badge badge-xs badge-warning ml-1">firmware v1.0.2 bug — use SW sweep</span></td></tr>
+            <tr><td class="font-mono">4</td><td>Intensity Sweep</td><td>Colour 1 cycles 0%→100%→0% at the set speed</td></tr>
           </tbody>
         </table>
       </div>
@@ -2008,247 +2091,526 @@ const WORKSHEETS = [
       </div>
 
       <p class="mt-4 font-medium text-base-content"><strong>Q1.</strong> The CL50 is described as a "PDout-only" device. What does that mean?</p>
-      <div class="space-y-2 mt-1">
-        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="ws5-q1" value="a" class="radio radio-sm radio-accent"> It only works with certain IO-Link masters</label>
-        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="ws5-q1" value="b" class="radio radio-sm radio-accent"> The master sends a command value TO the light — no measurement data comes back from the device to the master</label>
+      <div class="space-y-2 mt-1" data-correct="a">
+        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="ws5-q1" value="a" class="radio radio-sm radio-accent"> The master sends a command value TO the light — no measurement data comes back from the device to the master</label>
+        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="ws5-q1" value="b" class="radio radio-sm radio-accent"> It only works with certain IO-Link masters</label>
         <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="ws5-q1" value="c" class="radio radio-sm radio-accent"> It uses a separate digital output wire for each colour segment</label>
       </div>
 
       <p class="mt-3 font-medium text-base-content"><strong>Q2.</strong> The hex value <code class="font-mono bg-base-300 px-1 rounded text-sm">180101</code> is sent to the CL50. Which colour will it show?</p>
-      <div class="space-y-2 mt-1">
+      <div class="space-y-2 mt-1" data-correct="c">
         <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="ws5-q2" value="a" class="radio radio-sm radio-accent"> Green — Octet2 low nibble = 0x00</label>
-        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="ws5-q2" value="b" class="radio radio-sm radio-accent"> Red — Octet2 low nibble = 0x01 = Red (index 1)</label>
-        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="ws5-q2" value="c" class="radio radio-sm radio-accent"> Amber — 0x18 in Octet0 indicates Amber</label>
+        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="ws5-q2" value="b" class="radio radio-sm radio-accent"> Amber — 0x18 in Octet0 indicates Amber</label>
+        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="ws5-q2" value="c" class="radio radio-sm radio-accent"> Red — Octet2 low nibble = 0x01 = Red (index 1)</label>
       </div>
 
       <p class="mt-3 font-medium text-base-content"><strong>Q3.</strong> The flashing red segment will not turn off even after the operator says the fault is cleared. What is the most likely cause?</p>
-      <div class="space-y-2 mt-1">
-        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="ws5-q3" value="a" class="radio radio-sm radio-accent"> The light stack hardware is broken</label>
-        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="ws5-q3" value="b" class="radio radio-sm radio-accent"> The PLC is still sending a "red on" PDout command — the fault state is held in the controller, not the light itself</label>
+      <div class="space-y-2 mt-1" data-correct="a">
+        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="ws5-q3" value="a" class="radio radio-sm radio-accent"> The PLC is still sending a "red on" PDout command — the fault state is held in the controller, not the light itself</label>
+        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="ws5-q3" value="b" class="radio radio-sm radio-accent"> The light stack hardware is broken</label>
         <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="ws5-q3" value="c" class="radio radio-sm radio-accent"> IO-Link has lost connection to the light stack</label>
       </div>
 
       <p class="mt-3 font-medium text-base-content"><strong>Q4.</strong> Why is IO-Link PDout control better than wiring a traditional 3-wire digital light stack (one wire per segment)?</p>
-      <div class="space-y-2 mt-1">
+      <div class="space-y-2 mt-1" data-correct="c">
         <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="ws5-q4" value="a" class="radio radio-sm radio-accent"> It is always cheaper per unit due to IO-Link certification reducing manufacturing costs</label>
-        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="ws5-q4" value="b" class="radio radio-sm radio-accent"> Full control of colour, animation, intensity, and speed over a single 3-pin cable — plus the HMI can read back the exact state without a separate feedback wire</label>
-        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="ws5-q4" value="c" class="radio radio-sm radio-accent"> The colour cannot be changed once wired — it is safer</label>
+        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="ws5-q4" value="b" class="radio radio-sm radio-accent"> The colour cannot be changed once wired — it is safer</label>
+        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="ws5-q4" value="c" class="radio radio-sm radio-accent"> Full control of colour, animation, intensity, and speed over a single 3-pin cable — plus the HMI can read back the exact state without a separate feedback wire</label>
       </div>
 
       <div class="divider my-2"></div>
 
-      <!-- Hands-on: command the CL50 -->
-      <div class="rounded-xl border-2 border-primary/40 bg-primary/5 p-4 mt-4 space-y-3">
-        <p class="font-bold text-base-content text-base">🔧 Hands-on: Command the CL50</p>
-        <p class="text-sm text-base-content/80">Write a PDout value directly to the light stack. Watch the live panel above update and observe the physical light change on the bench. Each button shows the hex value it sends so you can verify it against the byte layout table.</p>
-        <div class="grid grid-cols-2 gap-2 sm:grid-cols-4">
-          <button type="button" class="ws6-write-btn btn btn-sm flex-col h-auto py-2" data-hex="000100" style="background:#16a34a;color:white;border-color:#16a34a">
-            <span>Green Steady</span><span class="text-xs opacity-70 font-mono">000100</span>
-          </button>
-          <button type="button" class="ws6-write-btn btn btn-sm flex-col h-auto py-2" data-hex="184203" style="background:#f59e0b;color:white;border-color:#f59e0b">
-            <span>Amber Flash</span><span class="text-xs opacity-70 font-mono">184203</span>
-          </button>
-          <button type="button" class="ws6-write-btn btn btn-sm flex-col h-auto py-2" data-hex="180101" style="background:#dc2626;color:white;border-color:#dc2626">
-            <span>Red Steady</span><span class="text-xs opacity-70 font-mono">180101</span>
-          </button>
-          <button type="button" class="ws6-write-btn btn btn-sm flex-col h-auto py-2" data-hex="180109" style="background:#2563eb;color:white;border-color:#2563eb">
-            <span>Blue Steady</span><span class="text-xs opacity-70 font-mono">180109</span>
-          </button>
-        </div>
-        <p id="ws6-write-status" class="text-xs text-center text-base-content/60 font-mono min-h-[1rem]"></p>
-      </div>
+      <!-- Maintenance scenario: stale PDout / wrong light state -->
+      <div class="rounded-xl overflow-hidden border border-neutral/60 mt-4">
 
-      <div class="divider my-2"></div>
-
-      <!-- Colour prediction challenge -->
-      <div class="rounded-xl border-2 border-warning/50 bg-warning/5 p-4 mt-4 space-y-3" id="ws6-challenge-box">
-        <p class="font-bold text-base-content text-base">🎯 Challenge</p>
-        <p class="text-sm text-base-content/80">WITHOUT looking at the physical light stack — use only the live panel above to predict what colour it is currently showing. Make your guess, then turn around and check.</p>
-        <div class="grid grid-cols-4 gap-2">
-          <button type="button" class="ws6-colour-btn btn btn-sm" data-colour="Green" style="background:#16a34a;color:white;border-color:#16a34a">Green</button>
-          <button type="button" class="ws6-colour-btn btn btn-sm" data-colour="Amber" style="background:#f59e0b;color:white;border-color:#f59e0b">Amber</button>
-          <button type="button" class="ws6-colour-btn btn btn-sm" data-colour="Red" style="background:#dc2626;color:white;border-color:#dc2626">Red</button>
-          <button type="button" class="ws6-colour-btn btn btn-sm" data-colour="Blue" style="background:#2563eb;color:white;border-color:#2563eb">Blue</button>
-        </div>
-        <p id="ws6-ch-selection" class="text-xs text-base-content/60 text-center">No guess selected</p>
-        <div class="flex justify-center">
-          <button type="button" id="ws6-ch-submit" class="btn btn-primary btn-sm">Submit Guess</button>
-        </div>
-        <div id="ws6-ch-result" class="hidden rounded-lg p-3 text-center font-bold text-sm"></div>
-        <div class="flex justify-center">
-          <button type="button" id="ws6-ch-reset" class="btn btn-warning btn-sm gap-2">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
-            Reset Challenge
+        <!-- Header -->
+        <div class="bg-neutral/20 border-b border-neutral/40 px-4 py-3 flex items-center justify-between gap-2 flex-wrap">
+          <div class="flex items-center gap-3">
+            <div class="w-3 h-3 rounded-full bg-warning animate-pulse"></div>
+            <span class="font-bold text-base-content text-sm">Maintenance Scenario — Work Order LST-0312</span>
+          </div>
+          <button type="button" id="ws6-ms-reset" class="btn btn-xs btn-ghost gap-1 text-base-content/50">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+            Reset
           </button>
         </div>
+
+        <!-- Embedded live state panel -->
+        <div class="px-4 py-3 bg-base-200/40 border-b border-neutral/30 flex items-center gap-5 flex-wrap">
+          <div class="flex items-center gap-2">
+            <div id="ws6-ms-c1-circle" class="w-8 h-8 rounded-full bg-base-300 border-2 border-base-300 transition-all duration-300 shadow-md"></div>
+            <div>
+              <p class="text-xs text-base-content/50">Colour 1</p>
+              <p id="ws6-ms-c1-label" class="text-xs font-bold text-base-content">—</p>
+            </div>
+          </div>
+          <div>
+            <p class="text-xs text-base-content/50">Animation</p>
+            <p id="ws6-ms-animation" class="text-xs font-semibold text-base-content">—</p>
+          </div>
+          <div>
+            <p class="text-xs text-base-content/50">Raw PDout hex</p>
+            <p id="ws6-ms-raw-hex" class="text-xs font-mono font-semibold text-base-content">—</p>
+          </div>
+          <div class="ml-auto">
+            <span id="ws6-ms-live-badge" class="badge badge-xs badge-ghost font-mono">OFFLINE</span>
+          </div>
+        </div>
+
+        <!-- Work order -->
+        <div class="p-4 space-y-3 border-b border-neutral/30">
+          <p class="text-xs font-semibold text-base-content/50 uppercase tracking-wide">Priority: HIGH · Asset: Port 4 CL50 Pro · Ref: LST-0312</p>
+          <p class="text-sm text-base-content/90 leading-relaxed"><strong>Fault reported:</strong> Assembly Line 2 CL50 light stack is stuck showing Flashing Amber after a planned maintenance window. All sensors are healthy and the maintenance sign-off sheet has been completed, but operators are refusing to restart the line while the warning light is active. The controls engineer insists the PLC program is correct.</p>
+          <p class="text-sm text-base-content/80">Click <strong>Start Scenario</strong> to inject the fault state into Port 4. The CL50 will begin Flashing Amber — investigate and clear the condition.</p>
+          <div class="flex items-center gap-3 flex-wrap">
+            <button type="button" id="ws6-ms-start" class="btn btn-warning btn-sm gap-2">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+              Start Scenario
+            </button>
+            <p id="ws6-ms-inject-status" class="text-xs font-mono text-base-content/50"></p>
+          </div>
+        </div>
+
+        <!-- Step 1: Observe -->
+        <div id="ws6-ms-observe-box" class="hidden p-4 border-b border-neutral/30 space-y-3">
+          <p class="text-xs font-semibold text-base-content/50 uppercase tracking-wide">Step 1 — Observe the Fault</p>
+          <p class="text-sm text-base-content/80">Look at the physical CL50 on Port 4 and confirm the fault state on the live panel below — the light should be Flashing Amber.</p>
+          <div class="rounded-lg bg-base-200 border border-base-300 px-4 py-3 flex items-center gap-5 flex-wrap">
+            <div class="flex items-center gap-2">
+              <div id="ws6-obs-c1-circle" class="w-8 h-8 rounded-full bg-base-300 border-2 border-base-300 transition-all duration-300 shadow-md"></div>
+              <div>
+                <p class="text-xs text-base-content/50">Colour 1</p>
+                <p id="ws6-obs-c1-label" class="text-xs font-bold text-base-content">—</p>
+              </div>
+            </div>
+            <div>
+              <p class="text-xs text-base-content/50">Animation</p>
+              <p id="ws6-obs-animation" class="text-xs font-semibold text-base-content">—</p>
+            </div>
+            <div>
+              <p class="text-xs text-base-content/50">Raw PDout hex</p>
+              <p id="ws6-obs-raw-hex" class="text-xs font-mono font-semibold text-base-content">—</p>
+            </div>
+          </div>
+          <button type="button" id="ws6-ms-i-observed" class="btn btn-outline btn-warning btn-sm gap-2">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+            I have observed the fault state
+          </button>
+        </div>
+
+        <!-- Step 2: Diagnose -->
+        <div id="ws6-ms-diag-box" class="hidden p-4 border-b border-neutral/30 space-y-3">
+          <p class="text-xs font-semibold text-base-content/50 uppercase tracking-wide">Step 2 — Diagnose the Root Cause</p>
+          <p class="text-sm text-base-content/80">The light is Flashing Amber but all sensors and the PLC are healthy. What is the most likely root cause?</p>
+          <div class="space-y-2 text-sm">
+            <label class="flex items-start gap-2 cursor-pointer">
+              <input type="radio" name="ws6-ms-diag" value="a" class="radio radio-sm radio-warning mt-0.5">
+              <span>The CL50 hardware is malfunctioning — the amber segment is stuck and cannot be cleared by software</span>
+            </label>
+            <label class="flex items-start gap-2 cursor-pointer">
+              <input type="radio" name="ws6-ms-diag" value="b" class="radio radio-sm radio-warning mt-0.5">
+              <span>IO-Link comms to Port 4 have dropped — the light is locked to its last received command and cannot be updated</span>
+            </label>
+            <label class="flex items-start gap-2 cursor-pointer">
+              <input type="radio" name="ws6-ms-diag" value="c" class="radio radio-sm radio-warning mt-0.5">
+              <span>The PLC output register is still holding the pre-maintenance fault PDout value (<code class="font-mono bg-base-300 px-1 rounded">184203</code> — Amber Flash). The normal-run value (<code class="font-mono bg-base-300 px-1 rounded">000100</code> — Green Steady) was never sent after the PLC restarted</span>
+            </label>
+          </div>
+          <div class="flex items-center gap-3">
+            <button type="button" id="ws6-ms-diag-submit" class="btn btn-warning btn-sm">Submit Diagnosis</button>
+          </div>
+          <div id="ws6-ms-diag-result" class="hidden rounded-lg p-3 text-sm"></div>
+        </div>
+
+        <!-- Step 3: Read PDout state -->
+        <div id="ws6-ms-read-box" class="hidden p-4 border-b border-neutral/30 space-y-3">
+          <p class="text-xs font-semibold text-base-content/50 uppercase tracking-wide">Step 3 — Read Back the Current PDout</p>
+          <p class="text-sm text-base-content/80">Confirm your diagnosis by reading the current PDout state from the master. The AL1350 stores the last value it wrote to the CL50, so you can verify exactly what command the PLC sent.</p>
+          <button type="button" id="ws6-ms-read-btn" class="btn btn-outline btn-accent btn-sm gap-2">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+            Read PDout State from Master
+          </button>
+          <div id="ws6-ms-read-result" class="hidden rounded-lg bg-base-200 border border-base-300 p-3 font-mono text-xs space-y-1"></div>
+        </div>
+
+        <!-- Step 4: Write fix -->
+        <div id="ws6-ms-fix-box" class="hidden p-4 border-b border-neutral/30 space-y-3">
+          <p class="text-xs font-semibold text-base-content/50 uppercase tracking-wide">Step 4 — Apply the Fix</p>
+          <p class="text-sm text-base-content/80">Override the stale PLC output by writing the correct normal-run PDout value directly. This returns the light to Green Steady and clears the warning state.</p>
+          <div class="rounded-lg bg-base-200 border border-base-300 px-3 py-2 text-sm space-y-1">
+            <p>Target PDout: <code class="font-mono bg-success/20 px-2 py-0.5 rounded text-success">000100</code></p>
+            <p class="text-xs text-base-content/50">Octet 0 = 0x00 (High) · Octet 1 = 0x01 (Steady) · Octet 2 = 0x00 (Green)</p>
+          </div>
+          <div class="flex items-center gap-3 flex-wrap">
+            <button type="button" id="ws6-ms-fix-btn" class="btn btn-success btn-sm gap-2">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+              Write Normal Run State (000100)
+            </button>
+            <p id="ws6-ms-fix-status" class="text-xs font-mono text-base-content/50"></p>
+          </div>
+        </div>
+
+        <!-- Step 5: Verify -->
+        <div id="ws6-ms-vfy-box" class="hidden p-4 border-b border-neutral/30 space-y-3">
+          <p class="text-xs font-semibold text-base-content/50 uppercase tracking-wide">Step 5 — Verify</p>
+          <p class="text-sm text-base-content/80">Confirm the CL50 is now showing Green Steady and holds stable. Maintain for 5 seconds.</p>
+          <div class="rounded-lg bg-base-200 border border-base-300 p-3 space-y-2">
+            <div class="flex items-center justify-between text-xs">
+              <span id="ws6-ms-vfy-pct" class="text-base-content/60">Waiting for Green Steady…</span>
+              <span id="ws6-ms-vfy-timer" class="font-mono text-base-content/60">0 / 5 s</span>
+            </div>
+            <div class="w-full h-3 bg-base-300 rounded-full overflow-hidden">
+              <div id="ws6-ms-vfy-tbar" class="h-full bg-success rounded-full transition-all duration-300" style="width:0%"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Sign-off -->
+        <div id="ws6-ms-signoff-box" class="hidden p-4 space-y-3">
+          <p class="text-xs font-semibold text-success uppercase tracking-wide">✓ Fault Cleared — Sign Off Work Order LST-0312</p>
+          <p class="text-sm text-base-content/80">Confirm the following before closing:</p>
+          <div class="space-y-2 text-sm">
+            <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" id="ws6-ms-ck1" class="checkbox checkbox-sm checkbox-success"> CL50 confirmed Green Steady — verified on physical light and live panel</label>
+            <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" id="ws6-ms-ck2" class="checkbox checkbox-sm checkbox-success"> Root cause documented: stale PDout (Amber Flash) held in PLC output register — not cleared during maintenance restart</label>
+            <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" id="ws6-ms-ck3" class="checkbox checkbox-sm checkbox-success"> Corrective action raised: PLC startup routine should reset light stack PDout to Green Steady on every power-on</label>
+          </div>
+          <button type="button" id="ws6-ms-close" class="btn btn-success btn-sm gap-2" disabled>
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+            Close Work Order
+          </button>
+        </div>
+
       </div>
     `
   },
   {
     id: 7,
     title: 'Fault Finding and Replacement',
-    shortDesc: 'Diagnose, swap, confirm — all four sensors.',
+    shortDesc: 'Diagnose a live Line 3 fault using the HMI — two devices, one clue.',
     estimatedTime: 'About 20 min',
-    whyItMatters: 'IO-Link tells you what\'s wrong and where. This worksheet ties together what you\'ve learned about all four sensors so you can run through a realistic fault-find without guessing.',
-    relatedDashboard: 'Dashboard: Simulate Fault, Active Port Details',
-    prerequisites: 'Complete Worksheets 1–5',
+    whyItMatters: 'IO-Link lets you read every device on the network from your workstation. This worksheet puts you in a real maintenance situation — something is wrong, a colleague swears he didn\'t cause it, and the light stack is the first clue.',
+    relatedDashboard: 'IO-Link Master page: Active Port Details, parameter read/write',
+    prerequisites: 'Complete Worksheets 1–6',
     contentHtml: `
-      <p class="text-base-content/90 leading-relaxed text-base">Read each scenario, then pick the best action. These are real faults you will come across on the job.</p>
+      <p class="text-base-content/90 leading-relaxed text-base">Your manager replaced the capacitive sensor on Port 2 and the temperature sensor on Port 3 during last night's maintenance window. He says both are connected and IO-Link is communicating. This morning Line 3 failed to restart — the machine is in fault mode and the light stack is flashing red.</p>
 
-      <!-- WS7 SVG diagram -->
-      <div class="rounded-xl border border-base-300 bg-base-200 p-3 mt-3">
-        <p class="text-xs font-semibold text-base-content/60 uppercase tracking-wide mb-2">How it works</p>
-        <svg viewBox="0 0 570 195" xmlns="http://www.w3.org/2000/svg" class="w-full" style="font-family:system-ui,sans-serif">
-          <!-- Box 1: Fault detected -->
-          <rect x="5" y="55" width="98" height="55" rx="5" fill="#dc2626"/>
-          <text x="54" y="75" text-anchor="middle" fill="white" font-size="8" font-weight="600">Fault detected</text>
-          <text x="54" y="88" text-anchor="middle" fill="#fca5a5" font-size="7">port offline or</text>
-          <text x="54" y="100" text-anchor="middle" fill="#fca5a5" font-size="7">wrong value</text>
-          <!-- Arrow 1 -->
-          <line x1="103" y1="82" x2="116" y2="82" stroke="#64748b" stroke-width="2"/>
-          <polygon points="116,78 116,86 124,82" fill="#64748b"/>
-
-          <!-- Box 2: Check dashboard -->
-          <rect x="124" y="55" width="98" height="55" rx="5" fill="#d97706"/>
-          <text x="173" y="75" text-anchor="middle" fill="white" font-size="8" font-weight="600">Check Dashboard</text>
-          <text x="173" y="88" text-anchor="middle" fill="#fde68a" font-size="7">read the</text>
-          <text x="173" y="100" text-anchor="middle" fill="#fde68a" font-size="7">fault code</text>
-          <!-- Arrow 2 -->
-          <line x1="222" y1="82" x2="235" y2="82" stroke="#64748b" stroke-width="2"/>
-          <polygon points="235,78 235,86 243,82" fill="#64748b"/>
-
-          <!-- Box 3: Identify cause -->
-          <rect x="243" y="55" width="98" height="55" rx="5" fill="#2563eb"/>
-          <text x="292" y="75" text-anchor="middle" fill="white" font-size="8" font-weight="600">Identify cause</text>
-          <text x="292" y="88" text-anchor="middle" fill="#bfdbfe" font-size="7">lens / sensitivity</text>
-          <text x="292" y="100" text-anchor="middle" fill="#bfdbfe" font-size="7">cable / probe</text>
-          <!-- Arrow 3 -->
-          <line x1="341" y1="82" x2="354" y2="82" stroke="#64748b" stroke-width="2"/>
-          <polygon points="354,78 354,86 362,82" fill="#64748b"/>
-
-          <!-- Box 4: Fix the issue -->
-          <rect x="362" y="55" width="98" height="55" rx="5" fill="#7c3aed"/>
-          <text x="411" y="75" text-anchor="middle" fill="white" font-size="8" font-weight="600">Fix the issue</text>
-          <text x="411" y="88" text-anchor="middle" fill="#ddd6fe" font-size="7">on the bench</text>
-          <text x="411" y="100" text-anchor="middle" fill="#ddd6fe" font-size="7">or in place</text>
-          <!-- Arrow 4 -->
-          <line x1="460" y1="82" x2="473" y2="82" stroke="#64748b" stroke-width="2"/>
-          <polygon points="473,78 473,86 481,82" fill="#64748b"/>
-
-          <!-- Box 5: Confirm -->
-          <rect x="481" y="55" width="84" height="55" rx="5" fill="#16a34a"/>
-          <text x="523" y="75" text-anchor="middle" fill="white" font-size="8" font-weight="600">Confirm</text>
-          <text x="523" y="88" text-anchor="middle" fill="#bbf7d0" font-size="7">port returns to</text>
-          <text x="523" y="100" text-anchor="middle" fill="#bbf7d0" font-size="7">IO-Link mode</text>
-
-          <!-- Bottom label -->
-          <text x="285" y="178" text-anchor="middle" fill="#64748b" font-size="8">IO-Link gives you the fault code — you don't have to guess</text>
-        </svg>
-      </div>
-
-      <div class="space-y-4 mt-3">
-
-        <div class="rounded-xl border-2 border-primary/30 bg-primary/5 p-4 space-y-3">
-          <p class="font-bold text-base-content">🔧 Scenario A — Port 1 (Proximity)</p>
-          <p class="text-sm text-base-content/80">Dashboard shows <strong>Instability Alarm active</strong>. The output is intermittently switching even though the target appears stationary.</p>
-          <p class="font-medium text-sm text-base-content mt-2">What do you do first?</p>
-          <div class="space-y-2">
-            <label class="flex items-center gap-2 cursor-pointer text-sm"><input type="radio" name="ws6-a" value="a" class="radio radio-xs radio-primary"> Replace the sensor immediately</label>
-            <label class="flex items-center gap-2 cursor-pointer text-sm"><input type="radio" name="ws6-a" value="b" class="radio radio-xs radio-primary"> Check and adjust the target bracket — the instability alarm means the target is at the edge of the sensing range, so moving it into the nominal zone (8–12 mm) should clear the alarm</label>
-            <label class="flex items-center gap-2 cursor-pointer text-sm"><input type="radio" name="ws6-a" value="c" class="radio radio-xs radio-primary"> Adjust the setpoint higher in the sensor parameters</label>
+      <!-- NC/NO recall callout -->
+      <div class="rounded-xl border border-base-300 bg-base-200/60 p-4 mt-4 space-y-2">
+        <p class="text-sm font-semibold text-base-content">🔁 Recall — Switching Output Logic (ISDU Index 61 / Sub 1)</p>
+        <p class="text-sm text-base-content/80">IO-Link sensors can be configured with <strong>Normal Open (NO)</strong> or <strong>Normal Closed (NC)</strong> output logic.</p>
+        <div class="grid grid-cols-2 gap-3 text-sm mt-1">
+          <div class="rounded-lg bg-success/10 border border-success/30 p-2">
+            <p class="font-bold text-success">NO — Normal Open (value 0)</p>
+            <p class="text-base-content/70 text-xs mt-0.5">Output is ON when an object is detected. Factory default.</p>
           </div>
-        </div>
-
-        <div class="rounded-xl border-2 border-secondary/30 bg-secondary/5 p-4 space-y-3">
-          <p class="font-bold text-base-content">🫙 Scenario B — Port 2 (Capacitive)</p>
-          <p class="text-sm text-base-content/80">Sensor was just replaced. Output is permanently ON even though the tank is empty.</p>
-          <p class="font-medium text-sm text-base-content mt-2">Most likely cause and action?</p>
-          <div class="space-y-2">
-            <label class="flex items-center gap-2 cursor-pointer text-sm"><input type="radio" name="ws6-b" value="a" class="radio radio-xs radio-secondary"> The replacement sensor is faulty — send it back</label>
-            <label class="flex items-center gap-2 cursor-pointer text-sm"><input type="radio" name="ws6-b" value="b" class="radio radio-xs radio-secondary"> Sensitivity is set too high — the sensor is detecting the container wall. Reduce sensitivity or re-teach</label>
-            <label class="flex items-center gap-2 cursor-pointer text-sm"><input type="radio" name="ws6-b" value="c" class="radio radio-xs radio-secondary"> The cable polarity is reversed</label>
-          </div>
-        </div>
-
-        <div class="rounded-xl border-2 border-warning/30 bg-warning/5 p-4 space-y-3">
-          <p class="font-bold text-base-content">🌡️ Scenario C — Port 3 (Temperature)</p>
-          <p class="text-sm text-base-content/80">Temperature reading suddenly shows −40 °C in a room-temperature lab.</p>
-          <p class="font-medium text-sm text-base-content mt-2">Most likely fault?</p>
-          <div class="space-y-2">
-            <label class="flex items-center gap-2 cursor-pointer text-sm"><input type="radio" name="ws6-c" value="a" class="radio radio-xs radio-warning"> The lab is too cold</label>
-            <label class="flex items-center gap-2 cursor-pointer text-sm"><input type="radio" name="ws6-c" value="b" class="radio radio-xs radio-warning"> Broken or disconnected sensor — −40 °C is a common default error value for temperature sensors</label>
-            <label class="flex items-center gap-2 cursor-pointer text-sm"><input type="radio" name="ws6-c" value="c" class="radio radio-xs radio-warning"> The setpoint was changed</label>
-          </div>
-        </div>
-
-        <div class="rounded-xl border-2 border-accent/30 bg-accent/5 p-4 space-y-3">
-          <p class="font-bold text-base-content">🚦 Scenario D — Port 4 (Light Stack)</p>
-          <p class="text-sm text-base-content/80">The red segment will not turn off even after the operator says the fault was cleared.</p>
-          <p class="font-medium text-sm text-base-content mt-2">Which is the most likely explanation?</p>
-          <div class="space-y-2">
-            <label class="flex items-center gap-2 cursor-pointer text-sm"><input type="radio" name="ws6-d" value="a" class="radio radio-xs radio-accent"> The light stack hardware is broken</label>
-            <label class="flex items-center gap-2 cursor-pointer text-sm"><input type="radio" name="ws6-d" value="b" class="radio radio-xs radio-accent"> The fault was not actually cleared in the controller — the PLC is still sending a "red on" command</label>
-            <label class="flex items-center gap-2 cursor-pointer text-sm"><input type="radio" name="ws6-d" value="c" class="radio radio-xs radio-accent"> IO-Link has lost connection to the light stack</label>
+          <div class="rounded-lg bg-error/10 border border-error/30 p-2">
+            <p class="font-bold text-error">NC — Normal Closed (value 1)</p>
+            <p class="text-base-content/70 text-xs mt-0.5">Output is ON when <em>no</em> object is detected — inverted behaviour. Causes a permanent "object present" signal when nothing is in front.</p>
           </div>
         </div>
       </div>
 
-      <div class="alert bg-primary/10 border border-primary/30 rounded-lg text-base-content mt-4">
-        <strong>Try it live:</strong> Go to the <a href="#" data-page="io-link-master" class="link link-primary">IO-Link Master</a> page. Look at Active Port Details for each connected sensor — what information can you see?
+      <!-- Start section — always visible -->
+      <div id="ws7-start-row" class="mt-4 flex items-center gap-3 flex-wrap">
+        <button type="button" id="ws7-ms-start" class="btn btn-error btn-sm gap-2">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+          Start Investigation
+        </button>
+        <p id="ws7-ms-inject-status" class="text-xs font-mono text-base-content/50"></p>
       </div>
 
-      <div class="divider my-2"></div>
+      <!-- HMI panel — hidden until Start is clicked -->
+      <div id="ws7-hmi-wrapper" class="hidden">
+      <div class="rounded-xl overflow-hidden mt-4 border border-slate-600/50" style="background:#0f172a;font-family:'Courier New',Courier,monospace;">
 
-      <div class="rounded-xl border-2 border-warning/50 bg-warning/5 p-4 mt-4 space-y-3" id="ws7-challenge-box">
-        <p class="font-bold text-base-content text-base">🎯 Challenge</p>
-        <p class="text-sm text-base-content/80">Disconnect any one sensor cable from the IO-Link Master. Watch the port go offline in the panel below. Then reconnect it. The challenge passes when the port returns to IO-Link mode.</p>
-        <div class="grid grid-cols-4 gap-2">
-          <div class="rounded-lg bg-base-200 border border-base-300 p-2 text-center space-y-1">
-            <p class="text-xs text-base-content/50 font-medium">P1</p>
-            <div id="ws7-ch-p1" class="w-5 h-5 rounded-full bg-base-300 mx-auto transition-all"></div>
-            <p id="ws7-ch-p1-val" class="text-xs text-base-content/70">—</p>
-          </div>
-          <div class="rounded-lg bg-base-200 border border-base-300 p-2 text-center space-y-1">
-            <p class="text-xs text-base-content/50 font-medium">P2</p>
-            <div id="ws7-ch-p2" class="w-5 h-5 rounded-full bg-base-300 mx-auto transition-all"></div>
-            <p id="ws7-ch-p2-val" class="text-xs text-base-content/70">—</p>
-          </div>
-          <div class="rounded-lg bg-base-200 border border-base-300 p-2 text-center space-y-1">
-            <p class="text-xs text-base-content/50 font-medium">P3</p>
-            <div id="ws7-ch-p3" class="w-5 h-5 rounded-full bg-base-300 mx-auto transition-all"></div>
-            <p id="ws7-ch-p3-val" class="text-xs text-base-content/70">—</p>
-          </div>
-          <div class="rounded-lg bg-base-200 border border-base-300 p-2 text-center space-y-1">
-            <p class="text-xs text-base-content/50 font-medium">P4</p>
-            <div id="ws7-ch-p4" class="w-5 h-5 rounded-full bg-base-300 mx-auto transition-all"></div>
-            <p id="ws7-ch-p4-val" class="text-xs text-base-content/70">—</p>
+        <!-- HMI title bar -->
+        <div class="flex items-center justify-between px-4 py-2" style="background:#1e3a5f;border-bottom:2px solid #1d4ed8;">
+          <span class="text-xs font-bold tracking-widest" style="color:#60a5fa;letter-spacing:0.12em;">LINE 3 — IO-LINK STATUS MONITOR</span>
+          <div class="flex items-center gap-3">
+            <span id="ws7-hmi-status" class="text-xs font-bold tracking-wider" style="color:#475569;">● OFFLINE</span>
+            <span id="ws7-hmi-badge" class="badge badge-xs font-mono" style="font-size:0.6rem;">OFFLINE</span>
           </div>
         </div>
-        <p id="ws7-ch-status-msg" class="text-xs text-base-content/60 text-center">Waiting — disconnect a sensor cable to begin</p>
-        <div id="ws7-ch-result" class="hidden rounded-lg p-3 text-center font-bold text-sm"></div>
-        <div class="flex justify-center">
-          <button type="button" id="ws7-ch-reset" class="btn btn-warning btn-sm gap-2">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
-            Reset Challenge
+
+        <!-- 2×2 port grid -->
+        <div class="grid grid-cols-2" style="gap:1px;background:#1e293b;">
+
+          <!-- P1: Inductive Proximity -->
+          <div class="p-3 space-y-2" style="background:#0f172a;">
+            <span class="text-xs font-bold tracking-wider" style="color:#3b82f6;font-size:0.6rem;letter-spacing:0.1em;">P1 · INDUCTIVE PROXIMITY</span>
+            <div class="flex items-center gap-3 mt-1">
+              <div id="ws7-hmi-p1-dot" style="width:22px;height:22px;border-radius:50%;background:#1e293b;border:2px solid #334155;flex-shrink:0;transition:all 0.2s;"></div>
+              <div class="space-y-0.5">
+                <div class="flex items-center gap-2">
+                  <span style="color:#475569;font-size:0.6rem;">OUT1</span>
+                  <span id="ws7-hmi-p1-out1" class="font-bold" style="color:#94a3b8;font-size:0.7rem;">—</span>
+                </div>
+                <div class="flex items-center gap-2">
+                  <span style="color:#475569;font-size:0.6rem;">MON</span>
+                  <span id="ws7-hmi-p1-mon" style="color:#94a3b8;font-size:0.65rem;">—</span>
+                </div>
+                <div class="flex items-center gap-2">
+                  <span style="color:#475569;font-size:0.6rem;">INSTAB</span>
+                  <span id="ws7-hmi-p1-instab" style="color:#94a3b8;font-size:0.65rem;">—</span>
+                </div>
+                <div class="flex items-center gap-2">
+                  <span style="color:#475569;font-size:0.6rem;">OVAPP</span>
+                  <span id="ws7-hmi-p1-ovapp" style="color:#94a3b8;font-size:0.65rem;">—</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- P2: Capacitive (replaced) -->
+          <div class="p-3 space-y-2" style="background:#0f172a;">
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-bold tracking-wider" style="color:#8b5cf6;font-size:0.6rem;letter-spacing:0.1em;">P2 · CAPACITIVE</span>
+              <span style="color:#22c55e;font-size:0.55rem;font-weight:700;letter-spacing:0.05em;">★ NEW UNIT</span>
+            </div>
+            <div class="flex items-center gap-3 mt-1">
+              <div id="ws7-hmi-p2-dot" style="width:22px;height:22px;border-radius:50%;background:#1e293b;border:2px solid #334155;flex-shrink:0;transition:all 0.2s;"></div>
+              <div class="space-y-0.5">
+                <div class="flex items-center gap-2">
+                  <span style="color:#475569;font-size:0.6rem;">LINK</span>
+                  <span id="ws7-hmi-p2-link" style="color:#94a3b8;font-size:0.65rem;">—</span>
+                </div>
+                <div class="flex items-center gap-2">
+                  <span style="color:#475569;font-size:0.6rem;">DET</span>
+                  <span id="ws7-hmi-p2-status" style="color:#94a3b8;font-size:0.65rem;">—</span>
+                </div>
+                <div class="flex items-center gap-2">
+                  <span style="color:#8b5cf6;font-size:0.6rem;">SP1</span>
+                  <span id="ws7-hmi-p2-sp1" style="color:#94a3b8;font-size:0.65rem;">—</span>
+                </div>
+                <div class="flex items-center gap-2">
+                  <span style="color:#a78bfa;font-size:0.6rem;">QoT</span>
+                  <span id="ws7-hmi-p2-qot" style="color:#94a3b8;font-size:0.65rem;">—</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- P3: Temperature (replaced) -->
+          <div class="p-3 space-y-2" style="background:#0f172a;">
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-bold tracking-wider" style="color:#f97316;font-size:0.6rem;letter-spacing:0.1em;">P3 · TEMPERATURE</span>
+              <span style="color:#22c55e;font-size:0.55rem;font-weight:700;letter-spacing:0.05em;">★ NEW UNIT</span>
+            </div>
+            <div class="flex items-center gap-3 mt-1">
+              <div id="ws7-hmi-p3-dot" style="width:22px;height:22px;border-radius:50%;background:#1e293b;border:2px solid #334155;flex-shrink:0;transition:all 0.2s;"></div>
+              <div class="space-y-0.5">
+                <div class="flex items-center gap-2">
+                  <span style="color:#475569;font-size:0.6rem;">TEMP</span>
+                  <span id="ws7-hmi-p3-temp" style="color:#94a3b8;font-size:0.65rem;">—</span>
+                </div>
+                <div class="flex items-center gap-2">
+                  <span style="color:#3b82f6;font-size:0.6rem;">SP1</span>
+                  <span id="ws7-hmi-p3-sp1" style="color:#94a3b8;font-size:0.65rem;">—</span>
+                </div>
+                <div class="flex items-center gap-2">
+                  <span style="color:#60a5fa;font-size:0.6rem;">RP1</span>
+                  <span id="ws7-hmi-p3-rp1" style="color:#94a3b8;font-size:0.65rem;">—</span>
+                </div>
+                <div class="flex items-center gap-2">
+                  <span style="color:#a78bfa;font-size:0.6rem;">SP2</span>
+                  <span id="ws7-hmi-p3-sp2" style="color:#94a3b8;font-size:0.65rem;">—</span>
+                </div>
+                <div class="flex items-center gap-2">
+                  <span style="color:#c4b5fd;font-size:0.6rem;">RP2</span>
+                  <span id="ws7-hmi-p3-rp2" style="color:#94a3b8;font-size:0.65rem;">—</span>
+                </div>
+                <div class="flex items-center gap-2">
+                  <span style="color:#475569;font-size:0.6rem;">OUT1</span>
+                  <span id="ws7-hmi-p3-out1" style="color:#94a3b8;font-size:0.65rem;">—</span>
+                </div>
+                <div class="flex items-center gap-2">
+                  <span style="color:#475569;font-size:0.6rem;">OUT2</span>
+                  <span id="ws7-hmi-p3-out2" style="color:#94a3b8;font-size:0.65rem;">—</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- P4: Light Stack -->
+          <div class="p-3 space-y-2" style="background:#0f172a;">
+            <span class="text-xs font-bold tracking-wider" style="color:#22c55e;font-size:0.6rem;letter-spacing:0.1em;">P4 · LIGHT STACK</span>
+            <div class="flex items-center gap-3 mt-1">
+              <div id="ws7-hmi-p4-swatch" style="width:22px;height:22px;border-radius:4px;background:#1e293b;border:2px solid #334155;flex-shrink:0;transition:all 0.3s;"></div>
+              <div class="space-y-0.5">
+                <div class="flex items-center gap-2">
+                  <span style="color:#475569;font-size:0.6rem;">COLOR</span>
+                  <span id="ws7-hmi-p4-color" style="color:#94a3b8;font-size:0.65rem;">—</span>
+                </div>
+                <div class="flex items-center gap-2">
+                  <span style="color:#475569;font-size:0.6rem;">ANIM</span>
+                  <span id="ws7-hmi-p4-anim" style="color:#94a3b8;font-size:0.65rem;">—</span>
+                </div>
+                <div class="flex items-center gap-2">
+                  <span style="color:#475569;font-size:0.6rem;">HEX</span>
+                  <span id="ws7-hmi-p4-hex" style="color:#94a3b8;font-size:0.65rem;font-family:'Courier New',monospace;">—</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Alarm bar (hidden until fault injected) -->
+        <div id="ws7-hmi-alarm-bar" class="hidden px-4 py-2 flex items-center gap-2" style="background:#450a0a;border-top:1px solid #dc2626;">
+          <span style="color:#f87171;font-size:0.75rem;font-weight:900;">⚠</span>
+          <span id="ws7-hmi-alarm-msg" style="color:#fca5a5;font-size:0.65rem;font-weight:600;letter-spacing:0.05em;">—</span>
+        </div>
+
+      </div>
+      </div><!-- /ws7-hmi-wrapper -->
+
+      <!-- Scenario / work order box — hidden until Start is clicked -->
+      <div id="ws7-ms-wrapper" class="hidden">
+      <div class="rounded-xl overflow-hidden border border-neutral/60 mt-4">
+
+        <!-- Header -->
+        <div class="bg-neutral/20 border-b border-neutral/40 px-4 py-3 flex items-center justify-between gap-2 flex-wrap">
+          <div class="flex items-center gap-3">
+            <div class="w-3 h-3 rounded-full bg-error animate-pulse"></div>
+            <span class="font-bold text-base-content text-sm">Line 3 Restart Fault — Work Order FND-0001</span>
+          </div>
+          <button type="button" id="ws7-ms-reset" class="btn btn-xs btn-ghost gap-1 text-base-content/50">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+            Reset
           </button>
         </div>
+
+        <!-- Briefing -->
+        <div class="p-4 border-b border-neutral/30 space-y-2">
+          <p class="text-xs font-semibold text-base-content/50 uppercase tracking-wide">Priority: HIGH · Line 3 blocked · Ref: FND-0001</p>
+          <p class="text-sm text-base-content/90 leading-relaxed">Your manager replaced the capacitive sensor (Port 2) and the temperature sensor (Port 3) during last night's maintenance window and says IO-Link is communicating on both ports. This morning the operator tried to start Line 3 — the machine went straight into fault mode. The CL50 is flashing red. Your manager insists: <em>"I only touched Ports 2 and 3."</em></p>
+          <p class="text-sm text-base-content/80">Use the live HMI monitor above to identify the problem, then work through the steps below.</p>
+        </div>
+
+        <!-- Step 1: Observe -->
+        <div id="ws7-ms-observe-box" class="hidden p-4 border-b border-neutral/30 space-y-3">
+          <p class="text-xs font-semibold text-base-content/50 uppercase tracking-wide">Step 1 — Read the HMI</p>
+          <p class="text-sm text-base-content/80">Look at the live HMI above. The light stack (P4) is your first clue — it is showing Flash Red, meaning the machine controller has detected a fault. Now look at each sensor port in turn. Remember: your manager says Ports 2 and 3 are fine.</p>
+          <div class="rounded-lg bg-base-200 border border-base-300 p-3 text-sm space-y-1">
+            <p class="font-semibold text-base-content">What to look for:</p>
+            <ul class="list-disc list-inside space-y-1 text-base-content/80">
+              <li>P4 (Light Stack) — what is it indicating about machine state?</li>
+              <li>P2 and P3 — recently replaced, marked <strong>NEW UNIT</strong> — are they communicating normally? Check their dots.</li>
+              <li>P1 (Inductive) — was not touched. Is OUT1 right for a sensor with nothing in front of it?</li>
+            </ul>
+          </div>
+          <div class="rounded-lg bg-warning/10 border border-warning/30 p-3 text-sm space-y-1">
+            <p class="font-semibold text-base-content/80">Tip — NC vs hardware short:</p>
+            <p class="text-base-content/70">Both cause OUT1 to appear permanently ON. To distinguish them: place a metal object within 5 mm of the Port 1 sensor face. If OUT1 turns <strong>OFF</strong>, the sensor is responding to targets but with inverted logic — that is NC. If OUT1 stays ON regardless, the sensor has physically failed.</p>
+          </div>
+          <button type="button" id="ws7-ms-i-observed" class="btn btn-outline btn-error btn-sm gap-2">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+            I have spotted the anomaly
+          </button>
+        </div>
+
+        <!-- Step 2: Diagnose -->
+        <div id="ws7-ms-diag-box" class="hidden p-4 border-b border-neutral/30 space-y-3">
+          <p class="text-xs font-semibold text-base-content/50 uppercase tracking-wide">Step 2 — Identify the Root Cause</p>
+          <p class="text-sm text-base-content/80">Port 1 (Inductive) OUT1 is permanently ON with nothing in front of the sensor. The P1 dot in the HMI is still <strong>blue</strong> — IO-Link is communicating normally. Your manager says he didn't touch Port 1. What is the most likely explanation?</p>
+          <div class="space-y-2 text-sm">
+            <label class="flex items-start gap-2 cursor-pointer">
+              <input type="radio" name="ws7-ms-diag" value="a" class="radio radio-sm radio-error mt-0.5">
+              <span>IO-Link communication to Port 1 has dropped — the master is frozen on the last reported output state and cannot be updated</span>
+            </label>
+            <label class="flex items-start gap-2 cursor-pointer">
+              <input type="radio" name="ws7-ms-diag" value="b" class="radio radio-sm radio-error mt-0.5">
+              <span>The inductive sensor hardware has failed — the output transistor is shorted and permanently conducting regardless of whether an object is present</span>
+            </label>
+            <label class="flex items-start gap-2 cursor-pointer">
+              <input type="radio" name="ws7-ms-diag" value="c" class="radio radio-sm radio-error mt-0.5">
+              <span>The sensor output logic is set to <strong>NC (Normal Closed)</strong> — in NC mode OUT1 is ON when nothing is detected and turns OFF when an object is present. This is the inverse of the correct <strong>NO (Normal Open)</strong> setting and causes the controller to see a permanent "object present" signal</span>
+            </label>
+          </div>
+          <button type="button" id="ws7-ms-diag-submit" class="btn btn-error btn-sm">Submit</button>
+          <div id="ws7-ms-diag-result" class="hidden rounded-lg p-3 text-sm"></div>
+        </div>
+
+        <!-- Step 3: ISDU Read -->
+        <div id="ws7-ms-read-box" class="hidden p-4 border-b border-neutral/30 space-y-3">
+          <p class="text-xs font-semibold text-base-content/50 uppercase tracking-wide">Step 3 — Confirm via ISDU Read</p>
+          <p class="text-sm text-base-content/80">Read the output logic parameter from the sensor over IO-Link to confirm your diagnosis before making any changes.</p>
+          <div class="rounded-lg bg-base-200 border border-base-300 px-3 py-2 text-xs font-mono space-y-0.5">
+            <p>Port 1 · Index 61 · Sub 1 — Switchpoint Logic OUT1</p>
+            <p class="text-base-content/50">Value: 0 = NO (Normal Open)  ·  1 = NC (Normal Closed)</p>
+          </div>
+          <button type="button" id="ws7-ms-read-btn" class="btn btn-outline btn-accent btn-sm gap-2">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+            Read Output Logic (Index 61, Sub 1)
+          </button>
+          <div id="ws7-ms-read-result" class="hidden rounded-lg bg-base-200 border border-base-300 p-3 font-mono text-xs space-y-1"></div>
+        </div>
+
+        <!-- Step 4: Fix -->
+        <div id="ws7-ms-fix-box" class="hidden p-4 border-b border-neutral/30 space-y-3">
+          <p class="text-xs font-semibold text-base-content/50 uppercase tracking-wide">Step 4 — Apply the Fix</p>
+          <p class="text-sm text-base-content/80">Write <strong>NO (value 0)</strong> to restore correct output behaviour. The light stack will also be reset to Green Steady once the fault is cleared.</p>
+          <div class="rounded-lg bg-base-200 border border-base-300 px-3 py-2 text-sm space-y-1">
+            <p>Write: Port 1 · Index 61 · Sub 1 = <code class="font-mono bg-success/20 px-1 rounded text-success">0 (NO)</code></p>
+            <p class="text-xs text-base-content/50">NO = output ON only when object is present — the correct behaviour for an inductive proximity sensor</p>
+          </div>
+          <div class="flex items-center gap-3 flex-wrap">
+            <button type="button" id="ws7-ms-fix-btn" class="btn btn-success btn-sm gap-2">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+              Write NO + Restore Light Stack
+            </button>
+            <p id="ws7-ms-fix-status" class="text-xs font-mono text-base-content/50"></p>
+          </div>
+        </div>
+
+        <!-- Step 5: Verify -->
+        <div id="ws7-ms-vfy-box" class="hidden p-4 border-b border-neutral/30 space-y-3">
+          <p class="text-xs font-semibold text-base-content/50 uppercase tracking-wide">Step 5 — Verify</p>
+          <p class="text-sm text-base-content/80">With no metal object in front of Port 1, confirm OUT1 is now OFF. Hold stable for 3 seconds.</p>
+          <div class="rounded-lg bg-base-200 border border-base-300 p-3 space-y-2">
+            <div class="flex items-center justify-between text-xs">
+              <span id="ws7-ms-vfy-pct" class="text-base-content/60">Waiting for OUT1 = OFF in free air…</span>
+              <span id="ws7-ms-vfy-timer" class="font-mono text-base-content/60">0 / 3 s</span>
+            </div>
+            <div class="w-full h-3 bg-base-300 rounded-full overflow-hidden">
+              <div id="ws7-ms-vfy-tbar" class="h-full bg-success rounded-full transition-all duration-300" style="width:0%"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Sign-off -->
+        <div id="ws7-ms-signoff-box" class="hidden p-4 space-y-3">
+          <p class="text-xs font-semibold text-success uppercase tracking-wide">✓ Fault Cleared — Sign Off Work Order FND-0001</p>
+          <p class="text-sm text-base-content/80">Confirm the following before closing:</p>
+          <div class="space-y-2 text-sm">
+            <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" id="ws7-ms-ck1" class="checkbox checkbox-sm checkbox-success"> Port 1 inductive sensor confirmed NO — OUT1 OFF in free air, switches ON when metal object is present</label>
+            <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" id="ws7-ms-ck2" class="checkbox checkbox-sm checkbox-success"> Root cause: output logic left in NC mode from a previous session on this training kit — not caused by the manager's Port 2/3 work</label>
+            <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" id="ws7-ms-ck3" class="checkbox checkbox-sm checkbox-success"> Light stack restored to Green Steady — Line 3 cleared to restart</label>
+          </div>
+          <button type="button" id="ws7-ms-close" class="btn btn-success btn-sm gap-2" disabled>
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+            Close Work Order
+          </button>
+        </div>
+
       </div>
+      </div><!-- /ws7-ms-wrapper -->
     `
   },
   {
     id: 8,
     title: 'Final Practical Assessment',
-    shortDesc: 'Checklist across all four sensors.',
+    shortDesc: 'Live-verified tasks across all four IO-Link devices.',
     estimatedTime: 'About 30 min',
-    whyItMatters: 'This is your sign-off checklist. Complete every task — on real hardware where available, or on the Dashboard where indicated.',
-    relatedDashboard: 'Dashboard: all ports, Simulate Fault',
-    prerequisites: 'Complete Worksheets 1–6',
+    whyItMatters: 'Sign-off for CP0001 — tasks 1–3 are verified against live sensor data, not just ticked on paper.',
+    relatedDashboard: 'Dashboard: all ports',
+    prerequisites: 'Complete Worksheets 1–7',
     contentHtml: `
-      <p class="text-base-content/90 leading-relaxed text-base">Work through each section on the real kit. Tick each task when you have done it and answer the check question.</p>
+      <p class="text-base-content/90 leading-relaxed text-base">Complete all four tasks using the live kit. Tasks 1–3 auto-verify against live sensor data. Task 4 is a knowledge check. Tick all five sign-off boxes when done.</p>
 
-      <!-- WS8 SVG diagram -->
+      <!-- Architecture diagram -->
       <div class="rounded-xl border border-base-300 bg-base-200 p-3 mt-3">
-        <p class="text-xs font-semibold text-base-content/60 uppercase tracking-wide mb-2">How it all connects</p>
+        <p class="text-xs font-semibold text-base-content/60 uppercase tracking-wide mb-2">Full system — what you have worked with</p>
         <svg viewBox="0 0 570 165" xmlns="http://www.w3.org/2000/svg" class="w-full" style="font-family:system-ui,sans-serif">
           <!-- Sensor boxes -->
           <rect x="2"   y="18"  width="90" height="22" rx="4" fill="#3b82f6"/>
@@ -2297,129 +2659,299 @@ const WORKSHEETS = [
         </svg>
       </div>
 
+      <!-- Quick Reference (needed for Tasks 2 and 3) -->
+      <details class="rounded-xl border border-base-300 bg-base-200/60 mt-3">
+        <summary class="cursor-pointer px-4 py-3 text-sm font-semibold text-base-content select-none">📋 Quick Reference — ISDU Decode Formula &amp; CL50 Colour Table</summary>
+        <div class="px-4 pb-4 pt-2 space-y-3 text-sm">
+          <div>
+            <p class="font-semibold text-base-content mb-1">ISDU Hex Decode</p>
+            <p class="text-base-content/80">Convert the raw hex value to decimal, then multiply by the scale factor.</p>
+            <p class="font-mono text-xs bg-base-300 rounded px-2 py-1 mt-1 text-base-content">decoded value = raw decimal × scale factor</p>
+            <p class="text-xs text-base-content/60 mt-1">Example: <code class="font-mono bg-base-300 px-1 rounded">01 F4</code> hex → 500 decimal → × 0.1 = <strong>50.0 °C</strong></p>
+            <p class="text-xs text-base-content/60">int16 values above 32767 are negative (two's complement). Scale factor for TV7105 temperatures: <strong>0.1</strong>.</p>
+          </div>
+          <div>
+            <p class="font-semibold text-base-content mb-1">CL50 Colour Index — Octet2 Low Nibble</p>
+            <div class="grid grid-cols-4 gap-1 text-xs font-mono">
+              <span class="bg-green-500/20 rounded px-1">0 = Green</span><span class="bg-red-500/20 rounded px-1">1 = Red</span><span class="bg-orange-500/20 rounded px-1">2 = Orange</span><span class="bg-amber-500/20 rounded px-1">3 = Amber</span>
+              <span class="bg-yellow-400/20 rounded px-1">4 = Yellow</span><span class="bg-lime-400/20 rounded px-1">5 = Lime</span><span class="bg-emerald-400/20 rounded px-1">6 = Spring</span><span class="bg-cyan-400/20 rounded px-1">7 = Cyan</span>
+              <span class="bg-sky-400/20 rounded px-1">8 = Sky Blue</span><span class="bg-blue-500/20 rounded px-1">9 = Blue</span><span class="bg-violet-500/20 rounded px-1">10 = Violet</span><span class="bg-fuchsia-500/20 rounded px-1">11 = Magenta</span>
+              <span class="bg-rose-500/20 rounded px-1">12 = Rose</span><span class="bg-gray-200/20 rounded px-1">13 = White</span><span class="rounded px-1 bg-base-300">14 = Custom1</span><span class="rounded px-1 bg-base-300">15 = Custom2</span>
+            </div>
+          </div>
+        </div>
+      </details>
+
+      <!-- Live 4-port panel -->
+      <div id="ws8-live-panel" class="rounded-xl overflow-hidden border border-slate-600/40 mt-3" style="background:#0f172a;font-family:'Courier New',monospace">
+        <div class="flex items-center justify-between px-3 py-2" style="background:#1e293b;border-bottom:1px solid #334155">
+          <span style="color:#94a3b8;font-size:0.6rem;font-weight:700;letter-spacing:0.12em">LIVE SYSTEM — CP0001 TRAINING KIT</span>
+          <span id="ws8-live-badge" class="badge badge-xs badge-ghost font-mono" style="font-size:0.6rem">OFFLINE</span>
+        </div>
+        <div class="grid grid-cols-4" style="gap:1px;background:#1e293b">
+          <div class="p-2 space-y-1" style="background:#0f172a">
+            <div class="flex items-center gap-1.5">
+              <div id="ws8-live-p1-dot" style="width:10px;height:10px;border-radius:50%;background:#1e293b;border:1.5px solid #334155;flex-shrink:0"></div>
+              <span style="color:#3b82f6;font-size:0.55rem;font-weight:700">P1 INDUCTIVE</span>
+            </div>
+            <div class="flex items-center gap-1"><span style="color:#475569;font-size:0.52rem">OUT1</span><span id="ws8-live-p1-out1" style="color:#94a3b8;font-size:0.6rem;margin-left:4px">—</span></div>
+            <div class="flex items-center gap-1"><span style="color:#475569;font-size:0.52rem">MON</span><span id="ws8-live-p1-mon" style="color:#94a3b8;font-size:0.6rem;margin-left:4px">—</span></div>
+          </div>
+          <div class="p-2 space-y-1" style="background:#0f172a">
+            <div class="flex items-center gap-1.5">
+              <div id="ws8-live-p2-dot" style="width:10px;height:10px;border-radius:50%;background:#1e293b;border:1.5px solid #334155;flex-shrink:0"></div>
+              <span style="color:#8b5cf6;font-size:0.55rem;font-weight:700">P2 CAPACITIVE</span>
+            </div>
+            <div class="flex items-center gap-1"><span style="color:#475569;font-size:0.52rem">DET</span><span id="ws8-live-p2-det" style="color:#94a3b8;font-size:0.6rem;margin-left:4px">—</span></div>
+            <div class="flex items-center gap-1"><span style="color:#475569;font-size:0.52rem">LINK</span><span id="ws8-live-p2-link" style="color:#94a3b8;font-size:0.6rem;margin-left:4px">—</span></div>
+          </div>
+          <div class="p-2 space-y-1" style="background:#0f172a">
+            <div class="flex items-center gap-1.5">
+              <div id="ws8-live-p3-dot" style="width:10px;height:10px;border-radius:50%;background:#1e293b;border:1.5px solid #334155;flex-shrink:0"></div>
+              <span style="color:#f97316;font-size:0.55rem;font-weight:700">P3 TEMPERATURE</span>
+            </div>
+            <div class="flex items-center gap-1"><span style="color:#475569;font-size:0.52rem">TEMP</span><span id="ws8-live-p3-temp" style="color:#94a3b8;font-size:0.6rem;margin-left:4px">—</span></div>
+            <div class="flex items-center gap-1"><span style="color:#475569;font-size:0.52rem">OUT1</span><span id="ws8-live-p3-out1" style="color:#94a3b8;font-size:0.6rem;margin-left:4px">—</span></div>
+          </div>
+          <div class="p-2 space-y-1" style="background:#0f172a">
+            <div class="flex items-center gap-1.5">
+              <div id="ws8-live-p4-dot" style="width:10px;height:10px;border-radius:4px;background:#1e293b;border:1.5px solid #334155;flex-shrink:0"></div>
+              <span style="color:#22c55e;font-size:0.55rem;font-weight:700">P4 LIGHT STACK</span>
+            </div>
+            <div class="flex items-center gap-1"><span style="color:#475569;font-size:0.52rem">COLOR</span><span id="ws8-live-p4-color" style="color:#94a3b8;font-size:0.6rem;margin-left:4px">—</span></div>
+            <div class="flex items-center gap-1"><span style="color:#475569;font-size:0.52rem">HEX</span><span id="ws8-live-p4-hex" style="color:#94a3b8;font-size:0.6rem;margin-left:4px">—</span></div>
+          </div>
+        </div>
+      </div>
+
       <div class="space-y-4 mt-3">
 
+        <!-- Task 1: Physical Interaction -->
         <div class="rounded-xl border-2 border-primary/30 bg-primary/5 p-4 space-y-3">
-          <p class="font-bold text-base-content">🔧 Section 1 — Proximity Sensor (Port 1)</p>
-          <label class="kit-item flex items-start gap-3 cursor-pointer rounded-xl border-2 border-transparent px-3 py-2 transition-all duration-200">
-            <input type="checkbox" class="checkbox checkbox-md checkbox-success flex-shrink-0 mt-0.5">
-            <span>Hold a metal object (screwdriver, spanner) near the sensor face and confirm the output dot changes on the Dashboard.</span>
-          </label>
-          <label class="kit-item flex items-start gap-3 cursor-pointer rounded-xl border-2 border-transparent px-3 py-2 transition-all duration-200">
-            <input type="checkbox" class="checkbox checkbox-md checkbox-success flex-shrink-0 mt-0.5">
-            <span>The waveform on the Proximity Sensor worksheet jumped from 0 to 1 when the metal object was in range.</span>
-          </label>
-          <p class="text-sm font-medium text-base-content mt-1">What is the sensor's current output state on the dashboard?</p>
-          <div class="space-y-1">
-            <label class="flex items-center gap-2 cursor-pointer text-sm"><input type="radio" name="ws7-s1" value="a" class="radio radio-xs radio-primary"> Detected (output ON, dot lit)</label>
-            <label class="flex items-center gap-2 cursor-pointer text-sm"><input type="radio" name="ws7-s1" value="b" class="radio radio-xs radio-primary"> No object (output OFF, dot grey)</label>
-            <label class="flex items-center gap-2 cursor-pointer text-sm"><input type="radio" name="ws7-s1" value="c" class="radio radio-xs radio-primary"> Port not connected</label>
+          <p class="font-bold text-base-content text-sm">Task 1 — Physical Interaction <span class="text-xs font-normal text-base-content/50">(auto-confirms via live data)</span></p>
+          <p class="text-sm text-base-content/70">Trigger each sensor physically and watch the live panel above respond.</p>
+          <div class="space-y-2">
+            <div class="flex items-center gap-3">
+              <div id="ws8-t1-p1-tick" class="w-7 h-7 rounded-full bg-base-300 border-2 border-base-300 flex items-center justify-center text-xs font-bold text-base-content/40 transition-all flex-shrink-0">1</div>
+              <span class="text-sm text-base-content/80">Hold metal near Port 1 until OUT1 shows ON in the live panel</span>
+            </div>
+            <div class="flex items-center gap-3">
+              <div id="ws8-t1-p2-tick" class="w-7 h-7 rounded-full bg-base-300 border-2 border-base-300 flex items-center justify-center text-xs font-bold text-base-content/40 transition-all flex-shrink-0">2</div>
+              <span class="text-sm text-base-content/80">Touch Port 2 until DET shows YES in the live panel</span>
+            </div>
+            <div class="flex items-center gap-3">
+              <div id="ws8-t1-p3-tick" class="w-7 h-7 rounded-full bg-base-300 border-2 border-base-300 flex items-center justify-center text-xs font-bold text-base-content/40 transition-all flex-shrink-0">3</div>
+              <span class="text-sm text-base-content/80">Confirm a temperature reading is visible for Port 3</span>
+            </div>
           </div>
         </div>
 
-        <div class="rounded-xl border-2 border-secondary/30 bg-secondary/5 p-4 space-y-3">
-          <p class="font-bold text-base-content">🫙 Section 2 — Capacitive Sensor (Port 2)</p>
-          <label class="kit-item flex items-start gap-3 cursor-pointer rounded-xl border-2 border-transparent px-3 py-2 transition-all duration-200">
-            <input type="checkbox" class="checkbox checkbox-md checkbox-success flex-shrink-0 mt-0.5">
-            <span>Touch the sensor face 5 times and confirm the detection count increments on the Capacitive worksheet.</span>
-          </label>
-          <label class="kit-item flex items-start gap-3 cursor-pointer rounded-xl border-2 border-transparent px-3 py-2 transition-all duration-200">
-            <input type="checkbox" class="checkbox checkbox-md checkbox-success flex-shrink-0 mt-0.5">
-            <span>The analogue level bar moves before the output fully switches on.</span>
-          </label>
-          <p class="text-sm font-medium text-base-content mt-1">What triggers a new count on the capacitive sensor?</p>
-          <div class="space-y-1">
-            <label class="flex items-center gap-2 cursor-pointer text-sm"><input type="radio" name="ws7-s2" value="a" class="radio radio-xs radio-secondary"> Every second while touching</label>
-            <label class="flex items-center gap-2 cursor-pointer text-sm"><input type="radio" name="ws7-s2" value="b" class="radio radio-xs radio-secondary"> The moment detection goes from off to on — rising edge</label>
-            <label class="flex items-center gap-2 cursor-pointer text-sm"><input type="radio" name="ws7-s2" value="c" class="radio radio-xs radio-secondary"> Only when you pull your hand away</label>
+        <!-- Task 2: ISDU Read -->
+        <div id="ws8-task2-wrap" class="rounded-xl border-2 border-warning/30 bg-warning/5 p-4 space-y-4 transition-opacity duration-300" style="opacity:0.35;pointer-events:none">
+          <p class="font-bold text-base-content text-sm">Task 2 — ISDU Acyclic Read</p>
+          <p class="text-sm text-base-content/70">IO-Link acyclic reads return raw hex data. You must know the parameter's data type and scale factor to interpret it. Work through Part A first, then read the live sensor.</p>
+
+          <!-- Part A: hex decode -->
+          <div class="rounded-xl border border-base-300 bg-base-200/50 p-3 space-y-3">
+            <p class="text-xs font-semibold text-base-content/60 uppercase tracking-wide">Part A — Decode a Sample Response</p>
+            <p class="text-sm text-base-content/80">A field engineer reads SP1 from a TV7105 on another machine. The IO-Link master returns this raw acyclic response:</p>
+            <div class="rounded-lg font-mono text-sm px-4 py-3 flex items-center gap-3 flex-wrap" style="background:#0f172a;border:1px solid #334155">
+              <span style="color:#475569">Index 583 · Sub 0</span>
+              <span style="color:#334155">→</span>
+              <span style="color:#f59e0b;font-weight:700;font-size:1.2em;letter-spacing:0.1em">01 F4</span>
+            </div>
+            <p class="text-xs text-base-content/60">Parameter registry: dtype = <span class="font-semibold">int16</span> · scale = <span class="font-semibold">×0.1</span> · unit = <span class="font-semibold">°C</span></p>
+            <p class="text-sm text-base-content/80">Those two bytes represent the decimal integer <span class="font-mono font-bold text-warning">500</span>. The scale factor converts it to an engineering value.</p>
+            <div class="space-y-2.5">
+              <p class="text-sm text-base-content/80">Apply the scaling factor to the decimal integer — what temperature reading do you get?</p>
+              <div class="flex flex-wrap gap-2">
+                <button type="button" class="ws8-pA-opt btn btn-outline btn-sm font-mono" data-val="5.0">5.0 °C</button>
+                <button type="button" class="ws8-pA-opt btn btn-outline btn-sm font-mono" data-val="50.0">50.0 °C</button>
+                <button type="button" class="ws8-pA-opt btn btn-outline btn-sm font-mono" data-val="500">500 °C</button>
+                <button type="button" class="ws8-pA-opt btn btn-outline btn-sm font-mono" data-val="0.5">0.5 °C</button>
+              </div>
+              <span id="ws8-pA-result" class="text-xs font-mono text-base-content/50"></span>
+            </div>
+          </div>
+
+          <!-- Part B: live ISDU decode challenge (locked until Part A correct) -->
+          <div id="ws8-partB-wrap" class="space-y-3 transition-opacity duration-300" style="opacity:0.35;pointer-events:none">
+            <p class="text-xs font-semibold text-base-content/60 uppercase tracking-wide">Part B — Decode a Live Reading</p>
+            <p class="text-sm text-base-content/70">Read the raw hex value of SP1 from the live temperature sensor. You will need to decode it.</p>
+            <div class="rounded-lg font-mono text-xs px-3 py-2" style="background:#0f172a;color:#94a3b8;border:1px solid #334155">Port 3 · Index 583 · Sub 0 · int16 · ×0.1</div>
+            <div class="flex items-center gap-3 flex-wrap">
+              <button id="ws8-isdu-btn" type="button" class="btn btn-warning btn-sm gap-2">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+                Read SP1 Raw Hex
+              </button>
+              <span id="ws8-isdu-result" class="text-xs font-mono text-base-content/60"></span>
+            </div>
+            <!-- decode MCQ — shown after raw hex is fetched -->
+            <div id="ws8-partB-mcq" class="space-y-2.5" style="display:none">
+              <p id="ws8-partB-decimal" class="text-sm text-base-content/80"></p>
+              <p class="text-sm text-base-content/80">Apply int16 decoding and scale ×0.1 — what temperature reading do you get?</p>
+              <div id="ws8-partB-opts" class="flex flex-wrap gap-2"></div>
+              <span id="ws8-partB-result" class="text-xs font-mono text-base-content/50"></span>
+            </div>
           </div>
         </div>
 
-        <div class="rounded-xl border-2 border-warning/30 bg-warning/5 p-4 space-y-3">
-          <p class="font-bold text-base-content">🌡️ Section 3 — Temperature Sensor (Port 3)</p>
-          <label class="kit-item flex items-start gap-3 cursor-pointer rounded-xl border-2 border-transparent px-3 py-2 transition-all duration-200">
-            <input type="checkbox" class="checkbox checkbox-md checkbox-success flex-shrink-0 mt-0.5">
-            <span>Note the current temperature reading from the Temperature worksheet live panel.</span>
-          </label>
-          <label class="kit-item flex items-start gap-3 cursor-pointer rounded-xl border-2 border-transparent px-3 py-2 transition-all duration-200">
-            <input type="checkbox" class="checkbox checkbox-md checkbox-success flex-shrink-0 mt-0.5">
-            <span>Hold the sensor between your palms for 30 seconds and confirm the chart rises on screen.</span>
-          </label>
-          <p class="text-sm font-medium text-base-content mt-1">What would a reading of −40 °C at room temperature most likely mean?</p>
-          <div class="space-y-1">
-            <label class="flex items-center gap-2 cursor-pointer text-sm"><input type="radio" name="ws7-s3" value="a" class="radio radio-xs radio-warning"> The room is very cold</label>
-            <label class="flex items-center gap-2 cursor-pointer text-sm"><input type="radio" name="ws7-s3" value="b" class="radio radio-xs radio-warning"> Broken or disconnected sensor — −40 °C is a common error default</label>
-            <label class="flex items-center gap-2 cursor-pointer text-sm"><input type="radio" name="ws7-s3" value="c" class="radio radio-xs radio-warning"> SP1 setpoint was changed</label>
+        <!-- Task 3: Actuator Control -->
+        <div id="ws8-task3-wrap" class="rounded-xl border-2 border-info/30 bg-info/5 p-4 space-y-4 transition-opacity duration-300" style="opacity:0.35;pointer-events:none">
+          <p class="font-bold text-base-content text-sm">Task 3 — PDout Actuator Control</p>
+          <p class="text-sm text-base-content/70">The CL50 light stack is controlled by writing a 3-byte PDout value over IO-Link. Each byte encodes different fields. Use the table below to decode the value before writing it.</p>
+
+          <!-- PDout field table (from Banner CL50PKQ datasheet) -->
+          <div class="overflow-x-auto rounded-lg" style="border:1px solid #334155">
+            <table class="w-full text-xs font-mono" style="background:#0f172a;border-collapse:collapse">
+              <thead>
+                <tr style="border-bottom:1px solid #334155">
+                  <th class="px-3 py-2 text-left" style="color:#94a3b8">Field</th>
+                  <th class="px-3 py-2 text-left" style="color:#94a3b8">Bits</th>
+                  <th class="px-3 py-2 text-left" style="color:#94a3b8">Values</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr style="border-bottom:1px solid #1e293b">
+                  <td class="px-3 py-1.5" style="color:#f59e0b">Color 1</td>
+                  <td class="px-3 py-1.5" style="color:#64748b">4</td>
+                  <td class="px-3 py-1.5" style="color:#cbd5e1">0=Green 1=Red 2=Orange 3=Amber 4=Yellow 5=Lime 6=Spring 7=Cyan 8=Sky Blue <span style="color:#3b82f6;font-weight:700">9=Blue</span> 10=Violet 11=Magenta 12=Rose 13=White</td>
+                </tr>
+                <tr style="border-bottom:1px solid #1e293b">
+                  <td class="px-3 py-1.5" style="color:#f59e0b">Color 2</td>
+                  <td class="px-3 py-1.5" style="color:#64748b">4</td>
+                  <td class="px-3 py-1.5" style="color:#cbd5e1">Same index as Color 1</td>
+                </tr>
+                <tr style="border-bottom:1px solid #1e293b">
+                  <td class="px-3 py-1.5" style="color:#f59e0b">Animation</td>
+                  <td class="px-3 py-1.5" style="color:#64748b">3</td>
+                  <td class="px-3 py-1.5" style="color:#cbd5e1">0=Off  1=Steady  2=Flash  3=Two Color Flash  4=Intensity Sweep</td>
+                </tr>
+                <tr style="border-bottom:1px solid #1e293b">
+                  <td class="px-3 py-1.5" style="color:#f59e0b">Pulse Pattern</td>
+                  <td class="px-3 py-1.5" style="color:#64748b">3</td>
+                  <td class="px-3 py-1.5" style="color:#cbd5e1">0=Normal  1=Strobe  2=Three Pulse  3=SOS  4=Random</td>
+                </tr>
+                <tr style="border-bottom:1px solid #1e293b">
+                  <td class="px-3 py-1.5" style="color:#f59e0b">Speed</td>
+                  <td class="px-3 py-1.5" style="color:#64748b">2</td>
+                  <td class="px-3 py-1.5" style="color:#cbd5e1">0=Medium  1=Fast  2=Slow</td>
+                </tr>
+                <tr style="border-bottom:1px solid #1e293b">
+                  <td class="px-3 py-1.5" style="color:#f59e0b">Color 1 Intensity</td>
+                  <td class="px-3 py-1.5" style="color:#64748b">3</td>
+                  <td class="px-3 py-1.5" style="color:#cbd5e1">0=High  1=Low  2=Medium  3=Off  4=Custom</td>
+                </tr>
+                <tr style="border-bottom:1px solid #1e293b">
+                  <td class="px-3 py-1.5" style="color:#f59e0b">Color 2 Intensity</td>
+                  <td class="px-3 py-1.5" style="color:#64748b">3</td>
+                  <td class="px-3 py-1.5" style="color:#cbd5e1">0=High  1=Low  2=Medium  3=Off  4=Custom</td>
+                </tr>
+                <tr>
+                  <td class="px-3 py-1.5" style="color:#f59e0b">Audible</td>
+                  <td class="px-3 py-1.5" style="color:#64748b">2</td>
+                  <td class="px-3 py-1.5" style="color:#cbd5e1">0=Off  1=On  2=Pulsed  3=SOS Pulse</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Hex value to decode -->
+          <div class="rounded-lg font-mono text-xs px-4 py-3 space-y-1" style="background:#0f172a;border:1px solid #334155">
+            <div class="text-base-content/50 text-xs mb-1">PDout value to write →</div>
+            <div class="flex items-baseline gap-3 flex-wrap">
+              <span style="color:#f59e0b;font-weight:700;font-size:1.2em;letter-spacing:0.15em">00 01 09</span>
+              <span style="color:#475569">Octet0=00  Octet1=01  Octet2=09</span>
+            </div>
+            <div style="color:#64748b">Octet2 low nibble = Color 1 index · Octet1 low 3 bits = Animation · Octet0 low 3 bits = C1 Intensity</div>
+          </div>
+
+          <!-- MCQ — what colour? -->
+          <div class="space-y-2.5">
+            <p class="text-sm text-base-content/80">Using the table above, what colour will the light stack display?</p>
+            <div class="flex flex-wrap gap-2">
+              <button type="button" class="ws8-t3-mcq btn btn-outline btn-sm" data-val="green">Green</button>
+              <button type="button" class="ws8-t3-mcq btn btn-outline btn-sm" data-val="blue">Blue</button>
+              <button type="button" class="ws8-t3-mcq btn btn-outline btn-sm" data-val="red">Red</button>
+              <button type="button" class="ws8-t3-mcq btn btn-outline btn-sm" data-val="white">White</button>
+            </div>
+            <span id="ws8-t3-mcq-result" class="text-xs font-mono text-base-content/50"></span>
+          </div>
+
+          <!-- Write/Restore (locked until MCQ answered) -->
+          <div id="ws8-t3-action-wrap" class="space-y-2 transition-opacity duration-300" style="opacity:0.35;pointer-events:none">
+            <p class="text-sm text-base-content/70">Now write the value to the light stack, observe the change, then restore green.</p>
+            <div class="flex items-center gap-3 flex-wrap">
+              <button id="ws8-pdout-write-btn" type="button" class="btn btn-info btn-sm">Write Blue (000109)</button>
+              <button id="ws8-pdout-restore-btn" type="button" class="btn btn-success btn-sm" disabled>Restore Green (000100)</button>
+            </div>
+            <p id="ws8-pdout-status" class="text-xs font-mono text-base-content/50"></p>
           </div>
         </div>
 
-        <div class="rounded-xl border-2 border-accent/30 bg-accent/5 p-4 space-y-3">
-          <p class="font-bold text-base-content">🚦 Section 4 — Light Stack (Port 4)</p>
-          <label class="kit-item flex items-start gap-3 cursor-pointer rounded-xl border-2 border-transparent px-3 py-2 transition-all duration-200">
-            <input type="checkbox" class="checkbox checkbox-md checkbox-success flex-shrink-0 mt-0.5">
-            <span>Open the Light Stack worksheet and read the current CL50 colour and animation state.</span>
-          </label>
-          <p class="text-sm font-medium text-base-content mt-1">What does a flashing red segment typically mean on a production machine?</p>
-          <div class="space-y-1">
-            <label class="flex items-center gap-2 cursor-pointer text-sm"><input type="radio" name="ws7-s4" value="a" class="radio radio-xs radio-accent"> Machine is running normally</label>
-            <label class="flex items-center gap-2 cursor-pointer text-sm"><input type="radio" name="ws7-s4" value="b" class="radio radio-xs radio-accent"> Active fault — machine stopped or needs attention</label>
-            <label class="flex items-center gap-2 cursor-pointer text-sm"><input type="radio" name="ws7-s4" value="c" class="radio radio-xs radio-accent"> The light stack is in standby mode</label>
+        <!-- Task 4: Knowledge Check -->
+        <div id="ws8-task4-wrap" class="rounded-xl border-2 border-secondary/30 bg-secondary/5 p-4 space-y-5 transition-opacity duration-300" style="opacity:0.35;pointer-events:none">
+          <p class="font-bold text-base-content text-sm">Task 4 — Knowledge Check</p>
+
+          <div class="space-y-2">
+            <p class="text-sm font-medium text-base-content">Q1 — The Omron E2E instability alarm fires but OUT1 is still switching correctly. What is the right course of action?</p>
+            <div class="space-y-1.5 text-sm pl-1">
+              <label class="flex items-start gap-2 cursor-pointer"><input type="radio" name="ws8-q1" value="a" class="radio radio-xs radio-secondary mt-0.5 flex-shrink-0"> Ignore it — the output is working so there is no problem</label>
+              <label class="flex items-start gap-2 cursor-pointer"><input type="radio" name="ws8-q1" value="b" class="radio radio-xs radio-secondary mt-0.5 flex-shrink-0"> Replace the sensor immediately</label>
+              <label class="flex items-start gap-2 cursor-pointer"><input type="radio" name="ws8-q1" value="c" class="radio radio-xs radio-secondary mt-0.5 flex-shrink-0"> Investigate — instability means the target is at the edge of sensing range. Small vibrations will cause intermittent output. Reposition the target or adjust the sensing distance before it causes a fault</label>
+            </div>
+          </div>
+
+          <div class="space-y-2">
+            <p class="text-sm font-medium text-base-content">Q2 — After replacing the capacitive sensor on Port 2, its output is ON even with nothing near it. Re-teaching did not fix it. What is the most likely cause?</p>
+            <div class="space-y-1.5 text-sm pl-1">
+              <label class="flex items-start gap-2 cursor-pointer"><input type="radio" name="ws8-q2" value="a" class="radio radio-xs radio-secondary mt-0.5 flex-shrink-0"> Output logic is set to NC — the sensor output is inverted so it is ON when nothing is present. Read the output logic parameter via ISDU to confirm, then write NO (0) to correct it</label>
+              <label class="flex items-start gap-2 cursor-pointer"><input type="radio" name="ws8-q2" value="b" class="radio radio-xs radio-secondary mt-0.5 flex-shrink-0"> The IO-Link cable polarity is reversed — swap Pin 2 and Pin 4 at the master connector</label>
+              <label class="flex items-start gap-2 cursor-pointer"><input type="radio" name="ws8-q2" value="c" class="radio radio-xs radio-secondary mt-0.5 flex-shrink-0"> SP1 is set correctly — the container wall is triggering the output and this is expected behaviour for a capacitive sensor</label>
+            </div>
+          </div>
+
+          <div class="space-y-2">
+            <p class="text-sm font-medium text-base-content">Q3 — A temperature sensor reading drifts 3 °C high after months in service. No other system changes were made. What is the correct IO-Link field action?</p>
+            <div class="space-y-1.5 text-sm pl-1">
+              <label class="flex items-start gap-2 cursor-pointer"><input type="radio" name="ws8-q3" value="a" class="radio radio-xs radio-secondary mt-0.5 flex-shrink-0"> Replace the sensor — drift always indicates a faulty unit</label>
+              <label class="flex items-start gap-2 cursor-pointer"><input type="radio" name="ws8-q3" value="b" class="radio radio-xs radio-secondary mt-0.5 flex-shrink-0"> Write a −3.0 °C calibration offset to the sensor via ISDU (index 681) to correct the reading in the field, verified against a reference thermometer</label>
+              <label class="flex items-start gap-2 cursor-pointer"><input type="radio" name="ws8-q3" value="c" class="radio radio-xs radio-secondary mt-0.5 flex-shrink-0"> Adjust SP1 down by 3 °C to compensate for the drift</label>
+            </div>
+          </div>
+
+          <div class="space-y-2">
+            <p class="text-sm font-medium text-base-content">Q4 — What is the key advantage of the IO-Link light stack over a conventionally wired one?</p>
+            <div class="space-y-1.5 text-sm pl-1">
+              <label class="flex items-start gap-2 cursor-pointer"><input type="radio" name="ws8-q4" value="a" class="radio radio-xs radio-secondary mt-0.5 flex-shrink-0"> IO-Link light stacks use less power</label>
+              <label class="flex items-start gap-2 cursor-pointer"><input type="radio" name="ws8-q4" value="b" class="radio radio-xs radio-secondary mt-0.5 flex-shrink-0"> IO-Link light stacks can display more colours than conventional ones</label>
+              <label class="flex items-start gap-2 cursor-pointer"><input type="radio" name="ws8-q4" value="c" class="radio radio-xs radio-secondary mt-0.5 flex-shrink-0"> All colours, animation patterns, and intensity levels are set by a single 3-byte PDout value over one standard cable. Conventional wiring needs a separate signal wire per segment</label>
+            </div>
+          </div>
+
+          <div class="flex items-center gap-3 flex-wrap">
+            <button id="ws8-qs-submit" type="button" class="btn btn-secondary btn-sm">Check Answers</button>
+            <div id="ws8-qs-result" class="hidden rounded-lg px-3 py-2 text-sm"></div>
           </div>
         </div>
 
-        <div class="rounded-xl border-2 border-error/30 bg-error/5 p-4 space-y-3">
-          <p class="font-bold text-base-content">🔧 Section 5 — Pulling It All Together</p>
-          <label class="kit-item flex items-start gap-3 cursor-pointer rounded-xl border-2 border-transparent px-3 py-2 transition-all duration-200">
-            <input type="checkbox" class="checkbox checkbox-md checkbox-success flex-shrink-0 mt-0.5">
-            <span>You can name all four sensors on the bench without looking at any labels.</span>
-          </label>
-          <label class="kit-item flex items-start gap-3 cursor-pointer rounded-xl border-2 border-transparent px-3 py-2 transition-all duration-200">
-            <input type="checkbox" class="checkbox checkbox-md checkbox-success flex-shrink-0 mt-0.5">
-            <span>You have triggered each sensor and seen it respond live on the dashboard.</span>
-          </label>
-          <label class="kit-item flex items-start gap-3 cursor-pointer rounded-xl border-2 border-transparent px-3 py-2 transition-all duration-200">
-            <input type="checkbox" class="checkbox checkbox-md checkbox-success flex-shrink-0 mt-0.5">
-            <span>You know what IO-Link gives you that a standard sensor does not.</span>
-          </label>
-          <p class="text-sm font-medium text-base-content mt-1">If a sensor stops working and you cannot tell why from the outside, what is the first advantage IO-Link gives you?</p>
-          <div class="space-y-1">
-            <label class="flex items-center gap-2 cursor-pointer text-sm"><input type="radio" name="ws7-s5" value="a" class="radio radio-xs radio-error"> You have to unplug it and test it on a bench</label>
-            <label class="flex items-center gap-2 cursor-pointer text-sm"><input type="radio" name="ws7-s5" value="b" class="radio radio-xs radio-error"> The dashboard shows a fault code telling you exactly what is wrong — no guesswork</label>
-            <label class="flex items-center gap-2 cursor-pointer text-sm"><input type="radio" name="ws7-s5" value="c" class="radio radio-xs radio-error"> You need to call the manufacturer</label>
+        <!-- Sign-off -->
+        <div id="ws8-signoff-wrap" class="rounded-xl border-2 border-success/40 bg-success/5 p-4 space-y-3 transition-opacity duration-300" style="opacity:0.35;pointer-events:none">
+          <p class="text-xs font-bold text-success uppercase tracking-wider">CP0001 Sign-Off Declaration</p>
+          <div class="space-y-2 text-sm">
+            <label class="kit-item flex items-start gap-3 cursor-pointer rounded-xl border-2 border-transparent px-3 py-2 transition-all duration-200"><input id="ws8-ck1" type="checkbox" class="checkbox checkbox-sm checkbox-success flex-shrink-0 mt-0.5"><span>I can identify all four IO-Link devices in this kit by port number, sensor type, and model name</span></label>
+            <label class="kit-item flex items-start gap-3 cursor-pointer rounded-xl border-2 border-transparent px-3 py-2 transition-all duration-200"><input id="ws8-ck2" type="checkbox" class="checkbox checkbox-sm checkbox-success flex-shrink-0 mt-0.5"><span>I have physically triggered each sensor and observed the live response on this page</span></label>
+            <label class="kit-item flex items-start gap-3 cursor-pointer rounded-xl border-2 border-transparent px-3 py-2 transition-all duration-200"><input id="ws8-ck3" type="checkbox" class="checkbox checkbox-sm checkbox-success flex-shrink-0 mt-0.5"><span>I understand IO-Link ISDU acyclic access and have read a parameter from a live sensor</span></label>
+            <label class="kit-item flex items-start gap-3 cursor-pointer rounded-xl border-2 border-transparent px-3 py-2 transition-all duration-200"><input id="ws8-ck4" type="checkbox" class="checkbox checkbox-sm checkbox-success flex-shrink-0 mt-0.5"><span>I understand NC/NO output logic and how to diagnose and correct an inverted output using ISDU</span></label>
+            <label class="kit-item flex items-start gap-3 cursor-pointer rounded-xl border-2 border-transparent px-3 py-2 transition-all duration-200"><input id="ws8-ck5" type="checkbox" class="checkbox checkbox-sm checkbox-success flex-shrink-0 mt-0.5"><span>I understand what IO-Link gives over conventional I/O — live diagnostics, acyclic parameter access, and smart actuation over a single unmodified cable</span></label>
           </div>
-        </div>
-      </div>
-
-      <div class="alert bg-success/10 border border-success/30 rounded-lg text-base-content mt-4">
-        <strong>Well done!</strong> If you have ticked every box and answered each question, you have completed CP0001. Head to <a href="#" data-page="io-link-master" class="link link-primary">the Dashboard</a> to explore the live data further.
-      </div>
-
-      <div class="divider my-2"></div>
-
-      <div class="rounded-xl border-2 border-warning/50 bg-warning/5 p-4 mt-4 space-y-3" id="ws8-challenge-box">
-        <p class="font-bold text-base-content text-base">🎯 Challenge</p>
-        <p class="text-sm text-base-content/80">Complete the sequence <strong>in order</strong>: first trigger the proximity sensor with a metal object, then trigger the capacitive sensor, then check the temperature is above 15°C. All three must happen in order.</p>
-        <div class="flex justify-center gap-6 py-2">
-          <div class="text-center space-y-1">
-            <div id="ws8-ch-s1" class="w-10 h-10 rounded-full bg-base-300 border-2 border-base-300 flex items-center justify-center text-xs font-bold text-base-content/50 transition-all mx-auto">1</div>
-            <p class="text-xs text-base-content/60">Proximity<br>triggered</p>
-          </div>
-          <div class="text-center space-y-1">
-            <div id="ws8-ch-s2" class="w-10 h-10 rounded-full bg-base-300 border-2 border-base-300 flex items-center justify-center text-xs font-bold text-base-content/50 transition-all mx-auto">2</div>
-            <p class="text-xs text-base-content/60">Capacitive<br>triggered</p>
-          </div>
-          <div class="text-center space-y-1">
-            <div id="ws8-ch-s3" class="w-10 h-10 rounded-full bg-base-300 border-2 border-base-300 flex items-center justify-center text-xs font-bold text-base-content/50 transition-all mx-auto">3</div>
-            <p class="text-xs text-base-content/60">Temperature<br>&gt; 15°C</p>
-          </div>
-        </div>
-        <div id="ws8-ch-result" class="hidden rounded-lg p-3 text-center font-bold text-sm"></div>
-        <div class="flex justify-center">
-          <button type="button" id="ws8-ch-reset" class="btn btn-warning btn-sm gap-2">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
-            Reset Challenge
+          <button id="ws8-complete-btn" type="button" class="btn btn-success btn-sm gap-2 mt-1" disabled>
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z"/></svg>
+            Submit — CP0001 Complete
           </button>
+          <div id="ws8-complete-msg" class="hidden rounded-lg bg-success/15 border border-success/40 px-4 py-3 text-sm font-semibold text-success text-center">✓ CP0001 signed off. Well done!</div>
         </div>
+
       </div>
     `
   }
@@ -2545,14 +3077,25 @@ let _ws5CalCleanup = null;
 let _ws5LightCleanup = null; // restores CL50 to default on navigation away from WS5
 let _ws5PreInjectTemp = null;
 
-// WS6 (light stack) challenge — colour prediction
-let _ws6ChGuess = null; let _ws6ChSubmitted = false; let _ws6ChColor = null;
+// WS6 animation demo state
+let _ws6AnimInterval = null;
+let _ws6AnimCleanup = null;
 
-// WS7 (fault finding) challenge — port recovery
-let _ws7ChPortDropped = false; let _ws7ChRecovered = false; let _ws7ChDroppedPort = null;
+// WS6 maintenance scenario — stale PDout / wrong light state
+let _ws6MsStep = 0;
+let _ws6MsVerifyStart = null;
+let _ws6MsVerifyDone = false;
+let _ws6MsCleanup = null;
 
-// WS8 (assessment) challenge — full sequence
-let _ws8ChStep = 0; let _ws8ChDone = false;
+// WS7 maintenance scenario — NC proximity fault + light stack clue
+let _ws7MsStep = 0;
+let _ws7MsVerifyStart = null;
+let _ws7MsVerifyDone = false;
+let _ws7MsCleanup = null;
+
+// WS8 final assessment
+let _ws8P1Done = false; let _ws8P2Done = false; let _ws8P3Done = false;
+let _ws8IsduDone = false; let _ws8T3McqDone = false; let _ws8PdoutWritten = false; let _ws8PdoutRestored = false; let _ws8QsSubmitted = false;
 
 // colour map for CL50
 const CL_COLOUR_MAP = {
@@ -4755,47 +5298,174 @@ function initLiveWs4(container) {
 }
 
 function initLiveWs5(container) {
-  _ws6ChGuess = null; _ws6ChSubmitted = false; _ws6ChColor = null;
+  _ws6MsStep = 0; _ws6MsVerifyStart = null; _ws6MsVerifyDone = false;
+  if (_ws6AnimInterval) { clearInterval(_ws6AnimInterval); _ws6AnimInterval = null; }
 
-  async function ws6WritePdout(hex) {
+  // ── Animation demo buttons ──────────────────────────────────────────────────
+  function ws6WriteLight(hex) {
     const base = window.IO_LINK_API_BASE || '';
-    const statusEl = container.querySelector('#ws6-write-status');
-    if (statusEl) statusEl.textContent = 'Writing…';
-    try {
-      const res = await fetch(`${base}/api/io-link/port/4/pdout`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ value: hex }),
-      });
-      const d = await res.json();
-      if (statusEl) {
-        statusEl.textContent = d.success ? `✓ Written ${hex}` : '✗ Write failed';
-        setTimeout(() => { if (statusEl) statusEl.textContent = ''; }, 2500);
-      }
-    } catch (e) {
-      if (statusEl) {
-        statusEl.textContent = '✗ Network error — is the backend running?';
-        setTimeout(() => { if (statusEl) statusEl.textContent = ''; }, 3000);
-      }
-    }
+    fetch(`${base}/api/io-link/port/4/pdout`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ value: hex }),
+    }).catch(() => {});
   }
 
-  container.querySelectorAll('.ws6-write-btn').forEach(btn => {
-    btn.addEventListener('click', () => ws6WritePdout(btn.getAttribute('data-hex')));
+  function setAnimStatus(msg) {
+    const el = container.querySelector('#ws6-anim-status');
+    if (el) el.textContent = msg;
+  }
+
+  function stopAnimLoop() {
+    if (_ws6AnimInterval) { clearInterval(_ws6AnimInterval); _ws6AnimInterval = null; }
+    const base = window.IO_LINK_API_BASE || '';
+    fetch(`${base}/api/io-link/port/4/pdout/sweep/stop`, { method: 'POST' }).catch(() => {});
+  }
+
+  container.querySelectorAll('.ws6-anim-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const action = btn.getAttribute('data-action');
+      stopAnimLoop();
+      const RAINBOW = [1, 2, 3, 4, 5, 0, 7, 9, 10, 11, 12];
+      const GAR     = [['000100','Green'], ['180103','Amber'], ['180101','Red']];
+
+      if (action === 'flash-red') {
+        ws6WriteLight('184201');
+        setAnimStatus('▶ Flashing Red  ·  hex: 18 42 01');
+      } else if (action === 'flash-orange') {
+        ws6WriteLight('184202');
+        setAnimStatus('▶ Flashing Orange  ·  hex: 18 42 02');
+      } else if (action === 'orange-red-alt') {
+        ws6WriteLight('004312');
+        setAnimStatus('▶ Orange / Red Two-Colour Flash  ·  hex: 00 43 12');
+      } else if (action === 'green-pulse') {
+        const base = window.IO_LINK_API_BASE || '';
+        fetch(`${base}/api/io-link/port/4/pdout/sweep`, {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ color1: 0, color2: 0, speed: 'medium' }),
+        }).catch(() => {});
+        setAnimStatus('▶ Green Pulse  ·  software breathing sweep (firmware 1.0.2 workaround)');
+      } else if (action === 'rainbow-pulse') {
+        let idx = 0;
+        setAnimStatus('▶ Rainbow Pulse  ·  cycling 11 colours via PDout writes');
+        const step = () => {
+          ws6WriteLight(`1801${RAINBOW[idx % RAINBOW.length].toString(16).padStart(2, '0')}`);
+          idx++;
+        };
+        step();
+        _ws6AnimInterval = setInterval(step, 700);
+      } else if (action === 'gar-loop') {
+        let idx = 0;
+        const step = () => {
+          ws6WriteLight(GAR[idx % 3][0]);
+          setAnimStatus(`▶ Traffic Light  ·  now: ${GAR[idx % 3][1]}`);
+          idx++;
+        };
+        step();
+        _ws6AnimInterval = setInterval(step, 2000);
+      }
+
+      _ws6AnimCleanup = () => {
+        if (_ws6AnimInterval) { clearInterval(_ws6AnimInterval); _ws6AnimInterval = null; }
+        const base = window.IO_LINK_API_BASE || '';
+        fetch(`${base}/api/io-link/port/4/pdout/sweep/stop`, { method: 'POST' }).catch(() => {});
+        fetch(`${base}/api/io-link/port/4/pdout`, {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ value: '000100' }),
+        }).catch(() => {});
+      };
+    });
   });
+
+  const animResetBtn = container.querySelector('#ws6-anim-reset');
+  if (animResetBtn) {
+    animResetBtn.addEventListener('click', () => {
+      stopAnimLoop();
+      ws6WriteLight('000100');
+      _ws6AnimCleanup = null;
+      setAnimStatus('↺ Reset — Green Steady');
+      setTimeout(() => {
+        const el = container.querySelector('#ws6-anim-status');
+        if (el && el.textContent.startsWith('↺')) el.textContent = '';
+      }, 2500);
+    });
+  }
+
+  // ── Build-your-own PDout hex dropdowns ──────────────────────────────────────
+  function ws6BuildHex() {
+    const v = id => parseInt(container.querySelector(`#${id}`)?.value || '0', 10);
+    const color1    = v('ws6-led-color');
+    const color2    = v('ws6-led-color2');
+    const animation = v('ws6-led-animation');
+    const pulse     = v('ws6-led-pulse');
+    const speed     = v('ws6-led-speed');
+    const intensity = v('ws6-led-intensity');
+    const octet2 = ((color2 & 0xF) << 4) | (color1 & 0xF);
+    const octet1 = ((speed & 0x3) << 6) | ((pulse & 0x7) << 3) | (animation & 0x7);
+    const octet0 = ((intensity & 0x7) << 3) | (intensity & 0x7); // C2I = C1I = intensity, audible = 0
+    return [octet0, octet1, octet2].map(b => b.toString(16).padStart(2, '0')).join('');
+  }
+
+  function ws6UpdateHexPreview() {
+    const hex = ws6BuildHex();
+    const el = container.querySelector('#ws6-led-hex-preview');
+    if (el) el.textContent = hex;
+    return hex;
+  }
+
+  ['ws6-led-color','ws6-led-color2','ws6-led-animation','ws6-led-pulse','ws6-led-intensity','ws6-led-speed']
+    .forEach(id => container.querySelector(`#${id}`)?.addEventListener('change', ws6UpdateHexPreview));
+  ws6UpdateHexPreview();
+
+  const ws6LedWrite = container.querySelector('#ws6-led-write');
+  if (ws6LedWrite) {
+    ws6LedWrite.addEventListener('click', async () => {
+      const v = id => parseInt(container.querySelector(`#${id}`)?.value || '0', 10);
+      // Clear any running animation loop / sweep from the demo buttons
+      stopAnimLoop();
+      setAnimStatus('');
+      _ws6AnimCleanup = null;
+      const statusEl = container.querySelector('#ws6-led-status');
+      if (statusEl) statusEl.textContent = 'Writing…';
+      const base = window.IO_LINK_API_BASE || '';
+      try {
+        let res;
+        if (v('ws6-led-animation') === 4) {
+          const speedMap = ['medium','fast','slow'];
+          res = await fetch(`${base}/api/io-link/port/4/pdout/sweep`, {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ color1: v('ws6-led-color'), color2: v('ws6-led-color2'), speed: speedMap[v('ws6-led-speed')] || 'medium' }),
+          });
+        } else {
+          const hex = ws6UpdateHexPreview();
+          res = await fetch(`${base}/api/io-link/port/4/pdout`, {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ value: hex }),
+          });
+        }
+        const d = await res.json();
+        if (statusEl) {
+          statusEl.textContent = d.success ? `✓ Written` : '✗ Write failed';
+          setTimeout(() => { if (statusEl) statusEl.textContent = ''; }, 2500);
+        }
+      } catch {
+        if (statusEl) {
+          statusEl.textContent = '✗ Network error — is the backend running?';
+          setTimeout(() => { if (statusEl) statusEl.textContent = ''; }, 3000);
+        }
+      }
+    });
+  }
 
   startLiveData(data => {
     const port = getPort(data, 4);
-    setLiveStatus('ws5-live-badge', !!port);
-    if (!port || !port.pdin_decoded) return;
-
-    const d = port.pdin_decoded;
+    const d = port && port.pdout_decoded && port.pdout_decoded.raw_hex ? port.pdout_decoded : null;
+    setLiveStatus('ws5-live-badge', !!d);
+    setLiveStatus('ws6-ms-live-badge', !!d);
+    if (!d) return;
     const c1 = d.color1 || 'off';
     const c2 = d.color2 || 'off';
     const anim = d.animation || 'off';
     const hex  = d.raw_hex || '—';
-
-    _ws6ChColor = c1;
 
     const c1El  = container.querySelector('#ws5-c1-circle');
     const c2El  = container.querySelector('#ws5-c2-circle');
@@ -4830,184 +5500,965 @@ function initLiveWs5(container) {
     setText('ws5-c1-intensity', d.color1_intensity);
     setText('ws5-c2-intensity', d.color2_intensity);
     setText('ws5-raw-hex', hex);
-  });
 
-  // ── WS6 challenge: colour prediction ─────────────────────────────────────
-  container.querySelectorAll('.ws6-colour-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
-      if (_ws6ChSubmitted) return;
-      _ws6ChGuess = btn.getAttribute('data-colour');
-      container.querySelectorAll('.ws6-colour-btn').forEach(b => {
-        b.style.outline = b === btn ? '3px solid white' : 'none';
-        b.style.transform = b === btn ? 'scale(1.1)' : '';
-      });
-      const sel = container.querySelector('#ws6-ch-selection');
-      if (sel) sel.textContent = `Your guess: ${_ws6ChGuess}`;
-    });
-  });
+    // Update embedded scenario panels
+    const msC1El = container.querySelector('#ws6-ms-c1-circle');
+    applyColour(msC1El, c1);
+    setText('ws6-ms-c1-label', c1);
+    setText('ws6-ms-animation', anim);
+    setText('ws6-ms-raw-hex', hex);
+    const obsC1El = container.querySelector('#ws6-obs-c1-circle');
+    applyColour(obsC1El, c1);
+    setText('ws6-obs-c1-label', c1);
+    setText('ws6-obs-animation', anim);
+    setText('ws6-obs-raw-hex', hex);
 
-  const submitBtn = container.querySelector('#ws6-ch-submit');
-  if (submitBtn) {
-    submitBtn.addEventListener('click', () => {
-      if (_ws6ChSubmitted) return;
-      if (!_ws6ChGuess) {
-        const sel = container.querySelector('#ws6-ch-selection');
-        if (sel) sel.textContent = 'Please select a colour first!';
-        return;
-      }
-      _ws6ChSubmitted = true;
-      const result = container.querySelector('#ws6-ch-result');
-      if (result) {
-        const live = _ws6ChColor || 'unknown';
-        const guessLower = _ws6ChGuess.toLowerCase();
-        const liveLower  = live.toLowerCase();
-        const pass = guessLower === liveLower || liveLower.includes(guessLower) || guessLower.includes(liveLower);
-        if (pass) {
-          result.className = 'rounded-lg p-3 text-center font-bold text-base bg-success/20 text-success border border-success/40';
-          result.textContent = `✓ Correct! Dashboard showed "${live}" and that matched your guess.`;
-        } else {
-          result.className = 'rounded-lg p-3 text-center font-bold text-sm bg-error/20 text-error border border-error/40';
-          result.textContent = `✗ Not quite — you guessed "${_ws6ChGuess}" but dashboard shows "${live}". Turn around and check, then reset.`;
+    // ── WS6 maintenance scenario verify step ─────────────────────────────────
+    if (_ws6MsStep === 5 && !_ws6MsVerifyDone) {
+      const isOK = (c1 === 'Green' || c1 === 'green') && (anim === 'Steady' || anim === 'steady');
+      const pctEl   = container.querySelector('#ws6-ms-vfy-pct');
+      const timerEl = container.querySelector('#ws6-ms-vfy-timer');
+      const barEl   = container.querySelector('#ws6-ms-vfy-tbar');
+      if (isOK) {
+        if (!_ws6MsVerifyStart) _ws6MsVerifyStart = Date.now();
+        const elapsed = (Date.now() - _ws6MsVerifyStart) / 1000;
+        const frac = Math.min(elapsed / 5, 1);
+        if (barEl) barEl.style.width = (frac * 100).toFixed(1) + '%';
+        if (pctEl) pctEl.textContent = 'Green Steady confirmed';
+        if (timerEl) timerEl.textContent = `${elapsed.toFixed(1)} / 5 s`;
+        if (elapsed >= 5) {
+          _ws6MsVerifyDone = true;
+          _ws6MsStep = 6;
+          if (barEl) barEl.style.width = '100%';
+          if (pctEl) pctEl.textContent = '✓ Verified — light is stable';
+          if (timerEl) timerEl.textContent = '5 / 5 s';
+          const signoff = container.querySelector('#ws6-ms-signoff-box');
+          if (signoff) signoff.classList.remove('hidden');
         }
-        result.classList.remove('hidden');
+      } else {
+        _ws6MsVerifyStart = null;
+        if (barEl) barEl.style.width = '0%';
+        if (pctEl) pctEl.textContent = 'Waiting for Green Steady…';
+        if (timerEl) timerEl.textContent = '0 / 5 s';
+      }
+    }
+  });
+
+  // ── WS6 maintenance scenario ──────────────────────────────────────────────
+  function ws6MsShow(id) {
+    const el = container.querySelector(`#${id}`);
+    if (el) el.classList.remove('hidden');
+  }
+
+  function ws6MsResetAll() {
+    if (_ws6MsCleanup) { _ws6MsCleanup(); _ws6MsCleanup = null; }
+    else { ws6WriteLight('000100'); }
+    _ws6MsStep = 0; _ws6MsVerifyStart = null; _ws6MsVerifyDone = false;
+    ['ws6-ms-observe-box','ws6-ms-diag-box','ws6-ms-read-box','ws6-ms-fix-box','ws6-ms-vfy-box','ws6-ms-signoff-box']
+      .forEach(id => { const el = container.querySelector(`#${id}`); if (el) el.classList.add('hidden'); });
+    ['ws6-ms-i-observed','ws6-ms-diag-submit','ws6-ms-read-btn','ws6-ms-fix-btn'].forEach(id => {
+      const el = container.querySelector(`#${id}`); if (el) el.disabled = false;
+    });
+    container.querySelectorAll('input[name="ws6-ms-diag"]').forEach(r => { r.checked = false; });
+    ['ws6-ms-diag-result','ws6-ms-read-result'].forEach(id => {
+      const el = container.querySelector(`#${id}`); if (el) el.classList.add('hidden');
+    });
+    ['ws6-ms-ck1','ws6-ms-ck2','ws6-ms-ck3'].forEach(id => {
+      const el = container.querySelector(`#${id}`); if (el) el.checked = false;
+    });
+    const startBtn = container.querySelector('#ws6-ms-start');
+    if (startBtn) startBtn.disabled = false;
+    const statusEl = container.querySelector('#ws6-ms-inject-status');
+    if (statusEl) statusEl.textContent = '';
+    const fixStatus = container.querySelector('#ws6-ms-fix-status');
+    if (fixStatus) fixStatus.textContent = '';
+    const barEl = container.querySelector('#ws6-ms-vfy-tbar');
+    if (barEl) barEl.style.width = '0%';
+    const pctEl = container.querySelector('#ws6-ms-vfy-pct');
+    if (pctEl) pctEl.textContent = 'Waiting for Green Steady…';
+    const timerEl = container.querySelector('#ws6-ms-vfy-timer');
+    if (timerEl) timerEl.textContent = '0 / 5 s';
+    const closeBtn = container.querySelector('#ws6-ms-close');
+    if (closeBtn) { closeBtn.disabled = true; closeBtn.className = 'btn btn-success btn-sm gap-2'; closeBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg> Close Work Order'; }
+  }
+
+  const ws6MsResetBtn = container.querySelector('#ws6-ms-reset');
+  if (ws6MsResetBtn) ws6MsResetBtn.addEventListener('click', ws6MsResetAll);
+
+  const ws6MsStartBtn = container.querySelector('#ws6-ms-start');
+  if (ws6MsStartBtn) {
+    ws6MsStartBtn.addEventListener('click', async () => {
+      ws6MsStartBtn.disabled = true;
+      const statusEl = container.querySelector('#ws6-ms-inject-status');
+      if (statusEl) statusEl.textContent = 'Injecting fault…';
+      const base = window.IO_LINK_API_BASE || '';
+      try {
+        const res = await fetch(`${base}/api/io-link/port/4/pdout`, {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ value: '184203' }),
+        });
+        const d = await res.json();
+        if (d.success) {
+          _ws6MsCleanup = () => ws6WriteLight('000100');
+          _ws6MsStep = 1;
+          if (statusEl) statusEl.textContent = '✓ Fault injected — Amber Flash written to Port 4';
+          ws6MsShow('ws6-ms-observe-box');
+        } else {
+          ws6MsStartBtn.disabled = false;
+          if (statusEl) { statusEl.textContent = '✗ Injection failed'; setTimeout(() => { if (statusEl) statusEl.textContent = ''; }, 3000); }
+        }
+      } catch {
+        ws6MsStartBtn.disabled = false;
+        if (statusEl) { statusEl.textContent = '✗ Network error'; setTimeout(() => { if (statusEl) statusEl.textContent = ''; }, 3000); }
       }
     });
   }
 
-  const ws6Reset = container.querySelector('#ws6-ch-reset');
-  if (ws6Reset) {
-    ws6Reset.addEventListener('click', () => {
-      _ws6ChGuess = null; _ws6ChSubmitted = false;
-      const result = container.querySelector('#ws6-ch-result');
-      if (result) result.classList.add('hidden');
-      const sel = container.querySelector('#ws6-ch-selection');
-      if (sel) sel.textContent = 'No guess selected';
-      container.querySelectorAll('.ws6-colour-btn').forEach(b => {
-        b.style.outline = 'none'; b.style.transform = '';
-      });
+  const ws6MsObserveBtn = container.querySelector('#ws6-ms-i-observed');
+  if (ws6MsObserveBtn) {
+    ws6MsObserveBtn.addEventListener('click', () => {
+      if (_ws6MsStep !== 1) return;
+      _ws6MsStep = 2;
+      ws6MsObserveBtn.disabled = true;
+      ws6MsShow('ws6-ms-diag-box');
+    });
+  }
+
+  const ws6MsDiagSubmit = container.querySelector('#ws6-ms-diag-submit');
+  if (ws6MsDiagSubmit) {
+    ws6MsDiagSubmit.addEventListener('click', () => {
+      if (_ws6MsStep !== 2) return;
+      const sel = container.querySelector('input[name="ws6-ms-diag"]:checked');
+      const resultEl = container.querySelector('#ws6-ms-diag-result');
+      if (!sel) {
+        if (resultEl) { resultEl.className = 'rounded-lg p-3 text-sm bg-warning/10 border border-warning/30 text-warning'; resultEl.textContent = 'Please select an answer first.'; resultEl.classList.remove('hidden'); }
+        return;
+      }
+      if (sel.value === 'c') {
+        if (resultEl) {
+          resultEl.className = 'rounded-lg p-3 text-sm bg-success/10 border border-success/30 text-success';
+          resultEl.textContent = '✓ Correct. The CL50 has no internal state machine — it simply executes the last PDout it received and holds it indefinitely. The PLC output register was not cleared after the maintenance window, so it keeps sending the pre-fault Amber Flash command.';
+          resultEl.classList.remove('hidden');
+        }
+        ws6MsDiagSubmit.disabled = true;
+        _ws6MsStep = 3;
+        setTimeout(() => ws6MsShow('ws6-ms-read-box'), 400);
+      } else {
+        if (resultEl) {
+          const hint = sel.value === 'a'
+            ? 'Not quite — if the hardware were faulty the light would be fully off or show a constant error state, not a specific animation. A stuck hardware fault would not produce a valid, animated PDout response.'
+            : 'Partially true — the CL50 does hold its last command when comms drop. But the live panel is still updating (IO-Link is active). The problem is the content of the PDout command, not the communication link.';
+          resultEl.className = 'rounded-lg p-3 text-sm bg-error/10 border border-error/30 text-error';
+          resultEl.textContent = `✗ ${hint}`;
+          resultEl.classList.remove('hidden');
+        }
+      }
+    });
+  }
+
+  const ws6MsReadBtn = container.querySelector('#ws6-ms-read-btn');
+  if (ws6MsReadBtn) {
+    ws6MsReadBtn.addEventListener('click', () => {
+      if (_ws6MsStep !== 3) return;
+      const rawHex  = container.querySelector('#ws6-ms-raw-hex')?.textContent  || '—';
+      const animVal = container.querySelector('#ws6-ms-animation')?.textContent || '—';
+      const c1Val   = container.querySelector('#ws6-ms-c1-label')?.textContent  || '—';
+      const speedVal = container.querySelector('#ws5-speed')?.textContent   || '—';
+      const c1Int   = container.querySelector('#ws5-c1-intensity')?.textContent || '—';
+      const resultEl = container.querySelector('#ws6-ms-read-result');
+      if (resultEl) {
+        const animBad = animVal !== 'Steady' && animVal !== '—';
+        resultEl.innerHTML = [
+          `<p>Raw PDout hex :  <strong>${rawHex}</strong></p>`,
+          `<p>Animation     :  <span class="${animBad ? 'text-error font-bold' : 'text-success'}">${animVal}${animBad ? ' ← FAULT (expected: Steady)' : ''}</span></p>`,
+          `<p>Colour 1      :  ${c1Val}</p>`,
+          `<p>Speed         :  ${speedVal}</p>`,
+          `<p>C1 Intensity  :  ${c1Int}</p>`,
+          `<p class="text-success pt-1 border-t border-base-300 mt-1">✓ Confirmed — Octet 1 animation field = 0x02 (Flash) instead of 0x01 (Steady). Write PDout 000100 to restore normal run state.</p>`,
+        ].join('');
+        resultEl.classList.remove('hidden');
+      }
+      ws6MsReadBtn.disabled = true;
+      _ws6MsStep = 4;
+      setTimeout(() => ws6MsShow('ws6-ms-fix-box'), 400);
+    });
+  }
+
+  const ws6MsFixBtn = container.querySelector('#ws6-ms-fix-btn');
+  if (ws6MsFixBtn) {
+    ws6MsFixBtn.addEventListener('click', async () => {
+      if (_ws6MsStep !== 4) return;
+      ws6MsFixBtn.disabled = true;
+      const statusEl = container.querySelector('#ws6-ms-fix-status');
+      if (statusEl) statusEl.textContent = 'Writing…';
+      const base = window.IO_LINK_API_BASE || '';
+      try {
+        const res = await fetch(`${base}/api/io-link/port/4/pdout`, {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ value: '000100' }),
+        });
+        const d = await res.json();
+        if (d.success) {
+          _ws6MsCleanup = null;
+          _ws6MsStep = 5; _ws6MsVerifyStart = null; _ws6MsVerifyDone = false;
+          if (statusEl) statusEl.textContent = '✓ Green Steady written — monitoring…';
+          setTimeout(() => ws6MsShow('ws6-ms-vfy-box'), 400);
+        } else {
+          ws6MsFixBtn.disabled = false;
+          if (statusEl) { statusEl.textContent = '✗ Write failed'; setTimeout(() => { if (statusEl) statusEl.textContent = ''; }, 3000); }
+        }
+      } catch {
+        ws6MsFixBtn.disabled = false;
+        if (statusEl) { statusEl.textContent = '✗ Network error'; setTimeout(() => { if (statusEl) statusEl.textContent = ''; }, 3000); }
+      }
+    });
+  }
+
+  function ws6MsCheckSignoff() {
+    const allChecked = ['ws6-ms-ck1','ws6-ms-ck2','ws6-ms-ck3'].every(id => container.querySelector(`#${id}`)?.checked);
+    const closeBtn = container.querySelector('#ws6-ms-close');
+    if (closeBtn) closeBtn.disabled = !allChecked;
+  }
+  ['ws6-ms-ck1','ws6-ms-ck2','ws6-ms-ck3'].forEach(id => {
+    container.querySelector(`#${id}`)?.addEventListener('change', ws6MsCheckSignoff);
+  });
+
+  const ws6MsCloseBtn = container.querySelector('#ws6-ms-close');
+  if (ws6MsCloseBtn) {
+    ws6MsCloseBtn.addEventListener('click', () => {
+      ws6MsCloseBtn.disabled = true;
+      ws6MsCloseBtn.className = 'btn btn-success btn-sm cursor-default';
+      ws6MsCloseBtn.innerHTML = '✓ Work Order LST-0312 Closed';
     });
   }
 }
 
 function initLiveWs7(container) {
-  _ws7ChPortDropped = false; _ws7ChRecovered = false; _ws7ChDroppedPort = null;
-  const portModes = { 1: null, 2: null, 3: null, 4: null };
-  const portColours = { 1: '#3b82f6', 2: '#8b5cf6', 3: '#f97316', 4: '#22c55e' };
+  _ws7MsStep = 0; _ws7MsVerifyStart = null; _ws7MsVerifyDone = false;
 
-  function updatePortDots(data) {
-    [1, 2, 3, 4].forEach(n => {
-      const port = getPort(data, n);
-      const mode = port?.mode || 'inactive';
-      const dot  = container.querySelector(`#ws7-ch-p${n}`);
-      const val  = container.querySelector(`#ws7-ch-p${n}-val`);
-      if (dot) {
-        const active = mode === 'io-link';
-        dot.style.backgroundColor = active ? portColours[n] : '';
-        dot.style.boxShadow = active ? `0 0 6px ${portColours[n]}80` : '';
-        dot.className = active
-          ? 'w-5 h-5 rounded-full mx-auto transition-all'
-          : 'w-5 h-5 rounded-full bg-base-300 mx-auto transition-all';
-      }
-      if (val) val.textContent = mode === 'io-link' ? 'IO-Link' : mode === 'inactive' ? 'off' : mode;
+  // ── colour name → CSS colour (for HMI swatch) ──────────────────────────────
+  const COLOR_CSS = {
+    green: '#22c55e', red: '#ef4444', orange: '#f97316', amber: '#f59e0b',
+    yellow: '#eab308', lime: '#84cc16', 'spring green': '#10b981', cyan: '#06b6d4',
+    'sky blue': '#0ea5e9', blue: '#3b82f6', violet: '#8b5cf6', magenta: '#d946ef',
+    rose: '#f43f5e', white: '#f8fafc',
+  };
+  function applySwatchColor(el, colorName) {
+    if (!el) return;
+    const css = COLOR_CSS[(colorName || '').toLowerCase()];
+    if (css) {
+      el.style.background = css;
+      el.style.boxShadow = `0 0 8px ${css}60`;
+      el.style.border = `2px solid ${css}`;
+    } else {
+      el.style.background = '#1e293b';
+      el.style.boxShadow = '';
+      el.style.border = '2px solid #334155';
+    }
+  }
 
-      // challenge logic
-      const prevMode = portModes[n];
-      if (prevMode !== null && prevMode === 'io-link' && mode !== 'io-link' && !_ws7ChPortDropped && !_ws7ChRecovered) {
-        _ws7ChPortDropped = true;
-        _ws7ChDroppedPort = n;
-        const msg = container.querySelector('#ws7-ch-status-msg');
-        if (msg) msg.textContent = `Port ${n} went offline — now reconnect it.`;
+  // ── HMI port-dot helper ─────────────────────────────────────────────────────
+  const PORT_COL = { 1: '#3b82f6', 2: '#8b5cf6', 3: '#f97316', 4: '#22c55e' };
+  function setPortDot(n, active) {
+    const el = container.querySelector(`#ws7-hmi-p${n}-dot`);
+    if (!el) return;
+    if (active) {
+      el.style.background = PORT_COL[n];
+      el.style.boxShadow = `0 0 8px ${PORT_COL[n]}80`;
+      el.style.border = `2px solid ${PORT_COL[n]}`;
+    } else {
+      el.style.background = '#1e293b';
+      el.style.boxShadow = '';
+      el.style.border = '2px solid #334155';
+    }
+  }
+
+  // ── write PDout to Port 4 ───────────────────────────────────────────────────
+  async function ws7WriteLight(hex) {
+    const base = window.IO_LINK_API_BASE || '';
+    try {
+      await fetch(`${base}/api/io-link/port/4/pdout`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ value: hex }),
+      });
+    } catch { /* ignore */ }
+  }
+
+  // ── show / hide step boxes ──────────────────────────────────────────────────
+  function ws7MsShow(id) {
+    const el = container.querySelector(`#${id}`);
+    if (el) el.classList.remove('hidden');
+  }
+
+  // ── full reset ──────────────────────────────────────────────────────────────
+  function ws7MsResetAll() {
+    if (_ws7MsCleanup) { _ws7MsCleanup(); _ws7MsCleanup = null; }
+    else {
+      isduWrite(1, 61, 1, 0, 'uint8', 1, null);
+      ws7WriteLight('000100');
+    }
+    _ws7MsStep = 0; _ws7MsVerifyStart = null; _ws7MsVerifyDone = false;
+    const hmiWrapper = container.querySelector('#ws7-hmi-wrapper');
+    if (hmiWrapper) hmiWrapper.classList.add('hidden');
+    const msWrapper = container.querySelector('#ws7-ms-wrapper');
+    if (msWrapper) msWrapper.classList.add('hidden');
+    ['ws7-ms-observe-box','ws7-ms-diag-box','ws7-ms-read-box','ws7-ms-fix-box','ws7-ms-vfy-box','ws7-ms-signoff-box']
+      .forEach(id => { const el = container.querySelector(`#${id}`); if (el) el.classList.add('hidden'); });
+    ['ws7-ms-i-observed','ws7-ms-diag-submit','ws7-ms-read-btn','ws7-ms-fix-btn'].forEach(id => {
+      const el = container.querySelector(`#${id}`);
+      if (el) el.disabled = false;
+    });
+    const diagResult = container.querySelector('#ws7-ms-diag-result');
+    if (diagResult) diagResult.classList.add('hidden');
+    const readResult = container.querySelector('#ws7-ms-read-result');
+    if (readResult) readResult.classList.add('hidden');
+    const startBtn = container.querySelector('#ws7-ms-start');
+    if (startBtn) startBtn.disabled = false;
+    const alarmBar = container.querySelector('#ws7-hmi-alarm-bar');
+    if (alarmBar) alarmBar.classList.add('hidden');
+    const statusEl = container.querySelector('#ws7-ms-inject-status');
+    if (statusEl) statusEl.textContent = '';
+  }
+
+  // ── live WebSocket updates ──────────────────────────────────────────────────
+  startLiveData(data => {
+    if (!data) {
+      // offline
+      const status = container.querySelector('#ws7-hmi-status');
+      if (status) { status.textContent = '● OFFLINE'; status.style.color = '#475569'; }
+      const badge = container.querySelector('#ws7-hmi-badge');
+      if (badge) { badge.textContent = 'OFFLINE'; badge.className = 'badge badge-xs badge-ghost font-mono'; badge.style.fontSize = '0.6rem'; }
+      return;
+    }
+
+    // HMI online indicator
+    const status = container.querySelector('#ws7-hmi-status');
+    if (status) { status.textContent = '● LIVE'; status.style.color = '#22c55e'; }
+    const badge = container.querySelector('#ws7-hmi-badge');
+    if (badge) { badge.textContent = 'LIVE'; badge.className = 'badge badge-xs badge-success font-mono'; badge.style.fontSize = '0.6rem'; }
+
+    // P1 — Inductive Proximity (Omron E2E)
+    const p1 = getPort(data, 1);
+    const p1d = p1?.pdin_decoded || {};
+    const p1mode = p1?.mode || 'inactive';
+    setPortDot(1, p1mode === 'io-link');
+    const p1det = !!(p1d.object_present || p1d.object_detected);
+    const p1out1El = container.querySelector('#ws7-hmi-p1-out1');
+    if (p1out1El) {
+      if (p1mode !== 'io-link') {
+        p1out1El.textContent = '—';
+        p1out1El.style.color = '#94a3b8';
+        p1out1El.style.fontWeight = '400';
+      } else if (p1det) {
+        p1out1El.textContent = 'ON';
+        p1out1El.style.color = '#ef4444';
+        p1out1El.style.fontWeight = '700';
+      } else {
+        p1out1El.textContent = 'OFF';
+        p1out1El.style.color = '#22c55e';
+        p1out1El.style.fontWeight = '400';
       }
-      if (_ws7ChPortDropped && !_ws7ChRecovered && n === _ws7ChDroppedPort && prevMode !== 'io-link' && mode === 'io-link') {
-        _ws7ChRecovered = true;
-        const result = container.querySelector('#ws7-ch-result');
-        if (result) {
-          result.className = 'rounded-lg p-3 text-center font-bold text-base bg-success/20 text-success border border-success/40';
-          result.textContent = `✓ Challenge complete! Port ${_ws7ChDroppedPort} dropped offline and came back to IO-Link mode.`;
-          result.classList.remove('hidden');
+    }
+    const p1monEl = container.querySelector('#ws7-hmi-p1-mon');
+    if (p1monEl) p1monEl.textContent = p1d.monitor_output != null ? p1d.monitor_output : '—';
+    const p1instabEl = container.querySelector('#ws7-hmi-p1-instab');
+    if (p1instabEl) {
+      const v = p1d.instability_alarm;
+      p1instabEl.textContent = v == null ? '—' : v ? 'ACTIVE' : 'CLEAR';
+      p1instabEl.style.color = v ? '#f87171' : '#94a3b8';
+    }
+    const p1ovappEl = container.querySelector('#ws7-hmi-p1-ovapp');
+    if (p1ovappEl) {
+      const v = p1d.over_approach_alarm;
+      p1ovappEl.textContent = v == null ? '—' : v ? 'ACTIVE' : 'CLEAR';
+      p1ovappEl.style.color = v ? '#f87171' : '#94a3b8';
+    }
+
+    // P2 — Capacitive
+    const p2 = getPort(data, 2);
+    const p2d = p2?.pdin_decoded || {};
+    const p2mode = p2?.mode || 'inactive';
+    setPortDot(2, p2mode === 'io-link');
+    const p2linkEl = container.querySelector('#ws7-hmi-p2-link');
+    if (p2linkEl) {
+      p2linkEl.textContent = p2mode === 'io-link' ? 'IO-Link OK' : p2mode || '—';
+      p2linkEl.style.color = p2mode === 'io-link' ? '#22c55e' : '#ef4444';
+    }
+    const p2statusEl = container.querySelector('#ws7-hmi-p2-status');
+    if (p2statusEl) p2statusEl.textContent = p2d.object_detected != null ? (p2d.object_detected ? 'DETECTED' : 'CLEAR') : '—';
+
+    // P3 — Temperature (IFM TV7105)
+    const p3 = getPort(data, 3);
+    const p3d = p3?.pdin_decoded || {};
+    const p3mode = p3?.mode || 'inactive';
+    setPortDot(3, p3mode === 'io-link');
+    const p3tempEl = container.querySelector('#ws7-hmi-p3-temp');
+    if (p3tempEl) p3tempEl.textContent = p3d.temperature_c != null ? `${p3d.temperature_c.toFixed(1)} °C` : '—';
+    const p3out1El = container.querySelector('#ws7-hmi-p3-out1');
+    if (p3out1El) {
+      const v = p3d.out1;
+      p3out1El.textContent = v == null ? '—' : v ? 'ON' : 'OFF';
+      p3out1El.style.color = v ? '#f87171' : '#4ade80';
+      p3out1El.style.fontWeight = v ? '700' : '400';
+    }
+    const p3out2El = container.querySelector('#ws7-hmi-p3-out2');
+    if (p3out2El) {
+      const v = p3d.out2;
+      p3out2El.textContent = v == null ? '—' : v ? 'ON' : 'OFF';
+      p3out2El.style.color = v ? '#f87171' : '#4ade80';
+      p3out2El.style.fontWeight = v ? '700' : '400';
+    }
+
+    // P4 — Light Stack (CL50 PDout-only)
+    const p4 = getPort(data, 4);
+    const p4dec = p4?.pdout_decoded;
+    const p4raw = p4dec?.raw_hex;
+    const p4swatchEl = container.querySelector('#ws7-hmi-p4-swatch');
+    const p4colorEl  = container.querySelector('#ws7-hmi-p4-color');
+    const p4animEl   = container.querySelector('#ws7-hmi-p4-anim');
+    const p4hexEl = container.querySelector('#ws7-hmi-p4-hex');
+    if (p4raw) {
+      const c1 = p4dec.color1 || '—';
+      const anim = p4dec.animation || '—';
+      applySwatchColor(p4swatchEl, c1);
+      if (p4colorEl) p4colorEl.textContent = c1;
+      if (p4animEl)  p4animEl.textContent  = anim;
+      if (p4hexEl)   p4hexEl.textContent   = p4raw.toUpperCase();
+    } else {
+      applySwatchColor(p4swatchEl, '');
+      if (p4colorEl) p4colorEl.textContent = '—';
+      if (p4animEl)  p4animEl.textContent  = '—';
+      if (p4hexEl)   p4hexEl.textContent   = '—';
+    }
+
+    // ── Verify step (step 4) — OUT1 must be OFF in free air for 3s ─────────
+    if (_ws7MsStep === 4 && !_ws7MsVerifyDone) {
+      const isOK = p1mode === 'io-link' && !(p1d.object_present || p1d.object_detected);
+      const pctEl  = container.querySelector('#ws7-ms-vfy-pct');
+      const timerEl = container.querySelector('#ws7-ms-vfy-timer');
+      const tbarEl  = container.querySelector('#ws7-ms-vfy-tbar');
+      if (isOK) {
+        if (!_ws7MsVerifyStart) _ws7MsVerifyStart = Date.now();
+        const elapsed = (Date.now() - _ws7MsVerifyStart) / 1000;
+        const pct = Math.min(100, (elapsed / 3) * 100);
+        if (pctEl)   pctEl.textContent   = 'OUT1 OFF — holding…';
+        if (timerEl) timerEl.textContent = `${elapsed.toFixed(1)} / 3 s`;
+        if (tbarEl)  tbarEl.style.width  = `${pct}%`;
+        if (elapsed >= 3) {
+          _ws7MsVerifyDone = true;
+          _ws7MsStep = 5;
+          if (pctEl)   pctEl.textContent   = '✓ Verified — OUT1 confirmed OFF in free air';
+          if (timerEl) timerEl.textContent = '3 / 3 s';
+          if (tbarEl)  tbarEl.style.width  = '100%';
+          ws7MsShow('ws7-ms-signoff-box');
         }
-        const msg = container.querySelector('#ws7-ch-status-msg');
-        if (msg) msg.textContent = `Port ${_ws7ChDroppedPort} recovered successfully.`;
+      } else {
+        _ws7MsVerifyStart = null;
+        if (pctEl)   pctEl.textContent   = 'OUT1 still ON — ensure no object is in front of Port 1';
+        if (timerEl) timerEl.textContent = '0 / 3 s';
+        if (tbarEl)  tbarEl.style.width  = '0%';
       }
-      portModes[n] = mode;
+    }
+  });
+
+  // ── One-shot ISDU reads: P2 capacitive SP1/QoT + P3 temperature SP/RP ──────
+  ;(async () => {
+    const [p3sp1, p3rp1, p3sp2, p3rp2, p2sp1, p2qot] = await Promise.all([
+      isduRead(3, 583, 0, 'int16', 0.1),
+      isduRead(3, 584, 0, 'int16', 0.1),
+      isduRead(3, 593, 0, 'int16', 0.1),
+      isduRead(3, 594, 0, 'int16', 0.1),
+      isduRead(2, 60, 1, 'int16', 1),
+      isduRead(2, 75, 0, 'uint8', 1),
+    ]);
+    const setTemp = (id, val) => {
+      const el = container.querySelector(`#${id}`);
+      if (el && val != null) { el.textContent = `${val.toFixed(1)} °C`; el.style.color = '#cbd5e1'; }
+    };
+    setTemp('ws7-hmi-p3-sp1', p3sp1);
+    setTemp('ws7-hmi-p3-rp1', p3rp1);
+    setTemp('ws7-hmi-p3-sp2', p3sp2);
+    setTemp('ws7-hmi-p3-rp2', p3rp2);
+    const sp1El = container.querySelector('#ws7-hmi-p2-sp1');
+    if (sp1El && p2sp1 != null) { sp1El.textContent = p2sp1; sp1El.style.color = '#cbd5e1'; }
+    const qotEl = container.querySelector('#ws7-hmi-p2-qot');
+    if (qotEl && p2qot != null) { qotEl.textContent = `${p2qot}%`; qotEl.style.color = '#cbd5e1'; }
+  })();
+
+  // ── Reset button ────────────────────────────────────────────────────────────
+  const resetBtn = container.querySelector('#ws7-ms-reset');
+  if (resetBtn) resetBtn.addEventListener('click', ws7MsResetAll);
+
+  // ── Start Investigation ─────────────────────────────────────────────────────
+  const startBtn = container.querySelector('#ws7-ms-start');
+  if (startBtn) {
+    startBtn.addEventListener('click', async () => {
+      startBtn.disabled = true;
+      const statusEl = container.querySelector('#ws7-ms-inject-status');
+      if (statusEl) statusEl.textContent = 'Injecting fault…';
+      const hmiWrapper = container.querySelector('#ws7-hmi-wrapper');
+      if (hmiWrapper) hmiWrapper.classList.remove('hidden');
+      const msWrapper = container.querySelector('#ws7-ms-wrapper');
+      if (msWrapper) msWrapper.classList.remove('hidden');
+
+      // Parallel: write NC to Port 1 + Flash Red to Port 4
+      const base = window.IO_LINK_API_BASE || '';
+      const [r1, r4] = await Promise.all([
+        isduWrite(1, 61, 1, 1, 'uint8', 1, null),
+        fetch(`${base}/api/io-link/port/4/pdout`, {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ value: '184201' }),
+        }).then(r => r.json()).catch(() => null),
+      ]);
+
+      if (r1 !== false && r4?.success) {
+        _ws7MsCleanup = async () => {
+          await Promise.all([
+            isduWrite(1, 61, 1, 0, 'uint8', 1, null),
+            ws7WriteLight('000100'),
+          ]);
+        };
+        _ws7MsStep = 1;
+        if (statusEl) statusEl.textContent = '✓ Fault active — OUT1 permanently ON, CL50 flashing red';
+        const alarmBar = container.querySelector('#ws7-hmi-alarm-bar');
+        if (alarmBar) alarmBar.classList.remove('hidden');
+        const alarmMsg = container.querySelector('#ws7-hmi-alarm-msg');
+        if (alarmMsg) alarmMsg.textContent = 'FAULT ACTIVE — PORT 1 OUT1 PERMANENTLY ON · LINE 3 STOPPED';
+        ws7MsShow('ws7-ms-observe-box');
+      } else {
+        if (statusEl) statusEl.textContent = '✗ Inject failed — check IO-Link connection';
+        startBtn.disabled = false;
+      }
     });
   }
 
-  startLiveData(data => {
-    updatePortDots(data);
+  // ── Step 1: Observed button ─────────────────────────────────────────────────
+  const observedBtn = container.querySelector('#ws7-ms-i-observed');
+  if (observedBtn) {
+    observedBtn.addEventListener('click', () => {
+      if (_ws7MsStep < 1) return;
+      _ws7MsStep = 2;
+      observedBtn.disabled = true;
+      ws7MsShow('ws7-ms-diag-box');
+    });
+  }
+
+  // ── Step 2: Diagnosis MCQ ───────────────────────────────────────────────────
+  const diagSubmit = container.querySelector('#ws7-ms-diag-submit');
+  if (diagSubmit) {
+    diagSubmit.addEventListener('click', () => {
+      const sel = container.querySelector('input[name="ws7-ms-diag"]:checked');
+      const resultEl = container.querySelector('#ws7-ms-diag-result');
+      if (!sel) { if (resultEl) { resultEl.className = 'rounded-lg p-3 text-sm bg-warning/10 border border-warning/40 text-warning'; resultEl.textContent = 'Select an answer first.'; resultEl.classList.remove('hidden'); } return; }
+      if (sel.value === 'c') {
+        _ws7MsStep = 3;
+        diagSubmit.disabled = true;
+        if (resultEl) {
+          resultEl.className = 'rounded-lg p-3 text-sm bg-success/10 border border-success/40 text-success';
+          resultEl.innerHTML = '<strong>✓ Correct.</strong> The output logic is set to NC — OUT1 is ON when no object is detected and OFF when an object is present. This is the inverse of normal operation and causes the machine controller to see a permanent "object present" signal. Confirm via ISDU read.';
+          resultEl.classList.remove('hidden');
+        }
+        ws7MsShow('ws7-ms-read-box');
+      } else if (sel.value === 'a') {
+        if (resultEl) {
+          resultEl.className = 'rounded-lg p-3 text-sm bg-error/10 border border-error/40 text-error';
+          resultEl.innerHTML = '<strong>✗ Not quite.</strong> If IO-Link had dropped, the P1 dot in the HMI would be grey and the port would show as inactive or offline. The P1 dot is still <strong>blue</strong> — IO-Link is communicating and the master is receiving live data from the sensor right now. Something else is wrong.';
+          resultEl.classList.remove('hidden');
+        }
+      } else {
+        if (resultEl) {
+          resultEl.className = 'rounded-lg p-3 text-sm bg-error/10 border border-error/40 text-error';
+          resultEl.innerHTML = '<strong>✗ Not quite.</strong> A shorted transistor and NC logic can look identical on the HMI — both cause OUT1 to appear permanently ON. But the key difference: in NC mode OUT1 will turn <strong>OFF</strong> when metal is placed within sensing range (the sensor IS responding to targets, just inverted). A shorted transistor stays ON regardless. Try placing metal in front of the sensor and watch OUT1. Use the ISDU read in the next step to confirm conclusively.';
+          resultEl.classList.remove('hidden');
+        }
+      }
+    });
+  }
+
+  // ── Step 3: ISDU Read ───────────────────────────────────────────────────────
+  const readBtn = container.querySelector('#ws7-ms-read-btn');
+  if (readBtn) {
+    readBtn.addEventListener('click', async () => {
+      readBtn.disabled = true;
+      const resultEl = container.querySelector('#ws7-ms-read-result');
+      if (resultEl) { resultEl.classList.remove('hidden'); resultEl.innerHTML = '<span class="text-base-content/50">Reading…</span>'; }
+      const val = await isduRead(1, 61, 1, 'uint8', 1);
+      if (val === null) {
+        if (resultEl) resultEl.innerHTML = '<span class="text-error">✗ Read failed — check IO-Link connection</span>';
+        readBtn.disabled = false;
+        return;
+      }
+      _ws7MsStep = 4;
+      const label = val === 1 ? 'NC (Normal Closed)' : val === 0 ? 'NO (Normal Open)' : `Unknown (${val})`;
+      const nc = val === 1;
+      if (resultEl) {
+        resultEl.innerHTML = [
+          `<p>Port 1 · Index 61 · Sub 1 — Switchpoint Logic OUT1</p>`,
+          `<p>Raw value  :  <span class="${nc ? 'text-error font-bold' : 'text-success'}">${val}</span></p>`,
+          `<p>Decoded    :  <span class="${nc ? 'text-error font-bold' : 'text-success'}">${label}${nc ? ' ← FAULT — output is inverted' : ''}</span></p>`,
+          nc ? `<p class="text-success pt-1 border-t border-base-300 mt-1">✓ Confirmed NC. Write value 0 (NO) to restore normal operation.</p>` : `<p class="text-warning pt-1">Value is already NO — check other parameters or hardware.</p>`,
+        ].join('');
+      }
+      if (nc) ws7MsShow('ws7-ms-fix-box');
+    });
+  }
+
+  // ── Step 4: Fix ─────────────────────────────────────────────────────────────
+  const fixBtn = container.querySelector('#ws7-ms-fix-btn');
+  if (fixBtn) {
+    fixBtn.addEventListener('click', async () => {
+      fixBtn.disabled = true;
+      const statusEl = container.querySelector('#ws7-ms-fix-status');
+      if (statusEl) statusEl.textContent = 'Writing…';
+      const base = window.IO_LINK_API_BASE || '';
+      const [r1, r4] = await Promise.all([
+        isduWrite(1, 61, 1, 0, 'uint8', 1, null),
+        fetch(`${base}/api/io-link/port/4/pdout`, {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ value: '000100' }),
+        }).then(r => r.json()).catch(() => null),
+      ]);
+      if (r1 !== false && r4?.success) {
+        _ws7MsCleanup = null;
+        const alarmBar = container.querySelector('#ws7-hmi-alarm-bar');
+        if (alarmBar) alarmBar.classList.add('hidden');
+        if (statusEl) statusEl.textContent = '✓ NO written to Port 1, Green Steady written to Port 4';
+        _ws7MsVerifyStart = null;
+        ws7MsShow('ws7-ms-vfy-box');
+      } else {
+        if (statusEl) statusEl.textContent = '✗ Write failed — retry';
+        fixBtn.disabled = false;
+      }
+    });
+  }
+
+  // ── Sign-off checkboxes ─────────────────────────────────────────────────────
+  ['ws7-ms-ck1','ws7-ms-ck2','ws7-ms-ck3'].forEach(id => {
+    const el = container.querySelector(`#${id}`);
+    if (el) el.addEventListener('change', () => {
+      const allTicked = ['ws7-ms-ck1','ws7-ms-ck2','ws7-ms-ck3'].every(k => container.querySelector(`#${k}`)?.checked);
+      const closeBtn = container.querySelector('#ws7-ms-close');
+      if (closeBtn) closeBtn.disabled = !allTicked;
+    });
   });
 
-  const ws7Reset = container.querySelector('#ws7-ch-reset');
-  if (ws7Reset) {
-    ws7Reset.addEventListener('click', () => {
-      _ws7ChPortDropped = false; _ws7ChRecovered = false; _ws7ChDroppedPort = null;
-      Object.keys(portModes).forEach(k => { portModes[k] = null; });
-      const result = container.querySelector('#ws7-ch-result');
-      if (result) result.classList.add('hidden');
-      const msg = container.querySelector('#ws7-ch-status-msg');
-      if (msg) msg.textContent = 'Waiting — disconnect a sensor cable to begin';
+  const closeBtn = container.querySelector('#ws7-ms-close');
+  if (closeBtn) {
+    closeBtn.addEventListener('click', () => {
+      closeBtn.disabled = true;
+      closeBtn.textContent = '✓ Work Order FND-0001 Closed';
+      closeBtn.className = 'btn btn-success btn-sm gap-2 opacity-70 cursor-default';
     });
   }
 }
 
 function initLiveWs8(container) {
-  _ws8ChStep = 0; _ws8ChDone = false;
-  let _ws8LastPhotoState = false;
-  let _ws8LastCapState = false;
+  _ws8P1Done = false; _ws8P2Done = false; _ws8P3Done = false;
+  _ws8IsduDone = false; _ws8T3McqDone = false; _ws8PdoutWritten = false; _ws8PdoutRestored = false; _ws8QsSubmitted = false;
+  let _lastP1Det = false, _lastP2Det = false;
 
-  function updateWs8Steps() {
-    [1, 2, 3].forEach(i => {
-      const dot = container.querySelector(`#ws8-ch-s${i}`);
-      if (!dot) return;
-      if (i <= _ws8ChStep) {
-        dot.className = 'w-10 h-10 rounded-full border-2 flex items-center justify-center text-xs font-bold transition-all bg-success border-success text-white mx-auto';
+  const C8_CSS = {
+    'green':'#22c55e','red':'#ef4444','orange':'#f97316','amber':'#f59e0b',
+    'yellow':'#eab308','lime':'#84cc16','spring green':'#10b981','cyan':'#06b6d4',
+    'sky blue':'#38bdf8','blue':'#3b82f6','violet':'#8b5cf6','magenta':'#ec4899',
+    'rose':'#f43f5e','white':'#e2e8f0'
+  };
+  const PORT_COL = { 1:'#3b82f6', 2:'#8b5cf6', 3:'#f97316', 4:'#22c55e' };
+
+  function setDot8(id, active, col) {
+    const el = container.querySelector('#' + id);
+    if (!el) return;
+    el.style.background = active ? col : '#1e293b';
+    el.style.borderColor = active ? col : '#334155';
+  }
+  function st8(id, txt, col) {
+    const el = container.querySelector('#' + id);
+    if (!el) return;
+    el.textContent = txt;
+    if (col !== undefined) el.style.color = col;
+  }
+  function autoTick8(id) {
+    const el = container.querySelector('#' + id);
+    if (!el) return;
+    el.className = 'w-7 h-7 rounded-full bg-success border-2 border-success flex items-center justify-center text-xs font-bold text-white transition-all flex-shrink-0';
+    el.textContent = '✓';
+  }
+  function unlock8(id) {
+    const el = container.querySelector('#' + id);
+    if (el) { el.style.opacity = '1'; el.style.pointerEvents = ''; }
+  }
+  function checkTaskUnlocks() {
+    if (_ws8P1Done && _ws8P2Done && _ws8P3Done) unlock8('ws8-task2-wrap');
+    if (_ws8IsduDone)                           unlock8('ws8-task3-wrap');
+    if (_ws8PdoutRestored)                      unlock8('ws8-task4-wrap');
+    if (_ws8QsSubmitted)                        unlock8('ws8-signoff-wrap');
+  }
+
+  // ── Live data ─────────────────────────────────────────────────────────────
+  startLiveData(data => {
+    const badge = container.querySelector('#ws8-live-badge');
+    if (!data) {
+      if (badge) { badge.textContent = 'OFFLINE'; badge.className = 'badge badge-xs badge-ghost font-mono'; badge.style.fontSize = '0.6rem'; }
+      return;
+    }
+    if (badge) { badge.textContent = 'LIVE'; badge.className = 'badge badge-xs badge-success font-mono'; badge.style.fontSize = '0.6rem'; }
+
+    // P1
+    const p1 = getPort(data, 1);
+    const p1d = p1?.pdin_decoded || {};
+    const p1mode = p1?.mode || 'inactive';
+    const p1det = !!(p1d.object_present || p1d.object_detected);
+    setDot8('ws8-live-p1-dot', p1mode === 'io-link', PORT_COL[1]);
+    st8('ws8-live-p1-out1', p1mode !== 'io-link' ? '—' : p1det ? 'ON' : 'OFF', p1det ? '#ef4444' : '#4ade80');
+    st8('ws8-live-p1-mon', p1d.monitor_output != null ? String(p1d.monitor_output) : '—', '#94a3b8');
+    if (p1det && !_lastP1Det && !_ws8P1Done) { _ws8P1Done = true; autoTick8('ws8-t1-p1-tick'); }
+    _lastP1Det = p1det;
+
+    // P2
+    const p2 = getPort(data, 2);
+    const p2d = p2?.pdin_decoded || {};
+    const p2mode = p2?.mode || 'inactive';
+    const p2det = !!p2d.object_detected;
+    setDot8('ws8-live-p2-dot', p2mode === 'io-link', PORT_COL[2]);
+    st8('ws8-live-p2-det', p2mode !== 'io-link' ? '—' : p2det ? 'YES' : 'NO', p2det ? '#f59e0b' : '#4ade80');
+    st8('ws8-live-p2-link', p2mode === 'io-link' ? 'OK' : (p2mode || '—'), p2mode === 'io-link' ? '#22c55e' : '#94a3b8');
+    if (p2det && !_lastP2Det && !_ws8P2Done) { _ws8P2Done = true; autoTick8('ws8-t1-p2-tick'); }
+    _lastP2Det = p2det;
+
+    // P3
+    const p3 = getPort(data, 3);
+    const p3d = p3?.pdin_decoded || {};
+    const p3mode = p3?.mode || 'inactive';
+    setDot8('ws8-live-p3-dot', p3mode === 'io-link', PORT_COL[3]);
+    const tempV = p3d.temperature_c;
+    st8('ws8-live-p3-temp', tempV != null ? tempV.toFixed(1) + '°C' : '—', '#94a3b8');
+    const p3o1 = p3d.out1;
+    st8('ws8-live-p3-out1', p3o1 == null ? '—' : p3o1 ? 'ON' : 'OFF', p3o1 ? '#ef4444' : '#4ade80');
+    if (tempV != null && !_ws8P3Done) { _ws8P3Done = true; autoTick8('ws8-t1-p3-tick'); }
+    checkTaskUnlocks();
+
+    // P4
+    const p4 = getPort(data, 4);
+    const p4dec = p4?.pdout_decoded;
+    const p4raw = p4dec?.raw_hex;
+    const p4c1name = (p4dec?.color1 || '').toLowerCase();
+    const p4dot = container.querySelector('#ws8-live-p4-dot');
+    if (p4dot) {
+      const css = C8_CSS[p4c1name] || '#1e293b';
+      p4dot.style.background = css;
+      p4dot.style.borderColor = css !== '#1e293b' ? css : '#334155';
+    }
+    st8('ws8-live-p4-color', p4dec?.color1 || '—', '#94a3b8');
+    st8('ws8-live-p4-hex', p4raw ? p4raw.toUpperCase() : '—', '#94a3b8');
+
+    if (_ws8PdoutWritten && !_ws8PdoutRestored && p4raw && p4raw.toLowerCase() === '000100') {
+      _ws8PdoutRestored = true;
+      checkTaskUnlocks();
+      const rb = container.querySelector('#ws8-pdout-restore-btn');
+      if (rb) { rb.disabled = true; rb.className = 'btn btn-success btn-sm opacity-70 cursor-default'; rb.textContent = '✓ Restored'; }
+      st8('ws8-pdout-status', '✓ Green Steady confirmed via live data', '#4ade80');
+    }
+  });
+
+  // ── Task 2: Part A — hex decode ───────────────────────────────────────────
+  container.querySelectorAll('.ws8-pA-opt').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const correct = Math.abs(parseFloat(btn.dataset.val) - 50.0) < 0.05;
+      const res = container.querySelector('#ws8-pA-result');
+      if (correct) {
+        btn.className = 'ws8-pA-opt btn btn-success btn-sm font-mono';
+        container.querySelectorAll('.ws8-pA-opt').forEach(b => { b.disabled = true; });
+        if (res) { res.innerHTML = 'Correct &mdash; <span class="font-bold">500 &times; 0.1 = 50.0 &deg;C</span>'; res.style.color = '#4ade80'; }
+        const partB = container.querySelector('#ws8-partB-wrap');
+        if (partB) { partB.style.opacity = '1'; partB.style.pointerEvents = ''; }
       } else {
-        dot.className = 'w-10 h-10 rounded-full bg-base-300 border-2 border-base-300 flex items-center justify-center text-xs font-bold text-base-content/50 transition-all mx-auto';
+        btn.className = 'ws8-pA-opt btn btn-error btn-sm font-mono opacity-50 cursor-default';
+        btn.disabled = true;
+        if (res) { res.textContent = 'Not quite — try another option.'; res.style.color = '#ef4444'; }
+      }
+    });
+  });
+
+  // ── Task 2: Part B — raw hex fetch + dynamic decode MCQ ──────────────────
+  const isduBtn = container.querySelector('#ws8-isdu-btn');
+  if (isduBtn) {
+    isduBtn.addEventListener('click', async () => {
+      isduBtn.disabled = true;
+      const resultEl = container.querySelector('#ws8-isdu-result');
+      if (resultEl) resultEl.textContent = 'Reading…';
+      const base = window.IO_LINK_API_BASE || '';
+      let rawHex = null, decodedVal = null;
+      try {
+        const r = await fetch(base + '/api/io-link/port/3/parameter/read', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ index: 583, subindex: 0, dtype: 'int16', scale: 0.1 }),
+        }).then(res => res.json());
+        if (r && r.success) { rawHex = r.raw_hex; decodedVal = r.value; }
+      } catch (_) {}
+      if (rawHex != null && decodedVal != null) {
+        // format raw hex as pairs e.g. "013C" → "01 3C"
+        const hexDisplay = rawHex.toUpperCase().replace(/(.{2})/g, '$1 ').trim();
+        if (resultEl) { resultEl.innerHTML = 'Raw hex: <span class="font-bold text-warning">' + hexDisplay + '</span>'; resultEl.style.color = ''; }
+        isduBtn.className = 'btn btn-success btn-sm opacity-70 cursor-default gap-2';
+        isduBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg> Read Complete';
+        // decimal integer from the raw hex (unscaled)
+        const rawInt = Math.round(decodedVal / 0.1);
+        const decimalEl = container.querySelector('#ws8-partB-decimal');
+        if (decimalEl) decimalEl.innerHTML = 'Those bytes represent the decimal integer <span class="font-mono font-bold text-warning">' + rawInt + '</span>.';
+        // build 4 MCQ options: correct + 3 plausible distractors
+        const correct = Math.round(decodedVal * 10) / 10;
+        const opts = [correct, correct + 10, correct - 10, correct * 10].map(v => Math.round(v * 10) / 10);
+        // shuffle
+        for (let i = opts.length - 1; i > 0; i--) {
+          const j = Math.floor((i + 1) * 0.37 + 0.5) % (i + 1); // deterministic-ish but varied
+          [opts[i], opts[j]] = [opts[j], opts[i]];
+        }
+        const mcqWrap = container.querySelector('#ws8-partB-mcq');
+        const optsEl = container.querySelector('#ws8-partB-opts');
+        const resEl = container.querySelector('#ws8-partB-result');
+        if (optsEl) {
+          optsEl.innerHTML = opts.map(v =>
+            `<button type="button" class="ws8-pB-opt btn btn-outline btn-sm font-mono" data-val="${v}">${v.toFixed(1)} °C</button>`
+          ).join('');
+          optsEl.querySelectorAll('.ws8-pB-opt').forEach(b => {
+            b.addEventListener('click', () => {
+              const isCorrect = Math.abs(parseFloat(b.dataset.val) - correct) < 0.05;
+              if (isCorrect) {
+                b.className = 'ws8-pB-opt btn btn-success btn-sm font-mono';
+                optsEl.querySelectorAll('.ws8-pB-opt').forEach(x => { x.disabled = true; });
+                if (resEl) { resEl.innerHTML = 'Correct &mdash; <span class="font-bold">SP1 = ' + correct.toFixed(1) + ' &deg;C</span>'; resEl.style.color = '#4ade80'; }
+                _ws8IsduDone = true;
+                checkTaskUnlocks();
+              } else {
+                b.className = 'ws8-pB-opt btn btn-error btn-sm font-mono opacity-50 cursor-default';
+                b.disabled = true;
+                if (resEl) { resEl.textContent = 'Not quite — try another option.'; resEl.style.color = '#ef4444'; }
+              }
+            });
+          });
+        }
+        if (mcqWrap) mcqWrap.style.display = '';
+      } else {
+        if (resultEl) { resultEl.textContent = 'Read failed — retry'; resultEl.style.color = '#ef4444'; }
+        isduBtn.disabled = false;
       }
     });
   }
 
-  startLiveData(data => {
-    const p1 = getPort(data, 1);
-    const p2 = getPort(data, 2);
-    const p3 = getPort(data, 3);
-    const det1  = p1?.pdin_decoded?.object_detected || false;
-    const det2  = p2?.pdin_decoded?.object_detected || false;
-    const temp3 = p3?.pdin_decoded?.temperature_c ?? null;
-
-    if (!_ws8ChDone) {
-      if (_ws8ChStep === 0 && det1 && !_ws8LastPhotoState) {
-        _ws8ChStep = 1;
-        updateWs8Steps();
+  // ── Task 3: colour MCQ ────────────────────────────────────────────────────
+  container.querySelectorAll('.ws8-t3-mcq').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const isCorrect = btn.dataset.val === 'blue';
+      const resEl = container.querySelector('#ws8-t3-mcq-result');
+      if (isCorrect) {
+        btn.className = 'ws8-t3-mcq btn btn-success btn-sm';
+        container.querySelectorAll('.ws8-t3-mcq').forEach(b => { b.disabled = true; });
+        if (resEl) { resEl.innerHTML = 'Correct &mdash; Color 1 index 9 = Blue, Animation 1 = Steady, C1I 0 = High.'; resEl.style.color = '#4ade80'; }
+        const actionWrap = container.querySelector('#ws8-t3-action-wrap');
+        if (actionWrap) { actionWrap.style.opacity = '1'; actionWrap.style.pointerEvents = ''; }
+        _ws8T3McqDone = true;
+      } else {
+        btn.className = 'ws8-t3-mcq btn btn-error btn-sm opacity-50 cursor-default';
+        btn.disabled = true;
+        if (resEl) { resEl.textContent = 'Not quite — check the Color 1 field in the table.'; resEl.style.color = '#ef4444'; }
       }
-      if (_ws8ChStep === 1 && det2 && !_ws8LastCapState) {
-        _ws8ChStep = 2;
-        updateWs8Steps();
-      }
-      if (_ws8ChStep === 2 && temp3 !== null && temp3 > 15) {
-        _ws8ChStep = 3;
-        _ws8ChDone = true;
-        updateWs8Steps();
-        const result = container.querySelector('#ws8-ch-result');
-        if (result) {
-          result.className = 'rounded-lg p-3 text-center font-bold text-base bg-success/20 text-success border border-success/40';
-          result.textContent = '✓ Assessment complete! All three steps completed in order. Well done!';
-          result.classList.remove('hidden');
-        }
-      }
-    }
-    _ws8LastPhotoState = det1;
-    _ws8LastCapState = det2;
+    });
   });
 
-  const ws8Reset = container.querySelector('#ws8-ch-reset');
-  if (ws8Reset) {
-    ws8Reset.addEventListener('click', () => {
-      _ws8ChStep = 0; _ws8ChDone = false;
-      _ws8LastPhotoState = false; _ws8LastCapState = false;
-      updateWs8Steps();
-      const result = container.querySelector('#ws8-ch-result');
-      if (result) result.classList.add('hidden');
+  // ── Task 3: PDout Write ───────────────────────────────────────────────────
+  const pdoutWriteBtn = container.querySelector('#ws8-pdout-write-btn');
+  if (pdoutWriteBtn) {
+    pdoutWriteBtn.addEventListener('click', async () => {
+      pdoutWriteBtn.disabled = true;
+      st8('ws8-pdout-status', 'Writing…', '#94a3b8');
+      const base = window.IO_LINK_API_BASE || '';
+      const r = await fetch(base + '/api/io-link/port/4/pdout', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ value: '000109' }),
+      }).then(res => res.json()).catch(() => null);
+      if (r?.success) {
+        _ws8PdoutWritten = true;
+        pdoutWriteBtn.className = 'btn btn-info btn-sm opacity-70 cursor-default';
+        pdoutWriteBtn.textContent = '✓ Blue Written';
+        st8('ws8-pdout-status', 'Observe the blue light, then restore green', '#94a3b8');
+        const rb = container.querySelector('#ws8-pdout-restore-btn');
+        if (rb) rb.disabled = false;
+      } else {
+        st8('ws8-pdout-status', '✗ Write failed — retry', '#ef4444');
+        pdoutWriteBtn.disabled = false;
+      }
+    });
+  }
+
+  // ── Task 3: PDout Restore ─────────────────────────────────────────────────
+  const pdoutRestoreBtn = container.querySelector('#ws8-pdout-restore-btn');
+  if (pdoutRestoreBtn) {
+    pdoutRestoreBtn.addEventListener('click', async () => {
+      pdoutRestoreBtn.disabled = true;
+      st8('ws8-pdout-status', 'Restoring…', '#94a3b8');
+      const base = window.IO_LINK_API_BASE || '';
+      const r = await fetch(base + '/api/io-link/port/4/pdout', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ value: '000100' }),
+      }).then(res => res.json()).catch(() => null);
+      if (r?.success) {
+        _ws8PdoutRestored = true;
+        checkTaskUnlocks();
+        pdoutRestoreBtn.className = 'btn btn-success btn-sm opacity-70 cursor-default';
+        pdoutRestoreBtn.textContent = '✓ Restored';
+        st8('ws8-pdout-status', '✓ Green Steady restored', '#4ade80');
+      } else {
+        st8('ws8-pdout-status', '✗ Restore failed — retry', '#ef4444');
+        pdoutRestoreBtn.disabled = false;
+      }
+    });
+  }
+
+  // ── Task 4: Knowledge Check ───────────────────────────────────────────────
+  const ANSWERS = { 'ws8-q1': 'c', 'ws8-q2': 'a', 'ws8-q3': 'b', 'ws8-q4': 'c' };
+  const qsBtn = container.querySelector('#ws8-qs-submit');
+  if (qsBtn) {
+    qsBtn.addEventListener('click', () => {
+      let correct = 0; let allAnswered = true;
+      Object.entries(ANSWERS).forEach(([name, ans]) => {
+        const sel = container.querySelector('input[name="' + name + '"]:checked');
+        if (!sel) { allAnswered = false; return; }
+        if (sel.value === ans) correct++;
+      });
+      const res = container.querySelector('#ws8-qs-result');
+      if (!allAnswered) {
+        if (res) { res.className = 'rounded-lg px-3 py-2 text-sm bg-warning/10 border border-warning/40 text-warning'; res.textContent = 'Answer all four questions first.'; res.classList.remove('hidden'); }
+        return;
+      }
+      const pass = correct >= 3;
+      if (pass) { _ws8QsSubmitted = true; qsBtn.disabled = true; checkTaskUnlocks(); }
+      if (res) {
+        res.className = 'rounded-lg px-3 py-2 text-sm ' + (pass ? 'bg-success/10 border border-success/40 text-success' : 'bg-error/10 border border-error/40 text-error');
+        res.textContent = correct + '/4 correct' + (pass ? ' — well done!' : ' — review the highlighted questions and try again.');
+        res.classList.remove('hidden');
+      }
+    });
+  }
+
+  // ── Sign-off ──────────────────────────────────────────────────────────────
+  const CK_IDS = ['ws8-ck1','ws8-ck2','ws8-ck3','ws8-ck4','ws8-ck5'];
+  function checkSignoff() {
+    const allTicked = CK_IDS.every(k => container.querySelector('#' + k)?.checked);
+    const btn = container.querySelector('#ws8-complete-btn');
+    if (btn) btn.disabled = !allTicked;
+  }
+  CK_IDS.forEach(id => {
+    const el = container.querySelector('#' + id);
+    if (el) el.addEventListener('change', checkSignoff);
+  });
+
+  const completeBtn = container.querySelector('#ws8-complete-btn');
+  if (completeBtn) {
+    completeBtn.addEventListener('click', () => {
+      completeBtn.disabled = true;
+      completeBtn.className = 'btn btn-success btn-sm gap-2 mt-1 opacity-70 cursor-default';
+      const msg = container.querySelector('#ws8-complete-msg');
+      if (msg) msg.classList.remove('hidden');
     });
   }
 }
@@ -5015,6 +6466,21 @@ function initLiveWs8(container) {
 function initWorksheetInteractivity(container) {
   if (!container) container = document.getElementById('worksheets-root');
   if (!container) return;
+
+  // Generic instant feedback for radio MCQs that carry data-correct attribute
+  container.querySelectorAll('div[data-correct]').forEach(block => {
+    const correct = block.dataset.correct;
+    const feedbackEl = document.createElement('div');
+    feedbackEl.className = 'hidden mt-2 rounded-lg p-2 text-sm';
+    block.appendChild(feedbackEl);
+    block.querySelectorAll('input[type="radio"]').forEach(radio => {
+      radio.addEventListener('change', () => {
+        const isCorrect = radio.value === correct;
+        feedbackEl.className = `mt-2 rounded-lg p-2 text-sm ${isCorrect ? 'bg-success/10 border border-success/30 text-success' : 'bg-error/10 border border-error/30 text-error'}`;
+        feedbackEl.textContent = isCorrect ? '✓ Correct!' : '✗ Not quite — re-read the section above and try again.';
+      });
+    });
+  });
 
   // green completion styling for any .kit-item checkboxes on the page
   container.querySelectorAll('.kit-item').forEach(label => {
@@ -5040,8 +6506,8 @@ function initWorksheetInteractivity(container) {
   else if (container.querySelector('#ws3-chart'))         initLiveWs3(container);        // WS4 — capacitive
   else if (container.querySelector('#ws4-chart'))         initLiveWs4(container);        // WS5 — temperature
   else if (container.querySelector('#ws5-live-panel'))    initLiveWs5(container);        // WS6 — light stack
-  else if (container.querySelector('#ws7-ch-p1'))         initLiveWs7(container);        // WS7 — fault finding
-  else if (container.querySelector('#ws8-ch-s1'))         initLiveWs8(container);        // WS8 — assessment
+  else if (container.querySelector('#ws7-start-row'))     initLiveWs7(container);        // WS7 — fault finding
+  else if (container.querySelector('#ws8-live-panel'))    initLiveWs8(container);        // WS8 — assessment
   else stopLiveData();
 }
 

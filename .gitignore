@@ -32,3 +32,10 @@ matrix-template/
 
 # Temp
 commit_msg.txt
+docs/~$*
+docs/e2e_iodd_temp/
+scripts/debug_extract.mjs
+scripts/extract_worksheets.mjs
+
+# Generated output (recreate with: cd print && node generate_pdfs.mjs)
+print/output/
