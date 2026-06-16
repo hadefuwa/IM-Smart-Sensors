@@ -6119,7 +6119,7 @@ app.innerHTML = `
     <div class="flex flex-1 min-h-0 bg-base-100 overflow-hidden">
 
       <!-- Sidebar -->
-      <aside id="sidebar" class="w-72 flex-shrink-0 border-r border-base-300 bg-base-200 flex flex-col overflow-hidden min-h-0 transition-[width] duration-300 ease-in-out">
+      <aside id="sidebar" class="relative w-72 flex-shrink-0 border-r border-base-300 bg-base-200 flex flex-col overflow-hidden min-h-0 transition-[width] duration-300 ease-in-out">
         <!-- Scrollable menu container -->
         <div class="flex-1 min-h-0 overflow-y-auto overscroll-contain">
           <ul class="menu p-4 gap-1" id="sidebar-menu">
@@ -6198,6 +6198,13 @@ app.innerHTML = `
           <li><a href="#" data-page="about">About / Help</a></li>
           -->
           </ul>
+        </div>
+        <!-- Scroll hint: bouncing chevron fades out when sidebar is fully scrolled -->
+        <style>#sb-hint svg{animation:sb-dn 1.4s ease-in-out infinite}@keyframes sb-dn{0%,100%{transform:translateY(0)}50%{transform:translateY(5px)}}</style>
+        <div id="sb-hint" class="pointer-events-none absolute bottom-0 left-0 right-0 flex justify-center pb-3 pt-10" style="transition:opacity 0.2s">
+          <svg class="w-5 h-5 text-base-content/40" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/>
+          </svg>
         </div>
       </aside>
 
@@ -7373,7 +7380,23 @@ setTimeout(() => {
       if (!dragActive) return;
       dragActive = false;
       sidebar.classList.remove('sidebar-scrolling');
+      updateScrollHint();
     });
+
+    // Scroll hint — gradient computed from actual sidebar bg so it works in both themes
+    const sbHint = document.getElementById('sb-hint');
+    if (sbHint) {
+      sbHint.style.background = `linear-gradient(to bottom,transparent,${getComputedStyle(sidebar).backgroundColor} 70%)`;
+      sidebarScrollContainer.addEventListener('scroll', updateScrollHint, { passive: true });
+      updateScrollHint();
+    }
+  }
+
+  function updateScrollHint() {
+    const hint = document.getElementById('sb-hint');
+    const sc = sidebar && sidebar.querySelector('.overflow-y-auto');
+    if (!hint || !sc) return;
+    hint.style.opacity = (sc.scrollTop + sc.clientHeight >= sc.scrollHeight - 4) ? '0' : '1';
   }
 
   // Drag-to-scroll for main content (X11 touch emulation fires mouse events, not touch events)
