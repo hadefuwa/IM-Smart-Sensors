@@ -1,5 +1,5 @@
 /**
- * Progress page — tracks student progress across CP0001, CP0002, and Further Study.
+ * Progress page — tracks student progress across CP3723, CP7395, and Further Study.
  * Visits are stored in sessionStorage (reset on tab close).
  * Completed chapters from the learn page are read from localStorage (persisted).
  * Students can save the full session report to a JSON file.
@@ -212,8 +212,8 @@ function renderProgress(root) {
       <div class="px-6 py-4 border-b border-base-300">
         <p class="text-xs font-semibold uppercase tracking-wide text-base-content/50 mb-3">Overall Progress</p>
         <div class="flex flex-wrap gap-4">
-          ${buildSummaryRing('worksheets', 'CP0001', cp0001Done, CP0001_TITLES.length)}
-          ${buildSummaryRing('worksheets', 'CP0002', cp0002Done, CP0002_TITLES.length)}
+          ${buildSummaryRing('worksheets', 'CP3723', cp0001Done, CP0001_TITLES.length)}
+          ${buildSummaryRing('worksheets', 'CP7395', cp0002Done, CP0002_TITLES.length)}
         </div>
       </div>
 
@@ -221,7 +221,7 @@ function renderProgress(root) {
       <div class="px-6 py-4 border-b border-base-300">
         <div class="flex items-center justify-between mb-3">
           <div>
-            <span class="font-mono text-xs font-bold text-primary">CP0001</span>
+            <span class="font-mono text-xs font-bold text-primary">CP3723</span>
             <span class="ml-2 text-sm font-semibold text-base-content">Maintenance on Smart Sensors</span>
           </div>
           <span class="badge badge-sm ${cp0001Done === CP0001_TITLES.length ? 'badge-success' : 'badge-ghost'}">${cp0001Done}/${CP0001_TITLES.length}</span>
@@ -234,7 +234,7 @@ function renderProgress(root) {
         </div>
         <a href="#" data-page="worksheets" class="btn btn-outline btn-xs mt-3 gap-1">
           <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
-          Open CP0001
+          Open CP3723
         </a>
       </div>
 
@@ -242,7 +242,7 @@ function renderProgress(root) {
       <div class="px-6 py-4 border-b border-base-300">
         <div class="flex items-center justify-between mb-3">
           <div>
-            <span class="font-mono text-xs font-bold text-secondary">CP0002</span>
+            <span class="font-mono text-xs font-bold text-secondary">CP7395</span>
             <span class="ml-2 text-sm font-semibold text-base-content">Industry 4.0 IO-Link</span>
           </div>
           <span class="badge badge-sm ${cp0002Done === CP0002_TITLES.length ? 'badge-success' : 'badge-ghost'}">${cp0002Done}/${CP0002_TITLES.length}</span>
@@ -255,7 +255,7 @@ function renderProgress(root) {
         </div>
         <a href="#" data-page="cp0002" class="btn btn-outline btn-xs mt-3 gap-1">
           <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
-          Open CP0002
+          Open CP7395
         </a>
       </div>
 

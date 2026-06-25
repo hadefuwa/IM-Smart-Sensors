@@ -1,5 +1,5 @@
 /**
- * CP0001: Maintenance on Smart Sensors
+ * CP3723: Maintenance on Smart Sensors
  * 7 worksheets with embedded live sensor charts, indicators, sliders, and task progress.
  */
 import { markVisited } from './progress-page.js';
@@ -2602,7 +2602,7 @@ const WORKSHEETS = [
     title: 'Final Practical Assessment',
     shortDesc: 'Live-verified tasks across all four IO-Link devices.',
     estimatedTime: 'About 30 min',
-    whyItMatters: 'Sign-off for CP0001 — tasks 1–3 are verified against live sensor data, not just ticked on paper.',
+    whyItMatters: 'Sign-off for CP3723 — tasks 1–3 are verified against live sensor data, not just ticked on paper.',
     relatedDashboard: 'Dashboard: all ports',
     prerequisites: 'Complete Worksheets 1–7',
     contentHtml: `
@@ -2685,7 +2685,7 @@ const WORKSHEETS = [
       <!-- Live 4-port panel -->
       <div id="ws8-live-panel" class="rounded-xl overflow-hidden border border-slate-600/40 mt-3" style="background:#0f172a;font-family:'Courier New',monospace">
         <div class="flex items-center justify-between px-3 py-2" style="background:#1e293b;border-bottom:1px solid #334155">
-          <span style="color:#94a3b8;font-size:0.6rem;font-weight:700;letter-spacing:0.12em">LIVE SYSTEM — CP0001 TRAINING KIT</span>
+          <span style="color:#94a3b8;font-size:0.6rem;font-weight:700;letter-spacing:0.12em">LIVE SYSTEM — CP3723 TRAINING KIT</span>
           <span id="ws8-live-badge" class="badge badge-xs badge-ghost font-mono" style="font-size:0.6rem">OFFLINE</span>
         </div>
         <div class="grid grid-cols-4" style="gap:1px;background:#1e293b">
@@ -2937,7 +2937,7 @@ const WORKSHEETS = [
 
         <!-- Sign-off -->
         <div id="ws8-signoff-wrap" class="rounded-xl border-2 border-success/40 bg-success/5 p-4 space-y-3 transition-opacity duration-300" style="opacity:0.35;pointer-events:none">
-          <p class="text-xs font-bold text-success uppercase tracking-wider">CP0001 Sign-Off Declaration</p>
+          <p class="text-xs font-bold text-success uppercase tracking-wider">CP3723 Sign-Off Declaration</p>
           <div class="space-y-2 text-sm">
             <label class="kit-item flex items-start gap-3 cursor-pointer rounded-xl border-2 border-transparent px-3 py-2 transition-all duration-200"><input id="ws8-ck1" type="checkbox" class="checkbox checkbox-sm checkbox-success flex-shrink-0 mt-0.5"><span>I can identify all four IO-Link devices in this kit by port number, sensor type, and model name</span></label>
             <label class="kit-item flex items-start gap-3 cursor-pointer rounded-xl border-2 border-transparent px-3 py-2 transition-all duration-200"><input id="ws8-ck2" type="checkbox" class="checkbox checkbox-sm checkbox-success flex-shrink-0 mt-0.5"><span>I have physically triggered each sensor and observed the live response on this page</span></label>
@@ -2947,9 +2947,9 @@ const WORKSHEETS = [
           </div>
           <button id="ws8-complete-btn" type="button" class="btn btn-success btn-sm gap-2 mt-1" disabled>
             <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z"/></svg>
-            Submit — CP0001 Complete
+            Submit — CP3723 Complete
           </button>
-          <div id="ws8-complete-msg" class="hidden rounded-lg bg-success/15 border border-success/40 px-4 py-3 text-sm font-semibold text-success text-center">✓ CP0001 signed off. Well done!</div>
+          <div id="ws8-complete-msg" class="hidden rounded-lg bg-success/15 border border-success/40 px-4 py-3 text-sm font-semibold text-success text-center">✓ CP3723 signed off. Well done!</div>
         </div>
 
       </div>
@@ -2975,7 +2975,7 @@ function buildIndexHtml() {
   return `
     <div class="worksheets-index max-w-5xl mx-auto space-y-6 relative min-h-full py-2 rounded-2xl" style="background:linear-gradient(160deg,hsl(var(--b2)) 0%,hsl(var(--b3)) 40%,hsl(var(--p)/0.06) 100%);">
       <header class="flex items-center gap-3 px-4 py-2 rounded-xl bg-primary/10 border border-primary/30">
-        <span class="badge badge-primary badge-outline font-mono text-xs shrink-0">CP0001</span>
+        <span class="badge badge-primary badge-outline font-mono text-xs shrink-0">CP3723</span>
         <h1 class="text-base font-bold text-base-content tracking-tight truncate">Maintenance on Smart Sensors</h1>
         <span class="text-xs text-base-content/50 ml-auto shrink-0 hidden sm:inline">${TOTAL} worksheets</span>
       </header>

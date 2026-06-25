@@ -1,8 +1,8 @@
 /**
- * CP0002: Industry 4.0 IO-Link
+ * CP7395: Industry 4.0 IO-Link
  * 7 worksheets — engineering level: system brief, architecture, protocol, integration, business case.
  * Audience: engineers, system integrators, HNC/degree students.
- * Prerequisite: CP0001 recommended.
+ * Prerequisite: CP3723 recommended.
  */
 import { markVisited } from './progress-page.js';
 
@@ -68,7 +68,7 @@ const WORKSHEETS = [
     estimatedTime: 'About 15 min',
     whyItMatters: 'Every engineering project starts with a system brief. Before writing code or interpreting data you need to know what hardware is on the bench, how it\'s networked, and what each component\'s role is in the overall architecture.',
     relatedDashboard: 'Edge Device page, Admin / Connection Diagnostics',
-    prerequisites: 'CP0001 recommended',
+    prerequisites: 'CP3723 recommended',
     contentHtml: `
       <p class="text-base-content/90 leading-relaxed text-base">In front of you is a complete Industry 4.0 sensor stack. Identify each component on the bench, tick it off, then confirm it's live on screen before moving to the questions.</p>
 
@@ -271,7 +271,7 @@ const WORKSHEETS = [
     whyItMatters: 'Understanding the full data path — from IO-Link sensor through the edge device to your browser — is the foundation of any Industry 4.0 integration. The same architecture pattern is used in industrial IoT platforms at scale.',
     relatedLearn: '',
     relatedDashboard: 'Edge Device page, Admin / Connection Diagnostics',
-    prerequisites: 'CP0001 recommended',
+    prerequisites: 'CP3723 recommended',
     contentHtml: `
       <p class="text-base-content/90 leading-relaxed">This app is a real Industry 4.0 system running on a Raspberry Pi edge device. Three layers talk to each other in real time:</p>
 
@@ -417,7 +417,7 @@ const WORKSHEETS = [
     whyItMatters: 'Every IO-Link sensor sends a raw binary process data (PDin) payload. The master delivers it as a hex string; the backend decodes it into human-readable values. Understanding this decode layer is essential for integrating sensors into PLCs, historians, and digital twin platforms.',
     relatedLearn: '',
     relatedDashboard: 'Dashboard: Active Port Details (Raw PDin)',
-    prerequisites: 'Complete CP0002 Worksheet 1',
+    prerequisites: 'Complete CP7395 Worksheet 1',
     contentHtml: `
       <p class="text-base-content/90 leading-relaxed">Process data (PDin) arrives as a raw byte string from the AL1350. The backend's <code class="font-mono text-xs bg-base-300 px-1 rounded">decoder.py</code> parses each device type differently based on its IODD specification.</p>
 
@@ -569,7 +569,7 @@ const WORKSHEETS = [
     whyItMatters: 'Mapping IO-Link features to real maintenance problems is how you make the ROI case for an Industry 4.0 investment — turning raw protocol features into tangible operational outcomes.',
     relatedLearn: '',
     relatedDashboard: 'Dashboard: Port status and events',
-    prerequisites: 'Complete CP0002 Worksheets 1–2',
+    prerequisites: 'Complete CP7395 Worksheets 1–2',
     contentHtml: `
       <p class="text-base-content/90 leading-relaxed">Match the maintenance problem to the IO-Link feature that addresses it.</p>
 
@@ -710,7 +710,7 @@ const WORKSHEETS = [
     shortDesc: 'Read raw hex bytes, apply data types and scale factors.',
     estimatedTime: 'About 20 min',
     whyItMatters: 'Every ISDU read returns raw hex. Without knowing the data type and scale, the number is meaningless. This is the skill that makes parameter access useful rather than just possible.',
-    prerequisites: 'CP0002 Worksheets 1–4',
+    prerequisites: 'CP7395 Worksheets 1–4',
     contentHtml: `
       <p class="text-base-content/90 leading-relaxed text-base">When you read a parameter via IO-Link acyclic access (ISDU), the device returns raw bytes in hexadecimal. This worksheet explains how to interpret those bytes — from hex digits to decimal to an engineering value with units.</p>
 
@@ -900,7 +900,7 @@ const WORKSHEETS = [
     whyItMatters: 'Routing the right data to the right destination — PLC scan cycle, historian, CMMS — is a core system integration task. Misclassifying data types leads to missed faults or overloaded controllers.',
     relatedLearn: '',
     relatedDashboard: 'Dashboard: Port Details, Events',
-    prerequisites: 'Complete CP0002 Worksheets 1–3',
+    prerequisites: 'Complete CP7395 Worksheets 1–3',
     contentHtml: `
       <p class="text-base-content/90 leading-relaxed">Classify each item below, then answer the routing question.</p>
 
@@ -1002,7 +1002,7 @@ const WORKSHEETS = [
     whyItMatters: 'IO-Link data doesn\'t automatically appear in a PLC — it must be mapped through the master\'s process data image. Understanding this mapping is essential for commissioning and for designing HMI alarm screens.',
     relatedLearn: '',
     relatedDashboard: 'Dashboard: Port Status, Simulate Fault',
-    prerequisites: 'Complete CP0002 Worksheets 1–4',
+    prerequisites: 'Complete CP7395 Worksheets 1–4',
     contentHtml: `
       <!-- PLC vs app architecture comparison diagram -->
       <div class="rounded-xl border border-base-300 bg-base-200 p-3 mb-4">
@@ -1135,7 +1135,7 @@ const WORKSHEETS = [
     whyItMatters: 'Quantifying the MTTR reduction and uptime gain is how you justify IO-Link investment to management. This worksheet walks through a realistic calculation.',
     relatedLearn: '',
     relatedDashboard: 'Dashboard: Simulate Fault, Active Port Details',
-    prerequisites: 'Complete CP0002 Worksheets 1–5',
+    prerequisites: 'Complete CP7395 Worksheets 1–5',
     contentHtml: `
       <p class="text-base-content/90 leading-relaxed"><strong class="text-base-content">Scenario:</strong> A production line has 40 sensors. On average, each sensor causes one fault per year. With standard sensors, locating and reconfiguring after a fault takes 35 minutes. With IO-Link, the HMI identifies the port and fault type instantly, and parameters are restored automatically — total time: 8 minutes.</p>
 
@@ -1246,7 +1246,7 @@ const WORKSHEETS = [
     estimatedTime: 'About 15 min',
     whyItMatters: 'Physical labels wear off. Maintenance records go missing. The Vendor ID and Device ID embedded in every IO-Link sensor mean you can always confirm what is connected, order the exact right spare, and decode PDin correctly — without leaving the dashboard.',
     relatedDashboard: 'IO-Link Master page — Port Status cards',
-    prerequisites: 'CP0001 Chapter 8 recommended',
+    prerequisites: 'CP3723 Chapter 8 recommended',
     contentHtml: `
       <p class="text-base-content/90 leading-relaxed text-base"><strong class="text-base-content">Scenario:</strong> During a planned shutdown a technician discovers that the physical label on the sensor connected to Port 1 has completely worn away. There is no maintenance record for this port. Before ordering a spare and signing off the job, you must positively identify the device using the app — without touching the physical unit.</p>
 
@@ -1369,8 +1369,8 @@ const WORKSHEETS = [
     shortDesc: 'Physics, PDin encoding, hex decode calculations, and calibration offset engineering.',
     estimatedTime: 'About 25 min',
     whyItMatters: 'Understanding how the PT100 element works — and how the sensor encodes its reading into IO-Link PDin — lets you decode raw data without a datasheet, calculate expected resistance values to fault-find wiring, and properly engineer calibration offset corrections rather than guessing.',
-    relatedDashboard: 'CP0001 Worksheet 5 — Temperature Sensor',
-    prerequisites: 'CP0001 Worksheet 5 recommended',
+    relatedDashboard: 'CP3723 Worksheet 5 — Temperature Sensor',
+    prerequisites: 'CP3723 Worksheet 5 recommended',
     contentHtml: `
       <p class="text-base-content/90 leading-relaxed text-base">The IFM TV7105 on Port 3 is built around a PT100 resistance temperature detector. The "PT" means platinum, the "100" means its resistance is exactly 100 Ω at 0 °C. Everything the sensor transmits via IO-Link traces back to how that resistance changes with temperature — and how the sensor encodes that number into a compact binary PDin payload.</p>
 
@@ -1560,10 +1560,10 @@ const WORKSHEETS = [
     shortDesc: 'How the 3-byte PDout hex is structured, what every bit field means, and how to decode or build any CL50 command by hand.',
     estimatedTime: 'About 20 min',
     whyItMatters: 'The CL50 exposes all its state in 24 bits. Once you can read and write those bits directly you can control any IO-Link output device — the encoding pattern repeats across all PDout-capable devices. It also prepares you for PLC integration, where you write these values in ladder logic or structured text rather than through a UI.',
-    relatedDashboard: 'CP0001 Worksheet 6 — CL50 Light Stack',
-    prerequisites: 'CP0001 Worksheet 6 required',
+    relatedDashboard: 'CP3723 Worksheet 6 — CL50 Light Stack',
+    prerequisites: 'CP3723 Worksheet 6 required',
     contentHtml: `
-      <p class="text-base-content/90 leading-relaxed text-base">In CP0001 Worksheet 6 the dropdown menus and preset buttons built the PDout hex for you. This worksheet tears that three-byte value apart — bit by bit — so you can decode any CL50 state you see on the dashboard and calculate the correct command for any light configuration by hand.</p>
+      <p class="text-base-content/90 leading-relaxed text-base">In CP3723 Worksheet 6 the dropdown menus and preset buttons built the PDout hex for you. This worksheet tears that three-byte value apart — bit by bit — so you can decode any CL50 state you see on the dashboard and calculate the correct command for any light configuration by hand.</p>
 
       <!-- What PDout is -->
       <div class="rounded-xl border border-base-300 bg-base-200 p-4 mt-4 space-y-2">
@@ -1789,7 +1789,7 @@ const WORKSHEETS = [
       <!-- Firmware note -->
       <div class="rounded-lg border border-warning/40 bg-warning/5 p-3 mt-4 text-sm space-y-1">
         <p class="font-bold text-warning">Firmware limitation — Animation mode 4 (Intensity Sweep)</p>
-        <p class="text-base-content/80">CL50 firmware v1.0.2 does not execute PDout animation=4. The AL1350 accepts the write without error but the light simply holds steady at the specified C1I intensity — it does not sweep. The HMI works around this by running a software loop in the backend that rapidly steps through intensity values (High → Medium → Low → Medium → High) using animation=1 (Steady). This produces the breathing effect you see when pressing the "Green Pulse" button in CP0001 Worksheet 6. If you calculate a hex with animation=4 (e.g. <code class="font-mono bg-base-300 px-1 rounded">180401</code>) and write it directly to the AL1350, the light will turn on steady — not sweep.</p>
+        <p class="text-base-content/80">CL50 firmware v1.0.2 does not execute PDout animation=4. The AL1350 accepts the write without error but the light simply holds steady at the specified C1I intensity — it does not sweep. The HMI works around this by running a software loop in the backend that rapidly steps through intensity values (High → Medium → Low → Medium → High) using animation=1 (Steady). This produces the breathing effect you see when pressing the "Green Pulse" button in CP3723 Worksheet 6. If you calculate a hex with animation=4 (e.g. <code class="font-mono bg-base-300 px-1 rounded">180401</code>) and write it directly to the AL1350, the light will turn on steady — not sweep.</p>
       </div>
     `
   }
@@ -1816,7 +1816,7 @@ function buildIndexHtml() {
         <svg viewBox="0 0 100 100" fill="none" class="text-secondary"><circle cx="50" cy="50" r="35" stroke="currentColor" stroke-width="1.5"/><path d="M50 15v70M15 50h70M26 26l48 48M74 26L26 74" stroke="currentColor" stroke-width="0.8"/></svg>
       </div>
       <header class="flex items-center gap-3 px-4 py-2 rounded-xl bg-secondary/10 border border-secondary/30">
-        <span class="badge badge-secondary badge-outline font-mono text-xs shrink-0">CP0002</span>
+        <span class="badge badge-secondary badge-outline font-mono text-xs shrink-0">CP7395</span>
         <h1 class="text-base font-bold text-base-content tracking-tight truncate">Industry 4.0 IO-Link</h1>
         <span class="text-xs text-base-content/50 ml-auto shrink-0 hidden sm:inline">${TOTAL} worksheets</span>
       </header>

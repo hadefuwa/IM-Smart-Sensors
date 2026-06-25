@@ -5268,14 +5268,14 @@ function renderAboutPage() {
 
     <section class="space-y-4">
       
-      <!-- Product Information - IM0004 -->
+      <!-- Product Information - IM4330 -->
       <div class="card bg-base-200 shadow-xl">
         <div class="card-body">
           <h2 class="card-title">
             <svg class="w-6 h-6 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z"/>
             </svg>
-            Product Information - IM0004
+            Product Information - IM4330
           </h2>
           
           <div class="divider"></div>
@@ -5291,7 +5291,7 @@ function renderAboutPage() {
                 <div class="stats stats-horizontal shadow bg-base-200">
                   <div class="stat">
                     <div class="stat-title">Model</div>
-                    <div class="stat-value text-lg text-primary">IM0004</div>
+                    <div class="stat-value text-lg text-primary">IM4330</div>
                     <div class="stat-desc">Industrial Maintenance</div>
                   </div>
                   <div class="stat">
@@ -5310,8 +5310,8 @@ function renderAboutPage() {
                     <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"/>
                   </svg>
                   <div>
-                    <h3 class="font-bold">Industrial Maintenance Closed Loop PID Control System</h3>
-                    <div class="text-xs mt-1">Curriculum Codes: CP0539 & CP6773</div>
+                    <h3 class="font-bold">IO-Link for Industrial Maintenance: Smart Sensors</h3>
+                    <div class="text-xs mt-1">Curriculum Codes: CP7395 & CP3723</div>
                   </div>
                 </div>
               </div>
@@ -5327,36 +5327,36 @@ function renderAboutPage() {
             <div class="collapse-content">
               <div class="grid gap-2 md:grid-cols-2">
                 <div class="flex items-center gap-2">
-                  <span class="badge badge-primary">PLC</span>
-                  <span class="text-sm">Siemens S7-1200 PLC</span>
+                  <span class="badge badge-primary">Master</span>
+                  <span class="text-sm">IFM AL1350 IO-Link Master</span>
                 </div>
                 <div class="flex items-center gap-2">
                   <span class="badge badge-secondary">HMI</span>
-                  <span class="text-sm">Unified Basic HMI</span>
+                  <span class="text-sm">Raspberry Pi + WaveShare Touchscreen</span>
                 </div>
                 <div class="flex items-center gap-2">
                   <span class="badge badge-accent">Sensor</span>
-                  <span class="text-sm">Turbine Flow Sensor</span>
-                </div>
-                <div class="flex items-center gap-2">
-                  <span class="badge badge-warning">Valve</span>
-                  <span class="text-sm">Proportional Control Valve</span>
+                  <span class="text-sm">Contrinex Photoelectric Sensor</span>
                 </div>
                 <div class="flex items-center gap-2">
                   <span class="badge badge-info">Sensor</span>
-                  <span class="text-sm">IFM Temperature Sensor</span>
+                  <span class="text-sm">Omron Inductive Proximity Sensor</span>
                 </div>
                 <div class="flex items-center gap-2">
-                  <span class="badge badge-success">Switch</span>
-                  <span class="text-sm">Float Switches</span>
+                  <span class="badge badge-warning">Sensor</span>
+                  <span class="text-sm">Carlo Gavazzi / RS PRO Capacitive Sensor</span>
                 </div>
                 <div class="flex items-center gap-2">
                   <span class="badge badge-error">Sensor</span>
-                  <span class="text-sm">Proximity Sensor</span>
+                  <span class="text-sm">IFM TV7105 PT100 Temperature Sensor</span>
                 </div>
                 <div class="flex items-center gap-2">
-                  <span class="badge badge-primary">Pump</span>
-                  <span class="text-sm">Immersion Pump</span>
+                  <span class="badge badge-success">Output</span>
+                  <span class="text-sm">Banner CL50 Pro RGB Light Stack</span>
+                </div>
+                <div class="flex items-center gap-2">
+                  <span class="badge badge-primary">Network</span>
+                  <span class="text-sm">MQTT Broker (Mosquitto)</span>
                 </div>
               </div>
             </div>
@@ -5397,25 +5397,25 @@ function renderAboutPage() {
             <div class="collapse-content">
               <div class="stat bg-base-200 rounded-box shadow">
                 <div class="stat-title">Guided Worksheets</div>
-                <div class="stat-value text-3xl text-primary">13+</div>
-                <div class="stat-desc">Comprehensive training materials</div>
+                <div class="stat-value text-3xl text-primary">20</div>
+                <div class="stat-desc">Across two curriculums (CP3723 &amp; CP7395)</div>
               </div>
               <div class="mt-3 space-y-2">
                 <div class="flex items-center gap-2">
                   <span class="badge badge-primary">Theory</span>
-                  <span class="text-sm">Closed-loop control theory</span>
+                  <span class="text-sm">IO-Link &amp; Industry 4.0 fundamentals</span>
                 </div>
                 <div class="flex items-center gap-2">
-                  <span class="badge badge-secondary">Diagnostics</span>
-                  <span class="text-sm">Component diagnostics</span>
+                  <span class="badge badge-secondary">Config</span>
+                  <span class="text-sm">Device commissioning &amp; ISDU parameters</span>
                 </div>
                 <div class="flex items-center gap-2">
-                  <span class="badge badge-accent">Faults</span>
-                  <span class="text-sm">Fault scenarios</span>
+                  <span class="badge badge-accent">Data</span>
+                  <span class="text-sm">Decoding process, service &amp; event data</span>
                 </div>
                 <div class="flex items-center gap-2">
                   <span class="badge badge-warning">Troubleshooting</span>
-                  <span class="text-sm">Real-world troubleshooting simulations</span>
+                  <span class="text-sm">Live fault diagnosis &amp; sensor replacement</span>
                 </div>
               </div>
             </div>
@@ -5435,25 +5435,25 @@ function renderAboutPage() {
                   </svg>
                   <div>
                     <h3 class="font-bold">Built-in Fault Simulation</h3>
-                    <p class="text-sm">Software-based faults and hardware fault simulation via removable wiring</p>
+                    <p class="text-sm">Faults injected live to the sensors via IO-Link ISDU, with auto-restore on exit</p>
                   </div>
                 </div>
                 <div class="space-y-2">
                   <div class="flex items-center gap-2">
                     <input type="checkbox" class="checkbox checkbox-error checkbox-sm" checked disabled />
-                    <span class="text-sm">Emergency stops</span>
+                    <span class="text-sm">Inverted output logic (NC)</span>
                   </div>
                   <div class="flex items-center gap-2">
                     <input type="checkbox" class="checkbox checkbox-warning checkbox-sm" checked disabled />
-                    <span class="text-sm">PID setpoint issues</span>
+                    <span class="text-sm">Temperature calibration drift</span>
                   </div>
                   <div class="flex items-center gap-2">
                     <input type="checkbox" class="checkbox checkbox-info checkbox-sm" checked disabled />
-                    <span class="text-sm">Temperature errors</span>
+                    <span class="text-sm">ISDU misconfiguration</span>
                   </div>
                   <div class="flex items-center gap-2">
                     <input type="checkbox" class="checkbox checkbox-accent checkbox-sm" checked disabled />
-                    <span class="text-sm">Safety interlocks</span>
+                    <span class="text-sm">Communication loss &amp; supply undervoltage</span>
                   </div>
                 </div>
               </div>
@@ -5469,7 +5469,7 @@ function renderAboutPage() {
             <div class="collapse-content">
               <div class="space-y-3">
                 <div class="flex items-center gap-2">
-                  <span class="badge badge-success badge-lg">CE/UL</span>
+                  <span class="badge badge-success badge-lg">CE/RoHS</span>
                   <span class="text-sm font-bold">Compliant Components</span>
                 </div>
                 <div class="flex items-center gap-2">
@@ -5477,8 +5477,8 @@ function renderAboutPage() {
                   <span class="text-sm font-bold">Safe Operation Voltage</span>
                 </div>
                 <div class="flex items-center gap-2">
-                  <span class="badge badge-info badge-lg">Standards</span>
-                  <span class="text-sm font-bold">Educational Equipment Compliance</span>
+                  <span class="badge badge-info badge-lg">IEC 61131-9</span>
+                  <span class="text-sm font-bold">IO-Link Communication Standard</span>
                 </div>
                 <div class="alert alert-success">
                   <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
@@ -5514,15 +5514,15 @@ function renderAboutPage() {
               <div class="stats stats-horizontal shadow bg-base-200">
                 <div class="stat">
                   <div class="stat-title">Length</div>
-                  <div class="stat-value text-lg text-primary">52cm</div>
+                  <div class="stat-value text-lg text-primary">TBC</div>
                 </div>
                 <div class="stat">
                   <div class="stat-title">Width</div>
-                  <div class="stat-value text-lg text-secondary">43.5cm</div>
+                  <div class="stat-value text-lg text-secondary">TBC</div>
                 </div>
                 <div class="stat">
                   <div class="stat-title">Height</div>
-                  <div class="stat-value text-lg text-accent">46.1cm</div>
+                  <div class="stat-value text-lg text-accent">TBC</div>
                 </div>
               </div>
             </div>
@@ -5547,23 +5547,23 @@ function renderAboutPage() {
                   <tbody>
                     <tr>
                       <td class="font-bold">Power Supply</td>
-                      <td>24V DC</td>
+                      <td>24V DC (master &amp; sensors) / 5V DC (Pi)</td>
                       <td><span class="badge badge-success">Standard</span></td>
                     </tr>
                     <tr>
-                      <td class="font-bold">Digital Inputs</td>
-                      <td>14 Inputs</td>
+                      <td class="font-bold">IO-Link Ports</td>
+                      <td>4 configurable ports</td>
                       <td><span class="badge badge-primary">Available</span></td>
                     </tr>
                     <tr>
-                      <td class="font-bold">Digital Outputs</td>
-                      <td>10 Outputs</td>
+                      <td class="font-bold">Communication</td>
+                      <td>IO-Link (IEC 61131-9), REST &amp; MQTT</td>
                       <td><span class="badge badge-primary">Available</span></td>
                     </tr>
                     <tr>
-                      <td class="font-bold">Analog Inputs</td>
-                      <td>2 Inputs (0-10V)</td>
-                      <td><span class="badge badge-info">Available</span></td>
+                      <td class="font-bold">Data Push Rate</td>
+                      <td>500 ms (MQTT) + HTTP fallback</td>
+                      <td><span class="badge badge-info">Real-time</span></td>
                     </tr>
                   </tbody>
                 </table>
@@ -5582,20 +5582,20 @@ function renderAboutPage() {
                 <div class="card-body">
                   <div class="flex items-center justify-between">
                     <div>
-                      <h3 class="font-bold">Siemens Unified Basic Panel</h3>
-                      <p class="text-sm opacity-70">Model: MTP700</p>
+                      <h3 class="font-bold">Raspberry Pi Touch Dashboard</h3>
+                      <p class="text-sm opacity-70">WaveShare Capacitive Touchscreen</p>
                     </div>
-                    <span class="badge badge-lg badge-primary">7" Touchscreen</span>
+                    <span class="badge badge-lg badge-primary">1024×600</span>
                   </div>
                   <div class="divider"></div>
                   <div class="space-y-2">
                     <div class="flex items-center gap-2">
                       <span class="badge badge-success">Display</span>
-                      <span class="text-sm">7" Capacitive Touchscreen</span>
+                      <span class="text-sm">7" Capacitive Touchscreen (kiosk mode)</span>
                     </div>
                     <div class="flex items-center gap-2">
                       <span class="badge badge-info">Features</span>
-                      <span class="text-sm">Real-time monitoring & diagnostics</span>
+                      <span class="text-sm">Live gauges, charts, IODD parameters &amp; diagnostics</span>
                     </div>
                   </div>
                 </div>
@@ -5612,19 +5612,19 @@ function renderAboutPage() {
             <div class="collapse-content">
               <div class="stats stats-horizontal shadow bg-base-200">
                 <div class="stat">
-                  <div class="stat-title">Tank Capacity</div>
-                  <div class="stat-value text-lg text-primary">3.5-4.5L</div>
-                  <div class="stat-desc">Litres</div>
+                  <div class="stat-title">IO-Link Devices</div>
+                  <div class="stat-value text-lg text-primary">5</div>
+                  <div class="stat-desc">Sensors &amp; outputs</div>
                 </div>
                 <div class="stat">
-                  <div class="stat-title">Fluid Type</div>
-                  <div class="stat-value text-lg text-info">Water</div>
-                  <div class="stat-desc">Clean only</div>
+                  <div class="stat-title">Sensor Types</div>
+                  <div class="stat-value text-lg text-info">4</div>
+                  <div class="stat-desc">Photo, prox, cap, temp</div>
                 </div>
                 <div class="stat">
-                  <div class="stat-title">Operation</div>
-                  <div class="stat-value text-lg text-success">Closed-loop</div>
-                  <div class="stat-desc">Circuit</div>
+                  <div class="stat-title">Data Path</div>
+                  <div class="stat-value text-lg text-success">MQTT</div>
+                  <div class="stat-desc">500 ms push</div>
                 </div>
               </div>
             </div>
@@ -6141,8 +6141,8 @@ app.innerHTML = `
               Study
             </span>
           </li>
-          <li><a href="#" data-page="worksheets"><span class="font-mono text-xs opacity-60">CP0001</span> Maintenance on Smart Sensors</a></li>
-          <li><a href="#" data-page="cp0002"><span class="font-mono text-xs opacity-60">CP0002</span> Industry 4.0 IO-Link</a></li>
+          <li><a href="#" data-page="worksheets"><span class="font-mono text-xs opacity-60">CP3723</span> Maintenance on Smart Sensors</a></li>
+          <li><a href="#" data-page="cp0002"><span class="font-mono text-xs opacity-60">CP7395</span> Industry 4.0 IO-Link</a></li>
           <li><a href="#" data-page="learn">Further Study</a></li>
           <li><a href="#" data-page="progress">Student Progress</a></li>
 
@@ -6174,6 +6174,7 @@ app.innerHTML = `
             </span>
           </li>
           <li><a href="#" data-page="settings">Settings</a></li>
+          <li><a href="#" data-page="about">About / Help</a></li>
           <!-- Commented out: other template pages (uncomment to restore)
           <li><a href="#" data-page="hmi-dashboard-1">Electrical Machines</a></li>
           <li><a href="#" data-page="hmi-dashboard-2">Wind Tunnel</a></li>
