@@ -1,0 +1,554 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>IM4330 — P&amp;ID Schematic</title>
+<style>
+:root{
+  --orange:#f58220; --orange-d:#c96910;
+  --blue:#1a5695;   --blue-l:#dbeafe;
+  --purple:#7c3aed; --purple-l:#ede9fe;
+  --green:#15803d;  --green-l:#dcfce7;
+  --amber:#d97706;  --amber-l:#fef3c7;
+  --slate:#52616f;  --charcoal:#1f2933;
+  --panel:rgba(255,255,255,0.88);
+  --r:20px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{
+  font-family:Inter,Segoe UI,sans-serif;
+  color:var(--charcoal);
+  background:
+    radial-gradient(circle at 8% 12%, rgba(245,130,32,.18),transparent 38%),
+    radial-gradient(circle at 90% 88%,rgba(26,86,149,.14),transparent 36%),
+    linear-gradient(145deg,#edf3f8,#d8e6f0);
+  min-height:100vh;
+  padding:28px 20px 40px;
+}
+.diagram{
+  max-width:1380px;
+  margin:0 auto;
+  background:rgba(255,255,255,.6);
+  border:1px solid rgba(255,255,255,.95);
+  border-radius:28px;
+  box-shadow:0 28px 80px rgba(31,41,51,.18);
+  backdrop-filter:blur(14px);
+  overflow:hidden;
+}
+
+/* HEADER */
+.hdr{
+  display:flex;align-items:center;gap:18px;
+  padding:22px 30px;
+  background:linear-gradient(90deg,rgba(255,255,255,.9),rgba(255,255,255,.55));
+  border-bottom:1px solid rgba(82,97,111,.13);
+}
+.logo{
+  width:58px;height:40px;border-radius:11px;
+  background:var(--blue);
+  color:#fff;font-size:10px;font-weight:900;text-align:center;
+  display:grid;place-items:center;line-height:1.25;padding:5px;
+  box-shadow:0 6px 18px rgba(26,86,149,.28);flex-shrink:0;
+}
+.hdr h1{font-size:clamp(15px,2vw,26px);letter-spacing:-.03em;line-height:1.1}
+.hdr p{font-size:12px;color:var(--slate);margin-top:4px}
+.hdr-badge{
+  margin-left:auto;white-space:nowrap;
+  border-radius:999px;padding:8px 16px;
+  background:rgba(26,86,149,.1);border:1px solid rgba(26,86,149,.22);
+  color:var(--blue);font-size:12px;font-weight:800;
+}
+
+/* ZONE LABELS */
+.zone-row{
+  display:flex;align-items:center;gap:0;
+  padding:16px 28px 6px;
+}
+.zlbl{
+  font-size:10px;font-weight:900;text-transform:uppercase;
+  letter-spacing:.1em;color:var(--slate);opacity:.65;
+  text-align:center;
+}
+.zs{width:296px;flex-shrink:0}
+.zb{width:72px;flex-shrink:0}
+.zm{width:250px;flex-shrink:0}
+.ze{width:56px;flex-shrink:0}
+.zp{width:246px;flex-shrink:0}
+.zh{width:56px;flex-shrink:0}
+.zi{flex:1}
+
+/* SCHEMATIC ROW — flex, each section is a direct child */
+.sch{
+  display:flex;
+  align-items:stretch;
+  gap:0;
+  padding:0 28px 28px;
+}
+
+/* SENSORS */
+.sens{
+  width:296px;flex-shrink:0;
+  display:flex;flex-direction:column;
+  gap:14px;
+}
+/* Fixed 110px height per card so bus SVG y-coords are exact:
+   4 × 110 + 3 × 14 = 482px total, centres at y = 55, 179, 303, 427 */
+.sc{
+  height:110px;flex-shrink:0;
+  background:var(--panel);
+  border:1px solid rgba(255,255,255,.95);
+  border-radius:var(--r);
+  box-shadow:0 10px 28px rgba(31,41,51,.09);
+  display:grid;
+  grid-template-columns:44px 1fr auto;
+  align-items:center;gap:11px;
+  padding:0 14px;
+  overflow:hidden;
+  position:relative;
+}
+.sc-bar{position:absolute;top:0;left:0;right:0;height:4px;border-radius:var(--r) var(--r) 0 0}
+.si{width:40px;height:40px;border-radius:12px;display:grid;place-items:center;font-size:20px}
+.sn{font-size:13px;font-weight:800;line-height:1.2}
+.sm{font-size:10.5px;color:var(--slate);margin-top:2px;font-weight:600}
+.sp{
+  display:inline-block;margin-top:5px;
+  border-radius:999px;padding:3px 7px;
+  font-size:9px;font-weight:800;
+  background:var(--purple-l);color:#5b21b6;
+}
+.isa-w{display:flex;flex-direction:column;align-items:center;gap:3px;flex-shrink:0}
+.isa{
+  width:44px;height:44px;border-radius:50%;
+  border:2px solid var(--blue);background:#fff;
+  position:relative;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+}
+.isa::after{
+  content:'';position:absolute;
+  left:3px;right:3px;top:50%;height:1.5px;
+  background:var(--blue);opacity:.38;
+}
+.isa-d{border-style:dashed}
+.it{font-size:9px;font-weight:900;color:var(--blue);z-index:1;line-height:1;margin-bottom:1px}
+.ib{font-size:9px;font-weight:700;color:var(--blue);z-index:1;line-height:1;margin-top:1px}
+.ptag{font-size:9px;font-weight:800;color:var(--blue);letter-spacing:.03em}
+
+/* IO-LINK BUS CONNECTOR */
+.bus{width:72px;flex-shrink:0;align-self:stretch;position:relative}
+.bus svg{width:100%;height:100%;overflow:visible;display:block}
+
+/* MASTER */
+.mst{
+  width:250px;flex-shrink:0;
+  background:var(--panel);
+  border:1px solid rgba(255,255,255,.95);
+  border-radius:var(--r);
+  box-shadow:0 12px 34px rgba(31,41,51,.10);
+  align-self:center;overflow:hidden;
+}
+.mst-top-bar{height:5px;background:linear-gradient(90deg,var(--orange),#ffb264)}
+.mp{padding:20px}
+.mh{display:flex;align-items:center;gap:13px;margin-bottom:16px}
+.mbox{
+  width:46px;height:62px;border-radius:12px;flex-shrink:0;
+  background:linear-gradient(180deg,#f3f8fc,#d0dde9);
+  border:1px solid rgba(82,97,111,.18);
+  position:relative;
+}
+.mbox::before,.mbox::after{content:'';position:absolute;left:9px;right:9px;height:6px;border-radius:3px;background:var(--orange)}
+.mbox::before{top:12px}.mbox::after{bottom:12px}
+.mn{font-size:18px;font-weight:900;letter-spacing:-.03em}
+.ms{font-size:11px;color:var(--slate);margin-top:3px;font-weight:600}
+.pl{display:flex;flex-direction:column;gap:7px}
+.pr{
+  display:flex;align-items:center;gap:9px;
+  padding:7px 10px;
+  background:rgba(245,130,32,.07);
+  border:1px solid rgba(245,130,32,.18);
+  border-radius:10px;
+}
+.pn{
+  width:26px;height:26px;border-radius:7px;flex-shrink:0;
+  background:linear-gradient(135deg,var(--orange),var(--orange-d));
+  color:#fff;font-size:10px;font-weight:900;
+  display:grid;place-items:center;
+}
+.prn{font-size:11px;font-weight:800}
+.prt{font-size:10px;color:var(--slate)}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:14px}
+.ch{border-radius:999px;padding:5px 9px;font-size:10.5px;font-weight:800;background:rgba(82,97,111,.09);color:var(--slate)}
+.cho{background:rgba(245,130,32,.12);color:#9a4d08}
+.chp{background:var(--purple-l);color:#5b21b6}
+
+/* SIMPLE INLINE CONNECTORS */
+.lc{width:56px;flex-shrink:0;align-self:center;position:relative;height:2px}
+.lc svg{overflow:visible;position:absolute;top:0;left:0;display:block}
+
+/* PI */
+.pi{
+  width:246px;flex-shrink:0;
+  background:var(--panel);
+  border:1px solid rgba(255,255,255,.95);
+  border-radius:var(--r);
+  box-shadow:0 12px 34px rgba(31,41,51,.10);
+  align-self:center;overflow:hidden;
+}
+.pi-bar{height:5px;background:linear-gradient(90deg,var(--green),#22c55e)}
+.pii{padding:18px}
+.pi-hero{
+  border-radius:14px;
+  background:linear-gradient(135deg,#166534,#15803d);
+  color:#fff;padding:16px 18px;
+  position:relative;overflow:hidden;margin-bottom:14px;
+}
+.pi-hero::after{content:'';position:absolute;width:110px;height:110px;right:-30px;bottom:-40px;border-radius:50%;background:rgba(255,255,255,.07)}
+.pil{font-size:9px;text-transform:uppercase;letter-spacing:.12em;font-weight:800;color:rgba(255,255,255,.6)}
+.pit{font-size:22px;font-weight:950;letter-spacing:-.04em;margin-top:4px}
+.piip{display:inline-block;margin-top:10px;border-radius:999px;padding:5px 11px;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.18);font-size:11px;font-weight:800;color:rgba(255,255,255,.9)}
+.svcs{display:flex;flex-direction:column;gap:8px}
+.svc{display:flex;align-items:center;gap:9px;background:rgba(255,255,255,.85);border-radius:11px;padding:8px 10px}
+.svi{width:30px;height:30px;border-radius:8px;flex-shrink:0;display:grid;place-items:center;color:#fff;font-size:9.5px;font-weight:900}
+.svn{font-size:11px;font-weight:800;line-height:1.2}
+.svd{font-size:10px;color:var(--slate)}
+
+/* HMI */
+.hmi{
+  flex:1;min-width:170px;
+  background:var(--panel);
+  border:1px solid rgba(255,255,255,.95);
+  border-radius:var(--r);
+  box-shadow:0 12px 34px rgba(31,41,51,.10);
+  align-self:center;overflow:hidden;
+}
+.hmi-bar{height:5px;background:linear-gradient(90deg,#334155,#64748b)}
+.hmii{padding:18px;display:flex;flex-direction:column;align-items:center}
+.bz{background:#1e293b;border-radius:12px;padding:8px 8px 3px;box-shadow:0 10px 24px rgba(15,23,42,.32);width:100%}
+.scr{background:#0f172a;border-radius:6px;padding:10px;display:flex;flex-direction:column;gap:6px}
+.stitle{font-size:8px;color:rgba(255,255,255,.3);font-weight:700;letter-spacing:.08em;margin-bottom:3px}
+.sb{height:11px;border-radius:4px}
+.std{width:40px;height:14px;background:#334155;border-radius:0 0 5px 5px;margin:0 auto}
+.sbase{width:80px;height:8px;background:#1e293b;border-radius:4px;margin:0 auto}
+.hl{font-size:12px;font-weight:800;margin-top:10px;text-align:center}
+.hs{font-size:10px;color:var(--slate);margin-top:2px;text-align:center}
+.hchips{display:flex;flex-wrap:wrap;gap:5px;justify-content:center;margin-top:12px}
+.hch{border-radius:999px;padding:5px 8px;font-size:10px;font-weight:800;background:rgba(51,65,85,.09);color:#334155}
+
+/* BOTTOM */
+.bot{padding:0 28px 28px;display:flex;flex-direction:column;gap:20px}
+.leg{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.lbox{background:rgba(255,255,255,.56);border:1px solid rgba(255,255,255,.9);border-radius:16px;padding:15px 18px}
+.ltit{font-size:10px;font-weight:900;text-transform:uppercase;letter-spacing:.1em;color:var(--slate);margin-bottom:12px}
+.lr{display:flex;align-items:center;gap:10px;margin-bottom:8px;font-size:12px;font-weight:600}
+.ll{width:32px;height:2.5px;border-radius:2px;flex-shrink:0}
+.lld{background:repeating-linear-gradient(90deg,var(--purple) 0,var(--purple) 5px,transparent 5px,transparent 9px)}
+.lisa{width:30px;height:30px;border-radius:50%;border:2px solid var(--blue);background:#fff;display:grid;place-items:center;flex-shrink:0;font-size:9px;font-weight:900;color:var(--blue);position:relative}
+.lisa::after{content:'';position:absolute;left:2px;right:2px;top:50%;height:1.5px;background:var(--blue);opacity:.35}
+.lisa-d{border-style:dashed}
+.tblsec h2{font-size:14px;font-weight:800;margin-bottom:10px}
+table{width:100%;border-collapse:collapse;font-size:11.5px}
+thead th{background:var(--blue);color:#fff;padding:9px 12px;text-align:left;font-weight:800;font-size:11px;letter-spacing:.03em}
+thead th:first-child{border-radius:10px 0 0 0}thead th:last-child{border-radius:0 10px 0 0}
+tbody tr:nth-child(even){background:rgba(26,86,149,.05)}
+tbody td{padding:8px 12px;border-bottom:1px solid rgba(199,210,222,.38);vertical-align:top}
+td strong{font-weight:800;color:var(--blue)}
+.note{background:rgba(255,255,255,.55);border:1px solid rgba(255,255,255,.9);border-radius:12px;padding:12px 16px;font-size:11.5px;color:var(--slate);line-height:1.6}
+</style>
+</head>
+<body>
+<div class="diagram">
+
+<!-- HEADER -->
+<header class="hdr">
+  <div class="logo">IM<br>4330</div>
+  <div>
+    <h1>P&amp;ID Schematic — IO-Link Smart Sensor Training System</h1>
+    <p>ISA-5.1 style functional schematic &nbsp;·&nbsp; For training purposes only &nbsp;·&nbsp; Issue 1.0</p>
+  </div>
+  <div class="hdr-badge">IEC 61131-9 &nbsp;·&nbsp; IO-Link V1.1</div>
+</header>
+
+<!-- ZONE LABELS -->
+<div class="zone-row">
+  <div class="zlbl zs">Field Devices / Training Panel</div>
+  <div class="zb"></div>
+  <div class="zlbl zm">IO-Link Master</div>
+  <div class="ze"></div>
+  <div class="zlbl zp">Edge Controller</div>
+  <div class="zh"></div>
+  <div class="zlbl zi">Operator Interface</div>
+</div>
+
+<!-- SCHEMATIC -->
+<div class="sch">
+
+  <!-- SENSORS COLUMN: 4 × 110px + 3 × 14px gap = 482px -->
+  <div class="sens">
+
+    <div class="sc">
+      <div class="sc-bar" style="background:var(--purple)"></div>
+      <div class="si" style="background:#f5f0ff">🔵</div>
+      <div>
+        <div class="sn">Proximity Sensor</div>
+        <div class="sm">Omron E2E-X16MB1T12</div>
+        <div class="sm">M18 Inductive · 16 mm Sn</div>
+        <span class="sp">IO-Link COM3</span>
+      </div>
+      <div class="isa-w">
+        <div class="isa"><span class="it">ZS</span><span class="ib">101</span></div>
+        <div class="ptag">PORT 1</div>
+      </div>
+    </div>
+
+    <div class="sc">
+      <div class="sc-bar" style="background:var(--purple)"></div>
+      <div class="si" style="background:#faf5ff">🟣</div>
+      <div>
+        <div class="sn">Capacitive Sensor</div>
+        <div class="sm">RS Pro / Carlo Gavazzi M18</div>
+        <div class="sm">Detects any dielectric</div>
+        <span class="sp">IO-Link COM2</span>
+      </div>
+      <div class="isa-w">
+        <div class="isa"><span class="it">LS</span><span class="ib">201</span></div>
+        <div class="ptag">PORT 2</div>
+      </div>
+    </div>
+
+    <div class="sc">
+      <div class="sc-bar" style="background:var(--purple)"></div>
+      <div class="si" style="background:#fff8f0">🌡️</div>
+      <div>
+        <div class="sn">Temperature Sensor</div>
+        <div class="sm">IFM TV7105</div>
+        <div class="sm">−40 to +150 °C · PT100</div>
+        <span class="sp">IO-Link COM2</span>
+      </div>
+      <div class="isa-w">
+        <div class="isa"><span class="it">TT</span><span class="ib">301</span></div>
+        <div class="ptag">PORT 3</div>
+      </div>
+    </div>
+
+    <div class="sc">
+      <div class="sc-bar" style="background:var(--purple)"></div>
+      <div class="si" style="background:#f0fdf4">🚦</div>
+      <div>
+        <div class="sn">Light Stack</div>
+        <div class="sm">Banner CL50 Pro</div>
+        <div class="sm">RGB · PDout write-only</div>
+        <span class="sp">IO-Link COM2</span>
+      </div>
+      <div class="isa-w">
+        <div class="isa isa-d"><span class="it">XAL</span><span class="ib">401</span></div>
+        <div class="ptag">PORT 4</div>
+      </div>
+    </div>
+
+  </div><!-- /sens -->
+
+  <!-- IO-LINK BUS CONNECTOR SVG
+       Container stretches to match sensors column height (482px).
+       viewBox="0 0 72 482" matches container dimensions.
+       Sensor centres: y=55, 179, 303, 427  (mid of each 110px card + accumulated gaps)
+       Spine at x=36, arrow exits at x=72 from y=241 (midpoint of spine) -->
+  <div class="bus">
+    <svg viewBox="0 0 72 482" preserveAspectRatio="none" aria-hidden="true">
+      <defs>
+        <marker id="ap" markerWidth="9" markerHeight="7" refX="8" refY="3.5" orient="auto" markerUnits="strokeWidth">
+          <path d="M0,0 L0,7 L9,3.5z" fill="#7c3aed"/>
+        </marker>
+      </defs>
+      <!-- 4 horizontal nubs, right edge of sensors (x=0) to spine (x=36) -->
+      <line x1="0"  y1="55"  x2="36" y2="55"  stroke="#7c3aed" stroke-width="2" stroke-dasharray="5 3"/>
+      <line x1="0"  y1="179" x2="36" y2="179" stroke="#7c3aed" stroke-width="2" stroke-dasharray="5 3"/>
+      <line x1="0"  y1="303" x2="36" y2="303" stroke="#7c3aed" stroke-width="2" stroke-dasharray="5 3"/>
+      <line x1="0"  y1="427" x2="36" y2="427" stroke="#7c3aed" stroke-width="2" stroke-dasharray="5 3"/>
+      <!-- Vertical spine -->
+      <line x1="36" y1="55"  x2="36" y2="427" stroke="#7c3aed" stroke-width="2" stroke-dasharray="5 3"/>
+      <!-- Arrow from spine midpoint to master -->
+      <line x1="36" y1="241" x2="70" y2="241" stroke="#7c3aed" stroke-width="2.6" stroke-dasharray="5 3" marker-end="url(#ap)"/>
+      <!-- Label -->
+      <text x="54" y="226" fill="#7c3aed" font-size="7" font-weight="800" text-anchor="middle" font-family="Inter,sans-serif">IO-Link</text>
+      <text x="54" y="236" fill="#7c3aed" font-size="6.5" font-weight="700" text-anchor="middle" font-family="Inter,sans-serif">M12 · 3-wire</text>
+    </svg>
+  </div>
+
+  <!-- IO-LINK MASTER -->
+  <div class="mst">
+    <div class="mst-top-bar"></div>
+    <div class="mp">
+      <div class="mh">
+        <div class="mbox" aria-hidden="true"></div>
+        <div>
+          <div class="mn">IFM AL1350</div>
+          <div class="ms">IO-Link Master · IoT Core</div>
+        </div>
+      </div>
+      <div class="pl">
+        <div class="pr"><div class="pn">P1</div><div><div class="prn">Proximity Sensor</div><div class="prt">Omron E2E · ZS-101</div></div></div>
+        <div class="pr"><div class="pn">P2</div><div><div class="prn">Capacitive Sensor</div><div class="prt">RS Pro M18 · LS-201</div></div></div>
+        <div class="pr"><div class="pn">P3</div><div><div class="prn">Temperature Sensor</div><div class="prt">IFM TV7105 · TT-301</div></div></div>
+        <div class="pr"><div class="pn">P4</div><div><div class="prn">Light Stack</div><div class="prt">Banner CL50 Pro · XAL-401</div></div></div>
+      </div>
+      <div class="chips">
+        <span class="ch cho">192.168.7.4</span>
+        <span class="ch cho">500 ms MQTT</span>
+        <span class="ch chp">REST API</span>
+        <span class="ch">4× Class A</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ETHERNET CONNECTOR -->
+  <div class="lc">
+    <svg width="56" height="2" aria-hidden="true">
+      <defs>
+        <marker id="ab" markerWidth="9" markerHeight="7" refX="8" refY="3.5" orient="auto" markerUnits="strokeWidth">
+          <path d="M0,0 L0,7 L9,3.5z" fill="#1a5695"/>
+        </marker>
+      </defs>
+      <line x1="0" y1="1" x2="55" y2="1" stroke="#1a5695" stroke-width="2.8" marker-end="url(#ab)"/>
+      <text x="28" y="-8" fill="#1a5695" font-size="7" font-weight="800" text-anchor="middle" font-family="Inter,sans-serif">Ethernet</text>
+    </svg>
+  </div>
+
+  <!-- RASPBERRY PI -->
+  <div class="pi">
+    <div class="pi-bar"></div>
+    <div class="pii">
+      <div class="pi-hero">
+        <div class="pil">Edge Device</div>
+        <div class="pit">Raspberry Pi 4</div>
+        <div class="piip">192.168.7.2</div>
+      </div>
+      <div class="svcs">
+        <div class="svc">
+          <div class="svi" style="background:#15803d">M</div>
+          <div><div class="svn">Mosquitto MQTT</div><div class="svd">Receives 500 ms PDin push</div></div>
+        </div>
+        <div class="svc">
+          <div class="svi" style="background:var(--blue)">API</div>
+          <div><div class="svn">FastAPI Backend</div><div class="svd">Decode · ISDU · WebSocket /ws</div></div>
+        </div>
+        <div class="svc">
+          <div class="svi" style="background:var(--purple)">UI</div>
+          <div><div class="svn">Chromium Kiosk</div><div class="svd">HMI → WaveShare touchscreen</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- HDMI + WS CONNECTOR -->
+  <div class="lc">
+    <svg width="56" height="2" aria-hidden="true">
+      <defs>
+        <marker id="ag" markerWidth="9" markerHeight="7" refX="8" refY="3.5" orient="auto" markerUnits="strokeWidth">
+          <path d="M0,0 L0,7 L9,3.5z" fill="#15803d"/>
+        </marker>
+      </defs>
+      <line x1="0" y1="1" x2="55" y2="1" stroke="#15803d" stroke-width="2.8" marker-end="url(#ag)"/>
+      <text x="28" y="-8" fill="#15803d" font-size="7" font-weight="800" text-anchor="middle" font-family="Inter,sans-serif">HDMI / WS</text>
+    </svg>
+  </div>
+
+  <!-- HMI SCREEN -->
+  <div class="hmi">
+    <div class="hmi-bar"></div>
+    <div class="hmii">
+      <div class="bz">
+        <div class="scr">
+          <div class="stitle">HMI DASHBOARD · LIVE</div>
+          <div class="sb" style="width:80%;background:#3b82f6;opacity:.8"></div>
+          <div class="sb" style="width:60%;background:#22c55e;opacity:.8"></div>
+          <div class="sb" style="width:88%;background:#f59e0b;opacity:.75"></div>
+          <div class="sb" style="width:45%;background:#ef4444;opacity:.75"></div>
+          <div class="sb" style="width:70%;background:#8b5cf6;opacity:.7"></div>
+        </div>
+        <div class="std"></div>
+      </div>
+      <div class="sbase"></div>
+      <div class="hl">HMI-001 · WaveShare 1024×600</div>
+      <div class="hs">Capacitive touch · Chromium kiosk</div>
+      <div class="hchips">
+        <span class="hch">WebSocket</span>
+        <span class="hch">500 ms live</span>
+        <span class="hch">ISDU panels</span>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /sch -->
+
+<!-- LEGEND + TABLE -->
+<div class="bot">
+
+  <div class="leg">
+    <div class="lbox">
+      <div class="ltit">Line / Signal Types</div>
+      <div class="lr">
+        <div class="ll lld"></div>
+        IO-Link cable · M12 3-wire · IEC 61131-9 · 24V / 0V / Data
+      </div>
+      <div class="lr">
+        <div class="ll" style="background:var(--blue)"></div>
+        Ethernet 100BASE-TX · MQTT publish / REST API / HTTP
+      </div>
+      <div class="lr">
+        <div class="ll" style="background:var(--green)"></div>
+        HDMI video + WebSocket data channel (browser ↔ FastAPI /ws)
+      </div>
+      <div class="lr">
+        <div class="ll" style="background:repeating-linear-gradient(90deg,var(--amber) 0,var(--amber) 5px,transparent 5px,transparent 9px)"></div>
+        24V DC power (not drawn — powers AL1350 + sensors via DIN rail PSU)
+      </div>
+    </div>
+    <div class="lbox">
+      <div class="ltit">ISA-5.1 Instrument Bubble Notation</div>
+      <div class="lr">
+        <div class="lisa" style="z-index:0">ZS</div>
+        Solid circle — locally mounted field instrument with panel indication
+      </div>
+      <div class="lr">
+        <div class="lisa lisa-d" style="z-index:0">XAL</div>
+        Dashed circle — locally mounted, no panel indication (write-only actuator)
+      </div>
+      <div class="lr" style="font-size:11.5px;flex-wrap:wrap;gap:6px;font-weight:700">
+        <span style="color:var(--blue)">ZS</span> — Position/Proximity Switch &nbsp;
+        <span style="color:var(--blue)">LS</span> — Level Switch (capacitive) &nbsp;
+        <span style="color:var(--blue)">TT</span> — Temperature Transmitter &nbsp;
+        <span style="color:var(--blue)">XAL</span> — Alarm Light
+      </div>
+    </div>
+  </div>
+
+  <div class="tblsec">
+    <h2>Component Register</h2>
+    <table>
+      <thead>
+        <tr><th>Tag</th><th>ISA Code</th><th>Description</th><th>Model</th><th>Port</th><th>Connection / Notes</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><strong>ZS-101</strong></td><td>ZS — Position Switch</td><td>Proximity Sensor</td><td>Omron E2E-X16MB1T12 · M18 Inductive · 16mm Sn</td><td>Port 1</td><td>IO-Link COM3 · M12 3-wire · PDin: OUT1, monitor output, instability alarm, over-approach alarm</td></tr>
+        <tr><td><strong>LS-201</strong></td><td>LS — Level Switch</td><td>Capacitive Sensor</td><td>RS Pro M18 / Carlo Gavazzi · Any dielectric</td><td>Port 2</td><td>IO-Link COM2 · M12 3-wire · SP1 via ISDU index 60/sub1 · Teach command available</td></tr>
+        <tr><td><strong>TT-301</strong></td><td>TT — Temperature Transmitter</td><td>Temperature Sensor</td><td>IFM TV7105 · −40 to +150 °C · PT100</td><td>Port 3</td><td>IO-Link COM2 · M12 3-wire · SP1/RP1 ISDU 583/584 · SP2/RP2 ISDU 593/594 · Cal offset 681</td></tr>
+        <tr><td><strong>XAL-401</strong></td><td>XAL — Alarm Light</td><td>Visual Status Indicator (Actuator)</td><td>Banner CL50 Pro · RGB · PDout-only</td><td>Port 4</td><td>IO-Link COM2 · M12 3-wire · Write-only: 3-byte PDout (colour / animation / speed / intensity)</td></tr>
+        <tr><td><strong>IL-001</strong></td><td>—</td><td>IO-Link Master</td><td>IFM AL1350 · IoT Core · 4× Class A ports</td><td>—</td><td>IP 192.168.7.4 · Ethernet 100BASE-TX · MQTT 500 ms publish · REST / ISDU API</td></tr>
+        <tr><td><strong>EDG-001</strong></td><td>—</td><td>Edge Device / Controller</td><td>Raspberry Pi 4 · Mosquitto · FastAPI · Chromium</td><td>—</td><td>IP 192.168.7.2 · Ethernet from AL1350 · HDMI to HMI · WebSocket /ws to browser</td></tr>
+        <tr><td><strong>HMI-001</strong></td><td>—</td><td>HMI Dashboard</td><td>WaveShare 1024×600 · Capacitive touch</td><td>—</td><td>HDMI from Pi · Chromium kiosk · WebSocket 500 ms live · Vite + Tailwind frontend</td></tr>
+        <tr><td><strong>PSU-001</strong></td><td>—</td><td>24V DC Power Supply</td><td>24V DC SELV · IEC 61010-1 · Min 1.5A</td><td>—</td><td>Powers AL1350 + sensors via DIN rail. Pi powered separately via 5V USB-C.</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <p class="note">
+    <strong>Note:</strong> All sensors are mounted on the IM4330 bench rig training panel — this is not an external process plant.
+    All IO-Link cables are point-to-point M12 3-wire (24V, 0V, IO-Link data on one unshielded cable per IEC 61131-9).
+    The dashed ISA bubble (XAL-401) indicates a write-only actuator — no process variable is returned.
+    ISDU acyclic read/write is available on all ports via REST: <code>POST /api/io-link/port/{n}/parameter/read</code> and <code>/write</code>.
+  </p>
+
+</div>
+</div><!-- /diagram -->
+</body>
+</html>

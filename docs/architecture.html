@@ -1,0 +1,665 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>IFM AL1350 IO-Link System Diagram</title>
+  <style>
+    :root {
+      --ifm-orange: #f58220;
+      --ifm-orange-dark: #d96f16;
+      --charcoal: #1f2933;
+      --slate: #52616f;
+      --line: #c7d2de;
+      --panel: rgba(255, 255, 255, 0.86);
+      --panel-solid: #ffffff;
+      --bg-1: #eef4f8;
+      --bg-2: #dbe7ef;
+      --green: #22a06b;
+      --blue: #2f80ed;
+      --purple: #8b5cf6;
+      --red: #ef4444;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: Inter, Segoe UI, Roboto, Arial, sans-serif;
+      color: var(--charcoal);
+      background:
+        radial-gradient(circle at top left, rgba(245, 130, 32, 0.18), transparent 34%),
+        radial-gradient(circle at bottom right, rgba(47, 128, 237, 0.16), transparent 32%),
+        linear-gradient(135deg, var(--bg-1), var(--bg-2));
+      display: grid;
+      place-items: center;
+      padding: 32px;
+    }
+
+    .diagram {
+      width: min(1180px, 100%);
+      background: rgba(255, 255, 255, 0.62);
+      border: 1px solid rgba(255, 255, 255, 0.9);
+      border-radius: 28px;
+      box-shadow: 0 28px 80px rgba(31, 41, 51, 0.18);
+      backdrop-filter: blur(14px);
+      overflow: hidden;
+    }
+
+    .header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 24px;
+      padding: 26px 32px;
+      border-bottom: 1px solid rgba(82, 97, 111, 0.14);
+      background: linear-gradient(90deg, rgba(255, 255, 255, 0.84), rgba(255, 255, 255, 0.48));
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .ifm-logo {
+      width: 78px;
+      height: 46px;
+      border-radius: 14px;
+      background: var(--ifm-orange);
+      color: white;
+      display: grid;
+      place-items: center;
+      font-size: 28px;
+      font-weight: 900;
+      letter-spacing: -1px;
+      box-shadow: 0 12px 24px rgba(245, 130, 32, 0.28);
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(24px, 3vw, 38px);
+      line-height: 1.05;
+      letter-spacing: -0.04em;
+    }
+
+    .subtitle {
+      margin-top: 7px;
+      color: var(--slate);
+      font-size: 15px;
+    }
+
+    .status-pill {
+      white-space: nowrap;
+      border: 1px solid rgba(245, 130, 32, 0.28);
+      background: rgba(245, 130, 32, 0.1);
+      color: #9a4d08;
+      font-weight: 700;
+      border-radius: 999px;
+      padding: 10px 16px;
+      font-size: 14px;
+    }
+
+    .stage {
+      position: relative;
+      padding: 34px;
+    }
+
+    .network {
+      display: grid;
+      grid-template-columns: 1.08fr 0.9fr 1.08fr;
+      grid-template-rows: auto 70px auto;
+      gap: 20px 28px;
+      align-items: center;
+      position: relative;
+      min-height: 620px;
+    }
+
+    .card {
+      position: relative;
+      background: var(--panel);
+      border: 1px solid rgba(255, 255, 255, 0.95);
+      border-radius: 22px;
+      box-shadow: 0 18px 40px rgba(31, 41, 51, 0.12);
+      overflow: hidden;
+    }
+
+    .card::before {
+      content: "";
+      position: absolute;
+      inset: 0 0 auto 0;
+      height: 5px;
+      background: linear-gradient(90deg, var(--ifm-orange), #ffb264);
+    }
+
+    .master {
+      grid-column: 1 / 2;
+      grid-row: 1 / 2;
+      padding: 26px;
+      align-self: start;
+    }
+
+    .master-top {
+      display: flex;
+      align-items: center;
+      gap: 18px;
+    }
+
+    .device-icon {
+      width: 72px;
+      height: 96px;
+      border-radius: 16px;
+      background: linear-gradient(180deg, #f7fafc, #d8e2eb);
+      border: 1px solid rgba(82, 97, 111, 0.2);
+      box-shadow: inset 0 -10px 20px rgba(31, 41, 51, 0.08);
+      position: relative;
+      flex: 0 0 auto;
+    }
+
+    .device-icon::before,
+    .device-icon::after {
+      content: "";
+      position: absolute;
+      left: 16px;
+      right: 16px;
+      height: 9px;
+      border-radius: 999px;
+      background: var(--ifm-orange);
+    }
+
+    .device-icon::before {
+      top: 18px;
+    }
+
+    .device-icon::after {
+      bottom: 18px;
+    }
+
+    .device-title {
+      font-size: 23px;
+      font-weight: 900;
+      letter-spacing: -0.03em;
+      margin: 0;
+    }
+
+    .device-subtitle {
+      margin: 7px 0 0;
+      color: var(--slate);
+      font-size: 14px;
+    }
+
+    .chip-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 20px;
+    }
+
+    .chip {
+      border-radius: 999px;
+      padding: 8px 11px;
+      font-size: 12px;
+      font-weight: 800;
+      background: rgba(82, 97, 111, 0.08);
+      color: var(--slate);
+    }
+
+    .chip.orange {
+      background: rgba(245, 130, 32, 0.12);
+      color: #9a4d08;
+    }
+
+    .ports {
+      grid-column: 3 / 4;
+      grid-row: 1 / 2;
+      display: grid;
+      gap: 12px;
+      align-self: start;
+    }
+
+    .port-card {
+      display: grid;
+      grid-template-columns: 78px 1fr;
+      align-items: center;
+      min-height: 78px;
+      padding: 14px 18px 14px 14px;
+      background: rgba(255, 255, 255, 0.82);
+      border: 1px solid rgba(255, 255, 255, 0.95);
+      border-radius: 18px;
+      box-shadow: 0 12px 26px rgba(31, 41, 51, 0.08);
+      position: relative;
+    }
+
+    .port-card::before {
+      content: "";
+      position: absolute;
+      left: -18px;
+      top: 50%;
+      width: 18px;
+      height: 2px;
+      background: var(--line);
+    }
+
+    .port-number {
+      width: 54px;
+      height: 54px;
+      border-radius: 16px;
+      display: grid;
+      place-items: center;
+      color: white;
+      font-weight: 900;
+      background: linear-gradient(135deg, var(--ifm-orange), var(--ifm-orange-dark));
+      box-shadow: 0 12px 24px rgba(245, 130, 32, 0.22);
+    }
+
+    .port-title {
+      margin: 0;
+      font-size: 16px;
+      font-weight: 850;
+    }
+
+    .port-detail {
+      margin: 5px 0 0;
+      font-size: 12px;
+      color: var(--slate);
+      font-weight: 650;
+    }
+
+    .pi {
+      grid-column: 1 / 4;
+      grid-row: 3 / 4;
+      display: grid;
+      grid-template-columns: 0.82fr 1.18fr;
+      gap: 22px;
+      padding: 24px;
+      align-items: stretch;
+    }
+
+    .pi-main {
+      border-radius: 20px;
+      background: linear-gradient(135deg, rgba(31, 41, 51, 0.96), rgba(50, 65, 82, 0.94));
+      color: white;
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      min-height: 260px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .pi-main::after {
+      content: "";
+      position: absolute;
+      width: 200px;
+      height: 200px;
+      right: -70px;
+      bottom: -80px;
+      border-radius: 999px;
+      background: rgba(245, 130, 32, 0.22);
+    }
+
+    .pi-label {
+      color: rgba(255, 255, 255, 0.68);
+      font-size: 13px;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      font-weight: 800;
+    }
+
+    .pi-title {
+      margin: 10px 0 0;
+      font-size: clamp(28px, 4vw, 48px);
+      line-height: 1;
+      letter-spacing: -0.05em;
+      font-weight: 950;
+    }
+
+    .ip-address {
+      margin-top: 18px;
+      display: inline-flex;
+      width: fit-content;
+      border-radius: 999px;
+      padding: 10px 14px;
+      background: rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.16);
+      font-weight: 800;
+      color: rgba(255, 255, 255, 0.86);
+    }
+
+    .service-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 14px;
+    }
+
+    .service {
+      min-height: 260px;
+      border-radius: 20px;
+      background: rgba(255, 255, 255, 0.9);
+      border: 1px solid rgba(255, 255, 255, 0.95);
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      box-shadow: 0 12px 30px rgba(31, 41, 51, 0.08);
+    }
+
+    .service-icon {
+      width: 48px;
+      height: 48px;
+      border-radius: 15px;
+      display: grid;
+      place-items: center;
+      font-weight: 950;
+      color: white;
+      font-size: 18px;
+    }
+
+    .service h3 {
+      margin: 18px 0 8px;
+      font-size: 18px;
+      letter-spacing: -0.03em;
+    }
+
+    .service p {
+      margin: 0;
+      color: var(--slate);
+      line-height: 1.45;
+      font-size: 13px;
+      font-weight: 600;
+    }
+
+    .mqtt .service-icon {
+      background: var(--green);
+    }
+
+    .api .service-icon {
+      background: var(--blue);
+    }
+
+    .kiosk .service-icon {
+      background: var(--purple);
+    }
+
+    .flow-label {
+      position: absolute;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 9px 12px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.82);
+      border: 1px solid rgba(255, 255, 255, 0.95);
+      box-shadow: 0 12px 24px rgba(31, 41, 51, 0.08);
+      color: var(--slate);
+      font-size: 12px;
+      font-weight: 850;
+      z-index: 4;
+    }
+
+    .flow-label.io-link {
+      left: 34%;
+      top: 92px;
+    }
+
+    .flow-label.ethernet {
+      left: 122px;
+      top: 350px;
+    }
+
+    .arrow-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 999px;
+      background: var(--ifm-orange);
+      box-shadow: 0 0 0 5px rgba(245, 130, 32, 0.14);
+    }
+
+    .connector-svg {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .network > *:not(.connector-svg):not(.flow-label) {
+      z-index: 1;
+    }
+
+    .line-main {
+      fill: none;
+      stroke: var(--line);
+      stroke-width: 3;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    .line-orange {
+      fill: none;
+      stroke: var(--ifm-orange);
+      stroke-width: 4;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      filter: drop-shadow(0 6px 10px rgba(245, 130, 32, 0.24));
+    }
+
+    .line-blue {
+      fill: none;
+      stroke: var(--blue);
+      stroke-width: 4;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      filter: drop-shadow(0 6px 10px rgba(47, 128, 237, 0.2));
+    }
+
+    .note {
+      margin: 0 34px 34px;
+      color: var(--slate);
+      font-size: 13px;
+      line-height: 1.5;
+      background: rgba(255, 255, 255, 0.58);
+      border: 1px solid rgba(255, 255, 255, 0.9);
+      border-radius: 16px;
+      padding: 14px 18px;
+    }
+
+    @media (max-width: 900px) {
+      body {
+        padding: 18px;
+      }
+
+      .header {
+        align-items: flex-start;
+        flex-direction: column;
+      }
+
+      .network {
+        display: flex;
+        flex-direction: column;
+        min-height: auto;
+      }
+
+      .master,
+      .ports,
+      .pi {
+        width: 100%;
+      }
+
+      .pi {
+        grid-template-columns: 1fr;
+      }
+
+      .service-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .service {
+        min-height: auto;
+      }
+
+      .connector-svg,
+      .flow-label,
+      .port-card::before {
+        display: none;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="diagram" aria-label="IFM AL1350 IO-Link system diagram">
+    <header class="header">
+      <div class="brand">
+        <div class="ifm-logo">ifm</div>
+        <div>
+          <h1>AL1350 IO-Link Architecture</h1>
+          <div class="subtitle">IFM IO-Link Master to Raspberry Pi 4 touchscreen kiosk system</div>
+        </div>
+      </div>
+      <div class="status-pill">Ethernet network: 192.168.7.x</div>
+    </header>
+
+    <section class="stage">
+      <div class="network">
+        <svg class="connector-svg" viewBox="0 0 1120 620" preserveAspectRatio="none" aria-hidden="true">
+          <defs>
+            <marker id="arrow-orange" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth">
+              <path d="M0,0 L0,6 L9,3 z" fill="#f58220" />
+            </marker>
+            <marker id="arrow-blue" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth">
+              <path d="M0,0 L0,6 L9,3 z" fill="#2f80ed" />
+            </marker>
+          </defs>
+
+          <path class="line-orange" marker-end="url(#arrow-orange)" d="M350 95 C455 95, 520 95, 650 95" />
+          <path class="line-main" d="M650 95 L650 366" />
+          <path class="line-main" d="M650 95 C710 95, 720 70, 765 70" />
+          <path class="line-main" d="M650 160 C710 160, 720 148, 765 148" />
+          <path class="line-main" d="M650 225 C710 225, 720 226, 765 226" />
+          <path class="line-main" d="M650 290 C710 290, 720 304, 765 304" />
+          <path class="line-main" d="M650 355 C710 355, 720 382, 765 382" />
+
+          <path class="line-blue" marker-end="url(#arrow-blue)" d="M190 210 C190 290, 190 360, 190 438" />
+          <path class="line-blue" marker-end="url(#arrow-blue)" d="M450 485 C565 485, 610 485, 690 485" />
+          <path class="line-blue" marker-end="url(#arrow-blue)" d="M450 485 C570 500, 610 530, 690 530" />
+          <path class="line-blue" marker-end="url(#arrow-blue)" d="M450 485 C570 470, 610 440, 690 440" />
+        </svg>
+
+        <div class="flow-label io-link"><span class="arrow-dot"></span>IO-Link via M12</div>
+        <div class="flow-label ethernet"><span class="arrow-dot"></span>Ethernet</div>
+
+        <article class="card master">
+          <div class="master-top">
+            <div class="device-icon" aria-hidden="true"></div>
+            <div>
+              <h2 class="device-title">IFM AL1350</h2>
+              <p class="device-subtitle">IO-Link Master with Ethernet connectivity</p>
+            </div>
+          </div>
+          <div class="chip-row">
+            <span class="chip orange">IO-Link</span>
+            <span class="chip">M12 ports</span>
+            <span class="chip">192.168.7.x</span>
+            <span class="chip">500 ms data push</span>
+          </div>
+        </article>
+
+        <section class="ports" aria-label="IO-Link ports">
+          <article class="port-card">
+            <div class="port-number">P1</div>
+            <div>
+              <h3 class="port-title">Photoelectric Sensor</h3>
+              <p class="port-detail">Object detection input</p>
+            </div>
+          </article>
+
+          <article class="port-card">
+            <div class="port-number">P2</div>
+            <div>
+              <h3 class="port-title">Proximity Sensor</h3>
+              <p class="port-detail">Inductive object detection</p>
+            </div>
+          </article>
+
+          <article class="port-card">
+            <div class="port-number">P3</div>
+            <div>
+              <h3 class="port-title">Capacitive Sensor</h3>
+              <p class="port-detail">Material or presence sensing</p>
+            </div>
+          </article>
+
+          <article class="port-card">
+            <div class="port-number">P4</div>
+            <div>
+              <h3 class="port-title">Temperature Sensor</h3>
+              <p class="port-detail">Process temperature input</p>
+            </div>
+          </article>
+
+          <article class="port-card">
+            <div class="port-number">P5</div>
+            <div>
+              <h3 class="port-title">CL50 Light Stack</h3>
+              <p class="port-detail">PDout status indication</p>
+            </div>
+          </article>
+        </section>
+
+        <article class="card pi">
+          <section class="pi-main">
+            <div>
+              <div class="pi-label">Edge device</div>
+              <h2 class="pi-title">Raspberry Pi 4</h2>
+              <div class="ip-address">Ethernet: 192.168.7.x</div>
+            </div>
+            <div class="chip-row">
+              <span class="chip orange">MQTT</span>
+              <span class="chip orange">FastAPI</span>
+              <span class="chip orange">Chromium Kiosk</span>
+            </div>
+          </section>
+
+          <section class="service-grid" aria-label="Raspberry Pi services">
+            <article class="service mqtt">
+              <div>
+                <div class="service-icon">M</div>
+                <h3>Mosquitto MQTT Broker</h3>
+                <p>Receives cyclic data pushed from the AL1350 every 500 ms.</p>
+              </div>
+              <span class="chip">AL1350 data source</span>
+            </article>
+
+            <article class="service api">
+              <div>
+                <div class="service-icon">API</div>
+                <h3>FastAPI Backend</h3>
+                <p>Processes MQTT data and streams live values to the browser over WebSocket.</p>
+              </div>
+              <span class="chip">WebSocket bridge</span>
+            </article>
+
+            <article class="service kiosk">
+              <div>
+                <div class="service-icon">UI</div>
+                <h3>Chromium Kiosk</h3>
+                <p>Displays the HMI dashboard on a 1024 × 600 WaveShare touchscreen.</p>
+              </div>
+              <span class="chip">Touchscreen HMI</span>
+            </article>
+          </section>
+        </article>
+      </div>
+    </section>
+
+    <p class="note">
+      Data flow: sensors connect to the IFM AL1350 through IO-Link M12 ports. The AL1350 communicates over the 192.168.7.x Ethernet network to the Raspberry Pi 4. Mosquitto receives the 500 ms MQTT updates, FastAPI serves live WebSocket data, and Chromium runs the touchscreen kiosk interface.
+    </p>
+  </main>
+</body>
+</html>

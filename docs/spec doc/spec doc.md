@@ -18,6 +18,30 @@
 
 **Height**: TBC
 
+---
+
+# Educational Purpose
+
+The **Maintenance of IO-Link Systems: Smart Sensors (IM4330)** teaches the dynamics of **industrial IO-Link sensor networks** in a live, hands-on training environment. Rather than simulating sensor behaviour, every interaction — reading a process value, writing a setpoint, diagnosing a fault — takes place on real industrial hardware connected over a live IO-Link bus.
+
+The kit bridges the gap between classroom theory and workplace practice. Learners build the skills demanded by modern industrial maintenance roles: commissioning IO-Link sensors from scratch, reading and writing ISDU parameters without interrupting the live data stream, diagnosing faults through device identity checks and event flags, and using a real HMI dashboard to guide maintenance decisions.
+
+Every fault scenario injects a real misconfiguration into the live sensor — inverted output logic, calibration drift, wrong setpoints — and the student must observe the anomaly, diagnose the root cause via ISDU reads, and write a corrective value, exactly as a field engineer would.
+
+---
+
+# Learning Outcomes
+
+The kit delivers **two structured curriculum units** totalling **19 guided hands-on modules** across two progressive courses.
+
+**CP3723 — Maintenance on Smart Sensors (9 modules)**
+Students are introduced to each device in the kit, interact with live process data, and work through commissioning and fault-diagnosis exercises. By the end of CP3723 a learner can identify IO-Link components, commission sensors, adjust setpoints and calibration via ISDU, diagnose and correct sensor faults, and interpret the HMI dashboard to guide a maintenance action.
+
+**CP7395 — Industry 4.0 IO-Link (11 modules)**
+A technically deeper second tier for learners pursuing engineering-level understanding. Worksheets decode the IO-Link protocol internals, map the data pipeline from sensor byte to HMI value, and build the commercial argument for IO-Link vs conventional wiring. By the end of CP7395 a learner can decode raw PDin hex payloads, map IO-Link data to PLC addresses, quantify the maintenance cost advantage of IO-Link, and encode PDout control words for an LED light stack.
+
+---
+
 # Product Description
 
 The IO-Link for Industrial Maintenance training system (Model IM4330) is a hands-on industrial training solution designed to teach smart sensor technology, condition monitoring, data analysis and fault diagnosis within an Industry 4.0 maintenance environment.
@@ -28,9 +52,90 @@ Sensor data and diagnostic information are accessed through PC-based IO-Link sof
 
 The product is supplied with a structured curriculum comprising CP7395 – Industry 4.0 IO-Link and CP3723 – Maintenance on Smart Sensors. The guided worksheets focus on IO-Link communication, smart sensor configuration, real-time data monitoring, troubleshooting techniques and maintenance decision-making.
 
+---
+
+# How the Product Functions in Practice
+
+The system operates as a **live industrial HMI**, not a simulation. All sensor data originates from real hardware on a real IO-Link bus.
+
+## Data Flow
+
+1. The **IFM AL1350 IO-Link Master** polls its four sensor ports every 1–5 ms and buffers the latest process data.
+2. Every **500 ms** the master publishes a structured payload to a **Mosquitto MQTT broker** running on the Raspberry Pi.
+3. The **FastAPI Python backend** subscribes to the MQTT broker and instantly broadcasts data over a **WebSocket** to any connected browser.
+4. The **Chromium kiosk** (on the 1024×600 WaveShare touchscreen) renders live gauges, charts, and status indicators that update without page refresh.
+5. Students interact with sensors via **ISDU read/write controls** on the HMI — every write travels from the browser → FastAPI → AL1350 → sensor in under 200 ms.
+
+## ISDU Parameter Access
+
+Students write setpoints, calibration offsets, and output logic values directly to running sensors without stopping the live data stream. A circuit-breaker in the backend protects the AL1350 from overload; adaptive polling reduces traffic to ports without a connected device.
+
+## Fault Scenario Injection
+
+Worksheets include guided fault scenarios where a real misconfiguration is written to the live sensor via ISDU (e.g. inverting proximity output logic to NC, injecting a +3 °C calibration offset, setting wrong setpoints). Students observe the anomaly on the HMI, diagnose the root cause, and write a corrective value. Auto-restore logic ensures sensors return to a safe state when the student navigates away, even if the exercise is not completed.
+
+## Light Stack Control
+
+The Banner CL50 Pro on Port 4 is controlled in real time via 3-byte PDout commands. The HMI provides a colour picker, animation selector, live hex preview, and a server-side intensity sweep effect. Worksheets include a full PDout encoding exercise where students build the hex control word from first principles.
+
+## Logging and Progress Tracking
+
+Student progress (worksheets visited, MCQ answers) is tracked per session in browser storage and can be exported as a JSON file at any time from the Progress page.
+
+---
+
+# System Architecture
+
+```
+┌────────────────────────────────────────────────────────────────┐
+│                FACTORY NETWORK — 192.168.7.0/24                │
+└──────────────┬─────────────────────────────────┬───────────────┘
+               │ Ethernet                        │ Ethernet
+               │                                 │
+┌──────────────▼──────────┐           ┌───────────▼─────────────────┐
+│  IFM AL1350              │           │  Raspberry Pi 4              │
+│  IO-Link Master          │           │  ──────────────────────────  │
+│  IP: 192.168.7.4         │ ← MQTT → │  Mosquitto MQTT Broker       │
+│  4 × IO-Link ports       │           │  FastAPI + uvicorn (8000)    │
+│  REST + MQTT API         │           │  nginx reverse proxy (80)    │
+└──────────┬───────────────┘           │  Chromium kiosk (1024×600)  │
+           │ IO-Link (M12, 3-wire)     └─────────────────────────────┘
+    ┌──────┴──────────────────────────┐
+    │        │          │             │
+  Port 1   Port 2     Port 3        Port 4
+    │        │          │             │
+ ┌──▼───┐ ┌──▼───┐ ┌───▼───┐ ┌──────▼───┐
+ │Photo │ │Prox. │ │Cap.   │ │Temp.     │
+ │elect.│ │Sensor│ │Sensor │ │Sensor    │
+ │      │ │      │ │       │ │          │
+ └──────┘ └──────┘ └───────┘ └──────────┘
+   PDin    PDin     PDin      PDin/PDout
+```
+
+*Note: Port 5 (if present on AL1350 variant) carries the Banner CL50 Pro light stack (PDout only).*
+
+## Component Roles
+
+| Component | Role |
+|-----------|------|
+| **IFM AL1350 IO-Link Master** | Bridge between IO-Link sensor bus and Ethernet. Handles IO-Link protocol, buffers PDin/PDout, exposes REST API and MQTT publish at 500 ms. |
+| **Mosquitto MQTT Broker** | Lightweight pub/sub message broker on the Raspberry Pi. Receives 500 ms pushes from the AL1350 and decouples the backend from the master. |
+| **FastAPI Backend (Python)** | Subscribes to MQTT, decodes sensor PDin payloads, manages ISDU read/write, forwards live data over WebSocket to the browser. Includes circuit-breaker and HTTP polling fallback. |
+| **Chromium HMI Kiosk** | Full-screen dashboard on the WaveShare touchscreen. Renders live gauges, charts, and IODD parameter cards. No external framework dependency. |
+| **Contrinex LTR-M18PA-PMS-603 (Port 1)** | Diffuse photoelectric sensor, M18, IO-Link. SSC1 switching output with configurable switch point and output logic. |
+| **Omron E2E-X16MB1T12 (Port 2)** | Inductive proximity sensor, M18, IO-Link COM2. PDin: monitor output amplitude + OUT1/diagnostic flags (instability, over-approach). |
+| **Carlo Gavazzi / RS PRO M18 (Port 3)** | Capacitive proximity sensor, IO-Link. Detects metal, liquid, and non-metallic materials. SSC1 setpoint + quality-of-target configurable via ISDU. |
+| **IFM TV7105 (Port 4)** | PT100 IO-Link temperature sensor. Two independent switching outputs (SP1/RP1, SP2/RP2). Calibration offset via ISDU, range ±10 °C. |
+| **Banner CL50 Pro (Port 5)** | 50 mm programmable RGB LED column light. PDout-only. Colour, animation, intensity, and audible control via 3-byte PDout word. |
+| **WaveShare 1024×600 Touchscreen** | Capacitive touchscreen display attached to the Raspberry Pi. Kiosk mode via Chromium on Openbox/X11. |
+
+---
+
 # Target Audience
 
 This curriculum is designed for 16 to 18-year-old engineering students in further education colleges, as well as apprentices beginning careers in industrial maintenance, automation, and related engineering fields. It is ideally suited for learners pursuing T-Levels, BTECs, or similar vocational qualifications, and for those aiming to develop practical skills in diagnosing, maintaining, and troubleshooting real-world automated systems. Whether preparing for a role in manufacturing, utilities, or process industries, this program provides a strong foundation in industrial control systems and maintenance best practices.
+
+---
 
 # Key Features
 
@@ -68,7 +173,7 @@ This curriculum is designed for 16 to 18-year-old engineering students in furthe
 ## Practical Exercises & Support
 
 - Two structured curriculums with 19 guided worksheets covering every device and fault type.
-- “Over to You” sections to encourage independent problem-solving.
+- "Over to You" sections to encourage independent problem-solving.
 - Structured fault scenarios reflecting real-world maintenance situations.
 - Live diagnostics, latency graphs, and circuit-breaker state for connection troubleshooting.
 - Built-in student-progress tracking with JSON export for assessment.
@@ -79,6 +184,8 @@ This curriculum is designed for 16 to 18-year-old engineering students in furthe
 - Designed for Further Education students and apprentices aged 16–18.
 - Teaches smart-sensor system integration: IO-Link master, sensors, network, and HMI.
 - Suitable for classroom teaching, self-guided labs, and assessment.
+
+---
 
 # Learning Objectives
 
@@ -96,6 +203,8 @@ By the end of this curriculum, learners will be able to:
     Gain hands-on experience with simulated real-world scenarios, using diagnostic tools, interpreting device feedback, and applying safe, effective maintenance practices.
 - **Develop Confidence in Industrial Maintenance Tasks**
     Build competence and confidence in commissioning devices, interpreting visual indicators and status LEDs, and using the HMI dashboard to guide maintenance decision-making.
+
+---
 
 # Worksheets
 
@@ -125,6 +234,41 @@ By the end of this curriculum, learners will be able to:
 - Worksheet 10 – PT100 Temperature Sensors — From Resistance to Process Data
 - Worksheet 11 – CL50 Pro — PDout Encoding Deep-Dive
 
+---
+
+# Curriculum Front Page
+
+---
+
+## IO-Link Smart Sensor Training Kit — IM4330
+
+**Courses:** CP3723 · CP7395  
+**Level:** Introductory (CP3723) / Engineering (CP7395)  
+**Format:** Self-paced, live hardware, browser-based HMI  
+**Audience:** FE students and apprentices aged 16–18; T-Level / BTEC engineering programmes  
+**Prerequisites:** Basic electrical knowledge. No IO-Link or programming experience required.
+
+---
+
+This training kit puts you in front of a real, running IO-Link sensor network. You will not watch a simulation — you will read live data from real sensors, write parameters that change how they behave, and fix faults you have injected yourself.
+
+**CP3723 — Maintenance on Smart Sensors** walks you through each device in the kit: a photoelectric sensor, a proximity sensor, a capacitive sensor, a temperature sensor, and a programmable LED light stack. Nine guided worksheets take you from first contact with the hardware through commissioning, fault diagnosis, and a final practical assessment.
+
+**CP7395 — Industry 4.0 IO-Link** goes beneath the surface. Eleven engineering worksheets decode the IO-Link protocol, map the data pipeline from sensor byte to HMI value, and build the commercial argument for IO-Link over conventional wiring.
+
+**What you will use:**
+
+| Hardware | Software |
+|----------|----------|
+| IFM AL1350 IO-Link Master | Raspberry Pi HMI Dashboard |
+| Contrinex Photoelectric Sensor | FastAPI Backend + MQTT |
+| Omron Proximity Sensor | Browser-based Worksheets |
+| RS PRO Capacitive Sensor | Live ISDU Read/Write Controls |
+| IFM TV7105 Temperature Sensor | Progress Tracking + JSON Export |
+| Banner CL50 Pro LED Light Stack | |
+
+---
+
 # Packing List
 
 Essentially the product will be sold as almost one complete tested unit.
@@ -133,8 +277,10 @@ Contents;
 
 - IM4330: Training panel with the IFM AL1350 IO-Link master and all five IO-Link devices pre-mounted and wired.
 - Raspberry Pi with WaveShare 1024×600 capacitive touchscreen, pre-loaded with the HMI dashboard software.
-- 24 V DC power supply for the IO-Link master and Raspberry Pi power supply, with UK, EU, and US plug adapters.
+- 24 V DC power supply with UK, EU, and US plug adapters — feeds the IO-Link master, all sensors, and the Raspberry Pi (via an internal DC-to-DC converter on the panel).
 - Patch cables and accessories for connecting the master, Pi, and network.
+
+---
 
 # Curriculum(s)
 
@@ -147,11 +293,15 @@ This product comes with two curriculums;
 
 Click [here](https://www.matrixtsl.com/learning/) to download curriculum from our Learning Centre
 
+---
+
 # Main Components
 
 Main Module
 
 <div class="joplin-table-wrapper"><table><tbody><tr><td><p><strong>IO-Link Master – IFM AL1350</strong></p><ul><li><strong>Purpose:</strong> Central IO-Link master connecting all field devices to the network and HMI dashboard</li><li><strong>Key Features:</strong><ul><li>Four configurable IO-Link / digital-I/O ports</li><li>IoT Core REST + MQTT interface for live data push (500 ms)</li><li>Acyclic ISDU read/write for full device parameter access</li><li>On-board supervision: port voltage, current, and temperature</li></ul></li></ul></td><td><p><img alt="IFM AL1350 IO-Link Master" src=""></p></td></tr><tr><td><p><strong>Photoelectric Sensor – Contrinex LTR-M18PA-PMS-603</strong></p><ul><li><strong>Purpose:</strong> Detects objects optically; demonstrates light-based sensing over IO-Link</li><li><strong>Key Features:</strong><ul><li>M18 housing, IO-Link switch signal channel (SSC1)</li><li>Configurable switch point and output logic via ISDU</li><li>Teach-in, cancel, and factory-reset commands</li></ul></li></ul></td><td><p><img alt="Contrinex LTR-M18PA-PMS-603 Photoelectric Sensor" src=""></p></td></tr><tr><td><p><strong>Proximity Sensor – Omron E2E-X16MB1T12</strong></p><ul><li><strong>Purpose:</strong> Detects metal objects inductively; demonstrates discrete sensing and alarm flags</li><li><strong>Key Features:</strong><ul><li>OUT1 object-detected flag plus instability and over-approach alarms</li><li>Monitor-output amplitude value in process data</li><li>Switchpoint logic (NO/NC) configurable via ISDU</li></ul></li></ul></td><td><p><img alt="Omron E2E-X16MB1T12 Inductive Proximity Sensor" src=""></p></td></tr><tr><td><p><strong>Capacitive Sensor – Carlo Gavazzi / RS PRO M18</strong></p><ul><li><strong>Purpose:</strong> Detects presence of materials through non-metallic barriers</li><li><strong>Key Features:</strong><ul><li>M18 capacitive switch with IO-Link SSC1 channel</li><li>Switch point, quality-of-teach and quality-of-run parameters</li><li>Teach start / stop / cancel commands via ISDU</li></ul></li></ul></td><td><p><img alt="Carlo Gavazzi / RS PRO M18 Capacitive Sensor" src=""></p></td></tr><tr><td><p><strong>Temperature Sensor – IFM TV7105 (PT100)</strong></p><ul><li><strong>Purpose:</strong> Measures process temperature and demonstrates analogue-to-IO-Link conversion</li><li><strong>Key Features:</strong><ul><li>PT100 RTD element with IO-Link transmitter</li><li>Two independent switching outputs, each with switch point (SP) and reset point (RP) and hysteresis</li><li>Calibration offset adjustable via ISDU (±10 °C)</li></ul></li></ul></td><td><p><img alt="IFM TV7105 Temperature Sensor" src=""></p></td></tr><tr><td><p><strong>Light Stack – Banner CL50 Pro RGB</strong></p><ul><li><strong>Purpose:</strong> Multi-colour signal tower for visual system-state indication</li><li><strong>Key Features:</strong><ul><li>PDout-only IO-Link device controlled directly from the dashboard</li><li>16-colour palette, intensity, animation, and audible options</li><li>Software "breathing" intensity-sweep effect for status display</li></ul></li></ul></td><td><p><img alt="Banner CL50 Pro RGB Light Stack" src=""></p></td></tr><tr><td><p><strong>HMI – Raspberry Pi + WaveShare Touchscreen</strong></p><ul><li><strong>Purpose:</strong> Runs the touch HMI dashboard and hosts the data/MQTT services</li><li><strong>Key Features:</strong><ul><li>1024×600 capacitive touchscreen in kiosk mode</li><li>Real-time gauges, charts, and per-sensor IODD parameter cards</li><li>Connection diagnostics, latency graphs, and interactive worksheets</li></ul></li></ul></td><td><p><img alt="Raspberry Pi with WaveShare 1024x600 Touchscreen" src=""></p></td></tr></tbody></table></div>
+
+---
 
 # Frequently asked questions
 
@@ -167,15 +317,15 @@ Yes. A full curriculum is included, complete with guided student worksheets and 
 
 **What age group is this kit aimed at?**
 
-It’s designed for further and higher education students aged 16–20 studying engineering, automation, or maintenance.
+It's designed for further and higher education students aged 16–20 studying engineering, automation, or maintenance.
 
 **How many students can use the kit at once?**
 
-It’s ideal for 1 or 2 students working collaboratively. Two learners can comfortably work side-by-side during practical sessions.
+It's ideal for 1 or 2 students working collaboratively. Two learners can comfortably work side-by-side during practical sessions.
 
 **How is the system powered?**
 
-The IO-Link master and sensors run from a 24 V DC supply, and the Raspberry Pi from its own 5 V supply. Both come with UK, EU, and US adapters. No mains wiring is required.
+Everything runs from a single 24 V DC supply. The Raspberry Pi receives 5 V via an internal DC-to-DC converter on the panel — there is no separate Pi supply. One adapter is included with UK, EU, and US plug heads. No mains wiring is required.
 
 **Do the sensors need any special media or targets?**
 
@@ -213,6 +363,8 @@ No prior experience is needed. The worksheets walk students through IO-Link oper
 
 The product includes a standard 12-month warranty with full technical support from Matrix TSL.
 
+---
+
 # Tender Specification
 
 Matrix Technology Solutions Ltd shall supply the **Maintenance of IO-Link Systems: Smart Sensors training system (Model IM4330)** with the following features, capabilities, and performance assurances:
@@ -238,7 +390,7 @@ Matrix Technology Solutions Ltd shall supply the **Maintenance of IO-Link System
 - The system shall support the following communication interfaces:
     - **Ethernet** between the IO-Link master, MQTT broker, and Raspberry Pi
     - **Wi-Fi / LAN** for browser access to the dashboard from other devices on the network
-- The system shall operate from a **24 V DC power supply** (master and sensors) and a **5 V supply** (Raspberry Pi), provided with global plug adapters for UK, EU, and US regions.
+- The system shall operate from a single **24 V DC power supply**, provided with global plug adapters for UK, EU, and US regions. The Raspberry Pi shall be powered at 5 V via an internal DC-to-DC converter on the panel board from the 24 V rail.
 
 **Performance Expectations**
 
@@ -266,9 +418,116 @@ Matrix Technology Solutions Ltd shall supply the **Maintenance of IO-Link System
     - IFM AL1350 IO-Link master and all five IO-Link devices preinstalled
     - Raspberry Pi and touchscreen preloaded with the HMI dashboard
     - Cables and accessories
-    - Global 24 V DC and 5 V power supplies
+    - Global 24 V DC power supply (with internal DC-to-DC for Pi)
 - Each kit shall be suitable for use by **1–2 students simultaneously**.
 - The system shall be **factory tested and ready to operate** out of the box.
+
+---
+
+# Hardware Features
+
+## Panel and Mounting
+
+- **Bench-top training panel** — all components pre-mounted and wired; no assembly required.
+- Panel dimensions: TBC (target ≤ 500 × 400 mm footprint).
+- **M18 sensors** mounted on threaded bosses with locking nuts; quick-change via standard M12 5-pin quick-disconnect IO-Link cables — no tools required for sensor swap.
+- **IFM AL1350** mounted on a DIN-rail section within the panel enclosure.
+- **Banner CL50 Pro** column light mounted upright for clear visual indication across the bench.
+- **Raspberry Pi and WaveShare display** mounted on a tilt-adjustable stand or integrated into the panel rear.
+- Cable management via spiral wrap; all cables labelled.
+
+## Materials
+
+| Component | Material |
+|-----------|----------|
+| Sensor bodies (M18) | Nickel-plated brass |
+| Sensor faces | PBT (polybutylene terephthalate), chemical-resistant |
+| IO-Link Master housing | Glass-fibre reinforced PA (IFM AL1350 standard) |
+| M12 cable jacket | PUR (polyurethane), oil-resistant, rated to 70 °C |
+| Panel baseplate | Powder-coated mild steel or ABS, RAL 7035 light grey |
+| Display bezel | ABS plastic |
+
+## IP Ratings
+
+| Component | IP Rating |
+|-----------|-----------|
+| IFM AL1350 | IP67 |
+| Omron E2E Sensor | IP67 |
+| RS PRO Capacitive Sensor | IP67 |
+| IFM TV7105 | IP67 |
+| Banner CL50 Pro | IP65 |
+| Raspberry Pi (in stand) | IP0 — enclosed in stand |
+| WaveShare Display (front) | IP54 |
+
+---
+
+# Control and Communication Capabilities
+
+## HMI Interface
+
+- **Browser-based dashboard** — runs in Chromium on the Pi kiosk, or in any modern desktop browser on the same network.
+- Responsive layout: full sidebar at large screen widths; drawer sidebar in kiosk mode (1024×600).
+- **Global display zoom** (50–150%) with kiosk white-space compensation; persists across sessions.
+- **Multiple themes** (light / dark / industrial) via DaisyUI theme selector.
+- **Touch-capable**: large hit targets, drag-to-scroll sidebar, designed for classroom touchscreen use.
+- Per-sensor **IODD parameter cards** on the home dashboard — read and write setpoints, output logic, and calibration directly from the HMI.
+- **Connection diagnostics page** — IO-Link latency graph, circuit-breaker state, MQTT status, log viewer.
+
+## Communication Interfaces
+
+| Interface | Specification |
+|-----------|---------------|
+| IO-Link | IEC 61131-9, COM2 / COM3; standard M12 3-wire cable, max 20 m |
+| Ethernet | 10/100 Base-T between AL1350, switch, and Raspberry Pi |
+| MQTT | MQTT 3.1.1; Mosquitto broker on Pi; 500 ms publish interval |
+| WebSocket | ws:// on port 80, proxied by nginx — live HMI push |
+| REST API | HTTP on port 80 at /api/ — ISDU read/write, config, diagnostics |
+| Wi-Fi | Raspberry Pi 4 built-in 802.11ac — dashboard accessible from any device on the local network |
+| LAN | Fixed IP or mDNS (iolink.local) for browser and SSH access |
+
+## USB
+
+- Raspberry Pi USB-A ports available for keyboard / mouse during setup.
+- Progress JSON export can be saved to a USB drive via standard browser download.
+
+## Remote Access
+
+- **SSH**: standard OpenSSH server on Pi; accessible at `hamed@iolink.local` on the local network.
+- **Remote Chromium debug**: port 9222 always open in kiosk mode for developer inspection.
+- **Web dashboard**: accessible from any browser on the local network at `http://iolink.local`.
+
+---
+
+# Performance Expectations
+
+## Real-Time Data
+
+- HMI sensor values update every **500 ms** via MQTT push — no page refresh required.
+- ISDU read/write response time: **< 200 ms** typical (browser → FastAPI → AL1350 → sensor → response).
+- HTTP polling fallback rate: **1 Hz** per connected port; **0.2 Hz** per disconnected port.
+- Circuit-breaker recovery time: **15 seconds** after 5 consecutive failures.
+- WebSocket reconnects automatically on drop, with exponential back-off and jitter.
+
+## Digital Control
+
+- PDout writes to the CL50 light stack acknowledged within **< 200 ms** of HMI button press.
+- Server-side intensity sweep cycles brightness at configurable step intervals (40 / 100 / 250 ms).
+- ISDU parameter writes take effect at the **next IO-Link cycle** — typically < 5 ms after the AL1350 receives the command.
+
+## Data Logging
+
+- Chart series buffers: **50 data points** per series (memory-optimised for Raspberry Pi).
+- Chart redraws: **once per 2 seconds** (flush-throttled to reduce CPU load).
+- Student progress: **session-persistent** (browser sessionStorage); JSON export available at any time.
+- Device tree (AL1350 /gettree): **5-minute cache** to reduce master load.
+
+## System Load (Raspberry Pi 4)
+
+- Chromium renderer CPU: approximately **97%** under normal kiosk operation.
+- Python backend CPU: approximately **5%** (adaptive polling + MQTT subscription).
+- Chart.js updates throttled; mimic components skip re-render when values unchanged.
+
+---
 
 # Electrical Safety Information
 
@@ -277,9 +536,9 @@ The **Maintenance of IO-Link Systems: Smart Sensors training system (Model IM433
 **Key Safety Notes**
 
 - **Low Voltage Operation**:
-    The IO-Link master and sensors operate at **24 V DC** and the Raspberry Pi at **5 V DC** only. The system does **not** require or tolerate direct connection to mains voltage. Doing so will result in damage and void the warranty.
+    The system operates from a single **24 V DC** supply. The Raspberry Pi receives **5 V DC** via an internal DC-to-DC converter on the panel — there is no separate Pi power supply. The system does **not** require or tolerate direct connection to mains voltage. Doing so will result in damage and void the warranty.
 - **Power Supply**:
-    Use only the **supplied power adapters** with approved plug heads (UK, EU, US). The power supplies are CE-marked units with overvoltage and short-circuit protection.
+    Use only the **supplied power adapter** with approved plug heads (UK, EU, US). It is a CE-marked unit with overvoltage and short-circuit protection.
 - **Enclosure and Wiring**:
     All devices are mounted on a panel with finger-safe terminals and connectors. No exposed live connections are present under normal use.
 - **Circuit Protection**:
@@ -297,9 +556,11 @@ The **Maintenance of IO-Link Systems: Smart Sensors training system (Model IM433
 - **Simulated Faults:**
     All training faults are software-injected via IO-Link ISDU or applied by changing what the sensors detect. They are for educational and simulation purposes only and do not affect electrical safety.
 - **Recommended Power Isolation:**
-    To fully isolate the system, switch off or unplug the 24 V DC and 5 V DC power supplies. This cuts power to all components.
+    To fully isolate the system, switch off or unplug the 24 V DC supply. This cuts power to all components simultaneously.
 - **Fault Indication:**
     The status light stack and HMI dashboard indicate fault or alarm states. Resolve any reported issue before continuing a training exercise.
+
+---
 
 # Standards Compliance
 

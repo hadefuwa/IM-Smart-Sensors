@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>System Architecture Diagram</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f4f7f9;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+            color: #333;
+        }
+        .diagram-container {
+            display: flex;
+            flex-direction: column;
+            gap: 30px;
+            max-width: 950px;
+            width: 100%;
+        }
+        @media (min-width: 768px) {
+            .diagram-container {
+                flex-direction: row;
+                align-items: stretch;
+            }
+        }
+        .node {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.06);
+            padding: 24px;
+            flex: 1;
+            border-top: 6px solid;
+            display: flex;
+            flex-direction: column;
+        }
+        .node.ifm { border-color: #F37021; } /* IFM Orange */
+        .node.pi { border-color: #C51A4A; } /* Raspberry Pi Red */
+
+        h2 {
+            margin-top: 0;
+            margin-bottom: 4px;
+            font-size: 1.5rem;
+            color: #2c3e50;
+        }
+        .subtitle {
+            font-size: 0.9rem;
+            color: #7f8c8d;
+            margin-bottom: 24px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .list-group {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            flex-grow: 1;
+        }
+        .list-item {
+            background: #f8f9fa;
+            border-left: 3px solid #ddd;
+            padding: 14px;
+            border-radius: 6px;
+            font-size: 0.95rem;
+            display: flex;
+            flex-direction: column;
+            transition: transform 0.2s ease;
+        }
+        .list-item:hover {
+            transform: translateX(4px);
+        }
+        .node.ifm .list-item { border-left-color: #F37021; }
+        .node.pi .list-item { border-left-color: #C51A4A; }
+
+        .item-title { 
+            font-weight: 700; 
+            color: #34495e;
+            margin-bottom: 4px; 
+        }
+        .item-detail { 
+            font-size: 0.85rem; 
+            color: #666; 
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .connection {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            gap: 12px;
+            padding: 10px;
+            font-weight: bold;
+            color: #2980b9;
+            text-align: center;
+        }
+        .connection-line {
+            width: 4px;
+            height: 40px;
+            background-color: #2980b9;
+            position: relative;
+            border-radius: 2px;
+        }
+        @media (min-width: 768px) {
+            .connection-line {
+                width: 80px;
+                height: 4px;
+            }
+        }
+        .connection-line::after {
+            content: '';
+            position: absolute;
+            bottom: -10px;
+            left: -6px;
+            border-width: 8px 8px 0;
+            border-style: solid;
+            border-color: #2980b9 transparent transparent transparent;
+        }
+        @media (min-width: 768px) {
+            .connection-line::after {
+                bottom: -6px;
+                left: auto;
+                right: -12px;
+                border-width: 8px 0 8px 12px;
+                border-color: transparent transparent transparent #2980b9;
+            }
+        }
+        .badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: bold;
+            background: #e9ecef;
+            color: #495057;
+            margin-left: auto;
+        }
+        .flex-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="diagram-container">
+        <div class="node ifm">
+            <h2>IFM AL1350</h2>
+            <div class="subtitle">IO-Link Master</div>
+            <ul class="list-group">
+                <li class="list-item">
+                    <div class="flex-row">
+                        <span class="item-title">Photoelectric Sensor</span> 
+                        <span class="badge">Port 1</span>
+                    </div>
+                </li>
+                <li class="list-item">
+                    <div class="flex-row">
+                        <span class="item-title">Proximity Sensor</span> 
+                        <span class="badge">Port 2</span>
+                    </div>
+                </li>
+                <li class="list-item">
+                    <div class="flex-row">
+                        <span class="item-title">Capacitive Sensor</span> 
+                        <span class="badge">Port 3</span>
+                    </div>
+                </li>
+                <li class="list-item">
+                    <div class="flex-row">
+                        <span class="item-title">Temperature Sensor</span> 
+                        <span class="badge">Port 4</span>
+                    </div>
+                </li>
+                <li class="list-item">
+                    <div class="flex-row">
+                        <span class="item-title">CL50 Light Stack</span> 
+                        <span class="badge">Port 5 (PDout)</span>
+                    </div>
+                </li>
+            </ul>
+        </div>
+
+        <div class="connection">
+            <span class="label">Ethernet<br>(192.168.7.x)</span>
+            <div class="connection-line"></div>
+        </div>
+
+        <div class="node pi">
+            <h2>Raspberry Pi 4</h2>
+            <div class="subtitle">Edge Compute & Kiosk</div>
+            <ul class="list-group">
+                <li class="list-item">
+                    <span class="item-title">Mosquitto MQTT Broker</span>
+                    <span class="item-detail">
+                        <span style="color:#C51A4A; font-weight:bold;">←</span> 500 ms push from AL1350
+                    </span>
+                </li>
+                <li class="list-item">
+                    <span class="item-title">FastAPI Backend</span>
+                    <span class="item-detail">
+                        <span style="color:#C51A4A; font-weight:bold;">←</span> WebSocket to browser
+                    </span>
+                </li>
+                <li class="list-item">
+                    <span class="item-title">Chromium Kiosk</span>
+                    <span class="item-detail">
+                        <span style="color:#C51A4A; font-weight:bold;">←</span> 1024×600 WaveShare Touchscreen
+                    </span>
+                </li>
+            </ul>
+        </div>
+    </div>
+
+</body>
+</html>
