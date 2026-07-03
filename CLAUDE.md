@@ -36,7 +36,7 @@ pscp -pw <password> dist\index.html           hamed@iolink.local:/var/www/im-sen
 bash scripts/pi/post_deploy_health.sh   # Post-deploy health checks
 ```
 
-Pi credentials and network details are in `docs/PI_SSH.md`.
+Pi credentials and network details are in `docs/manuals/PI_SSH.md`.
 
 **After every frontend deploy, always restart both the backend service AND the Chromium kiosk — changes are invisible until the kiosk relaunches:**
 ```powershell
@@ -100,7 +100,7 @@ Pi credentials and network details are in `docs/PI_SSH.md`.
 
 ## AL1350 IoT Core API
 
-The operating manual is at `docs/Operating Manual.txt`. Critical protocol details:
+The operating manual is at `docs/datasheets/Operating Manual.txt`. Critical protocol details:
 
 - **GET:** `http://<ip>/datapoint/getdata` — response: `{"code":200,"data":{"value": val}}`
 - **POST (service calls):** POST to `http://<ip>/` with body `{"code":"request","cid":-1,"adr":"servicename","data":{...}}`
@@ -375,7 +375,7 @@ Zoom is persisted in `localStorage` key `matrix-zoom` and applied via `applySave
 
 At 1024×600 (Pi WaveShare screen), `isTouchKioskLayout()` returns true (≤1280 wide, ≤900 tall). The sidebar is in drawer mode — it slides in over the content rather than sitting beside it.
 
-**Sidebar flex constraint rule:** The sidebar `<aside>` must stay `display: flex` at all viewport sizes. Do **not** add `md:block` or any Tailwind responsive `block` override to it — this silently breaks the inner scroll container by removing the flex column constraint, causing `overflow-y` to never activate. See `docs/SIDEBAR_SCROLL_FIX.md` for the full diagnosis.
+**Sidebar flex constraint rule:** The sidebar `<aside>` must stay `display: flex` at all viewport sizes. Do **not** add `md:block` or any Tailwind responsive `block` override to it — this silently breaks the inner scroll container by removing the flex column constraint, causing `overflow-y` to never activate. See `docs/manuals/SIDEBAR_SCROLL_FIX.md` for the full diagnosis.
 
 Touch events on X11 (WaveShare on Debian/Openbox) are emulated as mouse events — real `touchstart`/`touchmove` events do not fire. Drag-to-scroll in the sidebar is implemented via `mousedown`/`mousemove`/`mouseup` listeners in `src/main.js`.
 

@@ -107,7 +107,7 @@ The default homepage provides:
 
 The project runs as a kiosk on a Raspberry Pi with a WaveShare 1024×600 capacitive touchscreen. nginx serves the frontend from `/var/www/im-sensors/`; the FastAPI backend runs on `127.0.0.1:8000` via a systemd service.
 
-See [docs/PI_SSH.md](docs/PI_SSH.md) for SSH/SCP connection details, deploy commands, and network layout.
+See [docs/manuals/PI_SSH.md](docs/manuals/PI_SSH.md) for SSH/SCP connection details, deploy commands, and network layout.
 
 ---
 
@@ -132,15 +132,13 @@ The repo builds and deploys the UI to [GitHub Pages](https://hadefuwa.github.io/
 │   ├── config.json
 │   └── requirements.txt
 ├── docs/                        # Documentation
-│   ├── IO-LINK-COMMS-GUIDE.md    # Full IO-Link + MQTT architecture guide (primary reference)
-│   ├── PI_SSH.md                 # Pi SSH/SCP reference, deploy commands, network layout
-│   ├── PI_OPERATIONS.md          # Git → Pi workflow, rollback, health checks
-│   ├── port-config.md            # IO-Link port mode troubleshooting
-│   ├── SIDEBAR_SCROLL_FIX.md     # Sidebar flex constraint diagnosis
-│   ├── TV7105.pdf                # IFM TV7105 temperature sensor datasheet
-│   ├── LTR-M18PA-PM.pdf          # Contrinex LTR-M18PA-PMS-603 photoelectric datasheet
-│   ├── Capacitive Proximity.pdf  # Carlo Gavazzi / RS PRO M18 capacitive datasheet
-│   └── README.md                 # Docs index
+│   ├── README.md                 # Docs index
+│   ├── manuals/                  # Ops/maintenance guides — PI_SSH.md, PI_OPERATIONS.md, port-config.md, User Manual/
+│   ├── datasheets/                # Vendor datasheets & IODD files — TV7105, LTR-M18PA-PM, Capacitive Proximity, CL50PKQ, Operating Manual, e2e_iodd_temp/
+│   ├── specifications/            # CE-Technical-Documentation, LD0013 test procedure, parts-lists, spec doc/
+│   ├── diagrams/                  # architecture.html, data flow.html, pid-schematic.html, IM4330 PID Schematic.docx
+│   ├── dev-notes/                 # IO-LINK-COMMS-GUIDE.md, Archived/
+│   └── Curriculum/                # CP3723/CP7395 curriculum docs, teachers notes, MCQ files
 ├── public/                      # Static assets (logos, favicons, images)
 ├── scripts/pi/                  # Bash deploy helpers for Raspberry Pi
 ├── src/                         # Vite app source
@@ -205,10 +203,10 @@ The repo builds and deploys the UI to [GitHub Pages](https://hadefuwa.github.io/
 
 | Document | Description |
 |----------|-------------|
-| [docs/PI_SSH.md](docs/PI_SSH.md) | Pi SSH/SCP reference, deploy commands, network layout |
-| [docs/PI_OPERATIONS.md](docs/PI_OPERATIONS.md) | Git → Pi workflow, rollback, health checks |
-| [docs/port-config.md](docs/port-config.md) | IO-Link port mode troubleshooting and AL1350 API examples |
-| [docs/SIDEBAR_SCROLL_FIX.md](docs/SIDEBAR_SCROLL_FIX.md) | Sidebar flex constraint diagnosis |
+| [docs/manuals/PI_SSH.md](docs/manuals/PI_SSH.md) | Pi SSH/SCP reference, deploy commands, network layout |
+| [docs/manuals/PI_OPERATIONS.md](docs/manuals/PI_OPERATIONS.md) | Git → Pi workflow, rollback, health checks |
+| [docs/manuals/port-config.md](docs/manuals/port-config.md) | IO-Link port mode troubleshooting and AL1350 API examples |
+| [docs/manuals/SIDEBAR_SCROLL_FIX.md](docs/manuals/SIDEBAR_SCROLL_FIX.md) | Sidebar flex constraint diagnosis |
 | [CLAUDE.md](CLAUDE.md) | Project guidance for Claude Code |
 
 ---
@@ -216,7 +214,7 @@ The repo builds and deploys the UI to [GitHub Pages](https://hadefuwa.github.io/
 ## Troubleshooting
 
 - **Connection shows red** — Check: master powered and on network, correct IP in `config.json` (or Settings), reachable via `ping 192.168.7.4` from the Pi.
-- **Port shows orange light on AL1350** — Port may be in Disabled or DI mode. See [docs/port-config.md](docs/port-config.md) for how to set IO-Link mode via the API.
+- **Port shows orange light on AL1350** — Port may be in Disabled or DI mode. See [docs/manuals/port-config.md](docs/manuals/port-config.md) for how to set IO-Link mode via the API.
 - **Port 8000 in use** — Change the port in `run_io_link_fastapi.py` and set `window.IO_LINK_API_BASE` to the new URL.
 - **Frontend can't reach API** — Set `window.IO_LINK_API_BASE = 'http://localhost:8000'` in the browser console.
 

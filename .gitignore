@@ -33,7 +33,7 @@ matrix-template/
 # Temp
 commit_msg.txt
 docs/~$*
-docs/e2e_iodd_temp/
+docs/datasheets/e2e_iodd_temp/
 scripts/debug_extract.mjs
 scripts/extract_worksheets.mjs
 

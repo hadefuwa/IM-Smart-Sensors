@@ -8,7 +8,7 @@ Sources:
     [COMMENTED OUT — sensor swapped for Omron E2E-X16MB1T12 on port 1; re-enable (342,131842) if reverted]
   OMRON E2E-X NEXT M18 family — OMRON-E2E-NEXT-X_B1T18-20191010-IODD1.1.xml (IO-Link V1.1, COM3)
   Banner CL50PKQ / CL50 Pro RGB — Banner_Engineering-CL50RGBIOL-20210903-IODD1.1.xml (IO-Link V1.1)
-    VendorID: 451, DeviceID: 393229 — docs/CL50PKQ.pdf (IO-Link Data Reference Guide)
+    VendorID: 451, DeviceID: 393229 — docs/datasheets/CL50PKQ.pdf (IO-Link Data Reference Guide)
 """
 
 T_UINT8  = 'uint8'

@@ -63,7 +63,6 @@
 ### 1.4 Optical Safety
 
 - The Banner CL50 Pro RGB light stack contains high-intensity LEDs. Avoid prolonged direct eye contact at close range, especially at **High** intensity setting.
-- The Contrinex photoelectric sensor emits an infrared light beam. Do not look directly into the sensor face.
 
 ### 1.5 Simulated Faults — Safe to Use
 
@@ -89,11 +88,10 @@ All training fault scenarios are **software-injected** via IO-Link ISDU writes t
 | Component | Supply Voltage | Typical Current | Max Current |
 |-----------|---------------|-----------------|-------------|
 | IFM AL1350 IO-Link Master | 24 V DC | ~150 mA (idle) | 500 mA |
-| Contrinex LTR-M18PA (Port 1) | 24 V DC (via AL1350) | ~25 mA | 100 mA |
-| Omron E2E-X16MB1T12 (Port 2) | 24 V DC (via AL1350) | ~25 mA | 100 mA |
-| Carlo Gavazzi / RS PRO M18 (Port 3) | 24 V DC (via AL1350) | ~30 mA | 100 mA |
-| IFM TV7105 (Port 4) | 24 V DC (via AL1350) | ~30 mA | 100 mA |
-| Banner CL50 Pro (Port 5) | 24 V DC (via AL1350) | ~50 mA | 200 mA |
+| Omron E2E-X16MB1T12 (Port 1) | 24 V DC (via AL1350) | ~25 mA | 100 mA |
+| Carlo Gavazzi / RS PRO M18 (Port 2) | 24 V DC (via AL1350) | ~30 mA | 100 mA |
+| IFM TV7105 (Port 3) | 24 V DC (via AL1350) | ~30 mA | 100 mA |
+| Banner CL50 Pro (Port 4) | 24 V DC (via AL1350) | ~50 mA | 200 mA |
 | Raspberry Pi 4 (2 GB) | 5 V DC (via panel DC-to-DC from 24 V rail) | ~600 mA (idle) | 3 A |
 | WaveShare 1024×600 display | 5 V DC (via Pi GPIO/USB) | ~350 mA | 500 mA |
 
@@ -102,7 +100,6 @@ All training fault scenarios are **software-injected** via IO-Link ISDU writes t
 | Component | IP Rating | Notes |
 |-----------|-----------|-------|
 | IFM AL1350 | IP67 | Dust-tight, immersion to 1 m |
-| Contrinex LTR-M18PA | IP67 | |
 | Omron E2E-X16MB1T12 | IP67 | |
 | Carlo Gavazzi / RS PRO M18 | IP67 | |
 | IFM TV7105 | IP67 | |
@@ -144,11 +141,10 @@ The IM4330 is a self-contained, bench-top industrial training system built aroun
        │
        ▼
 IFM AL1350 IO-Link Master  ◄──── M12 IO-Link cables (up to 20 m)
-  ├── Port 1 ── Contrinex LTR-M18PA  (Photoelectric)
-  ├── Port 2 ── Omron E2E-X16MB1T12  (Proximity)
-  ├── Port 3 ── Carlo Gavazzi M18    (Capacitive)
-  ├── Port 4 ── IFM TV7105           (Temperature)
-  └── Port 5 ── Banner CL50 Pro      (Light Stack / PDout)
+  ├── Port 1 ── Omron E2E-X16MB1T12  (Proximity)
+  ├── Port 2 ── Carlo Gavazzi M18    (Capacitive)
+  ├── Port 3 ── IFM TV7105           (Temperature)
+  └── Port 4 ── Banner CL50 Pro      (Light Stack / PDout)
        │
        │ Ethernet (192.168.7.x)
        ▼
@@ -221,7 +217,7 @@ Once the HMI is live, confirm the following:
 | Proximity sensor indicator | Shows **NO OBJECT** with monitor output value ~80 in free air |
 | Capacitive sensor indicator | Shows **NO OBJECT** with no target present |
 | Light stack | Banner CL50 shows steady green |
-| IO-Link Master page | All five ports show correct device names and **IO-Link** mode |
+| IO-Link Master page | All four ports show correct device names and **IO-Link** mode |
 | WebSocket status bar | Shows **Connected** and a timestamp updating every 500 ms |
 
 ---
@@ -295,7 +291,7 @@ Power on → Boot (45–60 s) → HMI loads → WebSocket connects
 
 ### 6.2 Backend Service Management
 
-SSH into the Pi (credentials in `docs/PI_SSH.md`) and use the following commands:
+SSH into the Pi (credentials in `docs/manuals/PI_SSH.md`) and use the following commands:
 
 ```bash
 # Check backend status
@@ -354,7 +350,7 @@ The file `/home/hamed/IM-Smart-Sensors/backend/config.json` controls runtime beh
 ### 6.5 Software Update Procedure
 
 1. Build the updated frontend on a development machine: `npm run build`
-2. Copy the built files to the Pi via SCP (see `docs/PI_SSH.md` for full commands).
+2. Copy the built files to the Pi via SCP (see `docs/manuals/PI_SSH.md` for full commands).
 3. SSH into the Pi and restart the backend service.
 4. Restart the Chromium kiosk to load the new frontend.
 
@@ -419,24 +415,20 @@ sudo journalctl -u im-sensors-backend.service -n 100
 
 ### 7.3 Live Sensor Indicators
 
-**Temperature Gauge (TV7105 — Port 4)**
-- Circular arc gauge showing temperature in °C.
-- Colour changes from green → amber → red as temperature approaches SP1.
-- SP1 and RP1 markers shown on the gauge arc.
-
-**Capacitive Indicator (RS PRO M18 — Port 3)**
-- Vertical bar showing raw process value (0–4095).
-- Turns red when SSC1 output is active (object detected).
-- Detection counter (cumulative ISDU read) shown below the bar.
-
-**Proximity LED (Omron E2E — Port 2)**
+**Proximity LED (Omron E2E — Port 1)**
 - Large LED indicator: grey = no object, green = object detected.
 - Secondary indicators for Instability Alarm and Over-Approach Alarm.
 - Monitor output amplitude (0–255) shown as a numeric value.
 
-**Photoelectric Indicator (Contrinex — Port 1)**
-- LED indicator: grey = no object, green = object detected.
-- Switch point status shown.
+**Capacitive Indicator (RS PRO M18 — Port 2)**
+- Vertical bar showing raw process value (0–4095).
+- Turns red when SSC1 output is active (object detected).
+- Detection counter (cumulative ISDU read) shown below the bar.
+
+**Temperature Gauge (TV7105 — Port 3)**
+- Circular arc gauge showing temperature in °C.
+- Colour changes from green → amber → red as temperature approaches SP1.
+- SP1 and RP1 markers shown on the gauge arc.
 
 **Light Stack Mimic (CL50 Pro — Port 4)**
 - On-screen representation of the CL50 current colour and animation state.
@@ -490,11 +482,11 @@ If a sensor is displaying unexpected behaviour (permanently triggered, wrong val
 5. If the sensor does not appear on the IO-Link Master page at all, check the M12 cable connection at both the sensor and the AL1350.
 
 **Proximity sensor stuck ON (most common fault after scenario):**
-- Navigate to the Home page → Port 2 parameter card → Read index 61, subindex 1.
+- Navigate to the Home page → Port 1 parameter card → Read index 61, subindex 1.
 - If value = 1 (NC), write value 0 (NO) to restore normal operation.
 
 **Temperature sensor reading too high (calibration offset not restored):**
-- Navigate to the Home page → Port 4 parameter card → Read index 681, subindex 0.
+- Navigate to the Home page → Port 3 parameter card → Read index 681, subindex 0.
 - If value ≠ 0.0, write 0.0 to clear the calibration offset.
 
 ### 8.3 WebSocket Fault Recovery
@@ -562,7 +554,7 @@ If the system is in an unknown state and all other recovery steps have failed:
 | After each use | Return all sensors to default state (navigate away from any active scenario) |
 | Weekly (active use) | Wipe sensor faces with a dry lint-free cloth; check M12 cable locks |
 | Monthly | Inspect all M12 cable jackets for abrasion or kinking; check power supply cables |
-| Termly (or 3 months) | Verify all five IO-Link devices appear on the IO-Link Master page; run each worksheet scenario start-to-finish to confirm auto-restore |
+| Termly (or 3 months) | Verify all four IO-Link devices appear on the IO-Link Master page; run each worksheet scenario start-to-finish to confirm auto-restore |
 | Annually | Full system test against acceptance criteria (Section 4.3); check Raspberry Pi SD card health; update software if a release is available |
 
 ### 9.2 Sensor Face Cleaning
@@ -604,12 +596,12 @@ If a sensor has been misconfigured outside of a guided worksheet scenario and do
 
 | Sensor | Parameter | Index | Subindex | Default Value |
 |--------|-----------|-------|----------|---------------|
-| Omron E2E (Port 2) | Output logic OUT1 | 61 | 1 | 0 (NO — normal open) |
-| IFM TV7105 (Port 4) | Calibration offset | 681 | 0 | 0.0 °C |
-| IFM TV7105 (Port 4) | SP1 | 583 | 0 | 60.0 °C |
-| IFM TV7105 (Port 4) | RP1 | 584 | 0 | 55.0 °C |
-| IFM TV7105 (Port 4) | SP2 | 593 | 0 | 65.0 °C |
-| IFM TV7105 (Port 4) | RP2 | 594 | 0 | 60.0 °C |
+| Omron E2E (Port 1) | Output logic OUT1 | 61 | 1 | 0 (NO — normal open) |
+| IFM TV7105 (Port 3) | Calibration offset | 681 | 0 | 0.0 °C |
+| IFM TV7105 (Port 3) | SP1 | 583 | 0 | 60.0 °C |
+| IFM TV7105 (Port 3) | RP1 | 584 | 0 | 55.0 °C |
+| IFM TV7105 (Port 3) | SP2 | 593 | 0 | 65.0 °C |
+| IFM TV7105 (Port 3) | RP2 | 594 | 0 | 60.0 °C |
 
 Write these values using the ISDU parameter card on the **Home** page or via the worksheet ISDU controls.
 
@@ -631,7 +623,6 @@ The following items are recommended to be held as critical spares for uninterrup
 
 | Item | Part / Model | Quantity | Notes |
 |------|-------------|----------|-------|
-| Photoelectric sensor | Contrinex LTR-M18PA-PMS-603 | 1 | Or approved IO-Link equivalent (see replacement guide) |
 | Proximity sensor | Omron E2E-X16MB1T12 | 1 | Standard M18 inductive IO-Link |
 | Capacitive sensor | Carlo Gavazzi CA18FAF08BP (RS PRO equivalent) | 1 | M18 capacitive IO-Link |
 | Temperature sensor | IFM TV7105 | 1 | PT100 IO-Link — high value; replace only on failure |
@@ -650,9 +641,9 @@ The following items are recommended to be held as critical spares for uninterrup
 | Item | Location | Notes |
 |------|----------|-------|
 | System software image (Pi SD card backup) | Institution server or Matrix TSL | Restore to new SD card if original fails |
-| This user manual | `docs/user-manual.md` in project repo | Keep a printed copy in the kit storage box |
-| PI_SSH.md (credentials and network reference) | `docs/PI_SSH.md` in project repo | Do not leave accessible to students |
-| Sensor datasheets | `docs/` folder in project repo | TV7105.pdf, E2E IODD zip, etc. |
+| This user manual | `docs/manuals/User Manual/user-manual.md` in project repo | Keep a printed copy in the kit storage box |
+| PI_SSH.md (credentials and network reference) | `docs/manuals/PI_SSH.md` in project repo | Do not leave accessible to students |
+| Sensor datasheets | `docs/datasheets/` folder in project repo | TV7105.pdf, E2E IODD zip, etc. |
 
 ---
 
