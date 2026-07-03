@@ -26,6 +26,7 @@ function getWsBase() {
 let _cp2WsLive = null;
 let _cp2WsCallback = null;
 let _cp2ReconnectTimer = null;
+let _ws4FaultCleanup = null;
 
 function startCp2LiveData(callback) {
   stopCp2LiveData();
@@ -43,6 +44,7 @@ function _openCp2Socket() {
   } catch {}
 }
 function stopCp2LiveData() {
+  if (_ws4FaultCleanup) { _ws4FaultCleanup(); _ws4FaultCleanup = null; }
   _cp2WsCallback = null;
   clearTimeout(_cp2ReconnectTimer);
   if (_cp2WsLive) { try { _cp2WsLive.close(); } catch {} _cp2WsLive = null; }
@@ -1431,40 +1433,49 @@ const WORKSHEETS = [
       <button type="button" class="btn btn-primary btn-sm mt-2" id="ws2-check-btn">Check answers</button>
 
       <!-- Verification challenge — MTTR workflow simulation -->
-      <div class="rounded-xl border-2 border-warning/50 bg-warning/5 p-4 mt-4 space-y-3">
+      <div class="rounded-xl border-2 border-warning/50 bg-warning/5 p-4 mt-4 space-y-3" id="cp2-ws4-verify">
         <p class="font-bold text-base-content text-base">🎯 Verification — simulate the 8-minute IO-Link repair workflow</p>
 
-        <!-- Scenario banner -->
-        <div class="rounded-lg bg-error/10 border border-error/30 p-3 text-sm space-y-1">
-          <p class="font-semibold text-base-content">Scenario: the capacitive sensor on Port 2 has stopped detecting</p>
-          <p class="text-base-content/70 text-xs">Work through steps 1–5 in order using the real hardware. Each step maps to a phase of the IO-Link MTTR workflow and shows why the total repair time is ~8 minutes instead of ~35.</p>
+        <!-- Scenario launcher -->
+        <div class="rounded-lg bg-error/10 border border-error/30 p-3 space-y-2">
+          <p class="font-semibold text-base-content text-sm">Scenario: the capacitive sensor on Port 2 has stopped detecting</p>
+          <p class="text-base-content/70 text-xs">Click <strong>Start Scenario</strong> to inject the fault for real — Port 2 will go offline via the IO-Link master. Work through the steps below. The sensor restores automatically when you leave this worksheet.</p>
+          <div class="flex items-center gap-3 flex-wrap mt-1">
+            <button id="cp2-ws4-start-btn" class="btn btn-error btn-sm">▶ Start Scenario</button>
+            <button id="cp2-ws4-reset-btn" class="btn btn-ghost btn-xs hidden">↺ Reset — restore sensor</button>
+            <span id="cp2-ws4-port-badge" class="hidden items-center gap-1.5 text-xs font-mono text-error">
+              <span class="inline-block w-2 h-2 rounded-full bg-error animate-pulse"></span>
+              Port 2 INACTIVE
+            </span>
+          </div>
+          <p id="cp2-ws4-status-msg" class="text-xs text-error hidden"></p>
         </div>
 
-        <div class="space-y-2 text-sm">
+        <div id="cp2-ws4-steps" class="space-y-2 text-sm opacity-40 pointer-events-none select-none">
           <!-- Step 1 -->
           <label class="cp2-kit-item flex items-center gap-3 cursor-pointer rounded-xl border-2 border-transparent px-3 py-2 transition-all duration-200">
             <input type="checkbox" class="checkbox checkbox-sm checkbox-warning flex-shrink-0">
-            <span class="cp2-kit-text"><span class="badge badge-error badge-sm mr-1">Step 1 — Alert</span> Go to the <a href="#" data-page="home" class="link link-warning">Dashboard</a> and use the CL50 quick-colour buttons to set the light stack to <strong>Red, Flashing</strong>. In a real plant, the light stack is the first visual indicator a fault has occurred — this is what slashes the identification phase from ~10 minutes to near-zero.</span>
+            <span class="cp2-kit-text"><span class="badge badge-error badge-sm mr-1">Step 1 — Alert</span> Go to the <a href="#" data-page="home" class="link link-warning">Dashboard</a> and use the CL50 quick-colour buttons to set the light stack to <strong>Red, Flashing</strong>. In a real plant this is the first visual signal of a fault — it slashes the identification phase from ~10 minutes to near-zero.</span>
           </label>
           <!-- Step 2 -->
           <label class="cp2-kit-item flex items-center gap-3 cursor-pointer rounded-xl border-2 border-transparent px-3 py-2 transition-all duration-200">
             <input type="checkbox" class="checkbox checkbox-sm checkbox-warning flex-shrink-0">
-            <span class="cp2-kit-text"><span class="badge badge-warning badge-sm mr-1">Step 2 — Identify</span> On the <a href="#" data-page="io-link-master" class="link link-warning">IO-Link Master page</a>, open the <strong>Port 2 card</strong> and note the <strong>Vendor ID</strong> and <strong>Device Name</strong>. This is the exact part information needed to order the correct replacement — no worn label, no paper manual required.</span>
+            <span class="cp2-kit-text"><span class="badge badge-warning badge-sm mr-1">Step 2 — Identify</span> On the <a href="#" data-page="io-link-master" class="link link-warning">IO-Link Master page</a>, open the <strong>Port 2 card</strong> — note the Vendor ID and Device Name. The AL1350 retains the last-known identity even with the port inactive. This is the exact part number needed to order the replacement, no label required.</span>
           </label>
           <!-- Step 3 -->
           <label class="cp2-kit-item flex items-center gap-3 cursor-pointer rounded-xl border-2 border-transparent px-3 py-2 transition-all duration-200">
             <input type="checkbox" class="checkbox checkbox-sm checkbox-warning flex-shrink-0">
-            <span class="cp2-kit-text"><span class="badge badge-info badge-sm mr-1">Step 3 — ADR ready</span> Still on the IO-Link Master page, open the <strong>Port 3 parameter panel</strong> and read SP1 (index 583). This setpoint is stored in the AL1350 master — when a replacement TV7105 is plugged in, the master writes it back automatically within seconds. This is ADR eliminating the ~12-minute manual reconfiguration step.</span>
+            <span class="cp2-kit-text"><span class="badge badge-info badge-sm mr-1">Step 3 — ADR ready</span> Still on the IO-Link Master page, open the <strong>Port 3 parameter panel</strong> and read SP1 (index 583). This setpoint lives in the AL1350 master — plug in a replacement TV7105 and it writes back automatically within seconds. That is the ~12-minute manual reconfiguration step eliminated.</span>
           </label>
           <!-- Step 4 -->
           <label class="cp2-kit-item flex items-center gap-3 cursor-pointer rounded-xl border-2 border-transparent px-3 py-2 transition-all duration-200">
             <input type="checkbox" class="checkbox checkbox-sm checkbox-warning flex-shrink-0">
-            <span class="cp2-kit-text"><span class="badge badge-secondary badge-sm mr-1">Step 4 — Cycle count</span> Back on the <a href="#" data-page="home" class="link link-warning">Dashboard</a>, trigger the <strong>capacitive sensor (Port 2)</strong> with your hand several times and confirm the detection count increments. This counter is what enables condition-based scheduling — the capacitive sensor gets a planned replacement before failure, not an emergency callout after it.</span>
+            <span class="cp2-kit-text"><span class="badge badge-secondary badge-sm mr-1">Step 4 — Verify repair</span> Click <strong>↺ Reset</strong> above (or navigate away and back) to restore Port 2 to IO-Link mode — simulating the sensor swap. On the <a href="#" data-page="home" class="link link-warning">Dashboard</a>, confirm the capacitive sensor is detecting again and the count increments when you trigger it.</span>
           </label>
           <!-- Step 5 -->
           <label class="cp2-kit-item flex items-center gap-3 cursor-pointer rounded-xl border-2 border-transparent px-3 py-2 transition-all duration-200">
             <input type="checkbox" class="checkbox checkbox-sm checkbox-warning flex-shrink-0">
-            <span class="cp2-kit-text"><span class="badge badge-success badge-sm mr-1">Step 5 — Recovery</span> Set the CL50 back to <strong>Green, Steady</strong> on the Dashboard. This is the final step of the IO-Link repair workflow: the HMI confirms port health after the swap. Total elapsed time in a real plant: <strong>~8 minutes</strong>.</span>
+            <span class="cp2-kit-text"><span class="badge badge-success badge-sm mr-1">Step 5 — Sign off</span> Set the CL50 back to <strong>Green, Steady</strong> on the Dashboard. This is the HMI confirming port health after the swap — the final step of the IO-Link 8-minute repair workflow.</span>
           </label>
         </div>
 
@@ -3995,6 +4006,68 @@ function initLiveCp2Ws9(container) {
 }
 
 
+function initLiveCp2Ws4(container) {
+  var API = (window.IO_LINK_API_BASE || '') + '/api/io-link';
+  var startBtn  = container.querySelector('#cp2-ws4-start-btn');
+  var resetBtn  = container.querySelector('#cp2-ws4-reset-btn');
+  var portBadge = container.querySelector('#cp2-ws4-port-badge');
+  var stepsDiv  = container.querySelector('#cp2-ws4-steps');
+  var statusMsg = container.querySelector('#cp2-ws4-status-msg');
+
+  function _setPort2Mode(mode, cb) {
+    fetch(API + '/port/2/mode', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ mode: mode })
+    }).then(function(r) { return r.json(); })
+      .then(function(d) { if (cb) cb(!!d.success); })
+      .catch(function() { if (cb) cb(false); });
+  }
+
+  function _showFaultActive() {
+    if (portBadge) portBadge.classList.remove('hidden');
+    if (portBadge) portBadge.classList.add('flex');
+    if (resetBtn)  resetBtn.classList.remove('hidden');
+    if (startBtn)  { startBtn.textContent = 'Fault Active'; startBtn.disabled = true; startBtn.classList.add('btn-disabled'); startBtn.classList.remove('btn-error'); }
+    if (stepsDiv)  { stepsDiv.classList.remove('opacity-40', 'pointer-events-none', 'select-none'); }
+    if (statusMsg) statusMsg.classList.add('hidden');
+  }
+
+  function _showFaultCleared() {
+    if (portBadge) { portBadge.classList.add('hidden'); portBadge.classList.remove('flex'); }
+    if (resetBtn)  resetBtn.classList.add('hidden');
+    if (startBtn)  { startBtn.textContent = '▶ Start Scenario'; startBtn.disabled = false; startBtn.classList.remove('btn-disabled'); startBtn.classList.add('btn-error'); }
+    if (stepsDiv)  { stepsDiv.classList.add('opacity-40', 'pointer-events-none', 'select-none'); }
+  }
+
+  if (startBtn) {
+    startBtn.addEventListener('click', function() {
+      startBtn.disabled = true;
+      startBtn.textContent = 'Injecting fault…';
+      _setPort2Mode('inactive', function(ok) {
+        if (ok) {
+          _showFaultActive();
+          _ws4FaultCleanup = function() {
+            _setPort2Mode('io-link', function() {});
+          };
+        } else {
+          startBtn.disabled = false;
+          startBtn.textContent = '▶ Start Scenario';
+          if (statusMsg) { statusMsg.textContent = 'Could not set port mode — check connection.'; statusMsg.classList.remove('hidden'); }
+        }
+      });
+    });
+  }
+
+  if (resetBtn) {
+    resetBtn.addEventListener('click', function() {
+      _setPort2Mode('io-link', function() {});
+      _ws4FaultCleanup = null;
+      _showFaultCleared();
+    });
+  }
+}
+
 function initWorksheetInteractivity(container) {
   if (!container) container = document.getElementById('cp0002-root');
   if (!container) return;
@@ -4027,6 +4100,7 @@ function initWorksheetInteractivity(container) {
   if (container.querySelector('.cp2-kit-item')) initCp2KitChecklist(container);
   if (container.querySelector('#cp2-sys-panel')) initLiveCp2Intro(container);
   if (container.querySelector('#cp2-ws3-panel')) initLiveCp2Ws3(container);
+  if (container.querySelector('#cp2-ws4-verify')) initLiveCp2Ws4(container);
   if (container.querySelector('#cp2-ws9-live-panel')) initLiveCp2Ws9(container);
   if (container.querySelector('#cp2-diag-badge')) initCp2EmbeddedPanels(container);
 
