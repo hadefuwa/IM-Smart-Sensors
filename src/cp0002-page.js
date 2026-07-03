@@ -1,4 +1,4 @@
-﻿/**
+﻿﻿/**
  * CP7395: Industry 4.0 IO-Link
  * 7 worksheets — engineering level: system brief, architecture, protocol, integration, business case.
  * Audience: engineers, system integrators, HNC/degree students.
@@ -1257,19 +1257,19 @@ const WORKSHEETS = [
         <div class="space-y-2 text-sm">
           <label class="cp2-kit-item flex items-center gap-3 cursor-pointer rounded-xl border-2 border-transparent px-3 py-2 transition-all duration-200">
             <input type="checkbox" class="checkbox checkbox-md checkbox-secondary flex-shrink-0">
-            <span class="cp2-kit-text"><strong>Diagnostic events</strong> — IO-Link sensors actively report health warnings to the master before a complete failure occurs. For example, the OMRON E2E proximity sensor raises an instability alarm when its oscillation amplitude drifts below a safe threshold — the HMI shows this warning while the output is still switching normally. A lens contamination warning on a photoelectric sensor appears before the beam is fully blocked. This is the primary mechanism by which IO-Link reduces unplanned downtime: you get a heads-up, not a shutdown.</span>
+            <span class="cp2-kit-text"><strong>Diagnostic events</strong> — IO-Link sensors report health warnings before a complete failure. The OMRON E2E on Port 1 raises an instability alarm when its oscillation amplitude drops — visible on the HMI while the output is still switching normally. You get a heads-up before a shutdown, not after.</span>
           </label>
           <label class="cp2-kit-item flex items-center gap-3 cursor-pointer rounded-xl border-2 border-transparent px-3 py-2 transition-all duration-200">
             <input type="checkbox" class="checkbox checkbox-md checkbox-secondary flex-shrink-0">
-            <span class="cp2-kit-text"><strong>Device identity (Vendor ID + Device ID)</strong> — every IO-Link sensor broadcasts its exact manufacturer ID and product model number at power-up, without any manual label or lookup. In this kit, Port 1 identifies itself as Vendor 612 (OMRON), Device 131090 (E2E-X16MB1T12). The IO-Link Master page shows the resolved name directly. When a sensor fails, you know immediately which port it is on, the exact part number to order, and whether a replacement in the spares cabinet matches. The IO-Link master can also restore parameters automatically after a like-for-like swap — no risk of fitting the wrong model.</span>
+            <span class="cp2-kit-text"><strong>Device identity (Vendor ID + Device ID)</strong> — every IO-Link sensor broadcasts its manufacturer ID and model number at power-up. Port 1 identifies as Vendor 612 (OMRON), Device 131090 (E2E-X16MB1T12) — visible on the IO-Link Master page. When a sensor fails you already know the port, the exact part to order, and the master can auto-restore parameters after a like-for-like swap.</span>
           </label>
           <label class="cp2-kit-item flex items-center gap-3 cursor-pointer rounded-xl border-2 border-transparent px-3 py-2 transition-all duration-200">
             <input type="checkbox" class="checkbox checkbox-md checkbox-secondary flex-shrink-0">
-            <span class="cp2-kit-text"><strong>Parameter storage and Automatic Device Replacement (ADR)</strong> — setpoints, thresholds, and output logic are stored in the IO-Link master, not only in the sensor. The IFM AL1350 holds a copy of every parameter set for each connected device. When a sensor is physically swapped, the master detects the new device, checks the stored Vendor ID and Device ID match, and writes all parameters back within seconds. For the TV7105 on Port 3 this means SP1 = 31°C, RP1 = 28°C, and all calibration offsets are restored automatically — zero manual re-commissioning time, zero risk of operator keying errors.</span>
+            <span class="cp2-kit-text"><strong>Parameter storage and Automatic Device Replacement (ADR)</strong> — setpoints and output logic are stored in the IO-Link master, not only in the sensor. When a sensor is swapped, the AL1350 checks the Vendor ID and Device ID match, then writes all parameters back within seconds. For the TV7105 on Port 3: SP1, RP1, SP2, RP2, and calibration offset all restore automatically — zero re-commissioning time.</span>
           </label>
           <label class="cp2-kit-item flex items-center gap-3 cursor-pointer rounded-xl border-2 border-transparent px-3 py-2 transition-all duration-200">
             <input type="checkbox" class="checkbox checkbox-md checkbox-secondary flex-shrink-0">
-            <span class="cp2-kit-text"><strong>Operating hours and cycle count</strong> — IO-Link sensors expose cumulative run-hour and detection-cycle counters via acyclic ISDU reads. The capacitive sensor on Port 2 provides a rolling detection count visible on the Dashboard. These counters enable <em>condition-based maintenance</em>: instead of replacing a sensor on a fixed calendar interval (which is often too early and wastes parts, or too late and causes failure), you replace it when its detection count exceeds a manufacturer threshold. This is the first step toward predictive maintenance in a real plant.</span>
+            <span class="cp2-kit-text"><strong>Operating hours and cycle count</strong> — IO-Link sensors expose cumulative cycle counters via ISDU. The capacitive sensor on Port 2 shows a running detection count on the Dashboard. Instead of replacing on a fixed calendar schedule, you replace when the count approaches the manufacturer's rated lifetime — planned during a shutdown, not as an emergency callout.</span>
           </label>
         </div>
       </div>
@@ -1318,7 +1318,7 @@ const WORKSHEETS = [
 
       <!-- MTTR concept card -->
       <div class="rounded-xl border-2 border-info/30 bg-info/5 p-4 mt-4 space-y-3">
-        <p class="font-bold text-base-content text-sm">ðŸ“ Concept — MTTR: Mean Time to Repair</p>
+        <p class="font-bold text-base-content text-sm">⏱️ Concept — MTTR: Mean Time to Repair</p>
         <p class="text-sm text-base-content/80"><strong>MTTR</strong> (Mean Time to Repair) is the average time taken to restore a failed component to full operation. It is one of the key maintenance KPIs used to benchmark a plant's responsiveness. Lower MTTR means less lost production per incident.</p>
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-1">
           <div class="rounded-lg bg-base-200 border border-error/40 p-3 space-y-1">
@@ -1430,75 +1430,46 @@ const WORKSHEETS = [
       </div>
       <button type="button" class="btn btn-primary btn-sm mt-2" id="ws2-check-btn">Check answers</button>
 
-      <!-- Verification challenge -->
+      <!-- Verification challenge — MTTR workflow simulation -->
       <div class="rounded-xl border-2 border-warning/50 bg-warning/5 p-4 mt-4 space-y-3">
-        <p class="font-bold text-base-content text-base">🎯 Verification — find each IO-Link maintenance feature live</p>
-        <p class="text-sm text-base-content/80">Use the live panels below and the <a href="#" data-page="home" class="link link-warning">Dashboard</a> and <a href="#" data-page="io-link-master" class="link link-warning">IO-Link page</a> to confirm each feature is active. Tick each item when verified.</p>
+        <p class="font-bold text-base-content text-base">🎯 Verification — simulate the 8-minute IO-Link repair workflow</p>
 
-        <!-- Connection Diagnostics embedded panel -->
-        <div class="rounded-lg border border-base-300 bg-base-200 p-3 space-y-2">
-          <div class="flex items-center justify-between">
-            <p class="text-xs font-semibold text-base-content/60 uppercase tracking-wide">Connection Diagnostics</p>
-            <span id="cp2-diag-badge" class="badge badge-xs badge-ghost font-mono">—</span>
-          </div>
-          <div class="grid grid-cols-3 gap-2 text-center">
-            <div class="rounded bg-base-100 border border-base-300 p-2">
-              <div class="text-xs text-base-content/50 mb-1">Circuit Breaker</div>
-              <div id="cp2-diag-circuit" class="font-bold font-mono text-sm text-base-content">—</div>
-            </div>
-            <div class="rounded bg-base-100 border border-base-300 p-2">
-              <div class="text-xs text-base-content/50 mb-1">Success Rate</div>
-              <div id="cp2-diag-success" class="font-bold font-mono text-sm text-base-content">—</div>
-            </div>
-            <div class="rounded bg-base-100 border border-base-300 p-2">
-              <div class="text-xs text-base-content/50 mb-1">MQTT</div>
-              <div id="cp2-diag-mqtt" class="font-bold font-mono text-sm text-base-content">—</div>
-            </div>
-          </div>
-          <div class="h-28"><canvas id="cp2-diag-latency-chart"></canvas></div>
-          <p class="text-xs text-base-content/40">RTT p95: <span id="cp2-diag-p95">—</span> ms &nbsp;·&nbsp; poll latency to AL1350 over HTTP</p>
-        </div>
-
-        <!-- Edge Device embedded panel -->
-        <div class="rounded-lg border border-base-300 bg-base-200 p-3 space-y-2">
-          <p class="text-xs font-semibold text-base-content/60 uppercase tracking-wide">Edge Device — Services</p>
-          <div class="grid grid-cols-3 gap-2 text-center">
-            <div class="rounded bg-base-100 border border-base-300 p-2">
-              <div class="text-xs text-base-content/50 mb-1">Backend API</div>
-              <div id="cp2-edge-backend" class="font-bold font-mono text-sm text-base-content">—</div>
-            </div>
-            <div class="rounded bg-base-100 border border-base-300 p-2">
-              <div class="text-xs text-base-content/50 mb-1">CPU</div>
-              <div id="cp2-edge-cpu" class="font-bold font-mono text-sm text-base-content">—</div>
-            </div>
-            <div class="rounded bg-base-100 border border-base-300 p-2">
-              <div class="text-xs text-base-content/50 mb-1">CPU Temp</div>
-              <div id="cp2-edge-cputemp" class="font-bold font-mono text-sm text-base-content">—</div>
-            </div>
-          </div>
+        <!-- Scenario banner -->
+        <div class="rounded-lg bg-error/10 border border-error/30 p-3 text-sm space-y-1">
+          <p class="font-semibold text-base-content">Scenario: the capacitive sensor on Port 2 has stopped detecting</p>
+          <p class="text-base-content/70 text-xs">Work through steps 1–5 in order using the real hardware. Each step maps to a phase of the IO-Link MTTR workflow and shows why the total repair time is ~8 minutes instead of ~35.</p>
         </div>
 
         <div class="space-y-2 text-sm">
+          <!-- Step 1 -->
           <label class="cp2-kit-item flex items-center gap-3 cursor-pointer rounded-xl border-2 border-transparent px-3 py-2 transition-all duration-200">
             <input type="checkbox" class="checkbox checkbox-sm checkbox-warning flex-shrink-0">
-            <span class="cp2-kit-text">On the <strong>IO-Link Master page</strong>, find the Device Identity card for Port 1 — note the Vendor ID (<strong>612</strong>) and resolved name (<strong>OMRON</strong>)</span>
+            <span class="cp2-kit-text"><span class="badge badge-error badge-sm mr-1">Step 1 — Alert</span> Go to the <a href="#" data-page="home" class="link link-warning">Dashboard</a> and use the CL50 quick-colour buttons to set the light stack to <strong>Red, Flashing</strong>. In a real plant, the light stack is the first visual indicator a fault has occurred — this is what slashes the identification phase from ~10 minutes to near-zero.</span>
           </label>
+          <!-- Step 2 -->
           <label class="cp2-kit-item flex items-center gap-3 cursor-pointer rounded-xl border-2 border-transparent px-3 py-2 transition-all duration-200">
             <input type="checkbox" class="checkbox checkbox-sm checkbox-warning flex-shrink-0">
-            <span class="cp2-kit-text">On the <strong>Dashboard</strong>, confirm the capacitive sensor (Port 2) detection count is visible and increments when you trigger it with your hand</span>
+            <span class="cp2-kit-text"><span class="badge badge-warning badge-sm mr-1">Step 2 — Identify</span> On the <a href="#" data-page="io-link-master" class="link link-warning">IO-Link Master page</a>, open the <strong>Port 2 card</strong> and note the <strong>Vendor ID</strong> and <strong>Device Name</strong>. This is the exact part information needed to order the correct replacement — no worn label, no paper manual required.</span>
           </label>
+          <!-- Step 3 -->
           <label class="cp2-kit-item flex items-center gap-3 cursor-pointer rounded-xl border-2 border-transparent px-3 py-2 transition-all duration-200">
             <input type="checkbox" class="checkbox checkbox-sm checkbox-warning flex-shrink-0">
-            <span class="cp2-kit-text">Look at the <strong>Port 3 parameter panel</strong> on the IO-Link Master page — confirm SP1 (index 583) is readable from the app (parameter storage visible in action)</span>
+            <span class="cp2-kit-text"><span class="badge badge-info badge-sm mr-1">Step 3 — ADR ready</span> Still on the IO-Link Master page, open the <strong>Port 3 parameter panel</strong> and read SP1 (index 583). This setpoint is stored in the AL1350 master — when a replacement TV7105 is plugged in, the master writes it back automatically within seconds. This is ADR eliminating the ~12-minute manual reconfiguration step.</span>
           </label>
+          <!-- Step 4 -->
           <label class="cp2-kit-item flex items-center gap-3 cursor-pointer rounded-xl border-2 border-transparent px-3 py-2 transition-all duration-200">
             <input type="checkbox" class="checkbox checkbox-sm checkbox-warning flex-shrink-0">
-            <span class="cp2-kit-text"><strong>Backend API</strong> shows Online in the panel above — the diagnostic event infrastructure is running and connected</span>
+            <span class="cp2-kit-text"><span class="badge badge-secondary badge-sm mr-1">Step 4 — Cycle count</span> Back on the <a href="#" data-page="home" class="link link-warning">Dashboard</a>, trigger the <strong>capacitive sensor (Port 2)</strong> with your hand several times and confirm the detection count increments. This counter is what enables condition-based scheduling — the capacitive sensor gets a planned replacement before failure, not an emergency callout after it.</span>
           </label>
+          <!-- Step 5 -->
           <label class="cp2-kit-item flex items-center gap-3 cursor-pointer rounded-xl border-2 border-transparent px-3 py-2 transition-all duration-200">
             <input type="checkbox" class="checkbox checkbox-sm checkbox-warning flex-shrink-0">
-            <span class="cp2-kit-text"><strong>Circuit breaker</strong> shows CLOSED above — the IO-Link communication path used for diagnostic events and ISDU reads is healthy</span>
+            <span class="cp2-kit-text"><span class="badge badge-success badge-sm mr-1">Step 5 — Recovery</span> Set the CL50 back to <strong>Green, Steady</strong> on the Dashboard. This is the final step of the IO-Link repair workflow: the HMI confirms port health after the swap. Total elapsed time in a real plant: <strong>~8 minutes</strong>.</span>
           </label>
+        </div>
+
+        <div class="rounded-lg bg-base-300/50 border border-base-300 p-2 text-xs text-base-content/70">
+          <strong>Where the 27 minutes are saved:</strong> Step 1 replaces the ~10 min walk-and-find. Step 3 replaces the ~12 min manual reconfiguration. Together those two steps account for 22 of the 27 minutes saved per fault event.
         </div>
       </div>
 
