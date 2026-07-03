@@ -9,7 +9,7 @@
 |---|---|
 | **Course Code** | CP7395 |
 | **Title** | Industry 4.0 IO-Link |
-| **Level** | Level 3 |
+| **Level** | Engineering level — HNC/degree, engineers, system integrators |
 | **Total Time** | 10–12 hours |
 | **Worksheets** | 11 |
 | **Prerequisites** | CP3723 recommended — Worksheets 1–3 may run in parallel |
@@ -18,16 +18,17 @@
 
 By the end of this course you will be able to:
 
-- Describe the full hardware and software architecture of an Industry 4.0 sensor system
-- Trace the data path from IO-Link sensor through MQTT edge gateway to a browser-based HMI
-- Decode raw IO-Link process data (PDin) hex values into engineering units using data types and scale factors
-- Classify IO-Link data as process, service, or event and explain where each type is routed
-- Quantify the maintenance MTTR reduction from IO-Link and calculate the financial saving
-- Map IO-Link data into PLC architectures and identify the equivalent layers in this app
-- Identify any connected sensor from its Vendor ID and Device ID without physical inspection
-- Decode and encode the Banner CL50 Pro 3-byte PDout command word from first principles
-- Explain the PT100 resistance curve and decode temperature sensor PDin including negative values
-- Apply calibration offset engineering to correct sensor drift via ISDU
+- Describe the full hardware and software architecture of an Industry 4.0 sensor system, including the edge-gateway pattern
+- Trace the data path from IO-Link sensor through MQTT and the edge device to a browser-based HMI, and explain the HTTP/ISDU return path
+- Decode raw IO-Link process data (PDin) hex values into engineering units using data types and scale factors, including two's complement for negative values
+- Classify IO-Link data as process, service, or event data and explain where each type is routed and why
+- Apply the NAMUR NE107 health-state symbols (Failure / Maintenance Required / Out of Specification / Function Check) to real sensor events
+- Quantify the MTTR reduction from IO-Link and calculate the annual downtime and financial saving for a 40-sensor installation
+- Map IO-Link data into PLC and OPC UA architectures, including the Y-Path concept, and identify the equivalent layers in this app
+- Identify any connected sensor from its Vendor ID and Device ID without physical inspection, and use identity data to order the correct spare part
+- Explain the PT100 resistance curve and IEC 60751 accuracy classes, and decode a temperature sensor PDin including negative and open-circuit values
+- Apply calibration offset engineering to correct sensor drift via ISDU, and calculate Remaining Useful Life (RUL) from cycle-count data
+- Decode and encode the Banner CL50 Pro 3-byte PDout command word from first principles, bit by bit
 
 ### System Overview
 
@@ -48,10 +49,10 @@ Light Stack (Port 4)─M12──►
 
 | Port | Device | Model | Technical Notes |
 |------|--------|-------|-----------------|
-| 1 | Proximity Sensor | Omron E2E-X16MB1T12 | IO-Link V1.1 COM3 (230.4 kbps). PDin: 2 bytes. Bit 0 = OUT1; bit 4 = instability alarm; bit 5 = over-approach alarm. Full ISDU access. |
-| 2 | Capacitive Sensor | RS Pro / Carlo Gavazzi M18 | IO-Link 1.1. PDin: bit 0 = output state; detection count in extended bytes. ISDU writable: SP1 (threshold), teach commands. |
-| 3 | Temperature Sensor | IFM TV7105 | IO-Link 1.1. PDin: 4 bytes. Bytes 0–1 = signed int16 × 0.1 = °C. Bytes 2–3 = SP1/SP2 flags. ±0.1 °C resolution. |
-| 4 | Light Stack | Banner CL50 Pro | PDout-only. 3-byte command word controls colour, animation, intensity, and speed. No PDin. Write via AL1350 pdout/setdata service call. |
+| 1 | Proximity Sensor | Omron E2E-X16MB1T12 | IO-Link V1.1 COM3 (230.4 kbps). PDin: 2 bytes — byte 0 = monitor output (oscillation amplitude, uint8); byte 1 bit 0 = OUT1, bit 4 = instability alarm, bit 5 = over-approach alarm. Full ISDU access. Vendor ID 612, Device ID 131090. |
+| 2 | Capacitive Sensor | RS Pro / Carlo Gavazzi M18 | IO-Link 1.1. PDin bit 0 = output state; detection count accumulated in the backend from OFF→ON transitions. ISDU writable: SP1 (threshold, index 60/sub 1), teach commands. |
+| 3 | Temperature Sensor | IFM TV7105 | IO-Link 1.1. PDin: 4 bytes. Bytes 0–1 = signed int16 × 0.1 = °C. Bytes 2–3 carry SP1/SP2 flags. ±0.1 °C resolution. Open-circuit fault reads as −40.0 °C (`FE70`). |
+| 4 | Light Stack | Banner CL50 Pro | PDout-only. 3-byte (24-bit) command word controls colour, animation, intensity, and speed. No PDin. Write via AL1350 `pdout/setdata` service call. |
 | — | IO-Link Master | IFM AL1350 | 8 IO-Link/digital ports. IP: 192.168.7.4. Publishes MQTT every 500 ms; responds to HTTP service calls (ISDU). |
 | — | Edge Device | Raspberry Pi 4 | FastAPI + uvicorn on 127.0.0.1:8000. Mosquitto MQTT broker. eth0: 192.168.7.2 (IO-Link subnet). wlan0: building LAN (DHCP). Bridges the two isolated networks. |
 
@@ -75,7 +76,7 @@ Browser (this screen)                                          │
 
 ## WS1 — Your System: A Technical Brief
 
-**Estimated time:** 45 minutes | **Dashboard:** Edge Device page, Admin / Connection Diagnostics
+**Estimated time:** 15 minutes | **Dashboard:** Edge Device page, Admin / Connection Diagnostics | **Prerequisites:** CP3723 recommended
 
 ### Why This Matters
 
@@ -86,142 +87,134 @@ Every engineering project starts with a system brief. Before writing code or int
 - Identify all components in the IM4330 kit by name, IP address, and technical role
 - Describe the network topology — IO-Link subnet, edge gateway, building LAN
 - Confirm system health using the Connection Diagnostics and Edge Device pages
-- Understand how MQTT publish interval relates to WebSocket message rate
+- Calculate the WebSocket message rate implied by the AL1350's MQTT publish interval
 
-### Background — Communication Paths
+### Content — Architecture Overview
 
-| Protocol | Direction | Rate | What it carries |
-|----------|-----------|------|----------------|
-| IO-Link | Sensor → AL1350 | Per port (every scan cycle) | PDin process data + ISDU acyclic data |
-| MQTT | AL1350 → Pi | Every 500 ms | PDin from all ports + supervision data |
-| HTTP | Pi → AL1350 | On demand | ISDU reads/writes, device tree, supervision |
-| WebSocket | Pi → Browser | Every MQTT tick | Merged sensor data as JSON |
+An SVG architecture diagram and the network topology block (above) walk through the full path: sensor → AL1350 → Mosquitto (MQTT, port 1883) → Raspberry Pi (FastAPI/uvicorn) → WebSocket → browser. A live system-status panel shows the master connection dot, connected port count, WebSocket message counter, and time since last update.
 
-### Task 1 — Hardware Checklist
+**Concept — MQTT publish rate:** the AL1350 publishes every 500 ms. Message rate = 1000 ms ÷ 500 ms = **2 messages per second**.
 
-Locate each component on the bench. Tick it when you can match it to the screen and confirm its IP address or function.
+**Concept — dual-NIC bridging:** the Raspberry Pi has two network interfaces — eth0 (192.168.7.2, static, IO-Link subnet) and wlan0 (DHCP, building LAN). It bridges the two otherwise-isolated networks — the classic edge-gateway pattern.
 
-- [ ] **IO-Link Master (IFM AL1350)** — the orange box with numbered M12 ports. IP address: **192.168.7.4**. All sensors connect here. Publishes MQTT every 500 ms and responds to HTTP service calls for ISDU reads and writes.
-- [ ] **Port 1 — Omron E2E-X16MB1T12** — M18 inductive proximity. IO-Link V1.1 COM3 (230.4 kbps). Full ISDU access. Output logic, timer mode, and diagnosis mode are all configurable remotely.
-- [ ] **Port 2 — Capacitive Sensor** — M18 cylinder. IO-Link 1.1. Detects material by dielectric field change. SP1 threshold and teach commands are writable via ISDU.
-- [ ] **Port 3 — IFM TV7105** — IO-Link temperature sensor, ±0.1 °C. PDin bytes 0–1 = signed int16 (raw ÷ 10 = °C). Two independent switching outputs (SP1, SP2) with configurable setpoints.
-- [ ] **Port 4 — Banner CL50 Pro** — multi-colour status light stack. PDout-only — receives commands, sends no measurements. A 3-byte command controls every aspect of the display.
-- [ ] **Edge Gateway (Raspberry Pi 4)** — runs FastAPI + uvicorn + Mosquitto. eth0: 192.168.7.2 on the IO-Link subnet; wlan0 on the building LAN. Bridges the two isolated networks — the classic edge gateway pattern.
-- [ ] **This dashboard** — a Vite SPA receiving WebSocket JSON from the Pi's FastAPI backend. Decodes MQTT PDin into live charts. Never communicates directly with the AL1350.
+### Task — Hardware and Verification Checklist
 
-### Task 2 — System Health Check
+Locate each component on the bench and tick it when confirmed:
 
-Open the **Connection Diagnostics** page and the **Edge Device** page. Confirm all four items:
+- [ ] **IO-Link Master (IFM AL1350)** — IP **192.168.7.4**. All sensors connect here.
+- [ ] **Port 1 — Omron E2E-X16MB1T12** — IO-Link V1.1 COM3 (230.4 kbps). Full ISDU access.
+- [ ] **Port 2 — Capacitive Sensor** — SSC1 SP1 threshold + teach commands writable via ISDU.
+- [ ] **Port 3 — IFM TV7105** — ±0.1 °C, PDin 4 bytes, bytes 0–1 = int16 ÷ 10.
+- [ ] **Port 4 — Banner CL50 Pro** — PDout-only status light stack.
+- [ ] **Edge Gateway (Raspberry Pi 4)** — eth0 192.168.7.2 (static) / wlan0 (DHCP).
+- [ ] **This dashboard** — receives merged data over WebSocket; never talks directly to the AL1350.
 
-- [ ] The circuit breaker on Connection Diagnostics is **closed** (healthy)
-- [ ] The latency graph on Connection Diagnostics is showing live readings (not flat-lined)
-- [ ] The backend service is shown as **active** on the Edge Device page
-- [ ] The WebSocket message counter is incrementing at approximately **2 messages per second**
+Then confirm live system health:
+
+- [ ] Circuit breaker on Connection Diagnostics is **CLOSED**
+- [ ] Latency graph on Connection Diagnostics is live (not flat-lined)
+- [ ] Backend service is **Online** on the Edge Device page
+- [ ] WebSocket message counter is incrementing at approximately **2 messages per second**
 
 ### Knowledge Check
 
 **Q1.** What is the IP address of the IFM AL1350 IO-Link Master?
 
-- A: 192.168.7.4
-- B: 192.168.7.2
+- A: 192.168.7.4 — correct
+- B: 192.168.7.2 — this is the Raspberry Pi's eth0 address
 - C: 192.168.1.1
 
-**Q2.** The AL1350 pushes data to Mosquitto every 500 ms. Approximately how many WebSocket messages should arrive at the browser each second?
+**Q2.** The AL1350 publishes every 500 ms. Approximately how many WebSocket messages should arrive at the browser each second?
 
 - A: 20 messages per second
-- B: 2 messages per second — 500 ms is the period, so 1000 ÷ 500 = 2 per second
-- C: 500 messages per second — 500 ms equals 500 per second
+- B: 2 messages per second — 1000 ÷ 500 = 2 — correct
+- C: 500 messages per second
 
-**Q3.** The Raspberry Pi has two network interfaces (eth0 and wlan0). Why does this matter for the system architecture?
+**Q3.** Why does the Raspberry Pi have two network interfaces (eth0 and wlan0)?
 
 - A: It allows two IO-Link masters to be connected simultaneously
-- B: It doubles bandwidth by bonding eth0 and wlan0 together for MQTT traffic
-- C: It bridges the isolated IO-Link subnet (192.168.7.x) to the building LAN — the Pi is the edge gateway
+- B: It doubles bandwidth by bonding eth0 and wlan0 together
+- C: It bridges the isolated IO-Link subnet (192.168.7.x) to the building LAN — the Pi is the edge gateway — correct
 
-**Q4.** According to the hardware table, how many IO-Link ports have a sensor connected in this system?
+**Q4.** According to the hardware table, how many IO-Link ports have a sensor connected?
 
-- A: 4 — Ports 1 through 4 each have a device connected
+- A: 4 — Ports 1 through 4 each have a device connected — correct
 - B: 8 — every port on the AL1350 is populated
-- C: 2 — only the proximity and capacitive sensors
+- C: 2
 
 ---
 
 ## WS2 — How This App Works
 
-**Estimated time:** 60 minutes | **Dashboard:** Edge Device page, Admin / Connection Diagnostics
+**Estimated time:** 20 minutes | **Dashboard:** Edge Device page, Admin / Connection Diagnostics | **Prerequisites:** CP3723 recommended
 
 ### Why This Matters
 
-Understanding the full data path — from IO-Link sensor through the edge device to your browser — is the foundation of any Industry 4.0 integration. The same architecture pattern (sensor → MQTT broker → edge gateway → WebSocket → HMI) is used in industrial IoT platforms at scale, from individual machine cells to cloud-connected factories.
+Understanding the full data path — from IO-Link sensor through the edge device to your browser — is the foundation of any Industry 4.0 integration. The same architecture pattern (sensor → MQTT broker → edge gateway → WebSocket → HMI) is used in industrial IoT platforms at scale.
 
 ### Learning Objectives
 
 - Explain why MQTT is preferred over HTTP polling for 500 ms sensor data
 - Describe the Pi's role as an edge gateway bridging two isolated networks
 - Trace the data path: AL1350 → Mosquitto → FastAPI → decoder.py → WebSocket → browser
-- Understand how the backend handles AL1350 power cycles and maintains subscription
+- Understand how the backend handles AL1350 power cycles and maintains its MQTT subscription
+- Interpret circuit breaker state and round-trip latency
 
-### Background — Two Communication Protocols, One Architecture
+### Background — Software Layers
 
-**Why MQTT (primary)?**
-The AL1350 publishes sensor data every 500 ms without being asked. Mosquitto, the MQTT broker on the Pi, receives this push and the FastAPI backend subscribes to it. This is low-latency and efficient — no polling overhead, no request–response cycle. MQTT uses a pub/sub model: the AL1350 publishes to a topic, and any subscriber (the Pi, future SCADA systems) receives it.
+Each layer is explained with an analogy:
 
-**Why HTTP (fallback + extras)?**
-HTTP polling runs in parallel for data MQTT doesn't carry: ISDU parameter reads/writes, the device tree (/gettree, cached for 5 minutes), and as a fallback if MQTT is unavailable. The backend implements a circuit breaker: if 5 consecutive HTTP requests fail, it pauses for 15 seconds before retrying.
+| Layer | Role | Analogy |
+|-------|------|---------|
+| Mosquitto (MQTT broker) | Receives the AL1350's push and fans it out | A WhatsApp group — publish once, every subscriber gets it |
+| FastAPI + uvicorn | Backend API server | A bilingual receptionist — translates between HTTP/ISDU and WebSocket/JSON |
+| `decoder.py` | Parses raw PDin hex into engineering values | A barcode scanner — reads the code, returns the meaning |
+| WebSocket `/ws` | Persistent push channel to the browser | A phone call left open — no need to redial each time |
+| HMI dashboard | Renders the decoded data | A car instrument panel |
 
-**Why does the backend re-subscribe on every startup?**
-The AL1350 loses its MQTT subscriptions when it power-cycles. The backend calls `ensure_mqtt_subscription()` on every startup to re-register the push subscription automatically — a maintenance technician who power-cycles the AL1350 does not need to restart the Pi.
+**Why MQTT over HTTP polling?** MQTT uses publish/subscribe — the AL1350 pushes data the moment it is ready, without the Pi having to request each cycle. This is lower overhead than repeated HTTP GET requests every 500 ms.
 
-**The edge gateway pattern:**
-The AL1350 lives on a private 192.168.7.x subnet isolated from the main LAN. The Pi bridges the two — eth0 on the IO-Link subnet, wlan0 on the building network. The browser never talks directly to the AL1350; it only talks to the Pi's FastAPI backend. The Pi is the edge gateway.
+**The subscription-loss problem:** the AL1350 loses its MQTT subscriptions when it power-cycles. The backend calls `ensure_mqtt_subscription()` on every startup to re-register the push subscription automatically — a technician who power-cycles the AL1350 does not need to also restart the Pi.
 
-### Task 1 — Trace the Data Path
+**Circuit breaker and latency:** the HTTP fallback path is protected by a circuit breaker — CLOSED (healthy) normally, OPEN after 5 consecutive failures, HALF-OPEN after a 15 s recovery timeout. Round-trip latency is normally 20–80 ms; consistently above ~200 ms indicates AL1350 load or IO-Link subnet congestion, not a Wi-Fi problem on the browser side.
 
-Using the app, trace each step of the data path and confirm it is live:
+### Task — Trace the Data Path
 
-1. **AL1350 → Mosquitto (MQTT, 500 ms):** confirm the WS message counter on WS1 is incrementing at ~2 per second. This is MQTT-sourced data flowing through the Pi to your browser.
-2. **FastAPI backend:** open the **Edge Device** page. Confirm both `im-sensors-backend` and `mosquitto` are shown as active services.
-3. **Circuit breaker (HTTP path):** open **Connection Diagnostics**. Confirm the circuit breaker is closed (green) and the latency graph is live. This is the HTTP fallback path being measured.
-4. **WebSocket:** the round-trip latency on Connection Diagnostics should be below 200 ms under normal conditions. Consistently higher values indicate AL1350 load or IO-Link subnet congestion.
-
-### Task 2 — Live Verification Checklist
-
-- [ ] The WebSocket message counter is incrementing at approximately 2 messages per second
-- [ ] **Mosquitto** is shown as active on the Edge Device page
-- [ ] The circuit breaker on Connection Diagnostics is **closed** (green)
-- [ ] Round-trip latency is below **200 ms** on the Connection Diagnostics latency graph
+1. Watch the WebSocket message counter climb by roughly 20 in 10 seconds (≈2/s).
+2. Check the circuit breaker and latency panel on Connection Diagnostics.
+3. Warm the TV7105 probe with your hand on the Dashboard and watch the live decode chain: °C value → int16 → raw hex, all updating together in real time.
 
 ### Knowledge Check
 
 **Q1.** Why is MQTT better suited than HTTP polling for delivering sensor data every 500 ms?
 
-- A: MQTT uses publish/subscribe — the AL1350 pushes data the moment it is ready, without the Pi having to request each cycle
-- B: HTTP is push-based and uses persistent connections; MQTT requires a new TCP request each cycle
-- C: MQTT guarantees delivery of every message in all network conditions by queuing until the subscriber acknowledges
+- A: MQTT uses publish/subscribe — the AL1350 pushes data the moment it is ready, without the Pi having to request each cycle — correct
+- B: HTTP is push-based and MQTT requires a new TCP request each cycle
+- C: MQTT guarantees delivery in all network conditions by queuing until acknowledged
 
 **Q2.** The AL1350 loses its MQTT subscriptions when it power-cycles. How does the backend handle this?
 
-- A: It waits for the user to manually re-subscribe via the Settings page
-- B: It switches permanently to HTTP polling after any AL1350 restart
-- C: It calls `ensure_mqtt_subscription()` on every backend startup, re-registering the push subscription automatically
+- A: It waits for the user to manually re-subscribe via Settings
+- B: It switches permanently to HTTP polling after any restart
+- C: It calls `ensure_mqtt_subscription()` on every backend startup, re-registering the push subscription automatically — correct
 
 **Q3.** If the FastAPI backend service on the Pi crashed, what would you expect to observe?
 
-- A: Live data would stop and the WebSocket would disconnect — the browser shows "OFFLINE"
-- B: The WebSocket message counter would continue to increment at the normal rate
-- C: The AL1350 would automatically restart the backend service via its own built-in watchdog
+- A: Live data would stop and the WebSocket would disconnect — the browser shows offline — correct
+- B: The WebSocket message counter would continue to increment normally
+- C: The AL1350 would automatically restart the backend via a built-in watchdog
 
-**Q4.** What does a consistently high round-trip latency value on the Connection Diagnostics page indicate?
+**Q4.** What does a consistently high round-trip latency value on Connection Diagnostics indicate?
 
-- A: The browser's chart rendering pipeline cannot keep up with the WebSocket update rate
-- B: The AL1350 is under load or there is congestion on the IO-Link subnet
-- C: The Pi's Wi-Fi interface is saturated by other traffic on the building network
+- A: The AL1350 is under load or there is congestion on the IO-Link subnet — correct
+- B: The browser's chart rendering cannot keep up
+- C: The Pi's Wi-Fi interface is saturated by other building-network traffic
 
 ---
 
 ## WS3 — How Each Sensor Works (Protocol Level)
 
-**Estimated time:** 75 minutes | **Dashboard:** Dashboard — Active Port Details (Raw PDin)
+**Estimated time:** 20 minutes | **Dashboard:** Active Port Details (Raw PDin) | **Prerequisites:** Complete WS1
 
 ### Why This Matters
 
@@ -229,778 +222,573 @@ Every IO-Link sensor sends a raw binary process data (PDin) payload. The master 
 
 ### Learning Objectives
 
-- Describe the PDin decode pipeline: raw hex → decoder.py → engineering value
+- Describe the PDin decode pipeline: raw hex → `decoder.py` → engineering value
 - Identify the bit fields in the proximity sensor PDin (OUT1, instability alarm, over-approach alarm)
 - Explain what the capacitive detection count represents and why it is useful
-- Decode a temperature sensor PDin hex value using int16 and scale 0.1
-- Explain why CL50 PDout requires more care to build than a simple PDin decode
+- Decode a temperature sensor PDin hex value using int16 and scale ×0.1
+- Explain why the CL50 PDout requires more care to build than a simple PDin decode
 
-### Background — PDin Decode Pipeline
+### Background — PDin Byte Layout Per Device
 
-Each device sends its process data as a byte string. The backend reads each byte or bit according to the sensor's IODD file:
+**Port 1 — Proximity Sensor (Omron E2E-X16MB1T12)** — PDin is 2 bytes:
 
-**Port 1 — Proximity Sensor (Omron E2E-X16MB1T12)**
+| Byte | Bit | Field | Meaning |
+|------|-----|-------|---------|
+| Byte 0 | — | Monitor output | Oscillation amplitude, uint8 (~80 in free air) |
+| Byte 1 | Bit 0 | OUT1 | 1 = object detected |
+| Byte 1 | Bit 4 | Instability Alarm | 1 = target near edge of sensing range |
+| Byte 1 | Bit 5 | Over-Approach Alarm | 1 = target too close to sensor face |
+| Byte 1 | Bit 6 | Warning flag | |
+| Byte 1 | Bit 7 | Error flag | |
 
-PDin is 2 bytes (16 bits). The critical fields are in byte 0:
+**Port 2 — Capacitive Sensor** — bytes 0–1 carry field strength; byte 2 bit 0 is the SSC1 switching output. The backend accumulates a session detection count, incremented on each OFF→ON transition.
 
-| Bit | Field | Meaning |
-|-----|-------|---------|
-| Bit 0 | OUT1 (switching output) | 1 = object detected, 0 = no object |
-| Bit 4 | Instability Alarm | 1 = target near edge of sensing range |
-| Bit 5 | Over-Approach Alarm | 1 = target too close to sensor face |
-| Byte 1 | Monitor output | Oscillation amplitude uint8 (~80 in free air) |
+**Port 3 — Temperature Sensor (IFM TV7105)** — signed int16, scale ×0.1: `0x00F5` (245) → 24.5 °C; `0x02EE` (750) → 75.0 °C; `0xFFCE` (−50) → −5.0 °C.
 
-**Port 2 — Capacitive Sensor**
+**Port 4 — Light Stack (Banner CL50 Pro)** — PDout only, no PDin; this worksheet includes an interactive builder (colour swatches, animation picker, live hex preview, "Send to light" button).
 
-PDin carries the switching output (bit 0) and optionally a detection count in the extended bytes. The backend accumulates a session counter displayed on the Dashboard. A count is incremented on each rising edge (OFF→ON transition).
+### Task — Live PDin Panels
 
-**Port 3 — Temperature Sensor (IFM TV7105)**
-
-PDin is 4 bytes. Bytes 0–1 carry the temperature as a signed 16-bit integer (int16) with a scale factor of ×0.1:
-
-```
-raw = 0x00F5  →  245  →  245 ÷ 10  =  24.5 °C
-```
-
-Bytes 2–3 carry the SP1 and SP2 switching output states and alarm flags.
-
-**Port 4 — CL50 Light Stack (PDout-only)**
-
-The CL50 receives commands rather than sending sensor data. A 3-byte PDout payload controls colour, animation, intensity, and speed, with each field packed into specific bit positions. One incorrect bit changes the entire visual output. This is covered in detail in WS11.
-
-### Task — Live PDin Observation
-
-Open the **Dashboard** and expand the Active Port Details for each sensor. For each one:
-
-1. Note the current raw PDin hex value for Port 3 (temperature sensor) and manually calculate the temperature: extract bytes 0–1, interpret as int16, divide by 10
-2. Hold a **metal object** (screwdriver or spanner) near Port 1 (proximity sensor) and confirm the switching state (OUT1) changes on the Dashboard. Note: proximity sensors only detect metal — your hand will not trigger it
-3. Trigger the Port 2 (capacitive sensor) by bringing your hand close — confirm the detection count increments
-4. Identify the current CL50 colour state from the Dashboard and match it to what you can see on the light stack
+Work through each port's live decode panel: Port 1 proximity PDin decode, Port 2 dielectric panel, Port 3 temperature decode panel, and Port 4's interactive PDout builder.
 
 ### Knowledge Check
 
-**Q1.** If the Omron E2E proximity sensor returns raw PDin hex `0x01`, what is the switching output state?
+**Q1.** Byte 1 of the proximity sensor PDin reads `0x01`. What does this mean?
 
-- A: Object detected — bit 0 is set to 1
-- B: No object detected — the sensor is clear
-- C: Sensor fault — 0x01 indicates an internal error code
+- A: OUT1 is active — an object is detected — correct
+- B: The sensor is reporting an error
+- C: The monitor output amplitude is 1
 
-**Q2.** Why is a detection count more useful than just the current switching state for a capacitive level sensor on a filling line?
+**Q2.** Why is the capacitive sensor's running detection count useful?
 
-- A: It gives a continuous analogue level reading rather than a binary on/off output
-- B: It prevents false positives caused by water or foam near the sensor face
-- C: A running count tracks how many containers have been filled without needing a separate counter sensor
+- A: It replaces the need for a switching output entirely
+- B: It confirms the ISDU connection is alive
+- C: A running count lets you track fills/parts over a shift without watching the screen continuously — correct
 
-**Q3.** A raw PDin value of `0x02EE` is received from the TV7105 (int16, ÷10). What is the temperature? (0x02EE = 750 decimal)
+**Q3.** A TV7105 PDin decodes to `0x02EE`. What temperature does this represent?
 
-- A: 7.5 °C
-- B: 750.0 °C
-- C: 75.0 °C — 750 ÷ 10 = 75.0
+- A: 2.99 °C
+- B: 7.5 °C
+- C: 75.0 °C — 0x02EE = 750 decimal × 0.1 — correct
 
-**Q4.** Why does building a PDout command for the CL50 require more care than reading the proximity sensor's PDin?
+**Q4.** Why does building a correct CL50 PDout value require more care than decoding a simple sensor PDin?
 
-- A: Multiple fields — colour, animation, intensity, and speed — must be packed into specific bit positions across 3 bytes. One wrong bit changes the entire behaviour
-- B: The CL50 uses a completely different IO-Link variant that the standard binary decoder cannot process
-- C: The CL50 PDin arrives as a plain text string rather than binary bytes
+- A: PDout packs multiple unrelated fields (colour, animation, intensity, speed, audible) into specific bit ranges across 3 bytes — getting one field wrong can change several others at once — correct
+- B: PDout uses a different hex encoding to PDin
+- C: The CL50 requires a checksum byte that other devices don't
 
 ---
 
 ## WS4 — Benefits for Maintenance
 
-**Estimated time:** 45 minutes | **Dashboard:** Dashboard — Port status, IO-Link Master page
+**Estimated time:** 15 minutes | **Dashboard:** Port status and events | **Prerequisites:** Complete WS1–WS2
 
 ### Why This Matters
 
-Mapping IO-Link features to real maintenance problems is how you make the return-on-investment case for an Industry 4.0 upgrade. Turning raw protocol capabilities into tangible operational outcomes — shorter downtime, faster root-cause identification, automatic sensor re-commissioning — is the skill that bridges engineering and management.
+Mapping IO-Link features directly to maintenance problems is how you build the business case for Industry 4.0 investment to a manager who does not care about protocols — only about downtime and cost.
 
 ### Learning Objectives
 
-- Match IO-Link capabilities to specific maintenance problems
-- Compare mean-time-to-repair (MTTR) for standard sensors versus IO-Link sensors
-- Identify where process data, event data, and service data appear in the live system
-- Locate device identity, parameter panels, and event logs in the HMI
+- Match specific IO-Link data features (events, identity, parameter storage, cycle counts) to the maintenance problem each one solves
+- Interpret the MTTR comparison between standard wiring and IO-Link
+- Calculate an annual time saving from a fleet-wide MTTR reduction
 
-### Background — Standard vs IO-Link Maintenance Response
+### Background — Four Features, Four Problems
 
-When a standard sensor fails, the maintenance engineer walks to the machine, identifies the failed sensor visually, replaces it, re-adjusts it manually, and signs off — typically 35 minutes.
+| Feature | Maintenance Problem Solved | Kit Example |
+|---------|---------------------------|--------------|
+| Diagnostic events | "Which sensor failed and why?" without an on-site visit | Port 1 instability alarm |
+| Device identity | "What is the exact spare part number?" | Port 1 Vendor 612, Device 131090 |
+| Parameter storage / ADR | "Configuration is lost after a swap" | TV7105 SP1/RP1/SP2/RP2/calibration offset auto-restore |
+| Operating hours / cycle count | "When should this be replaced, before it fails?" | Port 2 capacitive ISDU count |
 
-When an IO-Link sensor fails:
-1. **HMI alerts** — port number and fault code are on screen in seconds (~1 min)
-2. **Part ordered** — device identity (vendor + model) is known before you leave the office (~2 min)
-3. **Sensor swapped** — parameters restore automatically from the master (~4 min)
-4. **HMI confirms** — port shows healthy, process value normal (~1 min)
+**MTTR comparison:**
 
-**Total: ~8 minutes.** A saving of 27 minutes per fault event.
+| Step | Standard wiring | IO-Link |
+|------|-----------------|---------|
+| Walk to sensor | 10 min | (alert removes the walk-to-diagnose step) |
+| Identify fault | 8 min | 1 min (alert) |
+| Replace / reconfigure | 12 min | 2 min (order) + 4 min (swap) |
+| Verify | 5 min | 1 min |
+| **Total** | **~35 min** | **~8 min** |
 
-### Task — Match Maintenance Problems to IO-Link Features
+Saving per fault: **≈27 minutes**. For 40 sensors at 1 fault/sensor/year: 40 × 27 min = 1,080 min = **18 hours saved per year**.
 
-For each maintenance problem below, select the IO-Link feature that addresses it:
+### Task — Matching Exercise and Repair-Workflow Challenge
 
-| Maintenance problem | IO-Link feature |
-|--------------------|----------------|
-| Sensor fails without warning | |
-| Replacing a sensor loses its configuration | |
-| Unknown which sensor on the line has failed | |
-| Planning when to replace a sensor | |
+**Matching exercise** — match each problem to the feature that solves it:
 
-**Available options:**
-- **Diagnostic events** — fault codes and warnings transmitted by the sensor (e.g. lens dirty, wire break) alert before complete failure
-- **Parameter storage and automatic device replacement** — parameters stored in the master restore automatically when the Device ID of the new sensor matches
-- **Device identity and event codes per port** — vendor ID, device ID, and per-port event codes on the HMI identify the exact failed sensor and model
-- **Cycle count and diagnostic trends** — usage data accessible via ISDU enables predictive maintenance planning
+| Problem | Feature |
+|---------|---------|
+| Sensor fails without warning | Diagnostic events |
+| Replacing a sensor loses configuration | Parameter storage (ADR) |
+| Unknown which sensor failed | Diagnostic events |
+| Planning when to replace | Diagnostic events (trend from event history) |
 
-### Task 2 — Live System Identification
+**5-step live repair-workflow scenario** simulating a Port 2 failure:
 
-Using the **Dashboard** and the **IO-Link Master page**, confirm each capability is visible on the live system:
+1. **Alert** — set the CL50 to Red/Flashing via the PDout builder
+2. **Identify** — read the Port 2 device identity
+3. **ADR** — read SP1 (index 60/sub 1)
+4. **Cycle count** — trigger Port 2 by hand and watch the live counter
+5. **Sign off** — restore the CL50 to Green/Steady
 
-- [ ] Find the **device identity** (vendor name, product name) for Port 3 on the IO-Link Master page
-- [ ] Locate where **process data** (live sensor values) appears on the Dashboard
-- [ ] Find where **event / diagnostic data** (faults and warnings) would appear on the IO-Link Master page if a fault occurred
-- [ ] Navigate to the **parameter read/write panel** for a sensor and identify at least one writable parameter
-
-### Knowledge Check
-
-**Q2.** In this app, which data type does the WebSocket stream deliver to the browser on every tick?
-
-- A: Process data (sensor values) + event data (faults/warnings) merged into a single JSON payload
-- B: Service data only — parameters and ISDU values
-- C: Raw binary PDin only, without decoding
+> Steps 1 and 3 (alert + parameter recovery) account for 22 of the 27 minutes saved per fault.
 
 ---
 
-## WS5 — Decoding IO-Link Data
+## WS5 — IODD Files & Decoding IO-Link Data
 
-**Estimated time:** 60 minutes | **Dashboard:** Dashboard — IODD parameter panels
-
-### Why This Matters
-
-Every ISDU read returns raw hexadecimal bytes. Without knowing the data type and scale factor, the number is meaningless. This worksheet teaches the conversion from hex to decimal to engineering value — the skill that makes parameter access useful, not just possible. It also prepares you for WS10 where negative (two's complement) values appear.
-
-### Learning Objectives
-
-- Convert hexadecimal values to decimal using positional notation
-- Apply data types (uint8, uint16, int16, int32) to raw byte values
-- Apply scale factors to produce engineering values with correct units
-- Complete three decode exercises using ISDU parameter values from this kit
-
-### Background — Three Components of Any ISDU Decode
-
-Every ISDU parameter decode requires three pieces of information from the IODD file:
-
-| Component | What it tells you | Example |
-|-----------|------------------|---------|
-| **Raw hex** | The bytes the device returned | `01 F4` |
-| **Data type** | How many bytes and whether signed | int16 (2 bytes, can be negative) |
-| **Scale factor** | Multiplier to reach engineering units | × 0.1 (to get °C) |
-
-**Step 1 — Hex digits:** Hexadecimal uses 16 symbols: 0–9, then A=10, B=11, C=12, D=13, E=14, F=15. One byte is always two hex digits.
-
-**Step 2 — One-byte conversion:** left digit × 16 + right digit.
-> Example: `F4` → 15 × 16 + 4 = 240 + 4 = **244**
-
-**Step 3 — Two-byte (16-bit) values:** positional weights are ×4096, ×256, ×16, ×1.
-> Example: `01 F4` → (0×4096) + (1×256) + (15×16) + 4 = 0 + 256 + 240 + 4 = **500**
-
-**Step 4 — Apply scale:** 500 × 0.1 = **50.0 °C**
-
-### Background — Data Types in This Kit
-
-| Type | Bytes | Range | Typical use |
-|------|-------|-------|-------------|
-| uint8 | 1 | 0–255 | Output logic (NO=0, NC=1), teach commands |
-| uint16 | 2 | 0–65 535 | Capacitive SP1 (raw count, always positive) |
-| int16 | 2 | −32 768 to +32 767 | Temperature SP1/RP1 and calibration offset |
-| int32 | 4 | ±2 billion | Photoelectric SP1 (wide sensing range) |
-
-Negative int16 values use **two's complement** encoding — covered in full in WS10 alongside the PT100 sensor.
-
-### Scale Factors in This Kit
-
-| Parameter | Index | Type | Scale | Example |
-|-----------|-------|------|-------|---------|
-| TV7105 SP1 | 583 | int16 | × 0.1 | Raw `0118` = 280 → 28.0 °C |
-| TV7105 RP1 | 584 | int16 | × 0.1 | Raw `00FA` = 250 → 25.0 °C |
-| TV7105 Cal. Offset | 681 | int16 | × 0.1 | Raw `FFD0` = −48 (signed) → −4.8 °C |
-| Capacitive SP1 | 60/sub1 | int16 | × 1 | Raw `0064` = 100 counts |
-| Proximity output logic | 61/sub1 | uint8 | × 1 | Raw `00` = NO, `01` = NC |
-
-### Practice Exercises
-
-Work through these three exercises using the conversion method above. Show your working.
-
-**Q1 — ISDU read of TV7105 RP1 (Index 584, Sub 0) returns `00 E6`. dtype = int16, scale = ×0.1. What is RP1 in °C?**
-
-> Hint: E = 14 in decimal.
-
-Working: ___________________
-
-Answer: _____ °C
-
-**Q2 — A capacitive sensor returns `00 64` for SP1 (uint16, no scale). What is the setpoint count?**
-
-> Hint: 6 × 16 + 4 = ?
-
-Working: ___________________
-
-Answer: _____ counts
-
-**Q3 — The TV7105 SP1 returns `01 F4` (int16, scale ×0.1). Show your full working to find the setpoint in °C.**
-
-Working:
-
-Answer: _____ °C
-
----
-
-## WS6 — Diagnostics: Process, Service, and Event Data
-
-**Estimated time:** 45 minutes | **Dashboard:** Dashboard — Port Details, IO-Link Master page
+**Estimated time:** 20 minutes | **Prerequisites:** Complete WS1–WS4
 
 ### Why This Matters
 
-Routing the right data to the right destination — PLC scan cycle, historian, CMMS — is a core system integration task. Misclassifying data types leads to missed faults (events sent to the wrong queue), overloaded controllers (service data polled every cycle), or stale dashboards (process data rate not matched to publish interval).
+The IODD (IO Device Description) is the specification that defines how to decode a device's raw PDin and ISDU data. Without it, raw hex is meaningless — this worksheet takes you from a blank hex string to a confident manual decode.
 
 ### Learning Objectives
 
-- Classify IO-Link data as process, service, or event
-- Explain where each data type is routed in an industrial control system
-- Identify which type the WebSocket stream delivers on each tick
-- Locate process data, service data access, and event data in this app
+- Explain what an IODD file is and where to find one for an unknown device (`ioddfinder.io`)
+- Describe how the master auto-identifies a device and how the backend translates that into a decode table (`backend/device_parameters.py`)
+- Convert a raw hex value to a signed or unsigned integer and apply a scale factor
+- Apply the two's-complement rule for negative int16 values
 
-### Background — Three IO-Link Data Types
+### Background — From Hex to Engineering Value
 
-| Type | Description | Rate | Destination |
-|------|-------------|------|-------------|
-| **Process data** | Cyclic sensor values — temperature, switching state, detection count | Every master scan (500 ms in this system) | PLC scan cycle, HMI live display, historian |
-| **Service data** | Acyclic parameter reads and writes (ISDU) — SP1, calibration offset, output logic | On demand only — initiated by controller or HMI | Commissioning tool, parameterisation software, ISDU panel in this app |
-| **Event data** | Diagnostic events triggered by a condition — device replacement, wire break, short circuit, sensor fault flag | On event trigger — not periodic | CMMS work order system, alarm management system |
+At power-up, the AL1350 reads the connected sensor's Vendor ID and Device ID and loads its IODD. In this app, `backend/device_parameters.py` is the hard-coded translation table built from those IODD definitions.
 
-**In this app:** the WebSocket `/ws` stream delivers **process data + event data** merged into a single JSON payload on every tick. Service data (ISDU reads/writes) is only accessed on demand via separate REST API calls.
+**Example IODD extract — TV7105 SP1:** Index 583, Subindex 0, datatype INT16, scale ×0.1, raw range −600 to 1500.
 
-### Task — Classification Exercise
+**Decode steps:**
+1. Two hex bytes → one 16-bit integer (e.g. `01 F4` → 500 decimal)
+2. If the datatype is signed and the value is ≥ 32768, apply two's complement: `signed = unsigned − 65536` (e.g. `0xFF9C` = 65436 → 65436 − 65536 = **−100** → ×0.1 = **−10.0 °C**)
+3. Multiply by the scale factor to get the engineering value
 
-For each item below, classify it as **process**, **service**, or **event**:
+**Data types on this kit:** uint8 (proximity monitor output), uint16 (capacitive SP1 depending on device), int16 (TV7105 SP1/RP1/SP2/RP2/calibration offset), int32 (Contrinex photoelectric SP1 — not on this kit's live ports but referenced in the registry).
 
-| Data item | Your classification |
-|-----------|---------------------|
-| Temperature value 23.5 °C arriving every 500 ms | |
-| Device replacement detected on Port 2 | |
-| Parameter read — filter time = 10 ms | |
-| Object present flag (switching output, 1 or 0) | |
-| Short circuit fault reported | |
+**Worked examples:**
+- TV7105 SP1 `0118` → 280 → **28.0 °C**
+- Calibration offset `FFD0` → −48 → **−4.8 °C**
+- RP1 `00E6` → 230 → **23.0 °C**
+- Capacitive SP1 `0064` → **100 counts**
 
-### Task 2 — Live Data Classification
+### Task — Live ISDU Decode Verification
 
-Explore the **Dashboard** and the **IO-Link Master page**. Identify an example of each data type in the live system:
+Perform three live ISDU reads and confirm your manual hex decode matches the value shown on screen:
 
-- [ ] Name **three process data values** visible on the Dashboard (e.g. temperature in °C, detected state, detection count)
-- [ ] Identify which page in this app provides access to **service data** (parameter read/write via ISDU panels)
-- [ ] Locate where **event data** (faults and warnings) would appear on the IO-Link Master page
-- [ ] Confirm the WebSocket stream is delivering **merged process + event data** — not service data — on every tick
+1. TV7105 SP1 — index 583, sub 0
+2. Capacitive SP1 — index 60, sub 1
+3. Calibration offset — index 681, sub 0
 
 ### Knowledge Check
 
-**Q2.** In this app, which data type does the WebSocket stream deliver to the browser on every tick?
+**Q1.** You need the ISDU parameter map for a device not yet in this app's registry. Where do you find it?
 
-- A: Process data (sensor values) + event data (faults/warnings) merged into a single JSON payload per push
-- B: Service data only (ISDU parameters) on every tick
-- C: Raw binary PDin only, without decoding
-
----
-
-## WS7 — PLC and HMI Integration
-
-**Estimated time:** 60 minutes | **Dashboard:** Dashboard — Port Status, Connection Diagnostics
-
-### Why This Matters
-
-IO-Link data does not automatically appear in a PLC — it must be mapped through the master's process data image into the fieldbus. Understanding this mapping is essential for commissioning a sensor into an existing control system, for designing HMI alarm screens, and for explaining the data flow to a controls engineer who has never seen IO-Link before.
-
-### Learning Objectives
-
-- Describe how an IO-Link master maps PDin into a PLC's process image via fieldbus
-- Identify the equivalent layers in this app (FastAPI replaces the PLC; WebSocket replaces the fieldbus)
-- Match each backend component to its function in the data decode chain
-- Explain the benefits of remote diagnostics over a traditional HMI architecture
-
-### Background — Traditional PLC Path vs This App
-
-In a traditional PLC system the data path is:
-
-```
-Sensor → IO-Link cable → IO-Link Master → Fieldbus (PROFINET/EtherNet/IP) → PLC scan cycle → HMI display
-```
-
-In this app the equivalent path is:
-
-```
-Sensor → IO-Link cable → AL1350 → MQTT (Mosquitto) → FastAPI (decoder.py) → WebSocket → Browser (HMI)
-```
-
-The layers correspond directly:
-
-| PLC layer | This app equivalent |
-|-----------|---------------------|
-| IO-Link Master (process image) | AL1350 — maps PDin into MQTT payload |
-| Fieldbus | MQTT + FastAPI WebSocket `/ws` |
-| PLC | FastAPI + decoder.py |
-| HMI display | This browser dashboard |
-| ISDU commissioning tool | IODD parameter panels in this app |
-
-**How the PLC reads IO-Link data:**
-The IO-Link master maps each port's PDin into its process data image. The PLC reads this via fieldbus on every scan cycle — the same way it reads a conventional digital or analogue input. IO-Link adds ISDU access and event data on top of this cyclic mapping, but the process value still arrives via the normal I/O image.
-
-### Task — Backend Component Matching
-
-For each function below, identify which backend file performs it:
-
-| Function | Backend file |
-|----------|-------------|
-| Subscribing to AL1350 MQTT topics | |
-| Decoding raw PDin into °C / object state / CL50 colour | |
-| Pushing decoded data to the browser via WebSocket | |
-
-**Available files:** `io_link_fastapi.py`, `decoder.py`, `al1350_client.py`
-
-### Task 2 — Live Data Path Trace
-
-Using the **Dashboard**, **Connection Diagnostics**, and **Edge Device** pages:
-
-- [ ] Note the current temperature reading on Port 3 from the Dashboard
-- [ ] Confirm the data path is live: **AL1350 → Mosquitto → FastAPI → decoder.py → WebSocket → Browser** — each layer is visible in this app
-- [ ] Confirm the **HTTP fallback path** is also live via the Connection Diagnostics latency graph
-- [ ] On the Edge Device page, confirm both **FastAPI** and **Mosquitto** are shown as active services
-
-### Knowledge Check
-
-**Q1.** In a traditional PLC architecture, how does the IO-Link master deliver a sensor's current state to the PLC?
-
-- A: The sensor publishes its state directly over Ethernet to the PLC's IP address
-- B: The PLC polls the IO-Link master on demand when it needs the current value
-- C: The IO-Link master maps the port's PDin into its process image; the PLC reads this via fieldbus on every scan cycle
-
-**Q2.** Match each function to the correct backend component:
-
-Fill in the matching exercise above (see Task section).
-
-**Q3.** What are the three main benefits of remote HMI-based diagnostics over a traditional on-site inspection model?
-
-- A: HMI dashboards require more skilled operators than traditional panel-based systems
-- B: Remote access reduces licensing costs for SCADA systems
-- C: Faster fault identification, monitoring of multiple machines from one screen, and historical trend data without a site visit
-
-**Q4.** A spike appears in the latency graph on Connection Diagnostics. What does this most likely indicate?
-
-- A: High load on the IO-Link subnet or the AL1350 being overloaded with requests
-- B: The browser's JavaScript rendering engine has stalled
-- C: A Wi-Fi channel collision has momentarily saturated the building LAN
+- A: `ioddfinder.io` — the official IODD repository — correct
+- B: The AL1350's operating manual
+- C: The device's physical label
 
 ---
 
-## WS8 — Case Study: Standard vs IO-Link — The Numbers
+## WS6 — Diagnostics Data & NAMUR NE107 Health States
 
-**Estimated time:** 45 minutes | **Dashboard:** Dashboard — Active Port Details
+**Estimated time:** 15 minutes | **Dashboard:** Port Details, Events | **Prerequisites:** Complete WS1–WS3
 
 ### Why This Matters
 
-Quantifying the MTTR reduction and uptime gain is how you justify IO-Link investment to management. This worksheet walks through a realistic financial calculation. The ability to turn protocol features into business numbers is a competency valued by maintenance engineers and engineering managers alike.
+IO-Link carries three distinct kinds of data, each routed and used differently. NAMUR NE107 is the cross-vendor standard that turns raw fault codes into a small set of universally-understood health symbols — the same symbols appear on HMIs from every major automation vendor.
 
 ### Learning Objectives
 
-- Calculate annual downtime in hours for both standard and IO-Link sensor systems
-- Compute the financial saving from a reduced MTTR
-- Identify the two non-MTTR features that most reduce total cost of ownership
-- Explain which data type triggers CMMS maintenance work orders
+- Classify a given piece of sensor data as process, service, or event data
+- Explain the latency and routing difference between the three data types
+- Map real sensor events on this kit to the four NAMUR NE107 symbols
+- Interpret what the WebSocket actually carries
 
-### Background — The Scenario
+### Background — Three Data Channels
 
-**A production line has 40 sensors. On average, each sensor causes one fault per year.**
+| Type | Trigger | Latency | Example |
+|------|---------|---------|---------|
+| Process data (PDin) | Cyclic, every scan | 500 ms | Live temperature value |
+| Service data (ISDU) | Acyclic, on request | 10–200 ms | Reading a filter-time parameter |
+| Event data | Triggered by a condition | Immediate | Instability alarm code + port + timestamp, feeds a CMMS |
 
-| Metric | Standard sensors | IO-Link sensors |
-|--------|-----------------|----------------|
-| Fault identification | Walk to machine, test manually | HMI shows port + fault code |
-| Part ordering | Physical label inspection | Device identity known from dashboard |
-| Replacement | Manual adjustment and re-commissioning | Parameters restore automatically |
-| Verification | Check with reference instrument | HMI confirms port healthy |
-| **MTTR per fault** | **~35 minutes** | **~8 minutes** |
+**NAMUR NE107 — four health symbols:**
 
-### Task — Complete the Calculation Table
+| Symbol | Meaning | Kit Example |
+|--------|---------|--------------|
+| ✗ Failure | Device cannot function | Connection lost |
+| △ Maintenance Required | Will fail soon if not addressed | Instability alarm |
+| ⊙ Out of Specification | Operating outside rated conditions | Over-approach alarm; SP1 exceeded |
+| ∟ Function Check | Temporary state during a config/teach operation | Calibration write in progress |
 
-Fill in the calculation table:
+### Task — Classification Exercise and Live Tiles
 
-| Metric | Standard sensors | IO-Link sensors |
-|--------|-----------------|----------------|
-| MTTR per fault (min) | 35 | 8 |
-| Faults per year (40 sensors, 1 each) | 40 | 40 |
-| Total downtime per year (minutes) | | |
-| Total downtime per year (hours) | | |
+**Classification matching** — classify each item as process, service, or event data:
 
-**Annual saving in hours:** _____ h
+| Item | Type |
+|------|------|
+| Temperature value | Process |
+| Device replacement | Event |
+| Filter-time parameter read | Service |
+| Object-present flag | Process |
+| Short circuit fault | Event |
 
-**At £5,000/hour production value, annual financial saving:** £_____
-
-### Task 2 — Scale-Up Calculation
-
-A larger facility has 200 sensors with the same fault rate. Calculate:
-- Annual hours saved with IO-Link vs standard: _____ h (200 × 1 fault × 27 min saving ÷ 60)
-- Financial saving at £5,000/hour: £_____
+Then observe 3 live tiles showing process, service, and event data behaving differently, and tick off the sign-off checklist.
 
 ### Knowledge Check
 
-**Q1.** Using the scenario figures above, what is the annual downtime saving when switching to IO-Link?
+**Q1.** What does the WebSocket connection to this dashboard carry?
 
-- A: 18 hours per year — Standard: 40 × 35 min = 1,400 min = 23.3 h; IO-Link: 40 × 8 min = 320 min = 5.3 h; Saving = 18 h
-- B: 5.3 hours per year — the IO-Link total downtime
-- C: 23.3 hours per year — the standard sensor total downtime
+- A: Process and event data merged into one stream — correct
+- B: Only raw PDin, unprocessed
+- C: Service data only
 
-**Q2.** If the production line generates £5,000 of value per hour, what is the annual financial saving from IO-Link?
+**Q2.** The proximity sensor's instability alarm fires. Which NE107 symbol applies?
 
-- A: £175,000
-- B: £26,500
-- C: £90,000 — 18 hours × £5,000/hour
+- A: ✗ Failure
+- B: △ Maintenance Required — the target is near the edge of range and will cause intermittent detection if not corrected — correct
+- C: ⊙ Out of Specification
 
-**Q3.** Beyond MTTR, which pair of benefits contributes most to lower total cost of ownership for IO-Link sensors?
+**Q3.** Why does NAMUR NE107 matter for a maintenance team working across multiple sensor vendors?
 
-- A: Built-in wireless backup channel and automatic IP address provisioning for all sensors
-- B: Automatic parameter restore on sensor swap and remote diagnostics via the HMI — both eliminate manual site visits
-- C: Lower per-unit sensor cost due to IO-Link certification subsidising manufacturing overheads
+- A: It reduces sensor cost
+- B: It is a legal requirement for IO-Link certification
+- C: It gives every vendor's HMI the same four symbols for health state, so an operator does not need to learn a different fault-code scheme per manufacturer — correct
 
-**Q4.** In this app's architecture, which data type would you export to a CMMS to automate maintenance work orders?
+---
 
-- A: Event data — faults and warnings are the triggers for maintenance actions
-- B: Process data only — the live sensor values
-- C: Service data only — ISDU parameters
+## WS7 — PLC, HMI & OPC UA Integration
+
+**Estimated time:** 15 minutes | **Dashboard:** Port Status, Simulate Fault | **Prerequisites:** Complete WS1–WS4
+
+### Why This Matters
+
+This worksheet is what distinguishes an installer from a systems integrator: understanding how IO-Link data reaches a PLC scan cycle, an OPC UA server, and ultimately the cloud — and where this app's own architecture sits within that picture.
+
+### Learning Objectives
+
+- Describe how PDin data reaches a PLC's process image
+- Compare this app's ~500 ms WebSocket update rate to fieldbus cyclic rates (PROFINET/EtherNet-IP, 1–10 ms)
+- Explain the role of OPC UA (IEC 62541) as a vendor-neutral information model
+- Describe the Y-Path concept and identify which branch this app's architecture resembles
+
+### Background
+
+**PDin → PLC scan cycle (4 steps):** sensor → IO-Link master maps PDin into its process image → fieldbus (PROFINET/EtherNet-IP) cyclically exchanges that process image with the PLC → the PLC's user program reads the mapped tag on its own scan cycle.
+
+**Fieldbus vs this app:** PROFINET/EtherNet-IP typically cycle every 1–10 ms — far faster than this app's ~500 ms WebSocket update, because a PLC control loop needs much tighter timing than a monitoring HMI.
+
+**OPC UA (IEC 62541):** a vendor-neutral companion specification that maps a device's Vendor ID, Device ID, and PDin fields onto standard OPC UA information-model nodes, letting IT-side software (MES, historians, cloud) consume the same data without vendor-specific drivers.
+
+**The Y-Path:** cyclic process data continues to flow to the PLC as normal (the control path). Acyclic data — serial numbers, operating hours, error codes — is sent directly from the IO-Link master's OPC UA server to IT systems, bypassing the PLC entirely (the IT-facing branch). This app's architecture — Pi reads ISDU data directly from the AL1350 over HTTP and serves it to a browser, independent of any PLC — structurally resembles the Y-Path's IT-facing branch.
+
+### Task — Live Verification
+
+**Part A:** warm the TV7105 by hand and watch the cyclic (PDin) value rise smoothly — this is the process-data path.
+
+**Part B:** trigger an ISDU read and watch the CL50 flash blue then return to green — visible proof of the acyclic (service-data) path completing.
+
+### Knowledge Check
+
+**Q1.** How does PDin data reach a PLC's scan cycle?
+
+- A: The sensor writes directly into PLC memory over IO-Link
+- B: The PLC polls each sensor individually over its own network connection
+- C: The IO-Link master maps PDin into its process image, which the fieldbus cyclically exchanges with the PLC's own process image — correct
+
+**Q2.** What is the key advantage of a web-based HMI (like this dashboard) over hard-wired panel indicators?
+
+- A: It is always cheaper to install
+- B: It requires no network infrastructure
+- C: A single dashboard can display live process data, historical trends, and remote parameter access — without dedicated wiring per indicator — correct
+
+**Q3.** What does a latency spike on Connection Diagnostics most likely indicate about this app's architecture?
+
+- A: AL1350 load or IO-Link subnet congestion — not a PLC scan-cycle issue, since this app is not in the PLC control path — correct
+- B: A PLC scan overrun
+- C: A fieldbus cable fault
+
+**Q4.** Which OPC UA data path does this app's architecture most closely resemble?
+
+- A: The pure cyclic control path through the PLC
+- B: The Y-Path's IT-facing branch — acyclic data delivered directly from the master to IT/browser without passing through a PLC — correct
+- C: A dedicated SCADA historian connection
+
+---
+
+## WS8 — Case Study: MTTR, TCO & Predictive Maintenance
+
+**Estimated time:** 20 minutes | **Dashboard:** Simulate Fault, Active Port Details | **Prerequisites:** Complete WS1–WS5
+
+### Why This Matters
+
+This worksheet quantifies the reactive-vs-predictive maintenance economics using this kit's own cycle-count, event, and drift data — the exact case a maintenance engineer has to make to a finance department.
+
+### Learning Objectives
+
+- Calculate annual downtime hours from an MTTR figure and fault frequency across a sensor fleet
+- Convert a downtime saving into an annual financial saving
+- Compare reactive, planned-preventive, and predictive maintenance strategies by cost and risk
+- Calculate Remaining Useful Life (RUL) from cycle-count data and a rated lifetime
+
+### Background — Scenario: 40 Sensors, 1 Fault/Sensor/Year
+
+**MTTR breakdown:**
+
+| Step | Standard | IO-Link |
+|------|----------|---------|
+| Walk to sensor | 10 min | 0 min (alert) |
+| Power down | 5 min | — |
+| Reconfigure/replace | 12 min | 4 min (swap) + 2 min (order) |
+| Verify | 8 min | 2 min |
+| **Total** | **35 min** | **8 min** |
+
+**Annual downtime:** Standard = 35 × 40 ÷ 60 = **23.3 h/year**. IO-Link = 8 × 40 ÷ 60 = **5.3 h/year**. **Saving: 18 h/year.**
+
+**Financial impact** at £5,000/hour production value: Standard = **£116,500/year**. IO-Link = **£26,500/year**. **Saving: £90,000/year.**
+
+**Three maintenance strategies:**
+
+| Strategy | MTTR | Cost/fault | Risk |
+|----------|------|-----------|------|
+| Reactive | 35 min | ~£2,917 | High |
+| Planned preventive | 8 min | ~£200 | Medium |
+| Predictive | 8 min | ~£200 | Low |
+
+**RUL worked example:** capacitive sensor has done 7.5M of its rated 10M cycles at 1,000 cycles/day. Cycles remaining to 90% threshold (9M) = 1.5M ÷ 1,000/day = **1,500 days ≈ 4.1 years**. This lets a CMMS work order be raised for a planned replacement window instead of an emergency callout.
+
+**CMMS integration example:** an event (e.g. fault code `0x8C11`, port, timestamp) can auto-generate a CMMS work order — this is the event-data channel from WS6 in practice.
+
+### Task — Calculation Table
+
+Work through the downtime and financial calculation table yourself, then check against the figures above. A scale-up extension task asks you to repeat the calculation for a fleet larger than 40 sensors.
+
+### Knowledge Check
+
+**Q1.** Using the scenario figures, what is the annual downtime saving from switching to IO-Link?
+
+- A: 18 hours per year — 23.3 h − 5.3 h — correct
+- B: 5.3 hours per year
+- C: 23.3 hours per year
+
+**Q2.** At £5,000/hour production value, what is the annual financial saving?
+
+- A: £26,500
+- B: £116,500
+- C: £90,000 — 18 h × £5,000 — correct
+
+**Q3.** What are the main drivers of lower Total Cost of Ownership (TCO) for IO-Link sensors?
+
+- A: Lower unit purchase price
+- B: Automatic parameter restore after replacement, plus remote diagnostics that avoid unnecessary site visits — correct
+- C: Longer warranty periods
+
+**Q4.** What data does a CMMS integration typically consume from this system?
+
+- A: Event data — fault codes, port, and timestamp — correct
+- B: Raw PDin only
+- C: ISDU parameter values only
+
+**Q5.** Using the RUL worked example, when should the Port 2 capacitive sensor be scheduled for replacement?
+
+- A: Immediately — it has already exceeded its rated life
+- B: In approximately 1,500 days (4.1 years) — schedule replacement before reaching 90% (9M cycles) — correct
+- C: There is no way to estimate this from cycle-count data
+
+**Q6.** Which data sources feed a predictive-maintenance strategy on this kit?
+
+- A: Cycle count only
+- B: Cycle count, event frequency, and calibration/parameter drift together — correct
+- C: Live PDin value alone
 
 ---
 
 ## WS9 — Device Identity: Vendor ID, Device ID & PDin
 
-**Estimated time:** 45 minutes | **Dashboard:** IO-Link Master page — Port Status cards
+**Estimated time:** 15 minutes | **Dashboard:** IO-Link Master page — Port Status cards | **Prerequisites:** CP3723 Chapter 8 recommended
 
 ### Why This Matters
 
-Physical labels wear off. Maintenance records go missing. The Vendor ID and Device ID embedded in every IO-Link sensor mean you can always confirm what is connected, order the exact right spare, and decode PDin correctly — without leaving the dashboard. This worksheet uses a real worn-label scenario to practise positive identification from IO-Link identity fields alone.
+Labels wear off, records go missing, and sensors get swapped between machines. The Vendor ID and Device ID broadcast automatically by every IO-Link sensor at power-up let you confirm exactly what hardware is connected — and order the correct spare — directly from the dashboard, with no physical inspection required.
 
 ### Learning Objectives
 
-- Read Vendor ID and Device ID from the IO-Link Master page
-- Resolve a Vendor ID to a manufacturer name using the IO-Link Community registry
-- Explain why the Device ID is critical for ordering and for automatic parameter restore
-- Decode key bit fields from the proximity sensor PDin hex
-- Identify the RS Pro capacitive sensor from its Vendor ID and Device ID pair
+- Look up a Vendor ID against the known registry for this kit
+- Combine Vendor ID and Device ID to identify an exact sensor model
+- Use device identity to select the correct PDin decode table
+- Use identity data to respond correctly to a live alarm condition
 
-### Background — What the Master Reads at Connection
+### Background — Identity Registry
 
-When a sensor is first connected, the AL1350 automatically reads its identity:
+**Known Vendor IDs on this kit:** 310 = ifm, 342 = Contrinex, 612 = OMRON, 896/1586 = RS Pro (OEM branding of Carlo Gavazzi).
 
-| Field | Where it comes from | What it tells you |
-|-------|--------------------|--------------------|
-| Vendor ID | Read from sensor EEPROM at connection | Which manufacturer made this sensor |
-| Device ID | Read from sensor EEPROM at connection | The exact model — used for ordering and parameter restore |
-| PDin hex | Delivered every MQTT cycle | Live process data — decode according to device type |
+**Device ID combinations on this kit:**
 
-**Known Vendor IDs in this kit:**
+| Vendor ID | Device ID | Model |
+|-----------|-----------|-------|
+| 612 | 131090 | OMRON E2E-X16MB1T12 |
+| 310 | 733 | IFM TV7105 |
+| 1586 | 1052673 | RS Pro capacitive (Carlo Gavazzi OEM, part 2377240) |
 
-| Vendor ID | Manufacturer |
-|-----------|-------------|
-| 310 | ifm electronic |
-| 342 | Contrinex |
-| 612 | OMRON Corporation |
-| 1586 | RS Pro (Carlo Gavazzi OEM) |
-| 451 | Banner Engineering |
+**The OMRON byte-order trap:** the IODD counts `bitOffset` from the LSB of the 16-bit record — byte 0 and byte 1 are not in the intuitive order. Byte 0 is the monitor-output amplitude (not a status byte); byte 1 carries OUT1 and the alarm flags. A PDin of `5100` in free air is byte 0 = `0x51` (monitor ≈ 81) and byte 1 = `0x00` (all flags clear) — misreading byte 0 as flags produces a permanent false "instability alarm."
 
-### Scenario
+### Task — Identity-Only Diagnosis
 
-During a planned shutdown, a technician discovers that the physical label on the sensor connected to Port 1 has completely worn away. There is no maintenance record for this port. Before ordering a spare and signing off the job, you must positively identify the device using the app — without touching the physical unit.
-
-### Task — Positive Identification Exercise
-
-Open the **IO-Link Master page**. For each active port, record:
-
-| Port | Vendor ID | Manufacturer name (resolved) | Device ID | Model name | PDin example |
-|------|-----------|------------------------------|-----------|------------|--------------|
-| 1 | | | | | |
-| 2 | | | | | |
-| 3 | | | | | |
-
-### PDin Quick Reference — Sensors in This Kit
-
-| Port | Sensor | PDin example | Key bytes |
-|------|--------|-------------|-----------|
-| 1 | Omron E2E-X16MB1T12 | `5000` | Byte 0 bit 0 = OUT1; bit 4 = instability alarm; bit 5 = over-approach alarm |
-| 2 | RS Pro Capacitive | `000A0002` | Bytes 0–1 = 16-bit analogue value; byte 3 bit 1 = switching output |
-| 3 | IFM TV7105 Temperature | `00FEFF00` | Bytes 0–1 = int16 raw × 0.1 = °C; bytes 2–3 = SP1/SP2 flags |
-
-### Task 2 — Live Identification Checklist
-
-- [ ] Note the **Vendor ID and resolved company name** for Port 1, Port 2, and Port 3 on the IO-Link Master page
-- [ ] Confirm the **Device ID and model name** for each port — verify they match the hardware on the bench
-- [ ] Read the live **PDin hex** for Port 3 and decode the first two bytes into a °C value (int16 ÷ 10)
-- [ ] Check Port 1's PDin first byte — if bit 4 is set, **investigate sensor alignment** before signing off
-- [ ] Record Vendor ID, Device ID, and current PDin for each port as a maintenance log entry
+1. **Mystery sensor challenge (Port 4):** using only the identity fields — no physical inspection — determine which device is connected: (a) CL50 Pro, (b) a second OMRON sensor, or (c) TV7105.
+2. **Manual PDin decode-by-hand check (Port 3).**
+3. **Port 1 alarm live confirmation** — move a metal target near and away from the sensor face and confirm the instability alarm behaves as expected.
 
 ### Knowledge Check
 
-**Q1.** Open the IO-Link Master page. What Vendor ID does Port 1 report?
+**Q1.** What Vendor ID does Port 1 report?
 
-- A: 612
+- A: 612 — correct
 - B: 310
-- C: 1586
+- C: 342
 
-**Q2.** The IO-Link Master page resolves the Vendor ID to a company name. Which manufacturer does Vendor ID 612 identify?
+**Q2.** Vendor ID 612 corresponds to which manufacturer?
 
-- A: ifm electronic
-- B: OMRON Corporation
-- C: Balluff
+- A: ifm
+- B: OMRON — correct
+- C: Contrinex
 
-**Q3.** Port 1 reports Device ID 131090, which the app resolves to E2E-X16MB1T12 Proximity. Why does knowing the Device ID matter when ordering a spare?
+**Q3.** Why does the Device ID matter specifically when ordering a spare part, beyond just the Vendor ID?
 
-- A: The master uses it to set the sensor's IP address on the IO-Link network
-- B: It shows the sensor's remaining service life in hours
-- C: It uniquely identifies the exact model — you order the right part first time and the master can restore parameters automatically after the swap
+- A: It doesn't — Vendor ID alone is always sufficient
+- B: It sets the IP address of the replacement
+- C: Multiple products from the same vendor share a Vendor ID — the Device ID uniquely identifies the exact model, so the correct part number can be derived without a label or manual — correct
 
-**Q4.** Port 1 currently shows PDin hex `5000`. The first byte is `50` (binary 0101 0000). Bit 4 being set indicates the instability alarm is active. What is the correct maintenance response?
+**Q4.** Port 1's instability alarm (bit 4) is active. What is the correct maintenance response?
 
-- A: Check sensor alignment — the target is likely at the edge of the sensing range
-- B: No action — an instability alarm means the sensor passed its self-test
-- C: Replace the sensor immediately — bit 4 means a permanent hardware fault
+- A: Check the target alignment and sensing distance — the target is near the edge of the sensing range — correct
+- B: Replace the sensor immediately
+- C: Ignore it — instability alarms are informational only
 
-**Q5.** A sensor with a worn label is found on Port 2. The app shows Vendor ID 1586 and Device ID 1052673. Which spare should you order?
+**Q5.** A sensor reports Vendor ID 1586, Device ID 1052673. What should you order as a replacement?
 
-- A: IFM TV7105 temperature sensor
-- B: OMRON E2E-X16MB1T12 proximity sensor
-- C: RS Pro M18 capacitive sensor (Carlo Gavazzi OEM)
-
----
-
-## WS10 — PT100 Temperature Sensors
-
-**Estimated time:** 60 minutes | **Dashboard:** CP3723 Worksheet 5 — Temperature Sensor
-
-### Why This Matters
-
-Understanding how the PT100 element works — and how the sensor encodes its reading into IO-Link PDin — lets you decode raw data without a datasheet, calculate expected resistance values to fault-find wiring problems, and properly engineer calibration offset corrections rather than guessing. The two's complement encoding for negative temperatures also appears in any signed parameter value in this kit.
-
-### Learning Objectives
-
-- Calculate the expected PT100 resistance at a given temperature using the simplified linear equation
-- Decode TV7105 PDin hex values into °C, including negative values using two's complement
-- Explain what the −40 °C reading on the dashboard means and what to investigate
-- Engineer a calibration offset correction value for a drifted sensor
-- Explain how SP1, SP2, and calibration offset are stored and restored by the IO-Link system
-
-### Background — The PT100 Resistance Curve
-
-The IFM TV7105 on Port 3 is built around a PT100 resistance temperature detector. The "PT" means platinum; the "100" means its resistance is exactly 100 Ω at 0 °C. Platinum's resistance changes predictably with temperature — described by the **Callendar–Van Dusen equation**. For the industrial working range a simplified linear equation is accurate enough:
-
-```
-R(T) = 100 × (1 + α × T)     where α = 0.00385 °C⁻¹  (IEC 60751)
-```
-
-For every 1 °C rise, resistance increases by approximately **0.385 Ω**.
-
-**Resistance reference table:**
-
-| Temperature | Calculation | Resistance |
-|------------|-------------|-----------|
-| −40 °C | 100 × (1 + 0.00385 × −40) | 84.6 Ω |
-| 0 °C | 100 × (1 + 0.00385 × 0) | 100.0 Ω |
-| 25 °C | 100 × (1 + 0.00385 × 25) | 109.6 Ω |
-| 60 °C | 100 × (1 + 0.00385 × 60) | 123.1 Ω |
-| 100 °C | 100 × (1 + 0.00385 × 100) | 138.5 Ω |
-| 150 °C | 100 × (1 + 0.00385 × 150) | 157.8 Ω |
-
-**Fault-finding with resistance:** If you suspect a wiring fault rather than a sensor fault, measure the element resistance with a multimeter and use the formula to verify it matches the expected temperature. A reading of 0 Ω is a short circuit. An open circuit (∞ Ω) reports as **−40 °C** on the IO-Link dashboard — the classic broken-element diagnostic. If your lab reads 20 °C ambient and the sensor shows −40 °C, it is almost certainly disconnected or the element is broken.
-
-### Background — IEC 60751 Accuracy Classes
-
-| Class | Tolerance formula | At 0 °C | At 100 °C |
-|-------|-------------------|---------|----------|
-| AA | ±(0.10 + 0.0017·\|T\|) | ±0.10 °C | ±0.27 °C |
-| A | ±(0.15 + 0.0020·\|T\|) | ±0.15 °C | ±0.35 °C |
-| **B ✓** | **±(0.30 + 0.0050·\|T\|)** | **±0.30 °C** | **±0.80 °C** |
-
-The TV7105 achieves **Class B** — the most common industrial grade. The calibration offset (Index 681) can compensate for element tolerance and installation-induced error.
-
-### Background — PDin Encoding: How °C Becomes Bytes
-
-The TV7105 PDin is 4 bytes. Bytes 0–1 carry temperature as a **signed 16-bit integer (int16)** at scale ×0.1. Bytes 2–3 carry SP1/SP2 flags.
-
-**Encoding steps (positive temperature):**
-1. Take temperature in °C, multiply by 10: 25.4 °C → **254**
-2. Store as 16-bit big-endian integer: 254 decimal = **0x00FE**
-3. Bytes 0–1 of PDin = `00 FE`
-
-**Negative temperatures — two's complement:**
-For values below 0 °C, the int16 wraps into two's complement. Rule: if the 16-bit value exceeds 32767 (0x7FFF), subtract 65536 to get the signed decimal.
-
-> −10.0 °C → raw = −100 → two's complement: 65536 − 100 = 65436 = **0xFF9C**
->
-> To decode 0xFF9C: 65436 − 65536 = **−100** → −100 ÷ 10 = **−10.0 °C**
-
-### Hex Decode Exercises
-
-For each PDin hex value, extract bytes 0–1, interpret as signed int16, then divide by 10. **Show your working.**
-
-| Exercise | PDin hex | Bytes 0–1 | int16 decimal | Temperature |
-|----------|---------|-----------|---------------|-------------|
-| 1 | `01 2C FF 00` | `01 2C` | | |
-| 2 | `01 96 FF 00` | `01 96` | | |
-| 3 | `FF 9C FF 00` | `FF 9C` | | |
-| 4 | `FE 70 00 00` | `FE 70` | | |
-
-> **Hint for Exercise 3 and 4:** 0xFF9C = 65436 unsigned; 65436 > 32767 so apply two's complement: 65436 − 65536 = **−100**
-
-### Background — Calibration Offset Engineering (Index 681)
-
-The calibration offset (ISDU Index 681, Sub 0, int16, ×0.1) adds a signed trim value to the sensor's decoded temperature before it is reported. Range: −10.0 to +10.0 °C. Default: 0.0 °C (raw 0x0000). The correction survives power-off and is stored in the sensor EEPROM.
-
-**When to use it:**
-
-| Situation | Action |
-|-----------|--------|
-| Reference thermometer reads 24.1 °C; sensor reads 24.7 °C | Write −0.6 °C to Index 681 |
-| Sensor in hot enclosure reading +2 °C high from self-heating | Write −2.0 °C to Index 681 |
-| Class B element drift of +3 °C confirmed against calibrated reference | Write −3.0 °C to Index 681 |
-
-**Encoding a negative correction:**
-−3.0 °C → −3.0 × 10 = −30 → two's complement: 65536 − 30 = 65506 = **0xFFE2**
-ISDU write: Index 681, Sub 0, int16, raw value −30, transmitted as `FFE2`.
-
-### Background — SP1 & SP2 Engineering Notes
-
-- SP1 (Index 583) and SP2 (Index 593) are stored in sensor EEPROM — they survive power-off, master replacement, and firmware updates
-- SP1 is typically the warning threshold; SP2 is the critical/shutdown threshold
-- Without hysteresis (RP1/RP2), output would chatter at the setpoint — always set RP at least 2–3 °C below SP
-- **Parameter restore on sensor swap:** the IO-Link master writes SP1, SP2, and calibration offset back to a replacement sensor automatically if the Device ID matches — no manual re-configuration needed
+- A: An OMRON proximity sensor
+- B: A TV7105 temperature sensor
+- C: An RS Pro capacitive sensor (Carlo Gavazzi OEM) — correct
 
 ---
 
-## WS11 — CL50 Pro PDout Encoding Deep-Dive
+## WS10 — PT100 Temperature Sensors: From Resistance to Process Data
 
-**Estimated time:** 60 minutes | **Dashboard:** CP3723 Worksheet 6 — CL50 Light Stack (required prerequisite)
+**Estimated time:** 25 minutes | **Dashboard:** CP3723 Worksheet 5 | **Prerequisites:** CP3723 Worksheet 5 recommended
 
 ### Why This Matters
 
-The CL50 exposes all its state in 24 bits. Once you can read and write those bits directly you can control any IO-Link output device — the PDout encoding pattern repeats across all PDout-capable devices. It also prepares you for PLC integration, where you write these values in ladder logic or structured text rather than through a UI. Encoding from a specification is the hardest practical skill in CP7395.
+Understanding the PT100 element's underlying physics and how the TV7105 encodes it into PDin lets you decode a hex value without a datasheet in hand — and engineer a calibration offset correctly rather than guessing.
 
 ### Learning Objectives
 
-- Explain the difference between PDin (sensor to master) and PDout (master to device)
-- Use the 24-bit PDout field map to decode a CL50 hex string into its component states
-- Build a correct 6-character PDout hex string from a written specification
-- Understand the Intensity Sweep firmware limitation and why the software sweep workaround exists
+- Apply the PT100 resistance-temperature relationship
+- Explain IEC 60751 accuracy classes and the TV7105's class
+- Decode temperature PDin including negative values (two's complement) and the open-circuit default
+- Engineer a calibration offset write to correct a known drift
 
-### Background — PDout vs PDin
+### Background — PT100 Physics
 
-IO-Link process data flows in two directions:
+**Resistance curve** (IEC 60751, α = 0.00385/°C): R(T) = 100 × (1 + 0.00385 × T)
 
-- **PDin** — device sends data to the master (sensor readings, status flags)
-- **PDout** — master sends commands to the device (setpoints, colour commands)
+| Temperature | Resistance |
+|-------------|-----------|
+| −40 °C | 84.6 Ω |
+| 0 °C | 100.0 Ω |
+| 25 °C | 109.6 Ω |
+| 60 °C | 123.1 Ω |
+| 100 °C | 138.5 Ω |
+| 150 °C | 157.8 Ω |
 
-The CL50 has no PDin. It is PDout-only. Every 500 ms the AL1350 writes a 3-byte (6 hex character) value to Port 4 and the CL50 executes it immediately. The startup default is `000100` — Green, Steady, High intensity.
+**Fault behaviour:** an open circuit reads as an implausibly low resistance and defaults to **−40.0 °C** (`0xFE70`); a short circuit reads as an implausibly high resistance/temperature.
 
-### Background — The Complete 24-Bit PDout Map
+**IEC 60751 accuracy classes:** AA (tightest), A, and **B** — the TV7105's class. Each class defines a tolerance formula and resulting tolerance band at 0 °C, 25 °C, and 100 °C.
 
-| Octet | Bits | Field | Values |
-|-------|------|-------|--------|
-| 0 | [7:6] | Audible alarm | 0=Off · 1=On · 2=Pulsed · 3=SOS |
-| 0 | [5:3] | Colour 2 intensity (C2I) | 0=High · 1=Low · 2=Med · 3=Off · 4=Custom |
-| 0 | [2:0] | Colour 1 intensity (C1I) | 0=High · 1=Low · 2=Med · 3=Off · 4=Custom |
-| 1 | [7:6] | Speed | 0=Medium · 1=Fast · 2=Slow |
-| 1 | [5:3] | Pulse pattern | 0=Normal · 1=Strobe · 2=Three Pulse · 3=SOS · 4=Random |
-| 1 | [2:0] | Animation mode | 0=Off · 1=Steady · 2=Flash · 3=Two Colour Flash · 4=Intensity Sweep ⚠ |
-| 2 | [7:4] | Colour 2 index | 4-bit index 0–15 |
-| 2 | [3:0] | Colour 1 index | 4-bit index 0–15 |
+**PDin encoding:** int16 × 0.1, big-endian, bytes 0–1; bytes 2–3 carry SP1/SP2 flags.
 
-**Colour index table:**
+**Two's complement (signed int16):** `signed = unsigned − 65536` when unsigned ≥ 32768.
 
-| Index | Colour | Index | Colour | Index | Colour | Index | Colour |
-|-------|--------|-------|--------|-------|--------|-------|--------|
-| 0 | Green | 4 | Yellow | 8 | Sky Blue | 12 | Rose |
-| 1 | Red | 5 | Lime | 9 | Blue | 13 | White |
-| 2 | Orange | 6 | Spring Green | 10 | Violet | 14 | Custom 1 |
-| 3 | Amber | 7 | Cyan | 11 | Magenta | 15 | Custom 2 |
+| Hex | Unsigned | Signed | °C |
+|-----|----------|--------|-----|
+| `00F5` | 245 | 245 | +24.5 °C |
+| `FF9C` | 65436 | −100 | −10.0 °C |
+| `FE70` | 65136 | −400 | −40.0 °C (open-circuit default) |
 
-**Best practice:** Set C2I = 3 (Off) in Octet 0 whenever you are not using Two Colour Flash animation — this prevents the Colour 2 slot from showing if animation mode changes unexpectedly.
+**Calibration offset engineering (index 681, ±10 °C):** if a reference thermometer reads 50.0 °C and the sensor reads 53.0 °C, the sensor is 3.0 °C high — write **−3.0 °C** (`0xFFE2`) to correct it.
 
-### Background — Intensity Sweep Firmware Bug (v1.0.2)
+**Setpoint/reset-point notes:** SP1/SP2/RP1/RP2 are stored in the sensor's EEPROM and survive power cycles. The sensor enforces SP > RP for the same output.
 
-**CL50 firmware v1.0.2 does not execute animation=4 (Intensity Sweep) from PDout.** The AL1350 accepts the write (returns code 200) but the light shows a static colour at the specified intensity — it does not cycle. All other animation values (0–3) work correctly.
+### Task — Live PT100 Verification
 
-The backend implements a **software sweep workaround** (`_run_sweep_loop` in `io_link_fastapi.py`) that cycles C1I through Low→Medium→High→Medium→Low using animation=Steady at configurable intervals, producing a visible breathing effect.
+1. Practice decode exercises: `012C` → 30.0 °C; `0196` → 40.6 °C; `FF9C` → −10.0 °C; `FE70` → −40.0 °C (open-circuit).
+2. Watch the live PT100 panel (raw hex → bytes → int16 → °C → computed resistance) update in real time.
+3. Hand-encode a value and check it against the panel.
+4. Perform live ISDU reads of the calibration offset (index 681) and SP1 (index 583) and compare against the live temperature.
 
-### Task 1 — Worked Decode Example
+---
 
-Decode the hex value `184203` by splitting it into octets:
+## WS11 — CL50 Pro: PDout Encoding Deep-Dive
 
-| Octet | Hex | Decimal | Binary | Fields |
-|-------|-----|---------|--------|--------|
-| 0 | `18` | 24 | 0001 1000 | [7:6]=00=Audible Off; [5:3]=011=C2I=3=Off; [2:0]=000=C1I=0=High |
-| 1 | `42` | 66 | 0100 0010 | [7:6]=01=Speed=Fast; [5:3]=000=Pattern=Normal; [2:0]=010=Anim=Flash |
-| 2 | `03` | 3 | 0000 0011 | [7:4]=0000=Colour2=0=Green(Off); [3:0]=0011=Colour1=3=Amber |
+**Estimated time:** 20 minutes | **Dashboard:** CP3723 Worksheet 6 | **Prerequisites:** CP3723 Worksheet 6 required
 
-**Decoded result:** Amber, Flash animation, Fast speed, High intensity (Colour 2 Off)
+### Why This Matters
 
-This is the LST-0312 fault state from CP3723 WS6 — the "Amber Flash" that the PLC was still holding after the maintenance restart.
+Once you can read and write the CL50's 24 bits directly — without relying on the app's quick-colour buttons — you can control any PDout device, including from PLC ladder logic or structured text.
 
-### Task 2 — Decode Exercises
+### Learning Objectives
 
-Decode each hex value using the PDout field map. Show your working in the table below.
+- Decode any 24-bit CL50 PDout hex value by hand, bit by bit
+- Encode a PDout value from a written specification (colour, animation, speed, intensity)
+- Explain the known firmware limitation with the Intensity Sweep animation mode
 
-**`000100`**
+### Background — Full PDout Bit Map
 
-| Octet | Hex | Fields decoded |
-|-------|-----|---------------|
-| 0 | `00` | |
-| 1 | `01` | |
-| 2 | `00` | |
+| Byte | Bits | Field | Values |
+|------|------|-------|--------|
+| Octet 0 | [7:6] | Audible | 0=Off, 1=On, 2=Pulsed, 3=SOS |
+| Octet 0 | [5:3] | Colour 2 Intensity (C2I) | 0=High, 1=Low, 2=Medium, 3=Off |
+| Octet 0 | [2:0] | Colour 1 Intensity (C1I) | 0=High, 1=Low, 2=Medium, 3=Off |
+| Octet 1 | [7:6] | Speed | 0=Medium, 1=Fast, 2=Slow |
+| Octet 1 | [5:3] | Pulse Pattern | 0=Normal, 1=Strobe, 2=Three Pulse, 3=SOS, 4=Random |
+| Octet 1 | [2:0] | Animation | 0=Off, 1=Steady, 2=Flash, 3=Two Colour Flash, 4=Intensity Sweep |
+| Octet 2 | [7:4] | Colour 2 index | 0–15 |
+| Octet 2 | [3:0] | Colour 1 index | 0–15 |
 
-Result: _______________________
+**Colour index:** 0=Green, 1=Red, 2=Orange, 3=Amber, 4=Yellow, 5=Lime, 6=Spring Green, 7=Cyan, 8=Sky Blue, 9=Blue, 10=Violet, 11=Magenta, 12=Rose, 13=White, 14=Custom1, 15=Custom2.
 
-**`004312`**
+**Worked decode example:** `184203` — Octet 0 `0x18` = C1I 0 (High), C2I 3 (Off) → this is actually the AL1350 default pattern for Amber Flashing at High intensity when combined with Octet 1 `0x42` (Animation=Flash, Pulse Pattern=Normal) and Octet 2 `0x03` (Colour 1 = Amber). Result: **Amber, Flashing, Fast, High intensity.**
 
-| Octet | Hex | Fields decoded |
-|-------|-----|---------------|
-| 0 | `00` | |
-| 1 | `43` | |
-| 2 | `12` | |
+**Firmware v1.0.2 limitation:** Animation = 4 (Intensity Sweep) does not execute — the AL1350 accepts the write but the light shows a static colour instead of cycling. The software workaround is a backend breathing-loop that steps C1I through Low→Medium→High→Medium→Low using Animation = Steady.
 
-Result: _______________________
+### Task — Decode, Encode, and Live Verification
 
-**`198205`**
+**Decode exercises:** `000100`, `004312`, `198205`.
 
-| Octet | Hex | Fields decoded |
-|-------|-----|---------------|
-| 0 | `19` | |
-| 1 | `82` | |
-| 2 | `05` | |
+**Encode exercises:**
 
-Result: _______________________
+| Specification | Correct Hex |
+|----------------|-------------|
+| Blue · Steady · Medium · High | `000109` |
+| Cyan/Magenta · Two Colour Flash · Fast · High | `0043B7` |
 
-### Task 3 — Encode Exercises
+**5-step live verification:** write and decode real CL50 PDout hex via the Dashboard quick-colour buttons and the LED Config modal — including confirming the Animation = 4 firmware bug in person.
 
-Build the correct 6-character PDout hex string from each specification. **Work octet by octet.**
+---
 
-**Specification A: Blue · Steady · Medium speed · High intensity**
+## Further Study
 
-| Octet | Fields | Binary | Hex |
-|-------|--------|--------|-----|
-| 0 | Audible=Off(0), C2I=Off(3)=011, C1I=High(0)=000 | 0001 1000 | |
-| 1 | Speed=Medium(0)=00, Pattern=Normal(0)=000, Anim=Steady(1)=001 | 0000 0001 | |
-| 2 | Colour2=0=0000, Colour1=Blue(9)=1001 | 0000 1001 | |
+The **Further Study** section (accessible from the sidebar) provides eight self-paced chapters with interactive games, simulations, and knowledge checks. These extend the technical depth developed in CP7395 with background theory.
 
-Answer: ______
-
-**Specification B: Cyan / Magenta · Two Colour Flash · Fast speed · High intensity**
-
-| Octet | Fields | Binary | Hex |
-|-------|--------|--------|-----|
-| 0 | Audible=Off(0), C2I=High(0)=000, C1I=High(0)=000 | | |
-| 1 | Speed=Fast(1)=01, Pattern=Normal(0)=000, Anim=TwoColour(3)=011 | | |
-| 2 | Colour2=Magenta(11)=1011, Colour1=Cyan(7)=0111 | | |
-
-Answer: ______
+| Chapter | Title | Key Takeaway |
+|---------|-------|-------------|
+| 1 | Industry 4.0 & IoT | Less guessing, more data — use sensor data to plan repairs before failure |
+| 2 | Smart Sensors & IO-Link | One cable: process data, parameters, diagnostics, and identity |
+| 3 | 4–20 mA Analogue Signals | 12 mA = 50% of range — the mA value is not the engineering value |
+| 4 | IO-Link in Depth | ISDU = acyclic service data; PDin/PDout = cyclic process data |
+| 5 | Sensor Types and Selection | Proximity vs. capacitive vs. optical vs. ultrasonic — when to use each |
+| 6 | Temperature Measurement | PT100 resistance curve, thermocouple vs. RTD, calibration drift |
+| 7 | Electromagnetics | How inductive sensors generate and detect field disturbance |
+| 8 | Device Identity | Vendor ID, Device ID, IODD — how the master auto-identifies a sensor |
 
 ---
 
@@ -1010,11 +798,11 @@ Answer: ______
 |------|--------|-----------|-------|
 | WS1–WS3 MCQs | Multiple choice (in-worksheet) | Formative | Immediate feedback on screen |
 | WS1–WS2 Verification checklists | Live system observation | Formative | Confirm system health before proceeding |
-| WS3 PDin challenge | Live sensor observation | Formative | Manual hex-to-°C calculation |
+| WS3 PDin panels | Live sensor observation | Formative | Manual hex-to-value decode |
 | WS4 Matching exercise | Maintenance problem → feature | Formative | App-checked (Check answers button) |
 | WS5 Decode exercises Q1–Q3 | Free-response calculation | Formative | Self-checked via "Show answers" |
 | WS6 Classification exercise | Process/Service/Event | Formative | App-checked |
-| WS7 Backend matching | Component → function | Formative | Self-checked via "Show answers" |
+| WS7 Component matching | Component → function | Formative | Self-checked via "Show answers" |
 | WS8 Calculation table | Downtime + financial calculation | Formative | Self-checked; scale-up extension task |
 | WS9 Identification task | Vendor ID/Device ID lookup + PDin | Formative | Live system observation |
 | WS10 Hex decode exercises | Four decode calculations | Formative | Self-checked via "Show calculation reference" |
@@ -1044,4 +832,4 @@ These are provided for self-checking WS11 decode exercises.
 ---
 
 *CP7395 — Industry 4.0 IO-Link*
-*IM4330 Issue 1.0 | Matrix Technology Solutions Ltd | development@matrixtsl.com*
+*IM4330 Issue 2.0 | Matrix Technology Solutions Ltd | development@matrixtsl.com*

@@ -17,6 +17,8 @@ const _CP2_ANSWERS = {
   'cp2-ws5-q1': 'c', 'cp2-ws5-q3': 'b', 'cp2-ws5-q4': 'c',
   'cp2-ws6-q1': 'a', 'cp2-ws6-q2': 'c', 'cp2-ws6-q3': 'c', 'cp2-ws6-q4': 'a', 'cp2-ws6-q5': 'b',
   'cp2-ws7-q1': 'a', 'cp2-ws7-q2': 'b', 'cp2-ws7-q3': 'c', 'cp2-ws7-q4': 'a', 'cp2-ws7-q5': 'c', 'cp2-ws7-q6': 'b', 'cp2-ws7-q7': 'b',
+  'cp2-ws7-ypath': 'b',
+  'cp2-ws9-mystery': 'a',
 };
 
 // ── Live data infrastructure ──────────────────────────────────────────────────
@@ -1958,18 +1960,35 @@ const WORKSHEETS = [
       <div class="rounded-xl border border-info/30 bg-info/5 p-4 mt-4 space-y-1">
         <p class="font-bold text-base-content">Process data — continuous, fast, lightweight</p>
         <p class="text-sm text-base-content/85 leading-relaxed">Process data is designed to be small enough to fit in a single cyclic PDin frame. The TV7105 temperature sensor sends just 4 bytes — temperature value plus status flags — every 500 ms. The AL1350 maps all four ports into a single process image and publishes it to the Mosquitto broker via MQTT. This is what the WebSocket delivers to the browser on every tick: decoded, current sensor values, ready for the HMI to display without any explicit request.</p>
+        <div class="rounded-lg px-3 py-2 mt-2 flex items-center flex-wrap gap-x-2 gap-y-1 font-mono text-xs" style="background:#0f172a;border:1px solid #334155">
+          <span class="w-2 h-2 rounded-full shrink-0 animate-pulse" style="background:#3b82f6"></span>
+          <span style="color:#60a5fa">23.5°C</span><span style="color:#475569">→</span>
+          <span style="color:#60a5fa">23.6°C</span><span style="color:#475569">→</span>
+          <span style="color:#60a5fa">23.4°C</span>
+          <span class="ml-auto" style="color:#64748b">every 500 ms via WebSocket — nobody asked for it</span>
+        </div>
       </div>
 
       <!-- Concept card: Service data -->
       <div class="rounded-xl border border-info/30 bg-info/5 p-4 mt-3 space-y-1">
         <p class="font-bold text-base-content">Service data — acyclic ISDU reads and writes</p>
         <p class="text-sm text-base-content/85 leading-relaxed">Service data uses the ISDU (IO-Link Acyclic Service Data Unit) protocol. The master sends a read request to the sensor — specifying an index and subindex — and the sensor responds with raw bytes. This is how SP1, RP1, calibration offset, and device identity strings are accessed. It does NOT arrive automatically; you must explicitly request it. In this app, ISDU reads are triggered by the REST endpoints (<code class="font-mono text-xs">/api/io-link/port/N/parameters</code> or <code class="font-mono text-xs">/api/io-link/port/N/parameter/read</code>). Average latency: 10–200 ms depending on device and AL1350 load.</p>
+        <div class="rounded-lg px-3 py-2 mt-2 space-y-1 font-mono text-xs" style="background:#0f172a;border:1px solid #334155">
+          <div><span style="color:#a78bfa">Browser</span> <span style="color:#475569">—click "Read SP1"→</span> <span style="color:#f59e0b">GET index 583</span> <span style="color:#475569">→</span> <span style="color:#a78bfa">AL1350 → Sensor</span></div>
+          <div><span style="color:#a78bfa">Sensor</span> <span style="color:#475569">—responds→</span> <span style="color:#4ade80">01 F4</span> <span style="color:#475569">→ decode →</span> <span style="color:#4ade80">50.0°C</span> <span style="color:#475569">→ back to Browser</span></div>
+          <div style="color:#64748b">one request, one response — only when explicitly asked</div>
+        </div>
       </div>
 
       <!-- Concept card: Event data -->
       <div class="rounded-xl border border-info/30 bg-info/5 p-4 mt-3 space-y-1">
         <p class="font-bold text-base-content">Event data — smart faults and the CMMS link</p>
         <p class="text-sm text-base-content/85 leading-relaxed">An event is a structured fault or warning message with a code, port number, and qualifier (appears / disappears). Examples: lens dirty (Omron E2E proximity), temperature exceeds SP2 (IFM TV7105), instability alarm (E2E). In a full industrial setup, events route to a CMMS (Computerised Maintenance Management System) to automatically generate maintenance work orders — eliminating the need for manual inspection rounds. In this app, event flags appear in the WebSocket JSON frame alongside process data, so the HMI can display them in real time.</p>
+        <div class="rounded-lg px-3 py-2 mt-2 flex items-center flex-wrap gap-2 font-mono text-xs" style="background:#0f172a;border-top:1px solid #334155;border-right:1px solid #334155;border-bottom:1px solid #334155;border-left:3px solid #ef4444">
+          <span style="color:#ef4444">⚠</span>
+          <span style="color:#fca5a5">Port 1 — Instability Alarm — appears</span>
+          <span style="color:#64748b">→ CMMS work order raised, then silent until it clears</span>
+        </div>
       </div>
 
       <!-- IO-Link data routing SVG (preserved exactly) -->
@@ -2123,74 +2142,75 @@ const WORKSHEETS = [
       </div>
 
       <!-- Verification section -->
-      <div class="rounded-xl border-2 border-warning/50 bg-warning/5 p-4 mt-4 space-y-3">
-        <p class="font-bold text-base-content text-base">🎯 Verification — classify live data flowing through the system</p>
+      <div id="cp2-ws6-verify" class="rounded-xl border-2 border-warning/50 bg-warning/5 p-4 mt-4 space-y-4">
+        <div>
+          <p class="font-bold text-base-content text-base">🎯 Verification — watch each data channel behave differently, live</p>
+          <p class="text-sm text-base-content/80">These three panels are wired to the real system. Watch them run for a few seconds — each one demonstrates <em>why</em> its data type is classified the way it is.</p>
+        </div>
 
-        <!-- Connection Diagnostics embedded panel -->
+        <!-- Process data live tile -->
         <div class="rounded-lg border border-base-300 bg-base-200 p-3 space-y-2">
           <div class="flex items-center justify-between">
-            <p class="text-xs font-semibold text-base-content/60 uppercase tracking-wide">Connection Diagnostics</p>
-            <span id="cp2-diag-badge" class="badge badge-xs badge-ghost font-mono">—</span>
+            <p class="text-xs font-semibold text-base-content/60 uppercase tracking-wide">Process data — live, unrequested</p>
+            <span id="ws6-proc-badge" class="badge badge-xs badge-ghost font-mono">—</span>
           </div>
-          <div class="grid grid-cols-3 gap-2 text-center">
-            <div class="rounded bg-base-100 border border-base-300 p-2">
-              <div class="text-xs text-base-content/50 mb-1">Circuit Breaker</div>
-              <div id="cp2-diag-circuit" class="font-bold font-mono text-sm text-base-content">—</div>
+          <div class="flex items-center gap-6">
+            <div>
+              <p class="text-xs text-base-content/50">Port 3 temperature</p>
+              <p id="ws6-proc-temp" class="font-mono font-bold text-2xl text-info">—</p>
             </div>
-            <div class="rounded bg-base-100 border border-base-300 p-2">
-              <div class="text-xs text-base-content/50 mb-1">Success Rate</div>
-              <div id="cp2-diag-success" class="font-bold font-mono text-sm text-base-content">—</div>
-            </div>
-            <div class="rounded bg-base-100 border border-base-300 p-2">
-              <div class="text-xs text-base-content/50 mb-1">MQTT</div>
-              <div id="cp2-diag-mqtt" class="font-bold font-mono text-sm text-base-content">—</div>
+            <div>
+              <p class="text-xs text-base-content/50">WS messages received</p>
+              <p id="ws6-proc-count" class="font-mono font-bold text-2xl text-info">0</p>
             </div>
           </div>
-          <div class="rounded bg-base-100 border border-base-300 p-2">
-            <div class="text-xs text-base-content/50 mb-1">Latency p50 / p95 (ms)</div>
-            <div class="flex items-center gap-2">
-              <div id="cp2-diag-latency-chart" class="flex-1 h-8 bg-base-200 rounded overflow-hidden flex items-end gap-px"></div>
-              <div id="cp2-diag-p95" class="font-mono text-sm text-base-content w-16 text-right">—</div>
-            </div>
-          </div>
+          <p class="text-xs text-base-content/40">Nobody clicked anything — this counter climbs on its own, roughly 2 per second.</p>
         </div>
 
-        <!-- Edge Device embedded panel -->
+        <!-- Service data live tile -->
         <div class="rounded-lg border border-base-300 bg-base-200 p-3 space-y-2">
-          <p class="text-xs font-semibold text-base-content/60 uppercase tracking-wide">Edge Device — Services</p>
-          <div class="grid grid-cols-3 gap-2 text-center">
-            <div class="rounded bg-base-100 border border-base-300 p-2">
-              <div class="text-xs text-base-content/50 mb-1">Backend API</div>
-              <div id="cp2-edge-backend" class="font-bold font-mono text-sm text-base-content">—</div>
+          <div class="flex items-center justify-between flex-wrap gap-2">
+            <p class="text-xs font-semibold text-base-content/60 uppercase tracking-wide">Service data — only on request</p>
+            <button id="ws6-svc-btn" class="btn btn-xs btn-outline">Send ISDU read →</button>
+          </div>
+          <div class="flex items-center gap-6 flex-wrap">
+            <div>
+              <p class="text-xs text-base-content/50">Round-trip time</p>
+              <p id="ws6-svc-rtt" class="font-mono font-bold text-2xl text-secondary">—</p>
             </div>
-            <div class="rounded bg-base-100 border border-base-300 p-2">
-              <div class="text-xs text-base-content/50 mb-1">CPU</div>
-              <div id="cp2-edge-cpu" class="font-bold font-mono text-sm text-base-content">—</div>
+            <div>
+              <p class="text-xs text-base-content/50">SP1 decoded</p>
+              <p id="ws6-svc-val" class="font-mono font-bold text-2xl text-secondary">—</p>
             </div>
-            <div class="rounded bg-base-100 border border-base-300 p-2">
-              <div class="text-xs text-base-content/50 mb-1">CPU Temp</div>
-              <div id="cp2-edge-cputemp" class="font-bold font-mono text-sm text-base-content">—</div>
+            <div>
+              <p class="text-xs text-base-content/50">Requests sent</p>
+              <p id="ws6-svc-count" class="font-mono font-bold text-2xl text-secondary">0</p>
             </div>
           </div>
+          <p class="text-xs text-base-content/40">This counter only moves when you click the button — unlike process data above, nothing arrives on its own.</p>
         </div>
 
-        <p class="text-sm text-base-content/80">Explore the <a href="#" data-page="home" class="link link-warning">Dashboard</a> and <a href="#" data-page="io-link-master" class="link link-warning">IO-Link page</a>. Tick each item when confirmed.</p>
+        <!-- Event data live tile -->
+        <div class="rounded-lg border border-base-300 bg-base-200 p-3 space-y-2">
+          <p class="text-xs font-semibold text-base-content/60 uppercase tracking-wide">Event data — silent until triggered</p>
+          <div id="ws6-evt-box" class="rounded-lg px-3 py-2 font-mono text-xs" style="background:#0f172a;border:1px solid #334155;color:#64748b">
+            No active event on Port 1 — wave a metal target close to the OMRON E2E to trigger the instability or over-approach alarm
+          </div>
+          <p class="text-xs text-base-content/40">If a fault condition is met, this box lights up with the matching NE107 symbol from the table above — it will not change on a timer.</p>
+        </div>
+
         <div class="space-y-2 text-sm">
           <label class="cp2-kit-item flex items-center gap-3 cursor-pointer rounded-xl border-2 border-transparent px-3 py-2 transition-all duration-200">
             <input type="checkbox" class="checkbox checkbox-sm checkbox-warning flex-shrink-0">
-            <span class="cp2-kit-text">Identify three process data values visible in real time on the Dashboard (e.g. temperature, proximity detected state, detection count) — these arrive via WebSocket every 500 ms</span>
+            <span class="cp2-kit-text">I watched the process data message counter climb on its own for a few seconds without clicking anything.</span>
           </label>
           <label class="cp2-kit-item flex items-center gap-3 cursor-pointer rounded-xl border-2 border-transparent px-3 py-2 transition-all duration-200">
             <input type="checkbox" class="checkbox checkbox-sm checkbox-warning flex-shrink-0">
-            <span class="cp2-kit-text">Navigate to Port 3's parameter panel on the Dashboard and perform an SP1 read — this is a service data request (ISDU read via REST API, not WebSocket)</span>
+            <span class="cp2-kit-text">I clicked "Send ISDU read" and saw the request counter increase by exactly one, with a round-trip time and decoded SP1 value shown.</span>
           </label>
           <label class="cp2-kit-item flex items-center gap-3 cursor-pointer rounded-xl border-2 border-transparent px-3 py-2 transition-all duration-200">
             <input type="checkbox" class="checkbox checkbox-sm checkbox-warning flex-shrink-0">
-            <span class="cp2-kit-text">Confirm the MQTT status above shows CONNECTED — the process data path is healthy</span>
-          </label>
-          <label class="cp2-kit-item flex items-center gap-3 cursor-pointer rounded-xl border-2 border-transparent px-3 py-2 transition-all duration-200">
-            <input type="checkbox" class="checkbox checkbox-sm checkbox-warning flex-shrink-0">
-            <span class="cp2-kit-text">Circuit breaker CLOSED above — the service data (HTTP/ISDU) path to the AL1350 is available</span>
+            <span class="cp2-kit-text">I understand the event panel above only changes when a fault condition on Port 1 is met — not on a fixed interval like process data.</span>
           </label>
         </div>
       </div>
@@ -2344,8 +2364,33 @@ const WORKSHEETS = [
 </div>
 
 <div class="alert bg-secondary/10 border border-secondary/30 rounded-lg text-base-content mt-3">
-  <strong>Do this:</strong> Open <a href="#" data-page="admin" class="link link-secondary">Connection Diagnostics</a>. The latency graph shows round-trip time to the AL1350 over HTTP. What does a spike in this graph tell you about the health of the IO-Link network?
+  <strong>Do this:</strong> The panel below is the same Connection Diagnostics latency graph as the Admin page, live. It shows round-trip time to the AL1350 over HTTP. What does a spike in this graph tell you about the health of the IO-Link network?
 </div>
+
+<!-- Connection Diagnostics embedded panel -->
+<div class="rounded-lg border border-base-300 bg-base-200 p-3 space-y-2 mt-2">
+  <div class="flex items-center justify-between">
+    <p class="text-xs font-semibold text-base-content/60 uppercase tracking-wide">Connection Diagnostics</p>
+    <span id="cp2-diag-badge" class="badge badge-xs badge-ghost font-mono">—</span>
+  </div>
+  <div class="grid grid-cols-3 gap-2 text-center">
+    <div class="rounded bg-base-100 border border-base-300 p-2">
+      <div class="text-xs text-base-content/50 mb-1">Circuit Breaker</div>
+      <div id="cp2-diag-circuit" class="font-bold font-mono text-sm text-base-content">—</div>
+    </div>
+    <div class="rounded bg-base-100 border border-base-300 p-2">
+      <div class="text-xs text-base-content/50 mb-1">Success Rate</div>
+      <div id="cp2-diag-success" class="font-bold font-mono text-sm text-base-content">—</div>
+    </div>
+    <div class="rounded bg-base-100 border border-base-300 p-2">
+      <div class="text-xs text-base-content/50 mb-1">MQTT</div>
+      <div id="cp2-diag-mqtt" class="font-bold font-mono text-sm text-base-content">—</div>
+    </div>
+  </div>
+  <div class="h-28"><canvas id="cp2-diag-latency-chart"></canvas></div>
+  <p class="text-xs text-base-content/40">RTT p95: <span id="cp2-diag-p95">—</span> ms &nbsp;·&nbsp; HTTP poll latency to AL1350</p>
+</div>
+
 <div class="space-y-2 mt-2">
   <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="cp2-ws6-q4" value="a" class="radio radio-sm radio-secondary"> High latency on the IO-Link subnet or the AL1350 being overloaded</label>
   <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="cp2-ws6-q4" value="b" class="radio radio-sm radio-secondary"> The dashboard browser tab is consuming too much memory and slowing the chart rendering</label>
@@ -2438,75 +2483,96 @@ const WORKSHEETS = [
         <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="cp2-ws6-q5" value="c" class="radio radio-sm radio-secondary"> In the SCADA historian — it bypasses the PLC entirely and writes directly to the cloud database</label>
       </div>
 
+      <!-- Concept card: the Y-Path -->
+      <div class="rounded-xl border border-info/30 bg-info/5 p-4 mt-4 space-y-2">
+        <p class="font-semibold text-base-content text-sm">The "Y-Path" — a second route that skips the PLC</p>
+        <p class="text-sm text-base-content/85 leading-relaxed">Q5 described the <strong>traditional route</strong>: PDin → AL1350 → PLC via PROFINET → the PLC's own built-in OPC UA server (e.g. TIA Portal) → SCADA/IT. Many modern IO-Link masters add a second, parallel route called the <strong>Y-Path</strong>: cyclic process data still goes to the PLC as normal for real-time control, but acyclic parameter and diagnostic data (ISDU — serial numbers, operating hours, error codes) is sent <em>directly</em> from the master to IT systems over its own built-in OPC UA server, completely bypassing the PLC's control logic. The PLC's scan cycle never even sees this traffic.</p>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs font-mono mt-1">
+          <div class="rounded-lg p-2" style="background:#0f172a;border:1px solid #334155;color:#94a3b8">
+            <span style="color:#64748b">Traditional route:</span> Sensor → Master → PLC (PROFINET) → PLC's OPC UA Server → IT
+          </div>
+          <div class="rounded-lg p-2" style="background:#0f172a;border:1px solid #334155;color:#94a3b8">
+            <span style="color:#64748b">Y-Path:</span> Sensor → Master → PLC (cyclic only), <span style="color:#475569">and</span> Master → OPC UA Server → IT (acyclic, direct)
+          </div>
+        </div>
+        <p class="text-sm text-base-content/70 mt-1">Where does this app sit? There is no PLC anywhere in its data path — AL1350 → MQTT → FastAPI → WebSocket → Browser. Structurally it resembles the Y-Path's IT-facing branch: data reaches a dashboard without ever passing through a PLC scan cycle.</p>
+      </div>
+
+      <p class="mt-4 font-medium text-base-content"><strong>Q6.</strong> Which route does this app's own architecture most resemble?</p>
+      <div class="space-y-2 mt-1">
+        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="cp2-ws7-ypath" value="a" class="radio radio-sm radio-secondary"> The traditional route — data must pass through a PLC and its OPC UA server before reaching the browser</label>
+        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="cp2-ws7-ypath" value="b" class="radio radio-sm radio-secondary"> The Y-Path's IT-facing branch — process and diagnostic data reach the dashboard directly from the master, with no PLC in the loop at all</label>
+        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="cp2-ws7-ypath" value="c" class="radio radio-sm radio-secondary"> Neither — a browser dashboard has no equivalent in real IO-Link/OPC UA deployments</label>
+      </div>
+
 <!-- Verification section -->
-<div class="rounded-xl border-2 border-warning/50 bg-warning/5 p-4 mt-4 space-y-3">
-  <p class="font-bold text-base-content text-base">🎯 Verification — trace the equivalent layers in this app</p>
-  <p class="text-sm text-base-content/80">Use the live panels below and the <a href="#" data-page="home" class="link link-warning">Dashboard</a> to confirm each layer. Tick each item when verified.</p>
-
-  <!-- Connection Diagnostics embedded panel -->
-  <div class="rounded-lg border border-base-300 bg-base-200 p-3 space-y-2">
-    <div class="flex items-center justify-between">
-      <p class="text-xs font-semibold text-base-content/60 uppercase tracking-wide">Connection Diagnostics</p>
-      <span id="cp2-diag-badge" class="badge badge-xs badge-ghost font-mono">—</span>
-    </div>
-    <div class="grid grid-cols-3 gap-2 text-center">
-      <div class="rounded bg-base-100 border border-base-300 p-2">
-        <div class="text-xs text-base-content/50 mb-1">Circuit Breaker</div>
-        <div id="cp2-diag-circuit" class="font-bold font-mono text-sm text-base-content">—</div>
-      </div>
-      <div class="rounded bg-base-100 border border-base-300 p-2">
-        <div class="text-xs text-base-content/50 mb-1">Success Rate</div>
-        <div id="cp2-diag-success" class="font-bold font-mono text-sm text-base-content">—</div>
-      </div>
-      <div class="rounded bg-base-100 border border-base-300 p-2">
-        <div class="text-xs text-base-content/50 mb-1">MQTT</div>
-        <div id="cp2-diag-mqtt" class="font-bold font-mono text-sm text-base-content">—</div>
-      </div>
-    </div>
-    <div class="h-28"><canvas id="cp2-diag-latency-chart"></canvas></div>
-    <p class="text-xs text-base-content/40">RTT p95: <span id="cp2-diag-p95">—</span> ms &nbsp;·&nbsp; HTTP poll latency to AL1350</p>
+<div id="cp2-ws7-verify" class="rounded-xl border-2 border-warning/50 bg-warning/5 p-4 mt-4 space-y-4">
+  <div>
+    <p class="font-bold text-base-content text-base">🎯 Verification — feel cyclic data, watch acyclic data, on real hardware</p>
+    <p class="text-sm text-base-content/80">Two physical demonstrations using the temperature sensor and light stack in front of you — not just numbers on screen. Cyclic process data is something you can trigger with your own hand; acyclic diagnostic data is something you can watch the light stack announce.</p>
   </div>
 
-  <!-- Edge Device embedded panel -->
+  <!-- Part A: warm the TV7105 — cyclic process data as an OPC UA subscription -->
   <div class="rounded-lg border border-base-300 bg-base-200 p-3 space-y-2">
-    <p class="text-xs font-semibold text-base-content/60 uppercase tracking-wide">Edge Device — Services</p>
-    <div class="grid grid-cols-3 gap-2 text-center">
-      <div class="rounded bg-base-100 border border-base-300 p-2">
-        <div class="text-xs text-base-content/50 mb-1">Backend API</div>
-        <div id="cp2-edge-backend" class="font-bold font-mono text-sm text-base-content">—</div>
-      </div>
-      <div class="rounded bg-base-100 border border-base-300 p-2">
-        <div class="text-xs text-base-content/50 mb-1">CPU</div>
-        <div id="cp2-edge-cpu" class="font-bold font-mono text-sm text-base-content">—</div>
-      </div>
-      <div class="rounded bg-base-100 border border-base-300 p-2">
-        <div class="text-xs text-base-content/50 mb-1">CPU Temp</div>
-        <div id="cp2-edge-cputemp" class="font-bold font-mono text-sm text-base-content">—</div>
-      </div>
+    <p class="text-xs font-semibold text-base-content/60 uppercase tracking-wide">Part A — Warm the TV7105 (Port 3) with your hand</p>
+    <p class="text-sm text-base-content/80">Cup your hand around the temperature sensor for 10–15 seconds. Watch the reading below climb <strong>without pressing anything</strong> — this is cyclic process data, the same data that would land in a PLC's I/O memory every scan cycle on the traditional route, or reach IT directly with no PLC at all on the Y-Path.</p>
+    <div class="rounded-lg px-3 py-2 font-mono text-xs" style="background:#0f172a;border:1px solid #334155;color:#94a3b8">
+      <span style="color:#64748b">OPC UA equivalent node:</span> <span style="color:#f59e0b">Server/DeviceSet/Port3/Temperature</span> — a <span style="color:#4ade80">Measurement node</span><br>
+      <span style="color:#64748b">Delivery mechanism:</span> an OPC UA client <strong style="color:#e2e8f0">subscribed</strong> to this node gets pushed the new value the instant it changes — no polling. That is exactly what just happened to your screen over WebSocket.
     </div>
+    <div class="flex items-center gap-6 flex-wrap">
+      <div>
+        <p class="text-xs text-base-content/50">Live temperature</p>
+        <p id="ws7-temp-val" class="font-mono font-bold text-3xl text-info">—</p>
+      </div>
+      <div>
+        <p class="text-xs text-base-content/50">Rise since you started watching</p>
+        <p id="ws7-temp-delta" class="font-mono font-bold text-3xl text-info">+0.0 °C</p>
+      </div>
+      <button id="ws7-temp-reset" class="btn btn-xs btn-ghost">Reset baseline</button>
+    </div>
+    <p id="ws7-temp-proof" class="text-sm font-semibold"></p>
   </div>
 
-  <div class="space-y-2 text-sm">
+  <!-- Part B: ISDU read flashes the light stack — acyclic data as an OPC UA Configuration node -->
+  <div class="rounded-lg border border-base-300 bg-base-200 p-3 space-y-2">
+    <p class="text-xs font-semibold text-base-content/60 uppercase tracking-wide">Part B — Trigger one ISDU read and watch the light stack answer</p>
+    <p class="text-sm text-base-content/80">Click the button. The light stack (Port 4) will flash <span class="font-semibold" style="color:#3b82f6">blue</span> once while a real SP1 read (Index 583, acyclic ISDU) is in flight, then return to green. One click, one flash, one response — unlike the temperature reading above, nothing happens here unless you ask for it.</p>
+    <div class="rounded-lg px-3 py-2 font-mono text-xs" style="background:#0f172a;border:1px solid #334155;color:#94a3b8">
+      <span style="color:#64748b">OPC UA equivalent node:</span> <span style="color:#f59e0b">Server/DeviceSet/Port3/SP1</span> — a <span style="color:#a78bfa">Configuration node</span>, not a subscription target<br>
+      <span style="color:#64748b">Delivery mechanism:</span> a client <strong style="color:#e2e8f0">reads</strong> (or writes) this node on demand, the same way a commissioning tool changes a setpoint. This is the acyclic side of the IO-Link OPC UA companion spec — the same category as manufacturer name, serial number, and error codes.
+    </div>
+    <div class="flex items-center gap-6 flex-wrap">
+      <div class="flex items-center gap-2">
+        <span class="w-5 h-5 rounded-full border-2 border-base-content/20 shrink-0" id="ws7-light-dot" style="background:#22c55e"></span>
+        <span id="ws7-light-state" class="text-sm font-semibold">Green — idle</span>
+      </div>
+      <div>
+        <p class="text-xs text-base-content/50">SP1 (via ISDU)</p>
+        <p id="ws7-isdu-val" class="font-mono font-bold text-2xl text-secondary">—</p>
+      </div>
+      <button id="ws7-isdu-btn" class="btn btn-sm btn-outline">Read SP1 (ISDU) → flash the light stack</button>
+    </div>
+    <p id="ws7-isdu-proof" class="text-sm font-semibold"></p>
+  </div>
+
+  <div class="space-y-2 text-sm mt-2">
     <label class="cp2-kit-item flex items-center gap-3 cursor-pointer rounded-xl border-2 border-transparent px-3 py-2 transition-all duration-200">
       <input type="checkbox" class="checkbox checkbox-sm checkbox-warning flex-shrink-0">
-      <span class="cp2-kit-text">The latency chart above shows HTTP RTT to the AL1350 — this is the equivalent of the <strong>fieldbus cycle time</strong> in a PLC system</span>
+      <span class="cp2-kit-text">I warmed the sensor and watched the temperature climb on its own — that is a <strong>Measurement node</strong> being pushed via <strong>subscription</strong>, cyclic process data that never needs a request.</span>
     </label>
     <label class="cp2-kit-item flex items-center gap-3 cursor-pointer rounded-xl border-2 border-transparent px-3 py-2 transition-all duration-200">
       <input type="checkbox" class="checkbox checkbox-sm checkbox-warning flex-shrink-0">
-      <span class="cp2-kit-text">Note the current temperature on Port 3 (Dashboard) — this is process data that would appear in the <strong>PLC I/O memory address</strong> in an industrial integration</span>
+      <span class="cp2-kit-text">I clicked "Read SP1" and watched the light stack flash blue once, then return to green — one <strong>Configuration node</strong> read, acyclic, exactly like an ISDU/OPC UA parameter access.</span>
     </label>
     <label class="cp2-kit-item flex items-center gap-3 cursor-pointer rounded-xl border-2 border-transparent px-3 py-2 transition-all duration-200">
       <input type="checkbox" class="checkbox checkbox-sm checkbox-warning flex-shrink-0">
-      <span class="cp2-kit-text">Backend API shows <strong>Online</strong> above — FastAPI (the "PLC equivalent") is running and receiving IO-Link process data</span>
-    </label>
-    <label class="cp2-kit-item flex items-center gap-3 cursor-pointer rounded-xl border-2 border-transparent px-3 py-2 transition-all duration-200">
-      <input type="checkbox" class="checkbox checkbox-sm checkbox-warning flex-shrink-0">
-      <span class="cp2-kit-text">MQTT status <strong>CONNECTED</strong> above — the primary data path (equivalent to fieldbus) is healthy</span>
+      <span class="cp2-kit-text">I answered Q6 above and can explain why this app — a Measurement node reaching the screen live, a Configuration node fetched only on demand — matches the Y-Path's IT-facing branch, with no PLC anywhere in between.</span>
     </label>
   </div>
 </div>
 
-<div id="cp2-ws5-suggested" class="hidden p-4 rounded-lg border border-base-300 bg-base-300/50 text-base-content/80 text-sm leading-relaxed ws-suggested">Q1: c — the IO-Link master maps PDin into its process image; the PLC reads this via fieldbus each scan cycle. Q2: io_link_fastapi.py (MQTT subscription, rows 1 and 3); decoder.py (PDin decode, row 2). Q3: c — faster fault identification, multi-machine monitoring, and trend history. Latency spike: a — points to IO-Link subnet congestion or AL1350 load. Q5: b — IO-Link data goes into the PLC process image via fieldbus first; the PLC's OPC UA interface then exposes it to any OPC UA client.</div>
+<div id="cp2-ws5-suggested" class="hidden p-4 rounded-lg border border-base-300 bg-base-300/50 text-base-content/80 text-sm leading-relaxed ws-suggested">Q1: c — the IO-Link master maps PDin into its process image; the PLC reads this via fieldbus each scan cycle. Q2: io_link_fastapi.py (MQTT subscription, rows 1 and 3); decoder.py (PDin decode, row 2). Q3: c — faster fault identification, multi-machine monitoring, and trend history. Latency spike: a — points to IO-Link subnet congestion or AL1350 load. Q5: b — IO-Link data goes into the PLC process image via fieldbus first; the PLC's OPC UA interface then exposes it to any OPC UA client. Q6: b — this app has no PLC anywhere in its path; it structurally matches the Y-Path's direct-to-IT branch.</div>
     `
   },
   {
@@ -2798,56 +2864,6 @@ const WORKSHEETS = [
         <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="cp2-ws7-q7" value="c" class="radio radio-sm radio-secondary"> Vendor ID and Device ID — knowing the exact model allows the manufacturer to predict failure based on average lifespan data</label>
       </div>
 
-      <!-- Verification section -->
-      <div class="rounded-xl border-2 border-warning/50 bg-warning/5 p-4 mt-4 space-y-3">
-        <p class="font-bold text-base-content text-base">🎯 Verification — calculate the business case for this lab kit</p>
-
-        <!-- Connection Diagnostics embedded panel -->
-        <div class="rounded-lg border border-base-300 bg-base-200 p-3 space-y-2">
-          <div class="flex items-center justify-between">
-            <p class="text-xs font-semibold text-base-content/60 uppercase tracking-wide">Connection Diagnostics</p>
-            <span id="cp2-diag-badge" class="badge badge-xs badge-ghost font-mono">—</span>
-          </div>
-          <div class="grid grid-cols-3 gap-2 text-xs">
-            <div><p class="text-base-content/50 mb-0.5">Circuit breaker</p><div id="cp2-diag-circuit" class="font-bold font-mono text-sm text-base-content">—</div></div>
-            <div><p class="text-base-content/50 mb-0.5">Success rate</p><div id="cp2-diag-success" class="font-bold font-mono text-sm text-base-content">—</div></div>
-            <div><p class="text-base-content/50 mb-0.5">MQTT</p><div id="cp2-diag-mqtt" class="font-bold font-mono text-sm text-base-content">—</div></div>
-          </div>
-          <div class="h-28"><canvas id="cp2-diag-latency-chart"></canvas></div>
-          <p class="text-xs text-base-content/40">RTT p95: <span id="cp2-diag-p95">—</span> ms &nbsp;·&nbsp; poll latency to AL1350 over HTTP</p>
-        </div>
-
-        <!-- Edge Device embedded panel -->
-        <div class="rounded-lg border border-base-300 bg-base-200 p-3 space-y-2">
-          <p class="text-xs font-semibold text-base-content/60 uppercase tracking-wide">Edge Device — Services</p>
-          <div class="grid grid-cols-3 gap-2 text-xs">
-            <div><p class="text-base-content/50 mb-0.5">Backend API</p><div id="cp2-edge-backend" class="font-bold font-mono text-sm text-base-content">—</div></div>
-            <div><p class="text-base-content/50 mb-0.5">CPU load</p><div id="cp2-edge-cpu" class="font-bold font-mono text-sm text-base-content">—</div></div>
-            <div><p class="text-base-content/50 mb-0.5">CPU temp</p><div id="cp2-edge-cputemp" class="font-bold font-mono text-sm text-base-content">—</div></div>
-          </div>
-        </div>
-
-        <p class="text-sm text-base-content/80">Use the calculation table above and the scenario figures. Tick each item when you have verified the answer.</p>
-        <div class="space-y-2 text-sm">
-          <label class="cp2-kit-item flex items-center gap-3 cursor-pointer rounded-xl border-2 border-transparent px-3 py-2 transition-all duration-200">
-            <input type="checkbox" class="checkbox checkbox-sm checkbox-warning flex-shrink-0">
-            <span class="cp2-kit-text">Fill in the calculation table above — verify: <strong>Standard = 23.3 h/year</strong>, IO-Link = 5.3 h/year, saving = 18 h/year</span>
-          </label>
-          <label class="cp2-kit-item flex items-center gap-3 cursor-pointer rounded-xl border-2 border-transparent px-3 py-2 transition-all duration-200">
-            <input type="checkbox" class="checkbox checkbox-sm checkbox-warning flex-shrink-0">
-            <span class="cp2-kit-text">Scale the calculation to 200 sensors: 200 × 1 fault × 27 min saving ÷ 60 = <strong>90 h/year saved</strong>. At £5,000/hour = <strong>£450,000/year</strong>.</span>
-          </label>
-          <label class="cp2-kit-item flex items-center gap-3 cursor-pointer rounded-xl border-2 border-transparent px-3 py-2 transition-all duration-200">
-            <input type="checkbox" class="checkbox checkbox-sm checkbox-warning flex-shrink-0">
-            <span class="cp2-kit-text">Backend API shows <strong>Online</strong> above — this app is the "web HMI" equivalent that would deliver the £90,000/year saving in a real deployment</span>
-          </label>
-          <label class="cp2-kit-item flex items-center gap-3 cursor-pointer rounded-xl border-2 border-transparent px-3 py-2 transition-all duration-200">
-            <input type="checkbox" class="checkbox checkbox-sm checkbox-warning flex-shrink-0">
-            <span class="cp2-kit-text">Circuit breaker <strong>CLOSED</strong> above — the diagnostic event infrastructure (that enables IO-Link MTTR of 8 min) is active</span>
-          </label>
-        </div>
-      </div>
-
       <div id="cp2-ws6-suggested" class="hidden p-4 rounded-lg border border-base-300 bg-base-300/50 text-base-content/80 text-sm leading-relaxed ws-suggested">Q1: a — Standard: 40×35=1,400 min=23.3 h. IO-Link: 40×8=320 min=5.3 h. Saving = 18 h/year. Q2: c — 18 × £5,000 = £90,000/year. Q3: b — automatic parameter restore (no re-commissioning cost) and remote diagnostics (no site visit needed). Q4: a — event data (faults and warnings) triggers maintenance work orders. Q5: b — (9,000,000 − 7,500,000) ÷ 1,000 = 1,500 days until 90% threshold. Q6: b — cycle count, event frequency, and calibration drift reveal actual device condition, unlike elapsed time alone.</div>
     `
   },
@@ -2934,8 +2950,44 @@ const WORKSHEETS = [
         </svg>
       </div>
 
+      <!-- Live device identity panel -->
+      <div id="cp2-ws9-identity-panel" class="rounded-lg border border-base-300 bg-base-200 p-3 space-y-2 mt-4">
+        <div class="flex items-center justify-between">
+          <p class="text-xs font-semibold text-base-content/60 uppercase tracking-wide">Live device identity — Port 1 (the worn-label sensor)</p>
+          <span id="ws9-p1-badge" class="badge badge-xs badge-ghost font-mono">—</span>
+        </div>
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 text-center">
+          <div class="rounded bg-base-100 border border-base-300 p-2">
+            <div class="text-xs text-base-content/50 mb-1">Vendor ID</div>
+            <div id="ws9-p1-vid" class="font-bold font-mono text-sm text-base-content">—</div>
+          </div>
+          <div class="rounded bg-base-100 border border-base-300 p-2">
+            <div class="text-xs text-base-content/50 mb-1">Vendor name</div>
+            <div id="ws9-p1-vname" class="font-bold text-sm text-base-content">—</div>
+          </div>
+          <div class="rounded bg-base-100 border border-base-300 p-2">
+            <div class="text-xs text-base-content/50 mb-1">Device ID</div>
+            <div id="ws9-p1-did" class="font-bold font-mono text-sm text-base-content">—</div>
+          </div>
+          <div class="rounded bg-base-100 border border-base-300 p-2">
+            <div class="text-xs text-base-content/50 mb-1">Device name</div>
+            <div id="ws9-p1-dname" class="font-bold text-sm text-base-content">—</div>
+          </div>
+        </div>
+        <div class="grid grid-cols-2 gap-2 text-center mt-1">
+          <div class="rounded bg-base-100 border border-base-300 p-2">
+            <div class="text-xs text-base-content/50 mb-1">Live PDin hex</div>
+            <div id="ws9-p1-pdin" class="font-mono font-bold text-sm text-base-content">—</div>
+          </div>
+          <div class="rounded bg-base-100 border border-base-300 p-2">
+            <div class="text-xs text-base-content/50 mb-1">Byte 1 bit 4 — instability alarm</div>
+            <div id="ws9-p1-bit4" class="font-bold text-sm text-base-content">—</div>
+          </div>
+        </div>
+      </div>
+
       <!-- Q1 -->
-      <p class="mt-4 font-medium text-base-content"><strong>Q1.</strong> Open the <a href="#" data-page="io-link-master" class="link link-secondary">IO-Link Master page</a>. What Vendor ID does Port 1 report?</p>
+      <p class="mt-4 font-medium text-base-content"><strong>Q1.</strong> Using the live panel above, what Vendor ID does Port 1 report?</p>
       <div class="space-y-2 mt-1">
         <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="cp2-ws7-q1" value="a" class="radio radio-sm radio-secondary"> 612</label>
         <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="cp2-ws7-q1" value="b" class="radio radio-sm radio-secondary"> 310</label>
@@ -2943,7 +2995,7 @@ const WORKSHEETS = [
       </div>
 
       <!-- Q2 -->
-      <p class="mt-4 font-medium text-base-content"><strong>Q2.</strong> The IO-Link Master page shows the Vendor ID resolved to a company name. Which manufacturer does Vendor ID 612 identify?</p>
+      <p class="mt-4 font-medium text-base-content"><strong>Q2.</strong> The panel above shows the Vendor ID resolved to a company name. Which manufacturer does Vendor ID 612 identify?</p>
       <div class="space-y-2 mt-1">
         <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="cp2-ws7-q2" value="a" class="radio radio-sm radio-secondary"> ifm electronic</label>
         <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="cp2-ws7-q2" value="b" class="radio radio-sm radio-secondary"> OMRON Corporation</label>
@@ -3030,78 +3082,83 @@ const WORKSHEETS = [
       </div>
 
       <!-- Verification section -->
-      <div class="rounded-xl border-2 border-warning/50 bg-warning/5 p-4 mt-4 space-y-3">
-        <p class="font-bold text-base-content text-base">🎯 Verification — positively identify all connected sensors</p>
-        <p class="text-sm text-base-content/80">Use the live panels below to verify device identity data is being read from the AL1350, then tick each item when confirmed.</p>
+      <div class="rounded-xl border-2 border-warning/50 bg-warning/5 p-4 mt-4 space-y-4">
+        <div>
+          <p class="font-bold text-base-content text-base">🎯 Verification — identify a mystery sensor, decode PDin yourself</p>
+          <p class="text-sm text-base-content/80">Two hands-on challenges using live data already on this page — no need to leave it. First, identify a port you haven't been told about yet. Then decode a live temperature reading by hand and check your own working.</p>
+        </div>
 
-        <!-- Connection Diagnostics embedded panel -->
+        <!-- Challenge 1: mystery sensor on Port 4 -->
         <div class="rounded-lg border border-base-300 bg-base-200 p-3 space-y-2">
           <div class="flex items-center justify-between">
-            <p class="text-xs font-semibold text-base-content/60 uppercase tracking-wide">Connection Diagnostics</p>
-            <span id="cp2-diag-badge" class="badge badge-xs badge-ghost font-mono">—</span>
+            <p class="text-xs font-semibold text-base-content/60 uppercase tracking-wide">Challenge 1 — Identify Port 4 from its identity fields alone</p>
+            <span id="ws9-p4-badge" class="badge badge-xs badge-ghost font-mono">—</span>
           </div>
-          <div class="grid grid-cols-3 gap-2 text-center">
+          <div class="grid grid-cols-2 gap-2 text-center">
             <div class="rounded bg-base-100 border border-base-300 p-2">
-              <div class="text-xs text-base-content/50 mb-1">Circuit Breaker</div>
-              <div id="cp2-diag-circuit" class="font-bold font-mono text-sm text-base-content">—</div>
+              <div class="text-xs text-base-content/50 mb-1">Vendor ID</div>
+              <div id="ws9-p4-vid" class="font-bold font-mono text-sm text-base-content">—</div>
             </div>
             <div class="rounded bg-base-100 border border-base-300 p-2">
-              <div class="text-xs text-base-content/50 mb-1">Success Rate</div>
-              <div id="cp2-diag-success" class="font-bold font-mono text-sm text-base-content">—</div>
-            </div>
-            <div class="rounded bg-base-100 border border-base-300 p-2">
-              <div class="text-xs text-base-content/50 mb-1">MQTT</div>
-              <div id="cp2-diag-mqtt" class="font-bold font-mono text-sm text-base-content">—</div>
+              <div class="text-xs text-base-content/50 mb-1">Device ID</div>
+              <div id="ws9-p4-did" class="font-bold font-mono text-sm text-base-content">—</div>
             </div>
           </div>
-          <div class="h-28"><canvas id="cp2-diag-latency-chart"></canvas></div>
-          <p class="text-xs text-base-content/40">RTT p95: <span id="cp2-diag-p95">—</span> ms &nbsp;·&nbsp; poll latency to AL1350 over HTTP</p>
+          <p class="text-sm font-medium text-base-content mt-1">You have never been told what Port 4 is anywhere in this worksheet. Based only on the live Vendor ID and Device ID above, what is it?</p>
+          <div class="space-y-2 mt-1">
+            <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="cp2-ws9-mystery" value="a" class="radio radio-sm radio-secondary"> Banner CL50 Pro RGB light stack</label>
+            <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="cp2-ws9-mystery" value="b" class="radio radio-sm radio-secondary"> A second OMRON E2E proximity sensor</label>
+            <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="cp2-ws9-mystery" value="c" class="radio radio-sm radio-secondary"> An IFM TV7105 temperature sensor</label>
+          </div>
         </div>
 
-        <!-- Edge Device embedded panel -->
+        <!-- Challenge 2: decode Port 3's live PDin by hand -->
         <div class="rounded-lg border border-base-300 bg-base-200 p-3 space-y-2">
-          <p class="text-xs font-semibold text-base-content/60 uppercase tracking-wide">Edge Device — Services</p>
-          <div class="grid grid-cols-3 gap-2 text-center">
+          <div class="flex items-center justify-between">
+            <p class="text-xs font-semibold text-base-content/60 uppercase tracking-wide">Challenge 2 — Decode Port 3's live PDin by hand</p>
+            <span id="ws9-p3-badge" class="badge badge-xs badge-ghost font-mono">—</span>
+          </div>
+          <div class="grid grid-cols-2 gap-2 text-center">
             <div class="rounded bg-base-100 border border-base-300 p-2">
-              <div class="text-xs text-base-content/50 mb-1">Backend API</div>
-              <div id="cp2-edge-backend" class="font-bold font-mono text-sm text-base-content">—</div>
+              <div class="text-xs text-base-content/50 mb-1">Vendor / Device</div>
+              <div id="ws9-p3-vname" class="font-bold text-sm text-base-content">—</div>
             </div>
             <div class="rounded bg-base-100 border border-base-300 p-2">
-              <div class="text-xs text-base-content/50 mb-1">CPU</div>
-              <div id="cp2-edge-cpu" class="font-bold font-mono text-sm text-base-content">—</div>
+              <div class="text-xs text-base-content/50 mb-1">Live PDin hex</div>
+              <div id="ws9-p3-pdin" class="font-mono font-bold text-sm text-base-content">—</div>
             </div>
-            <div class="rounded bg-base-100 border border-base-300 p-2">
-              <div class="text-xs text-base-content/50 mb-1">CPU Temp</div>
-              <div id="cp2-edge-cputemp" class="font-bold font-mono text-sm text-base-content">—</div>
-            </div>
+          </div>
+          <div class="flex flex-wrap items-center gap-2 mt-1">
+            <span class="text-sm text-base-content/70">Bytes 0–1 as int16 ÷ 10 =</span>
+            <input id="ws9-p3-ans" type="number" step="0.1" class="input input-bordered input-sm w-24" placeholder="°C">
+            <button id="ws9-p3-check" class="btn btn-xs btn-primary">Check</button>
+            <span id="ws9-p3-result" class="text-sm font-semibold"></span>
           </div>
         </div>
 
-        <div class="space-y-2 text-sm">
+        <!-- Port 1 alarm confirmation -->
+        <div class="rounded-lg border border-base-300 bg-base-200 p-3 space-y-1">
+          <p class="text-xs font-semibold text-base-content/60 uppercase tracking-wide">Port 1 — instability alarm (from the panel above Q1)</p>
+          <p class="text-sm text-base-content/80">Bring a metal target close to the sensing edge of the OMRON E2E until byte 1 bit 4 in the panel above Q1 reads <strong>ACTIVE</strong>, then pull it away until it reads <strong>clear</strong> again — confirming the flag responds to real conditions, not a fixed value.</p>
+        </div>
+
+        <div class="space-y-2 text-sm mt-1">
           <label class="cp2-kit-item flex items-center gap-3 cursor-pointer rounded-xl border-2 border-transparent px-3 py-2 transition-all duration-200">
             <input type="checkbox" class="checkbox checkbox-sm checkbox-warning flex-shrink-0">
-            <span class="cp2-kit-text">On the IO-Link Master page, note the <strong>Vendor ID and resolved company name</strong> for Port 1 (should be 612 → OMRON Corporation)</span>
+            <span class="cp2-kit-text">I identified Port 4 correctly using only its live Vendor ID and Device ID — no physical inspection or prior mention in this worksheet.</span>
           </label>
           <label class="cp2-kit-item flex items-center gap-3 cursor-pointer rounded-xl border-2 border-transparent px-3 py-2 transition-all duration-200">
             <input type="checkbox" class="checkbox checkbox-sm checkbox-warning flex-shrink-0">
-            <span class="cp2-kit-text">Note the <strong>Device ID</strong> for Port 1 — confirm it resolves to E2E-X16MB1T12 Proximity</span>
+            <span class="cp2-kit-text">My manual decode of Port 3's live PDin hex matched the actual temperature within a small margin.</span>
           </label>
           <label class="cp2-kit-item flex items-center gap-3 cursor-pointer rounded-xl border-2 border-transparent px-3 py-2 transition-all duration-200">
             <input type="checkbox" class="checkbox checkbox-sm checkbox-warning flex-shrink-0">
-            <span class="cp2-kit-text">Read the live <strong>PDin hex</strong> for Port 3 (temperature sensor) from the IO-Link Master page and decode bytes 0–1 as int16 ÷ 10 = °C</span>
-          </label>
-          <label class="cp2-kit-item flex items-center gap-3 cursor-pointer rounded-xl border-2 border-transparent px-3 py-2 transition-all duration-200">
-            <input type="checkbox" class="checkbox checkbox-sm checkbox-warning flex-shrink-0">
-            <span class="cp2-kit-text">Check Port 1's live PDin <strong>byte 1</strong> — if bit 4 is set (value 0x10 or higher), investigate sensor alignment before signing off</span>
-          </label>
-          <label class="cp2-kit-item flex items-center gap-3 cursor-pointer rounded-xl border-2 border-transparent px-3 py-2 transition-all duration-200">
-            <input type="checkbox" class="checkbox checkbox-sm checkbox-warning flex-shrink-0">
-            <span class="cp2-kit-text">Backend API shows <strong>Online</strong> above — device identity data is being read from the AL1350 HTTP API</span>
+            <span class="cp2-kit-text">I watched Port 1's instability alarm flip from clear to ACTIVE and back as I moved a target — this bit reflects a real condition, not a static demo value.</span>
           </label>
         </div>
       </div>
 
-      <div id="cp2-ws7-suggested" class="hidden p-4 rounded-lg border border-base-300 bg-base-300/50 text-base-content/80 text-sm leading-relaxed ws-suggested">Q1: a — Vendor ID 612 is shown on the Port 1 card on the IO-Link Master page. Q2: b — 612 is registered to OMRON Corporation in the IO-Link Community vendor table. Q3: c — the Device ID uniquely identifies the model; the master can use it to restore IODD parameters automatically after a swap. Q4: a — instability alarm means the target is at the sensing range boundary; adjust alignment before considering replacement. Q5: c — Vendor 1586 (RS Pro) Device 1052673 = the M18 capacitive sensor (Carlo Gavazzi OEM, RS Pro part 2377240).</div>
+      <div id="cp2-ws7-suggested" class="hidden p-4 rounded-lg border border-base-300 bg-base-300/50 text-base-content/80 text-sm leading-relaxed ws-suggested">Q1: a — Vendor ID 612 is shown in the live panel above. Q2: b — 612 is registered to OMRON Corporation in the IO-Link Community vendor table. Q3: c — the Device ID uniquely identifies the model; the master can use it to restore IODD parameters automatically after a swap. Q4: a — instability alarm means the target is at the sensing range boundary; adjust alignment before considering replacement. Q5: c — Vendor 1586 (RS Pro) Device 1052673 = the M18 capacitive sensor (Carlo Gavazzi OEM, RS Pro part 2377240).</div>
     `
   },
   {
@@ -3363,73 +3420,74 @@ const WORKSHEETS = [
         <p class="mt-1"><strong>Calibration offset raw encode:</strong> −3.0 °C → −3.0×10 = −30 → two's complement 16-bit: 65536−30 = 65506 = 0xFFE2</p>
       </div>
       <!-- Verification section -->
-      <div class="rounded-xl border-2 border-warning/50 bg-warning/5 p-4 mt-4 space-y-3">
-        <p class="font-bold text-base-content text-base">🎯 Verification — decode live PT100 data from Port 3</p>
-        <p class="text-sm text-base-content/80">The live panel above already shows the decoded temperature. Now verify the decode yourself using the exercises above — calculate the expected hex from the live reading and confirm it matches the raw bytes shown.</p>
-
-        <!-- Connection Diagnostics embedded panel -->
-        <div class="rounded-lg border border-base-300 bg-base-200 p-3 space-y-2">
-          <div class="flex items-center justify-between">
-            <p class="text-xs font-semibold text-base-content/60 uppercase tracking-wide">Connection Diagnostics</p>
-            <span id="cp2-diag-badge" class="badge badge-xs badge-ghost font-mono">—</span>
-          </div>
-          <div class="grid grid-cols-3 gap-2 text-center">
-            <div class="rounded bg-base-100 border border-base-300 p-2">
-              <div class="text-xs text-base-content/50 mb-1">Circuit Breaker</div>
-              <div id="cp2-diag-circuit" class="font-bold font-mono text-sm text-base-content">—</div>
-            </div>
-            <div class="rounded bg-base-100 border border-base-300 p-2">
-              <div class="text-xs text-base-content/50 mb-1">Success Rate</div>
-              <div id="cp2-diag-success" class="font-bold font-mono text-sm text-base-content">—</div>
-            </div>
-            <div class="rounded bg-base-100 border border-base-300 p-2">
-              <div class="text-xs text-base-content/50 mb-1">MQTT</div>
-              <div id="cp2-diag-mqtt" class="font-bold font-mono text-sm text-base-content">—</div>
-            </div>
-          </div>
-          <div class="h-28"><canvas id="cp2-diag-latency-chart"></canvas></div>
-          <p class="text-xs text-base-content/40">RTT p95: <span id="cp2-diag-p95">—</span> ms &nbsp;·&nbsp; poll latency to AL1350 over HTTP</p>
+      <div id="cp2-ws10-verify" class="rounded-xl border-2 border-warning/50 bg-warning/5 p-4 mt-4 space-y-4">
+        <div>
+          <p class="font-bold text-base-content text-base">🎯 Verification — decode by hand, then read two real parameters over ISDU</p>
+          <p class="text-sm text-base-content/80">Everything you need is on this page. First check your own hand-decode against the live panel above. Then perform two real ISDU reads and reason about what they mean for this installation.</p>
         </div>
 
-        <!-- Edge Device embedded panel -->
+        <!-- Manual decode self-check -->
         <div class="rounded-lg border border-base-300 bg-base-200 p-3 space-y-2">
-          <p class="text-xs font-semibold text-base-content/60 uppercase tracking-wide">Edge Device — Services</p>
-          <div class="grid grid-cols-3 gap-2 text-center">
-            <div class="rounded bg-base-100 border border-base-300 p-2">
-              <div class="text-xs text-base-content/50 mb-1">Backend API</div>
-              <div id="cp2-edge-backend" class="font-bold font-mono text-sm text-base-content">—</div>
+          <p class="text-xs font-semibold text-base-content/60 uppercase tracking-wide">Self-check — encode the live temperature by hand</p>
+          <p class="text-sm text-base-content/80">Take the temperature from the live panel above, multiply by 10, and convert to hex. Type your two bytes below and check them against the actual PDin bytes 0–1.</p>
+          <div class="flex flex-wrap items-center gap-2">
+            <span class="text-sm text-base-content/70">Your hex (e.g. 00FE):</span>
+            <input id="ws10-hex-ans" type="text" maxlength="4" class="input input-bordered input-sm w-28 font-mono uppercase" placeholder="0000">
+            <button id="ws10-hex-check" class="btn btn-xs btn-primary">Check</button>
+            <span id="ws10-hex-result" class="text-sm font-semibold"></span>
+          </div>
+        </div>
+
+        <!-- Live ISDU read: calibration offset -->
+        <div class="rounded-lg border border-base-300 bg-base-200 p-3 space-y-2">
+          <div class="flex items-center justify-between flex-wrap gap-2">
+            <p class="text-xs font-semibold text-base-content/60 uppercase tracking-wide">Read 1 — Calibration offset (Index 681, Sub 0)</p>
+            <button id="ws10-cal-btn" class="btn btn-xs btn-outline">Read via ISDU →</button>
+          </div>
+          <div class="flex items-center gap-6 flex-wrap">
+            <div>
+              <p class="text-xs text-base-content/50">Raw hex</p>
+              <p id="ws10-cal-hex" class="font-mono font-bold text-lg text-base-content">—</p>
             </div>
-            <div class="rounded bg-base-100 border border-base-300 p-2">
-              <div class="text-xs text-base-content/50 mb-1">CPU</div>
-              <div id="cp2-edge-cpu" class="font-bold font-mono text-sm text-base-content">—</div>
-            </div>
-            <div class="rounded bg-base-100 border border-base-300 p-2">
-              <div class="text-xs text-base-content/50 mb-1">CPU Temp</div>
-              <div id="cp2-edge-cputemp" class="font-bold font-mono text-sm text-base-content">—</div>
+            <div>
+              <p class="text-xs text-base-content/50">Decoded</p>
+              <p id="ws10-cal-val" class="font-mono font-bold text-lg text-secondary">—</p>
             </div>
           </div>
+          <p id="ws10-cal-note" class="text-sm text-base-content/70"></p>
+        </div>
+
+        <!-- Live ISDU read: SP1 compared to live temperature -->
+        <div class="rounded-lg border border-base-300 bg-base-200 p-3 space-y-2">
+          <div class="flex items-center justify-between flex-wrap gap-2">
+            <p class="text-xs font-semibold text-base-content/60 uppercase tracking-wide">Read 2 — SP1 (Index 583, Sub 0) vs live temperature</p>
+            <button id="ws10-sp1-btn" class="btn btn-xs btn-outline">Read via ISDU →</button>
+          </div>
+          <div class="flex items-center gap-6 flex-wrap">
+            <div>
+              <p class="text-xs text-base-content/50">SP1</p>
+              <p id="ws10-sp1-val" class="font-mono font-bold text-lg text-secondary">—</p>
+            </div>
+            <div>
+              <p class="text-xs text-base-content/50">Live temperature (from panel above)</p>
+              <p id="ws10-sp1-temp" class="font-mono font-bold text-lg text-info">—</p>
+            </div>
+          </div>
+          <p id="ws10-sp1-note" class="text-sm font-semibold"></p>
         </div>
 
         <div class="space-y-2 text-sm">
           <label class="cp2-kit-item flex items-center gap-3 cursor-pointer rounded-xl border-2 border-transparent px-3 py-2 transition-all duration-200">
             <input type="checkbox" class="checkbox checkbox-sm checkbox-warning flex-shrink-0">
-            <span class="cp2-kit-text">Read the current temperature from the live panel above. Multiply by 10, convert to hex. Verify it matches the raw PDin bytes 0–1 shown in the live panel.</span>
+            <span class="cp2-kit-text">My hand-encoded hex matched the live PDin bytes 0–1 exactly.</span>
           </label>
           <label class="cp2-kit-item flex items-center gap-3 cursor-pointer rounded-xl border-2 border-transparent px-3 py-2 transition-all duration-200">
             <input type="checkbox" class="checkbox checkbox-sm checkbox-warning flex-shrink-0">
-            <span class="cp2-kit-text">Calculate the expected PT100 resistance at the current temperature using R = 100 × (1 + 0.00385 × T). Note this value — it is your fault-finding reference for wiring checks on this installation.</span>
+            <span class="cp2-kit-text">I read the calibration offset live and noted whether it is 0.0 °C (uncalibrated) or a non-zero correction.</span>
           </label>
           <label class="cp2-kit-item flex items-center gap-3 cursor-pointer rounded-xl border-2 border-transparent px-3 py-2 transition-all duration-200">
             <input type="checkbox" class="checkbox checkbox-sm checkbox-warning flex-shrink-0">
-            <span class="cp2-kit-text">Read the calibration offset (Index 681, Sub 0) from the Dashboard parameter panel for Port 3 — confirm it reads <code class="font-mono bg-base-100 px-1 rounded text-xs">0x0000</code> (0.0 °C) when no calibration has been applied.</span>
-          </label>
-          <label class="cp2-kit-item flex items-center gap-3 cursor-pointer rounded-xl border-2 border-transparent px-3 py-2 transition-all duration-200">
-            <input type="checkbox" class="checkbox checkbox-sm checkbox-warning flex-shrink-0">
-            <span class="cp2-kit-text">Backend API shows <strong>Online</strong> above and circuit breaker shows <strong>CLOSED</strong> — the live panel data and ISDU reads are working through the full stack.</span>
-          </label>
-          <label class="cp2-kit-item flex items-center gap-3 cursor-pointer rounded-xl border-2 border-transparent px-3 py-2 transition-all duration-200">
-            <input type="checkbox" class="checkbox checkbox-sm checkbox-warning flex-shrink-0">
-            <span class="cp2-kit-text">SP1 shown on the Dashboard parameter panel for Port 3 is a value above the current temperature — confirm OUT1 is not currently tripped (this is expected at normal room temperature).</span>
+            <span class="cp2-kit-text">I read SP1 live and compared it to the current temperature to confirm whether OUT1 is tripped — not just assumed it from room temperature.</span>
           </label>
         </div>
       </div>
@@ -4108,6 +4166,10 @@ function initLiveCp2Ws3(container) {
 }
 
 function initLiveCp2Ws9(container) {
+  var API = (window.IO_LINK_API_BASE || '') + '/api/io-link';
+  var lastRawHex = null;
+  var lastTemp = null;
+
   startCp2LiveData(function (data) {
     const port = data && Array.isArray(data.ports) ? data.ports.find(function (p) { return p.port === 3; }) : null;
     const badge = container.querySelector('#cp2-ws9-badge');
@@ -4123,6 +4185,8 @@ function initLiveCp2Ws9(container) {
     var b0 = rawHex.slice(0, 2);
     var b1 = rawHex.slice(2, 4);
     var resistance = (100 * (1 + 0.00385 * temp)).toFixed(2);
+    lastRawHex = rawHex;
+    lastTemp = temp;
 
     var pdEl   = container.querySelector('#cp2-ws9-pdin-hex');
     var byEl   = container.querySelector('#cp2-ws9-bytes01');
@@ -4134,7 +4198,95 @@ function initLiveCp2Ws9(container) {
     if (i16El) i16El.textContent = raw + ' decimal';
     if (tcEl)  tcEl.textContent  = raw + ' ÷ 10 = ' + temp.toFixed(1) + ' °C';
     if (resEl) resEl.textContent = resistance + ' Ω';
+
+    var sp1TempEl = container.querySelector('#ws10-sp1-temp');
+    if (sp1TempEl) sp1TempEl.textContent = temp.toFixed(1) + ' °C';
   });
+
+  // ── Verification: manual hex self-check ─────────────────────────────────
+  var hexCheckBtn = container.querySelector('#ws10-hex-check');
+  if (hexCheckBtn) {
+    hexCheckBtn.addEventListener('click', function () {
+      var ansEl = container.querySelector('#ws10-hex-ans');
+      var resEl = container.querySelector('#ws10-hex-result');
+      if (!resEl) return;
+      if (lastRawHex === null) {
+        resEl.textContent = 'No live reading yet — try again shortly';
+        resEl.className = 'text-sm font-semibold text-warning';
+        return;
+      }
+      var val = ansEl ? ansEl.value.trim().replace(/^0x/i, '').toUpperCase().padStart(4, '0') : '';
+      var ok = val === lastRawHex;
+      resEl.textContent = ok ? ('✓ Correct — ' + lastRawHex) : ('✗ Expected ' + lastRawHex);
+      resEl.className = 'text-sm font-semibold ' + (ok ? 'text-success' : 'text-error');
+    });
+  }
+
+  // ── Verification: live ISDU read — calibration offset ───────────────────
+  var calBtn = container.querySelector('#ws10-cal-btn');
+  if (calBtn) {
+    calBtn.addEventListener('click', function (e) {
+      e.stopPropagation();
+      var hexEl = container.querySelector('#ws10-cal-hex');
+      var valEl = container.querySelector('#ws10-cal-val');
+      var noteEl = container.querySelector('#ws10-cal-note');
+      if (hexEl) hexEl.textContent = '…';
+      if (valEl) valEl.textContent = '…';
+      if (noteEl) noteEl.textContent = '';
+      fetch(API + '/port/3/parameter/read', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ index: 681, subindex: 0, dtype: 'int16', scale: 0.1 })
+      }).then(function (r) { return r.json(); })
+        .then(function (d) {
+          if (!d.success) {
+            if (hexEl) hexEl.textContent = '✗ failed';
+            return;
+          }
+          if (hexEl) hexEl.textContent = '0x' + (d.raw_hex || '').toUpperCase();
+          if (valEl) valEl.textContent = d.value + ' °C';
+          if (noteEl) {
+            var uncalibrated = Math.abs(d.value) < 0.05;
+            noteEl.textContent = uncalibrated
+              ? 'Uncalibrated (factory default) — no correction applied to the raw PT100 reading.'
+              : 'A non-zero correction is applied — this sensor has been calibrated against a reference.';
+          }
+        }).catch(function () {
+          if (hexEl) hexEl.textContent = '✗ error';
+        });
+    });
+  }
+
+  // ── Verification: live ISDU read — SP1 vs live temperature ──────────────
+  var sp1Btn = container.querySelector('#ws10-sp1-btn');
+  if (sp1Btn) {
+    sp1Btn.addEventListener('click', function (e) {
+      e.stopPropagation();
+      var valEl = container.querySelector('#ws10-sp1-val');
+      var noteEl = container.querySelector('#ws10-sp1-note');
+      if (valEl) valEl.textContent = '…';
+      if (noteEl) { noteEl.textContent = ''; noteEl.className = 'text-sm font-semibold'; }
+      fetch(API + '/port/3/parameter/read', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ index: 583, subindex: 0, dtype: 'int16', scale: 0.1 })
+      }).then(function (r) { return r.json(); })
+        .then(function (d) {
+          if (!d.success) {
+            if (valEl) valEl.textContent = '✗ failed';
+            return;
+          }
+          if (valEl) valEl.textContent = d.value + ' °C';
+          if (noteEl && lastTemp !== null) {
+            var tripped = lastTemp >= d.value;
+            noteEl.textContent = tripped
+              ? '⚠ OUT1 IS currently tripped — live temperature has reached or exceeded SP1'
+              : '✓ OUT1 is NOT tripped — live temperature is below SP1, ' + (d.value - lastTemp).toFixed(1) + ' °C of headroom remaining';
+            noteEl.className = 'text-sm font-semibold ' + (tripped ? 'text-warning' : 'text-success');
+          }
+        }).catch(function () {
+          if (valEl) valEl.textContent = '✗ error';
+        });
+    });
+  }
 }
 
 
@@ -4346,6 +4498,256 @@ function initLiveCp2Ws5(container) {
   wireChallenge('ws5-read-3', 'ws5-hex-3', 'ws5-ans-3', 'ws5-check-3', 'ws5-result-3', 3, 681, 0, 'int16', 0.1, '°C', 0.15);
 }
 
+function initLiveCp2Ws6(container) {
+  var API = (window.IO_LINK_API_BASE || '') + '/api/io-link';
+  var wsCount = 0;
+  var svcCount = 0;
+
+  var badge   = container.querySelector('#ws6-proc-badge');
+  var tempEl  = container.querySelector('#ws6-proc-temp');
+  var countEl = container.querySelector('#ws6-proc-count');
+  var evtBox  = container.querySelector('#ws6-evt-box');
+
+  startCp2LiveData(function (data) {
+    if (!data || !Array.isArray(data.ports)) return;
+
+    wsCount++;
+    if (badge) { badge.textContent = 'LIVE'; badge.className = 'badge badge-xs badge-success font-mono'; }
+    if (countEl) countEl.textContent = wsCount;
+
+    var p3 = data.ports.find(function (p) { return p.port === 3; });
+    if (tempEl && p3 && p3.pdin_decoded && p3.pdin_decoded.temperature_c != null) {
+      tempEl.textContent = p3.pdin_decoded.temperature_c.toFixed(1) + ' °C';
+    }
+
+    var p1 = data.ports.find(function (p) { return p.port === 1; });
+    if (evtBox && p1 && p1.pdin_decoded) {
+      var dec = p1.pdin_decoded;
+      if (dec.instability_alarm) {
+        evtBox.style.borderLeft = '3px solid #f59e0b';
+        evtBox.style.color = '#fde68a';
+        evtBox.textContent = '△ Maintenance Required — Port 1 instability alarm ACTIVE';
+      } else if (dec.over_approach_alarm) {
+        evtBox.style.borderLeft = '3px solid #eab308';
+        evtBox.style.color = '#fef08a';
+        evtBox.textContent = '⊙ Out of Specification — Port 1 over-approach alarm ACTIVE';
+      } else {
+        evtBox.style.borderLeft = '1px solid #334155';
+        evtBox.style.color = '#64748b';
+        evtBox.textContent = 'No active event on Port 1 — wave a metal target close to the OMRON E2E to trigger the instability or over-approach alarm';
+      }
+    }
+  });
+
+  var svcBtn = container.querySelector('#ws6-svc-btn');
+  if (svcBtn) {
+    svcBtn.addEventListener('click', function (e) {
+      e.stopPropagation();
+      var rttEl   = container.querySelector('#ws6-svc-rtt');
+      var valEl   = container.querySelector('#ws6-svc-val');
+      var countEl2 = container.querySelector('#ws6-svc-count');
+      if (rttEl) rttEl.textContent = '…';
+      var t0 = performance.now();
+      fetch(API + '/port/3/parameter/read', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ index: 583, subindex: 0, dtype: 'int16', scale: 0.1 })
+      }).then(function (r) { return r.json(); })
+        .then(function (d) {
+          var rtt = Math.round(performance.now() - t0);
+          svcCount++;
+          if (rttEl) rttEl.textContent = rtt + ' ms';
+          if (valEl) valEl.textContent = d.success ? (d.value + ' °C') : '✗ failed';
+          if (countEl2) countEl2.textContent = svcCount;
+        }).catch(function () {
+          if (rttEl) rttEl.textContent = '✗ error';
+        });
+    });
+  }
+}
+
+function initLiveCp2Ws7(container) {
+  var API = (window.IO_LINK_API_BASE || '') + '/api/io-link';
+  var GREEN_STEADY = '000100';
+  var BLUE_STEADY  = '000109';
+
+  // ── Part A: warm the TV7105 — live temperature + rise-since-baseline ────
+  var tempEl  = container.querySelector('#ws7-temp-val');
+  var deltaEl = container.querySelector('#ws7-temp-delta');
+  var proofEl = container.querySelector('#ws7-temp-proof');
+  var baseline = null;
+  var peakDelta = 0;
+
+  function resetBaseline(temp) {
+    baseline = temp;
+    peakDelta = 0;
+    if (proofEl) { proofEl.textContent = ''; proofEl.className = 'text-sm font-semibold'; }
+  }
+
+  startCp2LiveData(function (data) {
+    if (!data || !Array.isArray(data.ports)) return;
+    var p3 = data.ports.find(function (p) { return p.port === 3; });
+    if (!p3 || !p3.pdin_decoded || p3.pdin_decoded.temperature_c == null) return;
+    var temp = p3.pdin_decoded.temperature_c;
+    if (baseline === null) resetBaseline(temp);
+    if (tempEl) tempEl.textContent = temp.toFixed(1) + ' °C';
+    var delta = temp - baseline;
+    if (delta > peakDelta) peakDelta = delta;
+    if (deltaEl) {
+      deltaEl.textContent = (delta >= 0 ? '+' : '') + delta.toFixed(1) + ' °C';
+      deltaEl.className = 'font-mono font-bold text-3xl ' + (peakDelta >= 0.5 ? 'text-success' : 'text-info');
+    }
+    if (proofEl && peakDelta >= 0.5) {
+      proofEl.textContent = '✓ Detected a ' + peakDelta.toFixed(1) + ' °C rise from your hand — that arrived with no request, no button, no ISDU call. Pure cyclic process data.';
+      proofEl.className = 'text-sm font-semibold text-success';
+    }
+  });
+
+  var resetBtn = container.querySelector('#ws7-temp-reset');
+  if (resetBtn) {
+    resetBtn.addEventListener('click', function (e) {
+      e.stopPropagation();
+      if (tempEl && tempEl.textContent !== '—') resetBaseline(parseFloat(tempEl.textContent));
+    });
+  }
+
+  // ── Part B: one ISDU read flashes the light stack blue, then back to green ─
+  var isduBtn   = container.querySelector('#ws7-isdu-btn');
+  var isduVal   = container.querySelector('#ws7-isdu-val');
+  var isduProof = container.querySelector('#ws7-isdu-proof');
+  var lightDot  = container.querySelector('#ws7-light-dot');
+  var lightState = container.querySelector('#ws7-light-state');
+
+  function setLight(hex, color, label) {
+    if (lightDot) lightDot.style.background = color;
+    if (lightState) lightState.textContent = label;
+    return fetch(API + '/port/4/pdout', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ value: hex })
+    }).catch(function () {});
+  }
+
+  if (isduBtn) {
+    isduBtn.addEventListener('click', function (e) {
+      e.stopPropagation();
+      if (isduVal) isduVal.textContent = 'Reading…';
+      if (isduProof) { isduProof.textContent = ''; isduProof.className = 'text-sm font-semibold'; }
+
+      setLight(BLUE_STEADY, '#3b82f6', 'Blue — ISDU read in flight');
+
+      fetch(API + '/port/3/parameter/read', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ index: 583, subindex: 0, dtype: 'int16', scale: 0.1 })
+      }).then(function (r) { return r.json(); })
+        .then(function (d) {
+          if (isduVal) isduVal.textContent = d.success ? (d.value + ' °C') : '✗ failed';
+          setTimeout(function () {
+            setLight(GREEN_STEADY, '#22c55e', 'Green — idle');
+            if (isduProof) {
+              isduProof.textContent = '✓ One click → one flash → back to idle. That single blue flash was the ISDU request-response pair — acyclic, on demand, nothing like the continuous temperature feed in Part A.';
+              isduProof.className = 'text-sm font-semibold text-success';
+            }
+          }, 1500);
+        }).catch(function () {
+          if (isduVal) isduVal.textContent = '✗ error';
+          setLight(GREEN_STEADY, '#22c55e', 'Green — idle');
+        });
+    });
+  }
+
+  _cp2Ws4Cleanup = function () {
+    fetch(API + '/port/4/pdout', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ value: GREEN_STEADY })
+    }).catch(function () {});
+  };
+}
+
+function initLiveCp2Ws9Identity(container) {
+  var badge1  = container.querySelector('#ws9-p1-badge');
+  var vidEl   = container.querySelector('#ws9-p1-vid');
+  var vnameEl = container.querySelector('#ws9-p1-vname');
+  var didEl   = container.querySelector('#ws9-p1-did');
+  var dnameEl = container.querySelector('#ws9-p1-dname');
+  var pdinEl  = container.querySelector('#ws9-p1-pdin');
+  var bit4El  = container.querySelector('#ws9-p1-bit4');
+
+  var badge4  = container.querySelector('#ws9-p4-badge');
+  var vid4El  = container.querySelector('#ws9-p4-vid');
+  var did4El  = container.querySelector('#ws9-p4-did');
+
+  var badge3  = container.querySelector('#ws9-p3-badge');
+  var v3nameEl = container.querySelector('#ws9-p3-vname');
+  var pdin3El  = container.querySelector('#ws9-p3-pdin');
+  var p3Expected = null;
+
+  startCp2LiveData(function (data) {
+    if (!data || !Array.isArray(data.ports)) return;
+
+    var p1 = data.ports.find(function (p) { return p.port === 1; });
+    if (p1) {
+      if (badge1) { badge1.textContent = 'LIVE'; badge1.className = 'badge badge-xs badge-success font-mono'; }
+      var vid1 = p1.vendor_id != null && p1.vendor_id !== '' ? p1.vendor_id : null;
+      var did1 = p1.device_id != null && p1.device_id !== '' ? p1.device_id : null;
+      if (vidEl)   vidEl.textContent   = vid1 != null ? String(vid1) : '—';
+      if (vnameEl) vnameEl.textContent = vid1 != null ? resolveVendorName(vid1) : '—';
+      if (didEl)   didEl.textContent   = did1 != null ? String(did1) : '—';
+      if (dnameEl) dnameEl.textContent = (vid1 != null && did1 != null) ? resolveDeviceName(vid1, did1, p1.name) : (p1.name || '—');
+      if (p1.pdin) {
+        var pdin1 = p1.pdin.toUpperCase().padStart(4, '0');
+        if (pdinEl) pdinEl.textContent = pdin1;
+        var b1val = parseInt(pdin1.slice(2, 4), 16) || 0;
+        var instab = !!(b1val & 0x10);
+        if (bit4El) {
+          bit4El.textContent = instab ? 'ACTIVE' : 'clear';
+          bit4El.className = 'font-bold text-sm ' + (instab ? 'text-warning' : 'text-success');
+        }
+      }
+    }
+
+    var p4 = data.ports.find(function (p) { return p.port === 4; });
+    if (p4) {
+      if (badge4) { badge4.textContent = 'LIVE'; badge4.className = 'badge badge-xs badge-success font-mono'; }
+      var vid4 = p4.vendor_id != null && p4.vendor_id !== '' ? p4.vendor_id : null;
+      var did4 = p4.device_id != null && p4.device_id !== '' ? p4.device_id : null;
+      if (vid4El) vid4El.textContent = vid4 != null ? String(vid4) : '—';
+      if (did4El) did4El.textContent = did4 != null ? String(did4) : '—';
+    }
+
+    var p3 = data.ports.find(function (p) { return p.port === 3; });
+    if (p3) {
+      if (badge3) { badge3.textContent = 'LIVE'; badge3.className = 'badge badge-xs badge-success font-mono'; }
+      var vid3 = p3.vendor_id != null && p3.vendor_id !== '' ? p3.vendor_id : null;
+      var did3 = p3.device_id != null && p3.device_id !== '' ? p3.device_id : null;
+      if (v3nameEl) v3nameEl.textContent = (vid3 != null && did3 != null) ? resolveDeviceName(vid3, did3, p3.name) : (p3.name || '—');
+      if (p3.pdin && pdin3El) pdin3El.textContent = p3.pdin.toUpperCase();
+      if (p3.pdin_decoded && p3.pdin_decoded.temperature_c != null) {
+        p3Expected = p3.pdin_decoded.temperature_c;
+      }
+    }
+  });
+
+  var checkBtn = container.querySelector('#ws9-p3-check');
+  if (checkBtn) {
+    checkBtn.addEventListener('click', function () {
+      var ansEl = container.querySelector('#ws9-p3-ans');
+      var resEl = container.querySelector('#ws9-p3-result');
+      var val = ansEl ? parseFloat(ansEl.value) : NaN;
+      if (!resEl) return;
+      if (p3Expected === null) {
+        resEl.textContent = 'No live reading yet — try again shortly';
+        resEl.className = 'text-sm font-semibold text-warning';
+        return;
+      }
+      if (isNaN(val)) {
+        resEl.textContent = 'Enter a number';
+        resEl.className = 'text-sm font-semibold text-warning';
+        return;
+      }
+      var ok = Math.abs(val - p3Expected) <= 0.15;
+      resEl.textContent = ok ? ('✓ Correct — ' + p3Expected.toFixed(1) + ' °C') : ('✗ Expected ' + p3Expected.toFixed(1) + ' °C');
+      resEl.className = 'text-sm font-semibold ' + (ok ? 'text-success' : 'text-error');
+    });
+  }
+}
+
 function initWorksheetInteractivity(container) {
   if (!container) container = document.getElementById('cp0002-root');
   if (!container) return;
@@ -4380,6 +4782,9 @@ function initWorksheetInteractivity(container) {
   if (container.querySelector('#cp2-ws3-panel')) initLiveCp2Ws3(container);
   if (container.querySelector('#cp2-ws4-verify')) initLiveCp2Ws4(container);
   if (container.querySelector('#cp2-ws5-verify')) initLiveCp2Ws5(container);
+  if (container.querySelector('#cp2-ws6-verify')) initLiveCp2Ws6(container);
+  if (container.querySelector('#cp2-ws7-verify')) initLiveCp2Ws7(container);
+  if (container.querySelector('#cp2-ws9-identity-panel')) initLiveCp2Ws9Identity(container);
   if (container.querySelector('#cp2-ws9-live-panel')) initLiveCp2Ws9(container);
   if (container.querySelector('#cp2-diag-badge')) initCp2EmbeddedPanels(container);
 
