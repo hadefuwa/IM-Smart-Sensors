@@ -217,9 +217,6 @@ MAX_HISTORY_SIZE = 100
 connected_clients: Set[WebSocket] = set()
 _broadcast_in_progress: bool = False
 
-# Ports whose data is masked in WS broadcasts (fault simulation without touching AL1350)
-_suppressed_ports: Set[int] = set()
-
 # Background polling task handle
 polling_task: Optional[asyncio.Task] = None
 mqtt_task: Optional[asyncio.Task] = None
@@ -741,26 +738,6 @@ async def broadcast_to_clients(data: Dict):
 
     _broadcast_in_progress = True
     try:
-        # Apply fault simulation mask — replace suppressed ports with inactive placeholder
-        if _suppressed_ports and isinstance(data.get('ports'), list):
-            masked = []
-            for p in data['ports']:
-                if p.get('port') in _suppressed_ports:
-                    masked.append({
-                        'port': p['port'], 'mode': 'inactive',
-                        'pdin': '', 'pdin_decoded': {}, 'pdout': '',
-                        'comm_mode': '', 'master_cycle_time': '',
-                        'vendor_id': p.get('vendor_id', ''),
-                        'device_id': p.get('device_id', ''),
-                        'name': p.get('name', ''),
-                        'label': p.get('label', ''),
-                        'device_type': p.get('device_type', ''),
-                        'source': 'fault_simulated',
-                    })
-                else:
-                    masked.append(p)
-            data = {**data, 'ports': masked}
-
         try:
             message = json.dumps(data, default=str)
         except Exception as e:
@@ -1188,24 +1165,6 @@ async def set_port_mode(port_num: int, request: Request):
         logger.info(f"Port {port_num} mode set to {mode_name} ({mode_int})")
         return JSONResponse({'success': True, 'port': port_num, 'mode': mode_name})
     return JSONResponse({'success': False, 'error': f'AL1350 returned code {code}'}, status_code=502)
-
-
-@app.post("/api/io-link/port/{port_num}/suppress")
-async def suppress_port(port_num: int):
-    """Mask port N data in WS broadcasts to simulate a fault (no AL1350 change)."""
-    if port_num < 1 or port_num > 4:
-        raise HTTPException(status_code=400, detail="Port must be 1–4")
-    _suppressed_ports.add(port_num)
-    logger.info(f"Port {port_num} suppressed (fault simulation active)")
-    return JSONResponse({'success': True, 'suppressed': sorted(_suppressed_ports)})
-
-
-@app.post("/api/io-link/port/{port_num}/unsuppress")
-async def unsuppress_port(port_num: int):
-    """Restore port N to normal WS broadcasts (clear fault simulation)."""
-    _suppressed_ports.discard(port_num)
-    logger.info(f"Port {port_num} unsuppressed")
-    return JSONResponse({'success': True, 'suppressed': sorted(_suppressed_ports)})
 
 
 @app.post("/api/io-link/port/{port_num}/command")
