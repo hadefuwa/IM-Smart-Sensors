@@ -4014,19 +4014,15 @@ function initLiveCp2Ws4(container) {
   var stepsDiv  = container.querySelector('#cp2-ws4-steps');
   var statusMsg = container.querySelector('#cp2-ws4-status-msg');
 
-  function _setPort2Mode(mode, cb) {
-    fetch(API + '/port/2/mode', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ mode: mode })
-    }).then(function(r) { return r.json(); })
+  function _callFaultApi(action, cb) {
+    fetch(API + '/port/2/' + action, { method: 'POST' })
+      .then(function(r) { return r.json(); })
       .then(function(d) { if (cb) cb(!!d.success); })
       .catch(function() { if (cb) cb(false); });
   }
 
   function _showFaultActive() {
-    if (portBadge) portBadge.classList.remove('hidden');
-    if (portBadge) portBadge.classList.add('flex');
+    if (portBadge) { portBadge.classList.remove('hidden'); portBadge.classList.add('flex'); }
     if (resetBtn)  resetBtn.classList.remove('hidden');
     if (startBtn)  { startBtn.textContent = 'Fault Active'; startBtn.disabled = true; startBtn.classList.add('btn-disabled'); startBtn.classList.remove('btn-error'); }
     if (stepsDiv)  { stepsDiv.classList.remove('opacity-40', 'pointer-events-none', 'select-none'); }
@@ -4044,16 +4040,16 @@ function initLiveCp2Ws4(container) {
     startBtn.addEventListener('click', function() {
       startBtn.disabled = true;
       startBtn.textContent = 'Injecting fault…';
-      _setPort2Mode('inactive', function(ok) {
+      _callFaultApi('suppress', function(ok) {
         if (ok) {
           _showFaultActive();
           _ws4FaultCleanup = function() {
-            _setPort2Mode('io-link', function() {});
+            _callFaultApi('unsuppress', function() {});
           };
         } else {
           startBtn.disabled = false;
           startBtn.textContent = '▶ Start Scenario';
-          if (statusMsg) { statusMsg.textContent = 'Could not set port mode — check connection.'; statusMsg.classList.remove('hidden'); }
+          if (statusMsg) { statusMsg.textContent = 'Could not reach backend — check connection.'; statusMsg.classList.remove('hidden'); }
         }
       });
     });
@@ -4061,7 +4057,7 @@ function initLiveCp2Ws4(container) {
 
   if (resetBtn) {
     resetBtn.addEventListener('click', function() {
-      _setPort2Mode('io-link', function() {});
+      _callFaultApi('unsuppress', function() {});
       _ws4FaultCleanup = null;
       _showFaultCleared();
     });
