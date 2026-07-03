@@ -1,4 +1,4 @@
-﻿﻿/**
+/**
  * CP7395: Industry 4.0 IO-Link
  * 7 worksheets — engineering level: system brief, architecture, protocol, integration, business case.
  * Audience: engineers, system integrators, HNC/degree students.
@@ -6,6 +6,7 @@
  */
 import { markVisited } from './progress-page.js';
 import Chart from 'chart.js/auto';
+import { resolveVendorName, resolveDeviceName } from './io-link-vendors.js';
 
 // ── MCQ answer key (kept in JS, not in the DOM) ──────────────────────────────
 const _CP2_ANSWERS = {
@@ -26,6 +27,7 @@ function getWsBase() {
 let _cp2WsLive = null;
 let _cp2WsCallback = null;
 let _cp2ReconnectTimer = null;
+let _cp2Ws4Cleanup = null;
 
 function startCp2LiveData(callback) {
   stopCp2LiveData();
@@ -46,6 +48,7 @@ function stopCp2LiveData() {
   _cp2WsCallback = null;
   clearTimeout(_cp2ReconnectTimer);
   if (_cp2WsLive) { try { _cp2WsLive.close(); } catch {} _cp2WsLive = null; }
+  if (_cp2Ws4Cleanup) { try { _cp2Ws4Cleanup(); } catch {} _cp2Ws4Cleanup = null; }
 }
 
 // ── Embedded diagnostics panels ───────────────────────────────────────────────
@@ -1431,35 +1434,180 @@ const WORKSHEETS = [
       <button type="button" class="btn btn-primary btn-sm mt-2" id="ws2-check-btn">Check answers</button>
 
       <!-- Verification challenge — MTTR workflow simulation -->
-      <div class="rounded-xl border-2 border-warning/50 bg-warning/5 p-4 mt-4 space-y-3">
-        <p class="font-bold text-base-content text-base">🎯 Verification — walk through the IO-Link repair workflow on the HMI</p>
-        <p class="text-sm text-base-content/80">Imagine Port 2 (capacitive sensor) has just failed. Use the HMI to work through the 8-minute IO-Link repair workflow below. Tick each step when done.</p>
-
-        <div class="space-y-2 text-sm">
-          <label class="cp2-kit-item flex items-center gap-3 cursor-pointer rounded-xl border-2 border-transparent px-3 py-2 transition-all duration-200">
-            <input type="checkbox" class="checkbox checkbox-sm checkbox-warning flex-shrink-0">
-            <span class="cp2-kit-text"><span class="badge badge-error badge-sm mr-1">Step 1 — Alert</span> Go to the <a href="#" data-page="home" class="link link-warning">Dashboard</a> and use the CL50 quick-colour buttons to set the light stack to <strong>Red, Flashing</strong>. In a real plant this is the first visual signal that a fault has occurred — it brings the MTTR identification phase from ~10 minutes to near-zero.</span>
-          </label>
-          <label class="cp2-kit-item flex items-center gap-3 cursor-pointer rounded-xl border-2 border-transparent px-3 py-2 transition-all duration-200">
-            <input type="checkbox" class="checkbox checkbox-sm checkbox-warning flex-shrink-0">
-            <span class="cp2-kit-text"><span class="badge badge-warning badge-sm mr-1">Step 2 — Identify</span> On the <a href="#" data-page="io-link-master" class="link link-warning">IO-Link Master page</a>, open the <strong>Port 2 card</strong> and note the Vendor ID and Device Name. In a real fault the master retains the last-known identity even if the sensor is dead — this is the exact part number needed to order the replacement, no worn label required.</span>
-          </label>
-          <label class="cp2-kit-item flex items-center gap-3 cursor-pointer rounded-xl border-2 border-transparent px-3 py-2 transition-all duration-200">
-            <input type="checkbox" class="checkbox checkbox-sm checkbox-warning flex-shrink-0">
-            <span class="cp2-kit-text"><span class="badge badge-info badge-sm mr-1">Step 3 — ADR</span> Still on the IO-Link Master page, open the <strong>Port 3 parameter panel</strong> and read SP1 (index 583). This setpoint is stored in the AL1350 — plug in a replacement TV7105 and it writes back automatically within seconds. This is the ~12-minute manual reconfiguration step eliminated.</span>
-          </label>
-          <label class="cp2-kit-item flex items-center gap-3 cursor-pointer rounded-xl border-2 border-transparent px-3 py-2 transition-all duration-200">
-            <input type="checkbox" class="checkbox checkbox-sm checkbox-warning flex-shrink-0">
-            <span class="cp2-kit-text"><span class="badge badge-secondary badge-sm mr-1">Step 4 — Cycle count</span> Back on the <a href="#" data-page="home" class="link link-warning">Dashboard</a>, trigger the <strong>capacitive sensor (Port 2)</strong> with your hand and confirm the detection count increments. This counter enables predictive scheduling — the next replacement will be planned before failure, not reacted to after.</span>
-          </label>
-          <label class="cp2-kit-item flex items-center gap-3 cursor-pointer rounded-xl border-2 border-transparent px-3 py-2 transition-all duration-200">
-            <input type="checkbox" class="checkbox checkbox-sm checkbox-warning flex-shrink-0">
-            <span class="cp2-kit-text"><span class="badge badge-success badge-sm mr-1">Step 5 — Sign off</span> Set the CL50 back to <strong>Green, Steady</strong> on the Dashboard. This represents the HMI confirming port health after the sensor swap — the final step of the IO-Link 8-minute repair workflow.</span>
-          </label>
+      <div id="cp2-ws4-verify" class="mt-4 space-y-3">
+        <div class="rounded-xl border-2 border-warning/40 bg-warning/5 px-5 py-4">
+          <p class="font-bold text-base-content">🎯 Verification — IO-Link repair workflow</p>
+          <p class="text-sm text-base-content/70 mt-1">Imagine Port 2 (capacitive sensor) has just failed. Complete each step below without leaving this page. Tick each step when done.</p>
         </div>
 
-        <div class="rounded-lg bg-base-300/50 border border-base-300 p-2 text-xs text-base-content/70">
-          <strong>Where the 27 minutes are saved:</strong> Step 1 replaces the ~10 min walk-and-find. Step 3 replaces the ~12 min manual reconfiguration. Together those two steps account for 22 of the 27 minutes saved per fault event.
+        <!-- Step 1 — Alert -->
+        <div class="rounded-xl border border-base-300 shadow-sm overflow-hidden">
+          <label class="cp2-kit-item flex items-center gap-4 px-5 py-4 cursor-pointer bg-base-100 border-l-4 border-error transition-all duration-200">
+            <span class="shrink-0 w-8 h-8 rounded-full bg-error/15 border border-error/40 text-error flex items-center justify-center font-bold text-sm">1</span>
+            <div class="flex-1 min-w-0">
+              <p class="font-bold text-sm text-base-content">Alert — Set CL50 to Red, Flashing</p>
+              <p class="text-xs text-base-content/60 mt-0.5">Build the 3-byte PDout command from the datasheet fields and send it. This visual alert replaces the 10-minute floor walk — first action in any MTTR response.</p>
+            </div>
+            <input type="checkbox" class="checkbox checkbox-sm checkbox-warning shrink-0">
+          </label>
+          <div class="bg-base-200/40 border-t border-base-300 px-5 py-4">
+            <div class="grid grid-cols-2 gap-5">
+              <div>
+                <p class="text-xs font-semibold text-base-content/50 uppercase tracking-wide mb-2">Banner CL50 datasheet fields</p>
+                <table class="w-full text-xs">
+                  <thead><tr class="text-base-content/40 text-xs"><th class="text-left pb-1.5 pr-2 font-normal">Field</th><th class="text-left pb-1.5 pr-2 font-mono font-normal">Byte·Bits</th><th class="text-left pb-1.5">Value</th></tr></thead>
+                  <tbody>
+                    <tr class="border-t border-base-300/50"><td class="py-1.5 pr-2 text-base-content/70">Animation</td><td class="py-1.5 pr-2 font-mono text-base-content/40">B1[2:0]</td><td class="py-1.5"><select id="ws4s1-anim" class="select select-xs select-bordered w-full"><option value="0" selected>0 — Off</option><option value="1">1 — Steady</option><option value="2">2 — Flash</option><option value="3">3 — Two Color</option></select></td></tr>
+                    <tr class="border-t border-base-300/50"><td class="py-1.5 pr-2 text-base-content/70">Color 1</td><td class="py-1.5 pr-2 font-mono text-base-content/40">B2[3:0]</td><td class="py-1.5"><select id="ws4s1-c1" class="select select-xs select-bordered w-full"><option value="0" selected>0 — Green</option><option value="1">1 — Red</option><option value="2">2 — Orange</option><option value="3">3 — Amber</option><option value="4">4 — Yellow</option><option value="5">5 — Lime</option><option value="6">6 — Spring Green</option><option value="7">7 — Cyan</option><option value="8">8 — Sky Blue</option><option value="9">9 — Blue</option><option value="10">10 — Violet</option><option value="11">11 — Magenta</option><option value="12">12 — Rose</option><option value="13">13 — White</option></select></td></tr>
+                    <tr class="border-t border-base-300/50"><td class="py-1.5 pr-2 text-base-content/70">C1 Intensity</td><td class="py-1.5 pr-2 font-mono text-base-content/40">B0[2:0]</td><td class="py-1.5"><select id="ws4s1-c1i" class="select select-xs select-bordered w-full"><option value="0" selected>0 — High</option><option value="1">1 — Low</option><option value="2">2 — Medium</option><option value="3">3 — Off</option><option value="4">4 — Custom</option></select></td></tr>
+                    <tr class="border-t border-base-300/50"><td class="py-1.5 pr-2 text-base-content/70">Color 2</td><td class="py-1.5 pr-2 font-mono text-base-content/40">B2[7:4]</td><td class="py-1.5"><select id="ws4s1-c2" class="select select-xs select-bordered w-full"><option value="0" selected>0 — Green</option><option value="1">1 — Red</option><option value="2">2 — Orange</option><option value="3">3 — Amber</option><option value="4">4 — Yellow</option><option value="5">5 — Lime</option><option value="6">6 — Spring Green</option><option value="7">7 — Cyan</option><option value="8">8 — Sky Blue</option><option value="9">9 — Blue</option><option value="10">10 — Violet</option><option value="11">11 — Magenta</option><option value="12">12 — Rose</option><option value="13">13 — White</option></select></td></tr>
+                    <tr class="border-t border-base-300/50"><td class="py-1.5 pr-2 text-base-content/70">C2 Intensity</td><td class="py-1.5 pr-2 font-mono text-base-content/40">B0[5:3]</td><td class="py-1.5"><select id="ws4s1-c2i" class="select select-xs select-bordered w-full"><option value="0" selected>0 — High</option><option value="1">1 — Low</option><option value="2">2 — Medium</option><option value="3">3 — Off</option><option value="4">4 — Custom</option></select></td></tr>
+                    <tr class="border-t border-base-300/50"><td class="py-1.5 pr-2 text-base-content/70">Speed</td><td class="py-1.5 pr-2 font-mono text-base-content/40">B1[7:6]</td><td class="py-1.5"><select id="ws4s1-speed" class="select select-xs select-bordered w-full"><option value="0" selected>0 — Medium</option><option value="1">1 — Fast</option><option value="2">2 — Slow</option></select></td></tr>
+                    <tr class="border-t border-base-300/50"><td class="py-1.5 pr-2 text-base-content/70">Pulse Pattern</td><td class="py-1.5 pr-2 font-mono text-base-content/40">B1[5:3]</td><td class="py-1.5"><select id="ws4s1-pattern" class="select select-xs select-bordered w-full"><option value="0" selected>0 — Normal</option><option value="1">1 — Strobe</option><option value="2">2 — Three Pulse</option><option value="3">3 — SOS</option><option value="4">4 — Random</option></select></td></tr>
+                    <tr class="border-t border-base-300/50"><td class="py-1.5 pr-2 text-base-content/70">Audible</td><td class="py-1.5 pr-2 font-mono text-base-content/40">B0[7:6]</td><td class="py-1.5"><select id="ws4s1-audible" class="select select-xs select-bordered w-full"><option value="0" selected>0 — Off</option><option value="1">1 — On</option><option value="2">2 — Pulsed</option><option value="3">3 — SOS</option></select></td></tr>
+                  </tbody>
+                </table>
+              </div>
+              <div class="flex flex-col justify-between">
+                <div class="rounded-lg border border-base-300 bg-base-100 p-4 flex flex-col items-center justify-center flex-1 mb-4">
+                  <p class="text-xs text-base-content/40 font-mono mb-2">PDout</p>
+                  <span class="font-mono text-5xl font-bold tracking-widest transition-colors duration-200" id="ws4s1-hex">000000</span>
+                  <span id="ws4s1-valid" class="text-sm font-semibold mt-3 text-center"></span>
+                </div>
+                <div class="flex items-center gap-2">
+                  <button id="ws4s1-send" class="btn btn-sm btn-primary flex-1">Send to CL50 →</button>
+                  <span id="ws4s1-status" class="text-xs text-base-content/60"></span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Step 2 — Identify -->
+        <div class="rounded-xl border border-base-300 shadow-sm overflow-hidden">
+          <label class="cp2-kit-item flex items-center gap-4 px-5 py-4 cursor-pointer bg-base-100 border-l-4 border-warning transition-all duration-200">
+            <span class="shrink-0 w-8 h-8 rounded-full bg-warning/15 border border-warning/40 text-warning flex items-center justify-center font-bold text-sm">2</span>
+            <div class="flex-1 min-w-0">
+              <p class="font-bold text-sm text-base-content">Identify — Read Port 2 device identity</p>
+              <p class="text-xs text-base-content/60 mt-0.5">The AL1350 retains Vendor ID and Device ID even if the sensor is dead. These are the exact references needed to order the replacement — no worn label, no guessing.</p>
+            </div>
+            <input type="checkbox" class="checkbox checkbox-sm checkbox-warning shrink-0">
+          </label>
+          <div class="bg-base-200/40 border-t border-base-300 px-5 py-4">
+            <div class="grid grid-cols-4 gap-3">
+              <div class="bg-base-100 rounded-lg border border-base-300 p-3 text-center">
+                <p class="text-xs text-base-content/50 mb-2">Vendor ID</p>
+                <p class="font-mono font-bold text-xl" id="ws4-p2-vid">—</p>
+              </div>
+              <div class="bg-base-100 rounded-lg border border-base-300 p-3 text-center">
+                <p class="text-xs text-base-content/50 mb-2">Device ID</p>
+                <p class="font-mono font-bold text-xl" id="ws4-p2-did">—</p>
+              </div>
+              <div class="bg-base-100 rounded-lg border border-base-300 p-3 text-center">
+                <p class="text-xs text-base-content/50 mb-2">Device Name</p>
+                <p class="font-bold text-sm" id="ws4-p2-name">—</p>
+              </div>
+              <div class="bg-base-100 rounded-lg border border-base-300 p-3 text-center">
+                <p class="text-xs text-base-content/50 mb-2">Port Mode</p>
+                <p class="font-bold text-sm" id="ws4-p2-mode">—</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Step 3 — ADR -->
+        <div class="rounded-xl border border-base-300 shadow-sm overflow-hidden">
+          <label class="cp2-kit-item flex items-center gap-4 px-5 py-4 cursor-pointer bg-base-100 border-l-4 border-info transition-all duration-200">
+            <span class="shrink-0 w-8 h-8 rounded-full bg-info/15 border border-info/40 text-info flex items-center justify-center font-bold text-sm">3</span>
+            <div class="flex-1 min-w-0">
+              <p class="font-bold text-sm text-base-content">ADR — Read SP1 stored in the master</p>
+              <p class="text-xs text-base-content/60 mt-0.5">SP1 is stored in the AL1350, not the sensor. Plug in a replacement TV7105 and it writes back automatically — this is the ~12 minutes of manual reconfiguration eliminated.</p>
+            </div>
+            <input type="checkbox" class="checkbox checkbox-sm checkbox-warning shrink-0">
+          </label>
+          <div class="bg-base-200/40 border-t border-base-300 px-5 py-4">
+            <div class="flex items-center gap-6">
+              <button id="ws4-read-sp1" class="btn btn-sm btn-outline shrink-0">Read SP1 (index 583) →</button>
+              <div class="flex items-baseline gap-3">
+                <span class="text-sm text-base-content/60">SP1 =</span>
+                <span id="ws4-sp1-val" class="font-mono font-bold text-5xl">—</span>
+                <span id="ws4-sp1-unit" class="text-xl text-base-content/60 hidden">°C</span>
+                <span id="ws4-sp1-hex" class="font-mono text-xs text-base-content/40 self-end pb-1"></span>
+              </div>
+              <span id="ws4-sp1-status" class="text-sm text-base-content/60"></span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Step 4 — Cycle count -->
+        <div class="rounded-xl border border-base-300 shadow-sm overflow-hidden">
+          <label class="cp2-kit-item flex items-center gap-4 px-5 py-4 cursor-pointer bg-base-100 border-l-4 border-secondary transition-all duration-200">
+            <span class="shrink-0 w-8 h-8 rounded-full bg-secondary/15 border border-secondary/40 text-secondary flex items-center justify-center font-bold text-sm">4</span>
+            <div class="flex-1 min-w-0">
+              <p class="font-bold text-sm text-base-content">Cycle count — Trigger Port 2 with your hand</p>
+              <p class="text-xs text-base-content/60 mt-0.5">Watch the count increment below. In production this counter drives predictive scheduling — replace when approaching rated lifetime, not after an unexpected failure.</p>
+            </div>
+            <input type="checkbox" class="checkbox checkbox-sm checkbox-warning shrink-0">
+          </label>
+          <div class="bg-base-200/40 border-t border-base-300 px-5 py-4">
+            <div class="flex items-center gap-8">
+              <div class="flex items-center gap-3">
+                <span class="w-6 h-6 rounded-full border-2 border-base-content/20 transition-colors duration-150 shrink-0" id="ws4-cap-led" style="background:#374151"></span>
+                <span id="ws4-cap-state" class="font-bold text-sm w-24">—</span>
+              </div>
+              <div>
+                <p class="text-xs text-base-content/50 mb-1">Detections this session</p>
+                <span id="ws4-cap-count" class="font-mono font-bold text-5xl">0</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Step 5 — Sign off -->
+        <div class="rounded-xl border border-base-300 shadow-sm overflow-hidden">
+          <label class="cp2-kit-item flex items-center gap-4 px-5 py-4 cursor-pointer bg-base-100 border-l-4 border-success transition-all duration-200">
+            <span class="shrink-0 w-8 h-8 rounded-full bg-success/15 border border-success/40 text-success flex items-center justify-center font-bold text-sm">5</span>
+            <div class="flex-1 min-w-0">
+              <p class="font-bold text-sm text-base-content">Sign off — Restore CL50 to Green, Steady</p>
+              <p class="text-xs text-base-content/60 mt-0.5">Build the PDout command to return the light stack to normal. This confirms the repair is complete and the MTTR clock has stopped.</p>
+            </div>
+            <input type="checkbox" class="checkbox checkbox-sm checkbox-warning shrink-0">
+          </label>
+          <div class="bg-base-200/40 border-t border-base-300 px-5 py-4">
+            <div class="grid grid-cols-2 gap-5">
+              <div>
+                <p class="text-xs font-semibold text-base-content/50 uppercase tracking-wide mb-2">Banner CL50 datasheet fields</p>
+                <table class="w-full text-xs">
+                  <thead><tr class="text-base-content/40 text-xs"><th class="text-left pb-1.5 pr-2 font-normal">Field</th><th class="text-left pb-1.5 pr-2 font-mono font-normal">Byte·Bits</th><th class="text-left pb-1.5">Value</th></tr></thead>
+                  <tbody>
+                    <tr class="border-t border-base-300/50"><td class="py-1.5 pr-2 text-base-content/70">Animation</td><td class="py-1.5 pr-2 font-mono text-base-content/40">B1[2:0]</td><td class="py-1.5"><select id="ws4s5-anim" class="select select-xs select-bordered w-full"><option value="0" selected>0 — Off</option><option value="1">1 — Steady</option><option value="2">2 — Flash</option><option value="3">3 — Two Color</option></select></td></tr>
+                    <tr class="border-t border-base-300/50"><td class="py-1.5 pr-2 text-base-content/70">Color 1</td><td class="py-1.5 pr-2 font-mono text-base-content/40">B2[3:0]</td><td class="py-1.5"><select id="ws4s5-c1" class="select select-xs select-bordered w-full"><option value="0" selected>0 — Green</option><option value="1">1 — Red</option><option value="2">2 — Orange</option><option value="3">3 — Amber</option><option value="4">4 — Yellow</option><option value="5">5 — Lime</option><option value="6">6 — Spring Green</option><option value="7">7 — Cyan</option><option value="8">8 — Sky Blue</option><option value="9">9 — Blue</option><option value="10">10 — Violet</option><option value="11">11 — Magenta</option><option value="12">12 — Rose</option><option value="13">13 — White</option></select></td></tr>
+                    <tr class="border-t border-base-300/50"><td class="py-1.5 pr-2 text-base-content/70">C1 Intensity</td><td class="py-1.5 pr-2 font-mono text-base-content/40">B0[2:0]</td><td class="py-1.5"><select id="ws4s5-c1i" class="select select-xs select-bordered w-full"><option value="0" selected>0 — High</option><option value="1">1 — Low</option><option value="2">2 — Medium</option><option value="3">3 — Off</option><option value="4">4 — Custom</option></select></td></tr>
+                    <tr class="border-t border-base-300/50"><td class="py-1.5 pr-2 text-base-content/70">Color 2</td><td class="py-1.5 pr-2 font-mono text-base-content/40">B2[7:4]</td><td class="py-1.5"><select id="ws4s5-c2" class="select select-xs select-bordered w-full"><option value="0" selected>0 — Green</option><option value="1">1 — Red</option><option value="2">2 — Orange</option><option value="3">3 — Amber</option><option value="4">4 — Yellow</option><option value="5">5 — Lime</option><option value="6">6 — Spring Green</option><option value="7">7 — Cyan</option><option value="8">8 — Sky Blue</option><option value="9">9 — Blue</option><option value="10">10 — Violet</option><option value="11">11 — Magenta</option><option value="12">12 — Rose</option><option value="13">13 — White</option></select></td></tr>
+                    <tr class="border-t border-base-300/50"><td class="py-1.5 pr-2 text-base-content/70">C2 Intensity</td><td class="py-1.5 pr-2 font-mono text-base-content/40">B0[5:3]</td><td class="py-1.5"><select id="ws4s5-c2i" class="select select-xs select-bordered w-full"><option value="0" selected>0 — High</option><option value="1">1 — Low</option><option value="2">2 — Medium</option><option value="3">3 — Off</option><option value="4">4 — Custom</option></select></td></tr>
+                    <tr class="border-t border-base-300/50"><td class="py-1.5 pr-2 text-base-content/70">Speed</td><td class="py-1.5 pr-2 font-mono text-base-content/40">B1[7:6]</td><td class="py-1.5"><select id="ws4s5-speed" class="select select-xs select-bordered w-full"><option value="0" selected>0 — Medium</option><option value="1">1 — Fast</option><option value="2">2 — Slow</option></select></td></tr>
+                    <tr class="border-t border-base-300/50"><td class="py-1.5 pr-2 text-base-content/70">Pulse Pattern</td><td class="py-1.5 pr-2 font-mono text-base-content/40">B1[5:3]</td><td class="py-1.5"><select id="ws4s5-pattern" class="select select-xs select-bordered w-full"><option value="0" selected>0 — Normal</option><option value="1">1 — Strobe</option><option value="2">2 — Three Pulse</option><option value="3">3 — SOS</option><option value="4">4 — Random</option></select></td></tr>
+                    <tr class="border-t border-base-300/50"><td class="py-1.5 pr-2 text-base-content/70">Audible</td><td class="py-1.5 pr-2 font-mono text-base-content/40">B0[7:6]</td><td class="py-1.5"><select id="ws4s5-audible" class="select select-xs select-bordered w-full"><option value="0" selected>0 — Off</option><option value="1">1 — On</option><option value="2">2 — Pulsed</option><option value="3">3 — SOS</option></select></td></tr>
+                  </tbody>
+                </table>
+              </div>
+              <div class="flex flex-col justify-between">
+                <div class="rounded-lg border border-base-300 bg-base-100 p-4 flex flex-col items-center justify-center flex-1 mb-4">
+                  <p class="text-xs text-base-content/40 font-mono mb-2">PDout</p>
+                  <span class="font-mono text-5xl font-bold tracking-widest transition-colors duration-200" id="ws4s5-hex">000000</span>
+                  <span id="ws4s5-valid" class="text-sm font-semibold mt-3 text-center"></span>
+                </div>
+                <div class="flex items-center gap-2">
+                  <button id="ws4s5-send" class="btn btn-sm btn-success flex-1">Send to CL50 →</button>
+                  <span id="ws4s5-status" class="text-xs text-base-content/60"></span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="text-xs text-base-content/50 px-1">
+          <strong>Where the 27 minutes are saved:</strong> Step 1 replaces ~10 min walk-and-find. Step 3 replaces ~12 min manual reconfiguration — 22 of the 27 minutes saved per fault event come from these two steps.
         </div>
       </div>
 
@@ -1474,185 +1622,185 @@ const WORKSHEETS = [
     whyItMatters: 'The IODD is the spec the master uses to decode PDin and the lookup table you need to decode ISDU reads. Without it, raw hex is meaningless. This worksheet builds both the concept and the calculation skill.',
     prerequisites: 'CP7395 Worksheets 1–4',
     contentHtml: `
-      <p class=”text-base-content/90 leading-relaxed text-base”>Every IO-Link sensor ships with an <strong>IODD file</strong> — an XML document that is the sensor's digital datasheet. It tells the IO-Link master exactly how to decode PDin bytes and which ISDU parameter addresses are available, what data type each uses, and what scale factor converts the raw integer to an engineering value. Without the IODD, the master cannot interpret a single byte from the sensor. This worksheet explains what the IODD contains, where to find it, and then builds the decode skill you need to use it in practice.</p>
+      <p class="text-base-content/90 leading-relaxed text-base">Every IO-Link sensor ships with an <strong>IODD file</strong> — an XML document that is the sensor's digital datasheet. It tells the IO-Link master exactly how to decode PDin bytes and which ISDU parameter addresses are available, what data type each uses, and what scale factor converts the raw integer to an engineering value. Without the IODD, the master cannot interpret a single byte from the sensor. This worksheet explains what the IODD contains, where to find it, and then builds the decode skill you need to use it in practice.</p>
 
       <!-- Checklist -->
-      <div class=”space-y-2 mt-4”>
-        <p class=”text-xs font-semibold text-base-content/60 uppercase tracking-wide mb-2”>IODD &amp; decode concepts — tick each when understood</p>
-        <label class=”cp2-kit-item flex items-center gap-3 cursor-pointer rounded-xl border-2 border-transparent px-3 py-2 transition-all duration-200”>
-          <input type=”checkbox” class=”checkbox checkbox-md checkbox-secondary flex-shrink-0”>
-          <span class=”cp2-kit-text text-sm”><strong>IODD = IO-Link Device Description:</strong> an XML file published by the manufacturer. Contains device identity (Vendor ID, Device ID), the PDin bit layout, every parameter's index/subindex/dtype/scale/range, event codes, and valid operating limits. It is the complete specification for talking to that sensor.</span>
+      <div class="space-y-2 mt-4">
+        <p class="text-xs font-semibold text-base-content/60 uppercase tracking-wide mb-2">IODD &amp; decode concepts — tick each when understood</p>
+        <label class="cp2-kit-item flex items-center gap-3 cursor-pointer rounded-xl border-2 border-transparent px-3 py-2 transition-all duration-200">
+          <input type="checkbox" class="checkbox checkbox-md checkbox-secondary flex-shrink-0">
+          <span class="cp2-kit-text text-sm"><strong>IODD = IO-Link Device Description:</strong> an XML file published by the manufacturer. Contains device identity (Vendor ID, Device ID), the PDin bit layout, every parameter's index/subindex/dtype/scale/range, event codes, and valid operating limits. It is the complete specification for talking to that sensor.</span>
         </label>
-        <label class=”cp2-kit-item flex items-center gap-3 cursor-pointer rounded-xl border-2 border-transparent px-3 py-2 transition-all duration-200”>
-          <input type=”checkbox” class=”checkbox checkbox-md checkbox-secondary flex-shrink-0”>
-          <span class=”cp2-kit-text text-sm”><strong>Where to find IODDs:</strong> <code class=”font-mono text-xs bg-base-300 px-1 rounded”>ioddfinder.io</code> — the official IO-Link Community repository. Free, searchable by manufacturer, product name, or Vendor ID. Also available from each manufacturer's website. Every IO-Link certified device must have a published IODD.</span>
+        <label class="cp2-kit-item flex items-center gap-3 cursor-pointer rounded-xl border-2 border-transparent px-3 py-2 transition-all duration-200">
+          <input type="checkbox" class="checkbox checkbox-md checkbox-secondary flex-shrink-0">
+          <span class="cp2-kit-text text-sm"><strong>Where to find IODDs:</strong> <code class="font-mono text-xs bg-base-300 px-1 rounded">ioddfinder.io</code> — the official IO-Link Community repository. Free, searchable by manufacturer, product name, or Vendor ID. Also available from each manufacturer's website. Every IO-Link certified device must have a published IODD.</span>
         </label>
-        <label class=”cp2-kit-item flex items-center gap-3 cursor-pointer rounded-xl border-2 border-transparent px-3 py-2 transition-all duration-200”>
-          <input type=”checkbox” class=”checkbox checkbox-md checkbox-secondary flex-shrink-0”>
-          <span class=”cp2-kit-text text-sm”><strong>How the master uses the IODD:</strong> at power-up, the master reads Vendor ID + Device ID from each connected sensor → loads the matching IODD → learns the PDin layout and parameter map. Without the IODD loaded, the master passes raw bytes upstream but cannot label or scale them. In this app, <code class=”font-mono text-xs bg-base-300 px-1 rounded”>backend/device_parameters.py</code> is a hard-coded translation of the key IODD entries for all four kit devices.</span>
+        <label class="cp2-kit-item flex items-center gap-3 cursor-pointer rounded-xl border-2 border-transparent px-3 py-2 transition-all duration-200">
+          <input type="checkbox" class="checkbox checkbox-md checkbox-secondary flex-shrink-0">
+          <span class="cp2-kit-text text-sm"><strong>How the master uses the IODD:</strong> at power-up, the master reads Vendor ID + Device ID from each connected sensor → loads the matching IODD → learns the PDin layout and parameter map. Without the IODD loaded, the master passes raw bytes upstream but cannot label or scale them. In this app, <code class="font-mono text-xs bg-base-300 px-1 rounded">backend/device_parameters.py</code> is a hard-coded translation of the key IODD entries for all four kit devices.</span>
         </label>
-        <label class=”cp2-kit-item flex items-center gap-3 cursor-pointer rounded-xl border-2 border-transparent px-3 py-2 transition-all duration-200”>
-          <input type=”checkbox” class=”checkbox checkbox-md checkbox-secondary flex-shrink-0”>
-          <span class=”cp2-kit-text text-sm”><strong>IODD parameter entry structure:</strong> each ISDU-accessible parameter has — Index (hex address, e.g. 0x247 = 583 decimal for SP1), Subindex (field within that address, usually 0), Datatype (uint8/uint16/int16/int32), ScaleFactor (multiply raw integer to get engineering units), Name, Min/Max valid values. All of this lives in the IODD XML.</span>
+        <label class="cp2-kit-item flex items-center gap-3 cursor-pointer rounded-xl border-2 border-transparent px-3 py-2 transition-all duration-200">
+          <input type="checkbox" class="checkbox checkbox-md checkbox-secondary flex-shrink-0">
+          <span class="cp2-kit-text text-sm"><strong>IODD parameter entry structure:</strong> each ISDU-accessible parameter has — Index (hex address, e.g. 0x247 = 583 decimal for SP1), Subindex (field within that address, usually 0), Datatype (uint8/uint16/int16/int32), ScaleFactor (multiply raw integer to get engineering units), Name, Min/Max valid values. All of this lives in the IODD XML.</span>
         </label>
-        <label class=”cp2-kit-item flex items-center gap-3 cursor-pointer rounded-xl border-2 border-transparent px-3 py-2 transition-all duration-200”>
-          <input type=”checkbox” class=”checkbox checkbox-md checkbox-secondary flex-shrink-0”>
-          <span class=”cp2-kit-text text-sm”><strong>Hex decode skill:</strong> 16 symbols (0–9, A–F). One byte = two hex digits. F4 = 15×16+4 = 244. Two bytes = four digits; high byte ×256 + low byte. Apply dtype (signed or unsigned) then multiply by scale. This is the universal decode procedure for any IO-Link ISDU response.</span>
+        <label class="cp2-kit-item flex items-center gap-3 cursor-pointer rounded-xl border-2 border-transparent px-3 py-2 transition-all duration-200">
+          <input type="checkbox" class="checkbox checkbox-md checkbox-secondary flex-shrink-0">
+          <span class="cp2-kit-text text-sm"><strong>Hex decode skill:</strong> 16 symbols (0–9, A–F). One byte = two hex digits. F4 = 15×16+4 = 244. Two bytes = four digits; high byte ×256 + low byte. Apply dtype (signed or unsigned) then multiply by scale. This is the universal decode procedure for any IO-Link ISDU response.</span>
         </label>
       </div>
 
       <!-- IODD concept card -->
-      <div class=”rounded-xl border-2 border-info/30 bg-info/5 p-4 mt-4 space-y-3”>
-        <p class=”font-bold text-base-content text-sm”>📄 Concept — What the IODD XML contains</p>
-        <p class=”text-sm text-base-content/80”>Here is a simplified extract from the IFM TV7105 IODD showing SP1 (Setpoint 1 for OUT1):</p>
-        <div class=”rounded-lg p-3 font-mono text-xs overflow-x-auto” style=”background:#0f172a;color:#94a3b8”>
-          <div style=”color:#475569”>&lt;!-- IODD extract: IFM TV7105, SP1 parameter --&gt;</div>
-          <div>&lt;<span style=”color:#60a5fa”>Parameter</span> <span style=”color:#f97316”>index</span>=<span style=”color:#22c55e”>”583”</span> <span style=”color:#f97316”>subindex</span>=<span style=”color:#22c55e”>”0”</span>&gt;</div>
-          <div class=”ml-4”>&lt;<span style=”color:#60a5fa”>Name</span>&gt;<span style=”color:#fde68a”>SP1 Setpoint OUT1</span>&lt;/Name&gt;</div>
-          <div class=”ml-4”>&lt;<span style=”color:#60a5fa”>Datatype</span>&gt;<span style=”color:#a78bfa”>INT16</span>&lt;/Datatype&gt;</div>
-          <div class=”ml-4”>&lt;<span style=”color:#60a5fa”>ScaleFactor</span>&gt;<span style=”color:#4ade80”>0.1</span>&lt;/ScaleFactor&gt;</div>
-          <div class=”ml-4”>&lt;<span style=”color:#60a5fa”>Unit</span>&gt;<span style=”color:#fde68a”>°C</span>&lt;/Unit&gt;</div>
-          <div class=”ml-4”>&lt;<span style=”color:#60a5fa”>Min</span>&gt;<span style=”color:#f87171”>-600</span>&lt;/Min&gt; <span style=”color:#475569”>&lt;!-- raw: -60.0°C --&gt;</span></div>
-          <div class=”ml-4”>&lt;<span style=”color:#60a5fa”>Max</span>&gt;<span style=”color:#4ade80”>1500</span>&lt;/Max&gt; <span style=”color:#475569”>&lt;!-- raw: 150.0°C --&gt;</span></div>
+      <div class="rounded-xl border-2 border-info/30 bg-info/5 p-4 mt-4 space-y-3">
+        <p class="font-bold text-base-content text-sm">📄 Concept — What the IODD XML contains</p>
+        <p class="text-sm text-base-content/80">Here is a simplified extract from the IFM TV7105 IODD showing SP1 (Setpoint 1 for OUT1):</p>
+        <div class="rounded-lg p-3 font-mono text-xs overflow-x-auto" style="background:#0f172a;color:#94a3b8">
+          <div style="color:#475569">&lt;!-- IODD extract: IFM TV7105, SP1 parameter --&gt;</div>
+          <div>&lt;<span style="color:#60a5fa">Parameter</span> <span style="color:#f97316">index</span>=<span style="color:#22c55e">"583"</span> <span style="color:#f97316">subindex</span>=<span style="color:#22c55e">"0"</span>&gt;</div>
+          <div class="ml-4">&lt;<span style="color:#60a5fa">Name</span>&gt;<span style="color:#fde68a">SP1 Setpoint OUT1</span>&lt;/Name&gt;</div>
+          <div class="ml-4">&lt;<span style="color:#60a5fa">Datatype</span>&gt;<span style="color:#a78bfa">INT16</span>&lt;/Datatype&gt;</div>
+          <div class="ml-4">&lt;<span style="color:#60a5fa">ScaleFactor</span>&gt;<span style="color:#4ade80">0.1</span>&lt;/ScaleFactor&gt;</div>
+          <div class="ml-4">&lt;<span style="color:#60a5fa">Unit</span>&gt;<span style="color:#fde68a">°C</span>&lt;/Unit&gt;</div>
+          <div class="ml-4">&lt;<span style="color:#60a5fa">Min</span>&gt;<span style="color:#f87171">-600</span>&lt;/Min&gt; <span style="color:#475569">&lt;!-- raw: -60.0°C --&gt;</span></div>
+          <div class="ml-4">&lt;<span style="color:#60a5fa">Max</span>&gt;<span style="color:#4ade80">1500</span>&lt;/Max&gt; <span style="color:#475569">&lt;!-- raw: 150.0°C --&gt;</span></div>
           <div>&lt;/Parameter&gt;</div>
         </div>
-        <p class=”text-sm text-base-content/80”>The IODD tells you: send a read request to Index 583, Sub 0 → receive 2 bytes → interpret as INT16 → multiply by 0.1 → result in °C. <strong>This is exactly the information in <code class=”font-mono text-xs bg-base-100 px-1 rounded”>device_parameters.py</code> for this app.</strong></p>
+        <p class="text-sm text-base-content/80">The IODD tells you: send a read request to Index 583, Sub 0 → receive 2 bytes → interpret as INT16 → multiply by 0.1 → result in °C. <strong>This is exactly the information in <code class="font-mono text-xs bg-base-100 px-1 rounded">device_parameters.py</code> for this app.</strong></p>
       </div>
 
       <!-- Three-component grid -->
-      <div class=”grid grid-cols-3 gap-2 mt-4”>
-        <div class=”rounded-lg p-3 text-center space-y-1” style=”background:#0f172a;border:1px solid #334155”>
-          <p class=”text-xs font-bold” style=”color:#3b82f6”>Raw hex</p>
-          <p class=”font-mono font-bold text-lg” style=”color:#f59e0b”>01 F4</p>
-          <p class=”text-xs” style=”color:#475569”>Bytes from device</p>
+      <div class="grid grid-cols-3 gap-2 mt-4">
+        <div class="rounded-lg p-3 text-center space-y-1" style="background:#0f172a;border:1px solid #334155">
+          <p class="text-xs font-bold" style="color:#3b82f6">Raw hex</p>
+          <p class="font-mono font-bold text-lg" style="color:#f59e0b">01 F4</p>
+          <p class="text-xs" style="color:#475569">Bytes from device</p>
         </div>
-        <div class=”rounded-lg p-3 text-center space-y-1” style=”background:#0f172a;border:1px solid #334155”>
-          <p class=”text-xs font-bold” style=”color:#8b5cf6”>Data type</p>
-          <p class=”font-mono font-bold text-lg” style=”color:#a78bfa”>int16</p>
-          <p class=”text-xs” style=”color:#475569”>From IODD</p>
+        <div class="rounded-lg p-3 text-center space-y-1" style="background:#0f172a;border:1px solid #334155">
+          <p class="text-xs font-bold" style="color:#8b5cf6">Data type</p>
+          <p class="font-mono font-bold text-lg" style="color:#a78bfa">int16</p>
+          <p class="text-xs" style="color:#475569">From IODD</p>
         </div>
-        <div class=”rounded-lg p-3 text-center space-y-1” style=”background:#0f172a;border:1px solid #334155”>
-          <p class=”text-xs font-bold” style=”color:#22c55e”>Scale factor</p>
-          <p class=”font-mono font-bold text-lg” style=”color:#4ade80”>×0.1</p>
-          <p class=”text-xs” style=”color:#475569”>From IODD → °C</p>
+        <div class="rounded-lg p-3 text-center space-y-1" style="background:#0f172a;border:1px solid #334155">
+          <p class="text-xs font-bold" style="color:#22c55e">Scale factor</p>
+          <p class="font-mono font-bold text-lg" style="color:#4ade80">×0.1</p>
+          <p class="text-xs" style="color:#475569">From IODD → °C</p>
         </div>
       </div>
 
       <!-- Part 1 – Hex digits -->
-      <div class=”rounded-xl border border-base-300 bg-base-200 p-4 mt-4 space-y-3”>
-        <p class=”text-xs font-semibold text-base-content/60 uppercase tracking-wide”>Part 1 — Hex digits (0–F)</p>
-        <p class=”text-sm text-base-content/80”>Hexadecimal counts 0–9, then uses A–F for values 10–15, giving 16 symbols (base 16). One byte = two hex digits:</p>
-        <div class=”rounded-lg overflow-hidden” style=”border:1px solid #334155”>
-          <table class=”w-full text-xs text-center font-mono”>
+      <div class="rounded-xl border border-base-300 bg-base-200 p-4 mt-4 space-y-3">
+        <p class="text-xs font-semibold text-base-content/60 uppercase tracking-wide">Part 1 — Hex digits (0–F)</p>
+        <p class="text-sm text-base-content/80">Hexadecimal counts 0–9, then uses A–F for values 10–15, giving 16 symbols (base 16). One byte = two hex digits:</p>
+        <div class="rounded-lg overflow-hidden" style="border:1px solid #334155">
+          <table class="w-full text-xs text-center font-mono">
             <tbody>
-              <tr style=”background:#1e293b”>
-                <td class=”py-1.5 px-1 font-semibold” style=”color:#475569”>Hex</td>
-                <td style=”color:#94a3b8”>0</td><td style=”color:#94a3b8”>1</td><td style=”color:#94a3b8”>2</td><td style=”color:#94a3b8”>3</td>
-                <td style=”color:#94a3b8”>4</td><td style=”color:#94a3b8”>5</td><td style=”color:#94a3b8”>6</td><td style=”color:#94a3b8”>7</td>
-                <td style=”color:#94a3b8”>8</td><td style=”color:#94a3b8”>9</td>
-                <td style=”color:#f59e0b;font-weight:700”>A</td><td style=”color:#f59e0b;font-weight:700”>B</td>
-                <td style=”color:#f59e0b;font-weight:700”>C</td><td style=”color:#f59e0b;font-weight:700”>D</td>
-                <td style=”color:#f59e0b;font-weight:700”>E</td><td style=”color:#f59e0b;font-weight:700”>F</td>
+              <tr style="background:#1e293b">
+                <td class="py-1.5 px-1 font-semibold" style="color:#475569">Hex</td>
+                <td style="color:#94a3b8">0</td><td style="color:#94a3b8">1</td><td style="color:#94a3b8">2</td><td style="color:#94a3b8">3</td>
+                <td style="color:#94a3b8">4</td><td style="color:#94a3b8">5</td><td style="color:#94a3b8">6</td><td style="color:#94a3b8">7</td>
+                <td style="color:#94a3b8">8</td><td style="color:#94a3b8">9</td>
+                <td style="color:#f59e0b;font-weight:700">A</td><td style="color:#f59e0b;font-weight:700">B</td>
+                <td style="color:#f59e0b;font-weight:700">C</td><td style="color:#f59e0b;font-weight:700">D</td>
+                <td style="color:#f59e0b;font-weight:700">E</td><td style="color:#f59e0b;font-weight:700">F</td>
               </tr>
-              <tr style=”background:#0f172a”>
-                <td class=”py-1.5 px-1 font-semibold” style=”color:#475569”>Dec</td>
-                <td style=”color:#64748b”>0</td><td style=”color:#64748b”>1</td><td style=”color:#64748b”>2</td><td style=”color:#64748b”>3</td>
-                <td style=”color:#64748b”>4</td><td style=”color:#64748b”>5</td><td style=”color:#64748b”>6</td><td style=”color:#64748b”>7</td>
-                <td style=”color:#64748b”>8</td><td style=”color:#64748b”>9</td>
-                <td style=”color:#f59e0b;font-weight:700”>10</td><td style=”color:#f59e0b;font-weight:700”>11</td>
-                <td style=”color:#f59e0b;font-weight:700”>12</td><td style=”color:#f59e0b;font-weight:700”>13</td>
-                <td style=”color:#f59e0b;font-weight:700”>14</td><td style=”color:#f59e0b;font-weight:700”>15</td>
+              <tr style="background:#0f172a">
+                <td class="py-1.5 px-1 font-semibold" style="color:#475569">Dec</td>
+                <td style="color:#64748b">0</td><td style="color:#64748b">1</td><td style="color:#64748b">2</td><td style="color:#64748b">3</td>
+                <td style="color:#64748b">4</td><td style="color:#64748b">5</td><td style="color:#64748b">6</td><td style="color:#64748b">7</td>
+                <td style="color:#64748b">8</td><td style="color:#64748b">9</td>
+                <td style="color:#f59e0b;font-weight:700">10</td><td style="color:#f59e0b;font-weight:700">11</td>
+                <td style="color:#f59e0b;font-weight:700">12</td><td style="color:#f59e0b;font-weight:700">13</td>
+                <td style="color:#f59e0b;font-weight:700">14</td><td style="color:#f59e0b;font-weight:700">15</td>
               </tr>
             </tbody>
           </table>
         </div>
-        <p class=”text-sm text-base-content/80”>One byte, two hex digits: <strong>left digit × 16 + right digit</strong>.</p>
-        <div class=”rounded-lg px-4 py-3 text-sm font-mono” style=”background:#0f172a;border:1px solid #334155;color:#94a3b8”>
-          Example: <span style=”color:#f59e0b;font-weight:700”>F4</span> → F=15 → 15 × 16 + 4 = 240 + 4 = <span style=”color:#22c55e;font-weight:700”>244</span>
+        <p class="text-sm text-base-content/80">One byte, two hex digits: <strong>left digit × 16 + right digit</strong>.</p>
+        <div class="rounded-lg px-4 py-3 text-sm font-mono" style="background:#0f172a;border:1px solid #334155;color:#94a3b8">
+          Example: <span style="color:#f59e0b;font-weight:700">F4</span> → F=15 → 15 × 16 + 4 = 240 + 4 = <span style="color:#22c55e;font-weight:700">244</span>
         </div>
       </div>
 
       <!-- Part 2 – Two-byte positional -->
-      <div class=”rounded-xl border border-base-300 bg-base-200 p-4 mt-3 space-y-3”>
-        <p class=”text-xs font-semibold text-base-content/60 uppercase tracking-wide”>Part 2 — Two-byte (16-bit) values</p>
-        <p class=”text-sm text-base-content/80”>Many IODD parameters are int16 or uint16 — two bytes. The first (high) byte is worth 256× the second (low) byte:</p>
-        <div class=”overflow-x-auto”>
-          <table class=”text-xs font-mono text-center” style=”border-collapse:separate;border-spacing:3px;width:100%”>
+      <div class="rounded-xl border border-base-300 bg-base-200 p-4 mt-3 space-y-3">
+        <p class="text-xs font-semibold text-base-content/60 uppercase tracking-wide">Part 2 — Two-byte (16-bit) values</p>
+        <p class="text-sm text-base-content/80">Many IODD parameters are int16 or uint16 — two bytes. The first (high) byte is worth 256× the second (low) byte:</p>
+        <div class="overflow-x-auto">
+          <table class="text-xs font-mono text-center" style="border-collapse:separate;border-spacing:3px;width:100%">
             <thead>
               <tr>
-                <td class=”text-left text-base-content/50 pr-3 pb-1 text-xs”>Position</td>
-                <td class=”px-3 py-1.5 rounded” style=”background:#1e293b;color:#64748b;font-weight:600”>×4096</td>
-                <td class=”px-3 py-1.5 rounded” style=”background:#1e293b;color:#64748b;font-weight:600”>×256</td>
-                <td class=”px-3 py-1.5 rounded” style=”background:#1e293b;color:#64748b;font-weight:600”>×16</td>
-                <td class=”px-3 py-1.5 rounded” style=”background:#1e293b;color:#64748b;font-weight:600”>×1</td>
+                <td class="text-left text-base-content/50 pr-3 pb-1 text-xs">Position</td>
+                <td class="px-3 py-1.5 rounded" style="background:#1e293b;color:#64748b;font-weight:600">×4096</td>
+                <td class="px-3 py-1.5 rounded" style="background:#1e293b;color:#64748b;font-weight:600">×256</td>
+                <td class="px-3 py-1.5 rounded" style="background:#1e293b;color:#64748b;font-weight:600">×16</td>
+                <td class="px-3 py-1.5 rounded" style="background:#1e293b;color:#64748b;font-weight:600">×1</td>
                 <td></td>
               </tr>
             </thead>
             <tbody>
               <tr>
-                <td class=”text-left text-base-content/50 pr-3 text-xs”>Hex: 01 F4</td>
-                <td class=”px-3 py-1.5 rounded” style=”background:#1e293b;color:#94a3b8”>0</td>
-                <td class=”px-3 py-1.5 rounded” style=”background:#1e293b;color:#94a3b8”>1</td>
-                <td class=”px-3 py-1.5 rounded” style=”background:#1e293b;color:#f59e0b”>F (=15)</td>
-                <td class=”px-3 py-1.5 rounded” style=”background:#1e293b;color:#94a3b8”>4</td>
+                <td class="text-left text-base-content/50 pr-3 text-xs">Hex: 01 F4</td>
+                <td class="px-3 py-1.5 rounded" style="background:#1e293b;color:#94a3b8">0</td>
+                <td class="px-3 py-1.5 rounded" style="background:#1e293b;color:#94a3b8">1</td>
+                <td class="px-3 py-1.5 rounded" style="background:#1e293b;color:#f59e0b">F (=15)</td>
+                <td class="px-3 py-1.5 rounded" style="background:#1e293b;color:#94a3b8">4</td>
                 <td></td>
               </tr>
               <tr>
-                <td class=”text-left text-base-content/50 pr-3 text-xs”>Calculation</td>
-                <td class=”px-2 py-1.5 rounded text-xs” style=”background:#0f172a;color:#475569”>0×4096=0</td>
-                <td class=”px-2 py-1.5 rounded text-xs” style=”background:#0f172a;color:#94a3b8”>1×256=256</td>
-                <td class=”px-2 py-1.5 rounded text-xs” style=”background:#0f172a;color:#22c55e”>15×16=240</td>
-                <td class=”px-2 py-1.5 rounded text-xs” style=”background:#0f172a;color:#94a3b8”>4×1=4</td>
-                <td class=”text-left pl-3 font-bold” style=”color:#22c55e;font-size:1.1em”>= 500</td>
+                <td class="text-left text-base-content/50 pr-3 text-xs">Calculation</td>
+                <td class="px-2 py-1.5 rounded text-xs" style="background:#0f172a;color:#475569">0×4096=0</td>
+                <td class="px-2 py-1.5 rounded text-xs" style="background:#0f172a;color:#94a3b8">1×256=256</td>
+                <td class="px-2 py-1.5 rounded text-xs" style="background:#0f172a;color:#22c55e">15×16=240</td>
+                <td class="px-2 py-1.5 rounded text-xs" style="background:#0f172a;color:#94a3b8">4×1=4</td>
+                <td class="text-left pl-3 font-bold" style="color:#22c55e;font-size:1.1em">= 500</td>
               </tr>
             </tbody>
           </table>
         </div>
-        <p class=”text-sm text-base-content/80”>Apply scale: 500 × 0.1 = <span class=”font-bold text-success”>50.0 °C</span>.</p>
+        <p class="text-sm text-base-content/80">Apply scale: 500 × 0.1 = <span class="font-bold text-success">50.0 °C</span>.</p>
       </div>
 
       <!-- Signed vs unsigned concept -->
-      <div class=”rounded-xl border border-warning/30 bg-warning/5 p-4 mt-3 space-y-2”>
-        <p class=”text-xs font-semibold text-warning uppercase tracking-wide”>Signed vs unsigned — two's complement for negative values</p>
-        <p class=”text-sm text-base-content/80”>int16 range is −32768 to +32767. Values 0x0000–0x7FFF are positive. Values 0x8000–0xFFFF are negative. To decode: <span class=”font-semibold font-mono”>signed_value = unsigned_value − 65536</span>.</p>
-        <p class=”text-sm text-base-content/80”>Example: <span class=”font-mono font-bold” style=”color:#f59e0b”>0xFF9C</span> = 65436 unsigned → 65436 − 65536 = −100 → ÷10 = <span class=”font-bold text-success”>−10.0 °C</span>.</p>
-        <p class=”text-sm text-base-content/80”>Quick check: if the first hex digit of byte 0 is 8–F, the value is negative.</p>
+      <div class="rounded-xl border border-warning/30 bg-warning/5 p-4 mt-3 space-y-2">
+        <p class="text-xs font-semibold text-warning uppercase tracking-wide">Signed vs unsigned — two's complement for negative values</p>
+        <p class="text-sm text-base-content/80">int16 range is −32768 to +32767. Values 0x0000–0x7FFF are positive. Values 0x8000–0xFFFF are negative. To decode: <span class="font-semibold font-mono">signed_value = unsigned_value − 65536</span>.</p>
+        <p class="text-sm text-base-content/80">Example: <span class="font-mono font-bold" style="color:#f59e0b">0xFF9C</span> = 65436 unsigned → 65436 − 65536 = −100 → ÷10 = <span class="font-bold text-success">−10.0 °C</span>.</p>
+        <p class="text-sm text-base-content/80">Quick check: if the first hex digit of byte 0 is 8–F, the value is negative.</p>
       </div>
 
       <!-- Part 3 – Data types -->
-      <div class=”rounded-xl border border-base-300 bg-base-200 p-4 mt-3 space-y-3”>
-        <p class=”text-xs font-semibold text-base-content/60 uppercase tracking-wide”>Part 3 — Data types (from the IODD)</p>
-        <p class=”text-sm text-base-content/80”>The IODD specifies the dtype for every parameter. This tells you how many bytes to read and whether the value can be negative:</p>
-        <div class=”overflow-x-auto rounded-lg” style=”border:1px solid #334155”>
-          <table class=”w-full text-sm” style=”border-collapse:collapse”>
+      <div class="rounded-xl border border-base-300 bg-base-200 p-4 mt-3 space-y-3">
+        <p class="text-xs font-semibold text-base-content/60 uppercase tracking-wide">Part 3 — Data types (from the IODD)</p>
+        <p class="text-sm text-base-content/80">The IODD specifies the dtype for every parameter. This tells you how many bytes to read and whether the value can be negative:</p>
+        <div class="overflow-x-auto rounded-lg" style="border:1px solid #334155">
+          <table class="w-full text-sm" style="border-collapse:collapse">
             <thead>
-              <tr class=”text-xs” style=”background:#1e293b;color:#475569”>
-                <td class=”px-3 py-2 font-semibold”>Type</td>
-                <td class=”px-3 py-2”>Bytes</td>
-                <td class=”px-3 py-2”>Range</td>
-                <td class=”px-3 py-2”>Typical use in this kit</td>
+              <tr class="text-xs" style="background:#1e293b;color:#475569">
+                <td class="px-3 py-2 font-semibold">Type</td>
+                <td class="px-3 py-2">Bytes</td>
+                <td class="px-3 py-2">Range</td>
+                <td class="px-3 py-2">Typical use in this kit</td>
               </tr>
             </thead>
-            <tbody class=”text-xs text-base-content/80” style=”font-family:'Courier New',monospace”>
-              <tr style=”border-top:1px solid #1e293b”>
-                <td class=”px-3 py-2 font-bold” style=”color:#3b82f6”>uint8</td>
-                <td class=”px-3 py-2”>1</td><td class=”px-3 py-2”>0–255</td>
-                <td class=”px-3 py-2” style=”font-family:inherit”>Output logic (NO=0, NC=1), teach commands</td>
+            <tbody class="text-xs text-base-content/80" style="font-family:'Courier New',monospace">
+              <tr style="border-top:1px solid #1e293b">
+                <td class="px-3 py-2 font-bold" style="color:#3b82f6">uint8</td>
+                <td class="px-3 py-2">1</td><td class="px-3 py-2">0–255</td>
+                <td class="px-3 py-2" style="font-family:inherit">Output logic (NO=0, NC=1), teach commands</td>
               </tr>
-              <tr style=”border-top:1px solid #1e293b”>
-                <td class=”px-3 py-2 font-bold” style=”color:#8b5cf6”>uint16</td>
-                <td class=”px-3 py-2”>2</td><td class=”px-3 py-2”>0–65535</td>
-                <td class=”px-3 py-2” style=”font-family:inherit”>Capacitive SP1 (raw count, always positive)</td>
+              <tr style="border-top:1px solid #1e293b">
+                <td class="px-3 py-2 font-bold" style="color:#8b5cf6">uint16</td>
+                <td class="px-3 py-2">2</td><td class="px-3 py-2">0–65535</td>
+                <td class="px-3 py-2" style="font-family:inherit">Capacitive SP1 (raw count, always positive)</td>
               </tr>
-              <tr style=”border-top:1px solid #1e293b”>
-                <td class=”px-3 py-2 font-bold” style=”color:#f97316”>int16</td>
-                <td class=”px-3 py-2”>2</td><td class=”px-3 py-2”>−32768 to +32767</td>
-                <td class=”px-3 py-2” style=”font-family:inherit”>Temperature SP1/RP1 and calibration offset</td>
+              <tr style="border-top:1px solid #1e293b">
+                <td class="px-3 py-2 font-bold" style="color:#f97316">int16</td>
+                <td class="px-3 py-2">2</td><td class="px-3 py-2">−32768 to +32767</td>
+                <td class="px-3 py-2" style="font-family:inherit">Temperature SP1/RP1 and calibration offset</td>
               </tr>
-              <tr style=”border-top:1px solid #1e293b”>
-                <td class=”px-3 py-2 font-bold” style=”color:#22c55e”>int32</td>
-                <td class=”px-3 py-2”>4</td><td class=”px-3 py-2”>±2 billion</td>
-                <td class=”px-3 py-2” style=”font-family:inherit”>Photoelectric SP1 (wide sensing range)</td>
+              <tr style="border-top:1px solid #1e293b">
+                <td class="px-3 py-2 font-bold" style="color:#22c55e">int32</td>
+                <td class="px-3 py-2">4</td><td class="px-3 py-2">±2 billion</td>
+                <td class="px-3 py-2" style="font-family:inherit">Photoelectric SP1 (wide sensing range)</td>
               </tr>
             </tbody>
           </table>
@@ -1660,112 +1808,117 @@ const WORKSHEETS = [
       </div>
 
       <!-- Part 4 – Scale factors -->
-      <div class=”rounded-xl border border-base-300 bg-base-200 p-4 mt-3 space-y-3”>
-        <p class=”text-xs font-semibold text-base-content/60 uppercase tracking-wide”>Part 4 — Scale factors in this kit</p>
-        <div class=”grid grid-cols-1 sm:grid-cols-2 gap-3”>
-          <div class=”rounded-lg p-3 space-y-1.5” style=”background:#0f172a;border:1px solid #334155”>
-            <p class=”text-xs font-semibold text-base-content/50”>TV7105 — SP1 (Index 583, int16, ×0.1)</p>
-            <p class=”font-mono text-sm” style=”color:#94a3b8”>Raw <span style=”color:#f59e0b”>0118</span> hex = 280 decimal</p>
-            <p class=”font-mono text-sm font-bold” style=”color:#22c55e”>280 × 0.1 = 28.0 °C</p>
+      <div class="rounded-xl border border-base-300 bg-base-200 p-4 mt-3 space-y-3">
+        <p class="text-xs font-semibold text-base-content/60 uppercase tracking-wide">Part 4 — Scale factors in this kit</p>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div class="rounded-lg p-3 space-y-1.5" style="background:#0f172a;border:1px solid #334155">
+            <p class="text-xs font-semibold text-base-content/50">TV7105 — SP1 (Index 583, int16, ×0.1)</p>
+            <p class="font-mono text-sm" style="color:#94a3b8">Raw <span style="color:#f59e0b">0118</span> hex = 280 decimal</p>
+            <p class="font-mono text-sm font-bold" style="color:#22c55e">280 × 0.1 = 28.0 °C</p>
           </div>
-          <div class=”rounded-lg p-3 space-y-1.5” style=”background:#0f172a;border:1px solid #334155”>
-            <p class=”text-xs font-semibold text-base-content/50”>TV7105 — Cal Offset (Index 681, int16, ×0.1)</p>
-            <p class=”font-mono text-sm” style=”color:#94a3b8”>Raw <span style=”color:#f59e0b”>FFD0</span> hex = −48 (signed)</p>
-            <p class=”font-mono text-sm font-bold” style=”color:#22c55e”>−48 × 0.1 = −4.8 °C</p>
+          <div class="rounded-lg p-3 space-y-1.5" style="background:#0f172a;border:1px solid #334155">
+            <p class="text-xs font-semibold text-base-content/50">TV7105 — Cal Offset (Index 681, int16, ×0.1)</p>
+            <p class="font-mono text-sm" style="color:#94a3b8">Raw <span style="color:#f59e0b">FFD0</span> hex = −48 (signed)</p>
+            <p class="font-mono text-sm font-bold" style="color:#22c55e">−48 × 0.1 = −4.8 °C</p>
           </div>
         </div>
       </div>
 
       <!-- Practice exercises -->
-      <div class=”rounded-xl border-2 border-secondary/30 bg-secondary/5 p-4 mt-4 space-y-4”>
-        <p class=”text-xs font-semibold text-secondary uppercase tracking-wide”>Practice Exercises</p>
-        <div class=”space-y-1”>
-          <p class=”text-sm font-semibold text-base-content”>Q1 — An ISDU read of TV7105 RP1 (Index 584, Sub 0) returns <span class=”font-mono font-bold”>00 E6</span>. dtype = int16, scale = ×0.1. What is RP1 in °C?</p>
-          <p class=”text-xs text-base-content/60”>Hint: E = 14 in decimal.</p>
-          <p class=”text-sm mt-1”>Answer: <span class=”blur-sm hover:blur-none transition-all cursor-pointer select-none text-success font-mono”>00 E6 → 0 + 0 + (14×16) + 6 = 224 + 6 = 230 → 230 × 0.1 = 23.0 °C</span> <em class=”text-base-content/40”>(hover to reveal)</em></p>
+      <div class="rounded-xl border-2 border-secondary/30 bg-secondary/5 p-4 mt-4 space-y-4">
+        <p class="text-xs font-semibold text-secondary uppercase tracking-wide">Practice Exercises</p>
+        <div class="space-y-1">
+          <p class="text-sm font-semibold text-base-content">Q1 — An ISDU read of TV7105 RP1 (Index 584, Sub 0) returns <span class="font-mono font-bold">00 E6</span>. dtype = int16, scale = ×0.1. What is RP1 in °C?</p>
+          <p class="text-xs text-base-content/60">Hint: E = 14 in decimal.</p>
+          <p class="text-sm mt-1">Answer: <span class="blur-sm hover:blur-none transition-all cursor-pointer select-none text-success font-mono">00 E6 → 0 + 0 + (14×16) + 6 = 224 + 6 = 230 → 230 × 0.1 = 23.0 °C</span> <em class="text-base-content/40">(hover to reveal)</em></p>
         </div>
-        <div class=”space-y-1”>
-          <p class=”text-sm font-semibold text-base-content”>Q2 — A capacitive sensor returns <span class=”font-mono font-bold”>00 64</span> for SP1 (uint16, no scale). What is the setpoint count?</p>
-          <p class=”text-xs text-base-content/60”>Hint: 6 × 16 + 4 = ?</p>
-          <p class=”text-sm mt-1”>Answer: <span class=”blur-sm hover:blur-none transition-all cursor-pointer select-none text-success font-mono”>00 64 → 0 + 0 + (6×16) + 4 = 96 + 4 = 100 counts</span> <em class=”text-base-content/40”>(hover to reveal)</em></p>
+        <div class="space-y-1">
+          <p class="text-sm font-semibold text-base-content">Q2 — A capacitive sensor returns <span class="font-mono font-bold">00 64</span> for SP1 (uint16, no scale). What is the setpoint count?</p>
+          <p class="text-xs text-base-content/60">Hint: 6 × 16 + 4 = ?</p>
+          <p class="text-sm mt-1">Answer: <span class="blur-sm hover:blur-none transition-all cursor-pointer select-none text-success font-mono">00 64 → 0 + 0 + (6×16) + 4 = 96 + 4 = 100 counts</span> <em class="text-base-content/40">(hover to reveal)</em></p>
         </div>
-        <div class=”space-y-1”>
-          <p class=”text-sm font-semibold text-base-content”>Q3 — The TV7105 SP1 returns <span class=”font-mono font-bold”>01 F4</span> (int16, ×0.1). Show full working to find the setpoint in °C.</p>
-          <p class=”text-sm mt-1”>Answer: <span class=”blur-sm hover:blur-none transition-all cursor-pointer select-none text-success font-mono”>01 F4 → (0×4096) + (1×256) + (15×16) + 4 = 0 + 256 + 240 + 4 = 500 → 500 × 0.1 = 50.0 °C</span> <em class=”text-base-content/40”>(hover to reveal)</em></p>
+        <div class="space-y-1">
+          <p class="text-sm font-semibold text-base-content">Q3 — The TV7105 SP1 returns <span class="font-mono font-bold">01 F4</span> (int16, ×0.1). Show full working to find the setpoint in °C.</p>
+          <p class="text-sm mt-1">Answer: <span class="blur-sm hover:blur-none transition-all cursor-pointer select-none text-success font-mono">01 F4 → (0×4096) + (1×256) + (15×16) + 4 = 0 + 256 + 240 + 4 = 500 → 500 × 0.1 = 50.0 °C</span> <em class="text-base-content/40">(hover to reveal)</em></p>
         </div>
       </div>
 
       <!-- MCQ Q4 — IODD -->
-      <p class=”mt-4 font-medium text-base-content”><strong>Q4.</strong> You need the ISDU parameter map for a new IO-Link sensor not in this kit. Where is the correct first place to look?</p>
-      <div class=”space-y-2 mt-1”>
-        <label class=”flex items-center gap-2 cursor-pointer”><input type=”radio” name=”cp2-ws4-q1” value=”a” class=”radio radio-sm radio-secondary”> ioddfinder.io — the IO-Link Community's official IODD repository, searchable by manufacturer and product name</label>
-        <label class=”flex items-center gap-2 cursor-pointer”><input type=”radio” name=”cp2-ws4-q1” value=”b” class=”radio radio-sm radio-secondary”> The AL1350 web interface — it stores IODDs for all connected devices locally</label>
-        <label class=”flex items-center gap-2 cursor-pointer”><input type=”radio” name=”cp2-ws4-q1” value=”c” class=”radio radio-sm radio-secondary”> The Pi filesystem at /var/www — the backend downloads IODDs automatically on first connection</label>
+      <p class="mt-4 font-medium text-base-content"><strong>Q4.</strong> You need the ISDU parameter map for a new IO-Link sensor not in this kit. Where is the correct first place to look?</p>
+      <div class="space-y-2 mt-1">
+        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="cp2-ws4-q1" value="a" class="radio radio-sm radio-secondary"> ioddfinder.io — the IO-Link Community's official IODD repository, searchable by manufacturer and product name</label>
+        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="cp2-ws4-q1" value="b" class="radio radio-sm radio-secondary"> The AL1350 web interface — it stores IODDs for all connected devices locally</label>
+        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="cp2-ws4-q1" value="c" class="radio radio-sm radio-secondary"> The Pi filesystem at /var/www — the backend downloads IODDs automatically on first connection</label>
       </div>
 
       <!-- Verification -->
-      <div class=”rounded-xl border-2 border-warning/50 bg-warning/5 p-4 mt-4 space-y-3”>
-        <p class=”font-bold text-base-content text-base”>🎯 Verification — read an IODD entry then confirm it live</p>
-        <p class=”text-sm text-base-content/80”>Use the live panels below to confirm the system is reachable, then carry out the ISDU reads on the Dashboard.</p>
-        <div class=”rounded-lg border border-base-300 bg-base-200 p-3 space-y-2”>
-          <div class=”flex items-center justify-between”>
-            <p class=”text-xs font-semibold text-base-content/60 uppercase tracking-wide”>Connection Diagnostics</p>
-            <span id=”cp2-diag-badge” class=”badge badge-xs badge-ghost font-mono”>—</span>
-          </div>
-          <div class=”grid grid-cols-3 gap-2 text-center”>
-            <div class=”rounded bg-base-100 border border-base-300 p-2”>
-              <div class=”text-xs text-base-content/50 mb-1”>Circuit Breaker</div>
-              <div id=”cp2-diag-circuit” class=”font-bold font-mono text-sm text-base-content”>—</div>
-            </div>
-            <div class=”rounded bg-base-100 border border-base-300 p-2”>
-              <div class=”text-xs text-base-content/50 mb-1”>Success Rate</div>
-              <div id=”cp2-diag-success” class=”font-bold font-mono text-sm text-base-content”>—</div>
-            </div>
-            <div class=”rounded bg-base-100 border border-base-300 p-2”>
-              <div class=”text-xs text-base-content/50 mb-1”>MQTT</div>
-              <div id=”cp2-diag-mqtt” class=”font-bold font-mono text-sm text-base-content”>—</div>
-            </div>
-          </div>
-          <div class=”h-28”><canvas id=”cp2-diag-latency-chart”></canvas></div>
-          <p class=”text-xs text-base-content/40”>RTT p95: <span id=”cp2-diag-p95”>—</span> ms</p>
+      <div id="cp2-ws5-verify" class="rounded-xl border-2 border-warning/50 bg-warning/5 p-4 mt-4 space-y-4">
+        <div>
+          <p class="font-bold text-base-content text-base">🎯 Verification — decode three live ISDU reads</p>
+          <p class="text-sm text-base-content/80">For each challenge, read the live raw hex from the running sensor, decode it by hand using the dtype and scale shown, then enter your answer and check it against the real value.</p>
         </div>
-        <div class=”rounded-lg border border-base-300 bg-base-200 p-3 space-y-2”>
-          <p class=”text-xs font-semibold text-base-content/60 uppercase tracking-wide”>Edge Device — Services</p>
-          <div class=”grid grid-cols-3 gap-2 text-center”>
-            <div class=”rounded bg-base-100 border border-base-300 p-2”>
-              <div class=”text-xs text-base-content/50 mb-1”>Backend API</div>
-              <div id=”cp2-edge-backend” class=”font-bold font-mono text-sm text-base-content”>—</div>
-            </div>
-            <div class=”rounded bg-base-100 border border-base-300 p-2”>
-              <div class=”text-xs text-base-content/50 mb-1”>CPU</div>
-              <div id=”cp2-edge-cpu” class=”font-bold font-mono text-sm text-base-content”>—</div>
-            </div>
-            <div class=”rounded bg-base-100 border border-base-300 p-2”>
-              <div class=”text-xs text-base-content/50 mb-1”>CPU Temp</div>
-              <div id=”cp2-edge-cputemp” class=”font-bold font-mono text-sm text-base-content”>—</div>
-            </div>
+
+        <!-- Challenge 1: TV7105 SP1 -->
+        <div class="rounded-lg border border-base-300 bg-base-200 p-3 space-y-2">
+          <div class="flex items-center justify-between flex-wrap gap-2">
+            <p class="text-xs font-semibold text-base-content/60 uppercase tracking-wide">Challenge 1 — TV7105 SP1 (Port 3, Index 583/Sub 0, int16, ×0.1)</p>
+            <button id="ws5-read-1" class="btn btn-xs btn-outline">Read raw hex →</button>
+          </div>
+          <div class="flex flex-wrap items-center gap-2">
+            <span class="text-sm text-base-content/70">Raw hex:</span>
+            <span id="ws5-hex-1" class="font-mono font-bold text-lg text-warning">—</span>
+            <span class="text-sm text-base-content/70 ml-2">Your answer:</span>
+            <input id="ws5-ans-1" type="number" step="0.1" class="input input-bordered input-sm w-24" placeholder="°C">
+            <button id="ws5-check-1" class="btn btn-xs btn-primary">Check</button>
+            <span id="ws5-result-1" class="text-sm font-semibold"></span>
           </div>
         </div>
-        <div class=”space-y-2 text-sm”>
-          <label class=”cp2-kit-item flex items-center gap-3 cursor-pointer rounded-xl border-2 border-transparent px-3 py-2 transition-all duration-200”>
-            <input type=”checkbox” class=”checkbox checkbox-sm checkbox-warning flex-shrink-0”>
-            <span class=”cp2-kit-text”>Read the current SP1 for Port 3 from the Dashboard parameter panel. Note the raw hex and manually decode it: int16 × 0.1 = °C.</span>
+
+        <!-- Challenge 2: Capacitive SP1 -->
+        <div class="rounded-lg border border-base-300 bg-base-200 p-3 space-y-2">
+          <div class="flex items-center justify-between flex-wrap gap-2">
+            <p class="text-xs font-semibold text-base-content/60 uppercase tracking-wide">Challenge 2 — Capacitive SP1 (Port 2, Index 60/Sub 1, uint16, no scale)</p>
+            <button id="ws5-read-2" class="btn btn-xs btn-outline">Read raw hex →</button>
+          </div>
+          <div class="flex flex-wrap items-center gap-2">
+            <span class="text-sm text-base-content/70">Raw hex:</span>
+            <span id="ws5-hex-2" class="font-mono font-bold text-lg text-warning">—</span>
+            <span class="text-sm text-base-content/70 ml-2">Your answer:</span>
+            <input id="ws5-ans-2" type="number" step="1" class="input input-bordered input-sm w-24" placeholder="counts">
+            <button id="ws5-check-2" class="btn btn-xs btn-primary">Check</button>
+            <span id="ws5-result-2" class="text-sm font-semibold"></span>
+          </div>
+        </div>
+
+        <!-- Challenge 3: Calibration offset (signed) -->
+        <div class="rounded-lg border border-base-300 bg-base-200 p-3 space-y-2">
+          <div class="flex items-center justify-between flex-wrap gap-2">
+            <p class="text-xs font-semibold text-base-content/60 uppercase tracking-wide">Challenge 3 — Calibration Offset (Port 3, Index 681/Sub 0, int16, ×0.1 — may be negative)</p>
+            <button id="ws5-read-3" class="btn btn-xs btn-outline">Read raw hex →</button>
+          </div>
+          <div class="flex flex-wrap items-center gap-2">
+            <span class="text-sm text-base-content/70">Raw hex:</span>
+            <span id="ws5-hex-3" class="font-mono font-bold text-lg text-warning">—</span>
+            <span class="text-sm text-base-content/70 ml-2">Your answer:</span>
+            <input id="ws5-ans-3" type="number" step="0.1" class="input input-bordered input-sm w-24" placeholder="°C">
+            <button id="ws5-check-3" class="btn btn-xs btn-primary">Check</button>
+            <span id="ws5-result-3" class="text-sm font-semibold"></span>
+          </div>
+          <p class="text-xs text-base-content/40">Remember: if the first hex digit of the high byte is 8–F, apply two's complement — subtract 65536 before scaling.</p>
+        </div>
+
+        <div class="space-y-2 text-sm">
+          <label class="cp2-kit-item flex items-center gap-3 cursor-pointer rounded-xl border-2 border-transparent px-3 py-2 transition-all duration-200">
+            <input type="checkbox" class="checkbox checkbox-sm checkbox-warning flex-shrink-0">
+            <span class="cp2-kit-text">All three decoded values above matched the live sensor reading.</span>
           </label>
-          <label class=”cp2-kit-item flex items-center gap-3 cursor-pointer rounded-xl border-2 border-transparent px-3 py-2 transition-all duration-200”>
-            <input type=”checkbox” class=”checkbox checkbox-sm checkbox-warning flex-shrink-0”>
-            <span class=”cp2-kit-text”>Read the calibration offset (Index 681, Sub 0) for Port 3. Confirm it is 0x0000 (0.0 °C) when uncalibrated. This index number came from the IFM TV7105 IODD.</span>
-          </label>
-          <label class=”cp2-kit-item flex items-center gap-3 cursor-pointer rounded-xl border-2 border-transparent px-3 py-2 transition-all duration-200”>
-            <input type=”checkbox” class=”checkbox checkbox-sm checkbox-warning flex-shrink-0”>
-            <span class=”cp2-kit-text”>Read SP1 (Index 60 / Sub 1) from Port 2 (capacitive) — dtype uint16, no scale. Decode the raw hex to a count value.</span>
-          </label>
-          <label class=”cp2-kit-item flex items-center gap-3 cursor-pointer rounded-xl border-2 border-transparent px-3 py-2 transition-all duration-200”>
-            <input type=”checkbox” class=”checkbox checkbox-sm checkbox-warning flex-shrink-0”>
-            <span class=”cp2-kit-text”>Backend API Online and circuit breaker CLOSED above — the ISDU read path to the AL1350 is available.</span>
+          <label class="cp2-kit-item flex items-center gap-3 cursor-pointer rounded-xl border-2 border-transparent px-3 py-2 transition-all duration-200">
+            <input type="checkbox" class="checkbox checkbox-sm checkbox-warning flex-shrink-0">
+            <span class="cp2-kit-text">Each read above completed without error — confirming the ISDU read path from browser → backend → AL1350 → sensor is working end to end.</span>
           </label>
         </div>
       </div>
-      <div id=”cp2-ws4-suggested” class=”hidden p-4 rounded-lg border border-base-300 bg-base-300/50 text-base-content/80 text-sm leading-relaxed ws-suggested”>Q4: a — ioddfinder.io is the official IO-Link Community repository. The AL1350 does not store IODDs and the Pi backend uses a hard-coded parameter registry, not a runtime IODD parser.</div>
+      <div id="cp2-ws4-suggested" class="hidden p-4 rounded-lg border border-base-300 bg-base-300/50 text-base-content/80 text-sm leading-relaxed ws-suggested">Q4: a — ioddfinder.io is the official IO-Link Community repository. The AL1350 does not store IODDs and the Pi backend uses a hard-coded parameter registry, not a runtime IODD parser.</div>
     `
   },
   {
@@ -1797,7 +1950,7 @@ const WORKSHEETS = [
         </label>
         <label class="cp2-kit-item flex items-center gap-3 cursor-pointer rounded-xl border-2 border-transparent px-3 py-2 transition-all duration-200">
           <input type="checkbox" class="checkbox checkbox-md checkbox-secondary flex-shrink-0">
-          <span class=”cp2-kit-text”><strong>NAMUR NE107:</strong> international standard defining four health symbols for field devices: Failure (✗ red), Maintenance Required (△ amber), Out of Specification (⊙ yellow), Function Check (∟ blue). IO-Link event codes map to these symbols on modern plant HMIs, enabling vendor-neutral health display across any manufacturer's devices.</span>
+          <span class="cp2-kit-text"><strong>NAMUR NE107:</strong> international standard defining four health symbols for field devices: Failure (✗ red), Maintenance Required (△ amber), Out of Specification (⊙ yellow), Function Check (∟ blue). IO-Link event codes map to these symbols on modern plant HMIs, enabling vendor-neutral health display across any manufacturer's devices.</span>
         </label>
       </div>
 
@@ -2042,7 +2195,7 @@ const WORKSHEETS = [
         </div>
       </div>
 
-      <div id=”cp2-ws4-suggested” class=”hidden p-4 rounded-lg border border-base-300 bg-base-300/50 text-base-content/80 text-sm leading-relaxed ws-suggested”>Classification: Temperature 23.5°C = Process; Device replacement = Event; Filter time parameter = Service; Object present flag = Process; Short circuit fault = Event. Q2: a — WebSocket delivers process data + event data merged into one JSON payload each tick; service data is only read on demand via separate ISDU calls. Q3: b — instability alarm = Maintenance Required (sensor still operates but needs attention). Q4: c — NE107 provides vendor-neutral health symbols for any plant HMI.</div>
+      <div id="cp2-ws4-suggested" class="hidden p-4 rounded-lg border border-base-300 bg-base-300/50 text-base-content/80 text-sm leading-relaxed ws-suggested">Classification: Temperature 23.5°C = Process; Device replacement = Event; Filter time parameter = Service; Object present flag = Process; Short circuit fault = Event. Q2: a — WebSocket delivers process data + event data merged into one JSON payload each tick; service data is only read on demand via separate ISDU calls. Q3: b — instability alarm = Maintenance Required (sensor still operates but needs attention). Q4: c — NE107 provides vendor-neutral health symbols for any plant HMI.</div>
     `
   },
   {
@@ -2072,16 +2225,16 @@ const WORKSHEETS = [
   </label>
   <label class="cp2-kit-item flex items-center gap-3 cursor-pointer rounded-xl border-2 border-transparent px-3 py-2 transition-all duration-200">
     <input type="checkbox" class="checkbox checkbox-md checkbox-secondary flex-shrink-0">
-    <span class=”cp2-kit-text”><strong>Latency interpretation:</strong> high RTT on the Connection Diagnostics page indicates the AL1350 is under load or the 192.168.7.x subnet has congestion — not a Wi-Fi or browser problem. The browser connects to the Pi (building LAN), not the AL1350.</span>
+    <span class="cp2-kit-text"><strong>Latency interpretation:</strong> high RTT on the Connection Diagnostics page indicates the AL1350 is under load or the 192.168.7.x subnet has congestion — not a Wi-Fi or browser problem. The browser connects to the Pi (building LAN), not the AL1350.</span>
   </label>
-  <label class=”cp2-kit-item flex items-center gap-3 cursor-pointer rounded-xl border-2 border-transparent px-3 py-2 transition-all duration-200”>
-    <input type=”checkbox” class=”checkbox checkbox-md checkbox-secondary flex-shrink-0”>
-    <span class=”cp2-kit-text”><strong>OPC UA (IEC 62541):</strong> the vendor-neutral standard for moving IO-Link data from PLCs to supervisory systems (SCADA, cloud, historian). Any certified OPC UA client connects to any OPC UA server regardless of manufacturer. The IO-Link OPC UA companion spec maps Vendor ID, Device ID, PDin measurements, and event codes to standardised OPC UA address space nodes.</span>
+  <label class="cp2-kit-item flex items-center gap-3 cursor-pointer rounded-xl border-2 border-transparent px-3 py-2 transition-all duration-200">
+    <input type="checkbox" class="checkbox checkbox-md checkbox-secondary flex-shrink-0">
+    <span class="cp2-kit-text"><strong>OPC UA (IEC 62541):</strong> the vendor-neutral standard for moving IO-Link data from PLCs to supervisory systems (SCADA, cloud, historian). Any certified OPC UA client connects to any OPC UA server regardless of manufacturer. The IO-Link OPC UA companion spec maps Vendor ID, Device ID, PDin measurements, and event codes to standardised OPC UA address space nodes.</span>
   </label>
 </div>
 
 <!-- PLC vs app architecture comparison diagram -->
-<div class=”rounded-xl border border-base-300 bg-base-200 p-3 mb-4 mt-4”>
+<div class="rounded-xl border border-base-300 bg-base-200 p-3 mb-4 mt-4">
   <p class="text-xs font-semibold text-base-content/60 uppercase tracking-wide mb-2">Traditional PLC path vs this app — equivalent layers</p>
   <svg viewBox="0 0 570 200" xmlns="http://www.w3.org/2000/svg" class="w-full" style="font-family:system-ui,sans-serif">
     <defs>
@@ -2193,101 +2346,101 @@ const WORKSHEETS = [
 <div class="alert bg-secondary/10 border border-secondary/30 rounded-lg text-base-content mt-3">
   <strong>Do this:</strong> Open <a href="#" data-page="admin" class="link link-secondary">Connection Diagnostics</a>. The latency graph shows round-trip time to the AL1350 over HTTP. What does a spike in this graph tell you about the health of the IO-Link network?
 </div>
-<div class=”space-y-2 mt-2”>
-  <label class=”flex items-center gap-2 cursor-pointer”><input type=”radio” name=”cp2-ws6-q4” value=”a” class=”radio radio-sm radio-secondary”> High latency on the IO-Link subnet or the AL1350 being overloaded</label>
-  <label class=”flex items-center gap-2 cursor-pointer”><input type=”radio” name=”cp2-ws6-q4” value=”b” class=”radio radio-sm radio-secondary”> The dashboard browser tab is consuming too much memory and slowing the chart rendering</label>
-  <label class=”flex items-center gap-2 cursor-pointer”><input type=”radio” name=”cp2-ws6-q4” value=”c” class=”radio radio-sm radio-secondary”> The Pi's MQTT broker has stopped forwarding messages and is queueing them internally until the buffer limit is reached</label>
+<div class="space-y-2 mt-2">
+  <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="cp2-ws6-q4" value="a" class="radio radio-sm radio-secondary"> High latency on the IO-Link subnet or the AL1350 being overloaded</label>
+  <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="cp2-ws6-q4" value="b" class="radio radio-sm radio-secondary"> The dashboard browser tab is consuming too much memory and slowing the chart rendering</label>
+  <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="cp2-ws6-q4" value="c" class="radio radio-sm radio-secondary"> The Pi's MQTT broker has stopped forwarding messages and is queueing them internally until the buffer limit is reached</label>
 </div>
 
       <!-- OPC UA section -->
-      <div class=”rounded-xl border-2 border-info/30 bg-info/5 p-4 mt-4 space-y-3”>
-        <p class=”font-bold text-base-content text-sm”>🌐 Concept — OPC UA: the Industry 4.0 data bridge</p>
-        <p class=”text-sm text-base-content/80”><strong>OPC UA</strong> (IEC 62541) is the vendor-neutral standard for moving data from shop floor systems (PLCs, IO-Link masters) to supervisory systems (SCADA, data historians, cloud platforms). It is the “common language” of Industry 4.0 — any certified OPC UA client can connect to any OPC UA server regardless of manufacturer.</p>
-        <div class=”rounded-xl border border-base-300 bg-base-200 p-3”>
-          <p class=”text-xs font-semibold text-base-content/60 uppercase tracking-wide mb-2”>Extended data path with OPC UA</p>
-          <svg viewBox=”0 0 570 80” xmlns=”http://www.w3.org/2000/svg” class=”w-full” style=”font-family:system-ui,sans-serif”>
+      <div class="rounded-xl border-2 border-info/30 bg-info/5 p-4 mt-4 space-y-3">
+        <p class="font-bold text-base-content text-sm">🌐 Concept — OPC UA: the Industry 4.0 data bridge</p>
+        <p class="text-sm text-base-content/80"><strong>OPC UA</strong> (IEC 62541) is the vendor-neutral standard for moving data from shop floor systems (PLCs, IO-Link masters) to supervisory systems (SCADA, data historians, cloud platforms). It is the "common language" of Industry 4.0 — any certified OPC UA client can connect to any OPC UA server regardless of manufacturer.</p>
+        <div class="rounded-xl border border-base-300 bg-base-200 p-3">
+          <p class="text-xs font-semibold text-base-content/60 uppercase tracking-wide mb-2">Extended data path with OPC UA</p>
+          <svg viewBox="0 0 570 80" xmlns="http://www.w3.org/2000/svg" class="w-full" style="font-family:system-ui,sans-serif">
             <defs>
-              <marker id=”opcua-arr” markerWidth=”6” markerHeight=”6” refX=”5” refY=”3” orient=”auto”><path d=”M0,0 L6,3 L0,6 Z” fill=”#94a3b8”/></marker>
+              <marker id="opcua-arr" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#94a3b8"/></marker>
             </defs>
-            <rect x=”5” y=”20” width=”75” height=”36” rx=”5” fill=”#1e3a5f”/>
-            <text x=”42” y=”35” text-anchor=”middle” fill=”#93c5fd” font-size=”8” font-weight=”600”>IO-Link</text>
-            <text x=”42” y=”47” text-anchor=”middle” fill=”#bfdbfe” font-size=”7”>Sensor + AL1350</text>
-            <line x1=”80” y1=”38” x2=”103” y2=”38” stroke=”#94a3b8” stroke-width=”1.5” marker-end=”url(#opcua-arr)”/>
-            <rect x=”105” y=”20” width=”75” height=”36” rx=”5” fill=”#312e81”/>
-            <text x=”142” y=”35” text-anchor=”middle” fill=”#a5b4fc” font-size=”8” font-weight=”600”>PLC</text>
-            <text x=”142” y=”47” text-anchor=”middle” fill=”#c7d2fe” font-size=”7”>PROFINET</text>
-            <line x1=”180” y1=”38” x2=”203” y2=”38” stroke=”#94a3b8” stroke-width=”1.5” marker-end=”url(#opcua-arr)”/>
-            <rect x=”205” y=”20” width=”90” height=”36” rx=”5” fill=”#134e4a”/>
-            <text x=”250” y=”35” text-anchor=”middle” fill=”#99f6e4” font-size=”8” font-weight=”600”>OPC UA Server</text>
-            <text x=”250” y=”47” text-anchor=”middle” fill=”#6ee7b7” font-size=”7”>address space</text>
-            <line x1=”295” y1=”38” x2=”318” y2=”38” stroke=”#94a3b8” stroke-width=”1.5” marker-end=”url(#opcua-arr)”/>
-            <rect x=”320” y=”5” width=”80” height=”28” rx=”4” fill=”#1e293b”/>
-            <text x=”360” y=”16” text-anchor=”middle” fill=”#e2e8f0” font-size=”7” font-weight=”600”>SCADA</text>
-            <text x=”360” y=”26” text-anchor=”middle” fill=”#94a3b8” font-size=”6”>plant display</text>
-            <rect x=”320” y=”40” width=”80” height=”28” rx=”4” fill=”#1e293b”/>
-            <text x=”360” y=”51” text-anchor=”middle” fill=”#e2e8f0” font-size=”7” font-weight=”600”>Historian</text>
-            <text x=”360” y=”61” text-anchor=”middle” fill=”#94a3b8” font-size=”6”>long-term data</text>
-            <line x1=”400” y1=”19” x2=”423” y2=”19” stroke=”#94a3b8” stroke-width=”1.5” marker-end=”url(#opcua-arr)”/>
-            <line x1=”400” y1=”54” x2=”423” y2=”54” stroke=”#94a3b8” stroke-width=”1.5” marker-end=”url(#opcua-arr)”/>
-            <rect x=”425” y=”20” width=”80” height=”36” rx=”5” fill=”#1c1917”/>
-            <text x=”465” y=”35” text-anchor=”middle” fill=”#fde68a” font-size=”8” font-weight=”600”>Cloud / MES</text>
-            <text x=”465” y=”47” text-anchor=”middle” fill=”#fcd34d” font-size=”7”>any OPC UA client</text>
+            <rect x="5" y="20" width="75" height="36" rx="5" fill="#1e3a5f"/>
+            <text x="42" y="35" text-anchor="middle" fill="#93c5fd" font-size="8" font-weight="600">IO-Link</text>
+            <text x="42" y="47" text-anchor="middle" fill="#bfdbfe" font-size="7">Sensor + AL1350</text>
+            <line x1="80" y1="38" x2="103" y2="38" stroke="#94a3b8" stroke-width="1.5" marker-end="url(#opcua-arr)"/>
+            <rect x="105" y="20" width="75" height="36" rx="5" fill="#312e81"/>
+            <text x="142" y="35" text-anchor="middle" fill="#a5b4fc" font-size="8" font-weight="600">PLC</text>
+            <text x="142" y="47" text-anchor="middle" fill="#c7d2fe" font-size="7">PROFINET</text>
+            <line x1="180" y1="38" x2="203" y2="38" stroke="#94a3b8" stroke-width="1.5" marker-end="url(#opcua-arr)"/>
+            <rect x="205" y="20" width="90" height="36" rx="5" fill="#134e4a"/>
+            <text x="250" y="35" text-anchor="middle" fill="#99f6e4" font-size="8" font-weight="600">OPC UA Server</text>
+            <text x="250" y="47" text-anchor="middle" fill="#6ee7b7" font-size="7">address space</text>
+            <line x1="295" y1="38" x2="318" y2="38" stroke="#94a3b8" stroke-width="1.5" marker-end="url(#opcua-arr)"/>
+            <rect x="320" y="5" width="80" height="28" rx="4" fill="#1e293b"/>
+            <text x="360" y="16" text-anchor="middle" fill="#e2e8f0" font-size="7" font-weight="600">SCADA</text>
+            <text x="360" y="26" text-anchor="middle" fill="#94a3b8" font-size="6">plant display</text>
+            <rect x="320" y="40" width="80" height="28" rx="4" fill="#1e293b"/>
+            <text x="360" y="51" text-anchor="middle" fill="#e2e8f0" font-size="7" font-weight="600">Historian</text>
+            <text x="360" y="61" text-anchor="middle" fill="#94a3b8" font-size="6">long-term data</text>
+            <line x1="400" y1="19" x2="423" y2="19" stroke="#94a3b8" stroke-width="1.5" marker-end="url(#opcua-arr)"/>
+            <line x1="400" y1="54" x2="423" y2="54" stroke="#94a3b8" stroke-width="1.5" marker-end="url(#opcua-arr)"/>
+            <rect x="425" y="20" width="80" height="36" rx="5" fill="#1c1917"/>
+            <text x="465" y="35" text-anchor="middle" fill="#fde68a" font-size="8" font-weight="600">Cloud / MES</text>
+            <text x="465" y="47" text-anchor="middle" fill="#fcd34d" font-size="7">any OPC UA client</text>
           </svg>
         </div>
-        <div class=”overflow-x-auto rounded-lg” style=”border:1px solid #334155”>
-          <table class=”w-full text-xs” style=”border-collapse:collapse”>
+        <div class="overflow-x-auto rounded-lg" style="border:1px solid #334155">
+          <table class="w-full text-xs" style="border-collapse:collapse">
             <thead>
-              <tr style=”background:#1e293b;color:#475569”>
-                <td class=”px-3 py-2 font-semibold”>OPC UA concept</td>
-                <td class=”px-3 py-2”>What it means</td>
+              <tr style="background:#1e293b;color:#475569">
+                <td class="px-3 py-2 font-semibold">OPC UA concept</td>
+                <td class="px-3 py-2">What it means</td>
               </tr>
             </thead>
-            <tbody class=”text-base-content/80”>
-              <tr style=”border-top:1px solid #1e293b”>
-                <td class=”px-3 py-2 font-bold text-info”>Address space</td>
-                <td class=”px-3 py-2”>All data exposed as nodes in a hierarchical tree — Vendor ID lives at Server/DeviceSet/Port1/VendorID. Any client can browse and subscribe.</td>
+            <tbody class="text-base-content/80">
+              <tr style="border-top:1px solid #1e293b">
+                <td class="px-3 py-2 font-bold text-info">Address space</td>
+                <td class="px-3 py-2">All data exposed as nodes in a hierarchical tree — Vendor ID lives at Server/DeviceSet/Port1/VendorID. Any client can browse and subscribe.</td>
               </tr>
-              <tr style=”border-top:1px solid #1e293b”>
-                <td class=”px-3 py-2 font-bold text-info”>Subscriptions</td>
-                <td class=”px-3 py-2”>Client subscribes to nodes; server pushes only when values change. Reduces network load vs polling — similar to MQTT but with a standardised schema.</td>
+              <tr style="border-top:1px solid #1e293b">
+                <td class="px-3 py-2 font-bold text-info">Subscriptions</td>
+                <td class="px-3 py-2">Client subscribes to nodes; server pushes only when values change. Reduces network load vs polling — similar to MQTT but with a standardised schema.</td>
               </tr>
-              <tr style=”border-top:1px solid #1e293b”>
-                <td class=”px-3 py-2 font-bold text-info”>Security</td>
-                <td class=”px-3 py-2”>Built-in certificates, message signing, encryption, and user authentication. Designed for OT security from the ground up.</td>
+              <tr style="border-top:1px solid #1e293b">
+                <td class="px-3 py-2 font-bold text-info">Security</td>
+                <td class="px-3 py-2">Built-in certificates, message signing, encryption, and user authentication. Designed for OT security from the ground up.</td>
               </tr>
-              <tr style=”border-top:1px solid #1e293b”>
-                <td class=”px-3 py-2 font-bold text-info”>IO-Link companion spec</td>
-                <td class=”px-3 py-2”>Maps Vendor ID → ManufacturerName node, Device ID → Model node, PDin bytes → individual measurement nodes, event codes → Condition objects.</td>
+              <tr style="border-top:1px solid #1e293b">
+                <td class="px-3 py-2 font-bold text-info">IO-Link companion spec</td>
+                <td class="px-3 py-2">Maps Vendor ID → ManufacturerName node, Device ID → Model node, PDin bytes → individual measurement nodes, event codes → Condition objects.</td>
               </tr>
             </tbody>
           </table>
         </div>
-        <div class=”rounded-lg p-3 space-y-2” style=”background:#0f172a;border:1px solid #334155”>
-          <p class=”text-xs font-semibold text-base-content/50 uppercase tracking-wide”>This app vs OPC UA path</p>
-          <div class=”grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs font-mono”>
-            <div class=”rounded p-2 space-y-1” style=”background:#1e293b;border:1px solid #334155”>
-              <p class=”text-base-content/40 text-xs”>This app</p>
-              <p style=”color:#94a3b8”>AL1350 → MQTT → FastAPI → <span style=”color:#38bdf8”>WebSocket → Browser</span></p>
+        <div class="rounded-lg p-3 space-y-2" style="background:#0f172a;border:1px solid #334155">
+          <p class="text-xs font-semibold text-base-content/50 uppercase tracking-wide">This app vs OPC UA path</p>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs font-mono">
+            <div class="rounded p-2 space-y-1" style="background:#1e293b;border:1px solid #334155">
+              <p class="text-base-content/40 text-xs">This app</p>
+              <p style="color:#94a3b8">AL1350 → MQTT → FastAPI → <span style="color:#38bdf8">WebSocket → Browser</span></p>
             </div>
-            <div class=”rounded p-2 space-y-1” style=”background:#1e293b;border:1px solid #334155”>
-              <p class=”text-base-content/40 text-xs”>OPC UA path</p>
-              <p style=”color:#94a3b8”>AL1350 → PLC (PROFINET) → <span style=”color:#4ade80”>OPC UA Server → Any Client</span></p>
+            <div class="rounded p-2 space-y-1" style="background:#1e293b;border:1px solid #334155">
+              <p class="text-base-content/40 text-xs">OPC UA path</p>
+              <p style="color:#94a3b8">AL1350 → PLC (PROFINET) → <span style="color:#4ade80">OPC UA Server → Any Client</span></p>
             </div>
           </div>
-          <p class=”text-xs text-base-content/50”>Key difference: WebSocket is proprietary to this app. OPC UA is an international standard — any SCADA on the market can connect without custom code.</p>
+          <p class="text-xs text-base-content/50">Key difference: WebSocket is proprietary to this app. OPC UA is an international standard — any SCADA on the market can connect without custom code.</p>
         </div>
       </div>
 
-      <p class=”mt-4 font-medium text-base-content”><strong>Q5.</strong> In an OPC UA-enabled plant, where does the IO-Link process data from the AL1350 typically end up first?</p>
-      <div class=”space-y-2 mt-1”>
-        <label class=”flex items-center gap-2 cursor-pointer”><input type=”radio” name=”cp2-ws6-q5” value=”a” class=”radio radio-sm radio-secondary”> Directly in the OPC UA server — the AL1350 publishes OPC UA natively over Ethernet</label>
-        <label class=”flex items-center gap-2 cursor-pointer”><input type=”radio” name=”cp2-ws6-q5” value=”b” class=”radio radio-sm radio-secondary”> In the PLC process image via fieldbus (e.g. PROFINET), then in the OPC UA server via the PLC's OPC UA interface</label>
-        <label class=”flex items-center gap-2 cursor-pointer”><input type=”radio” name=”cp2-ws6-q5” value=”c” class=”radio radio-sm radio-secondary”> In the SCADA historian — it bypasses the PLC entirely and writes directly to the cloud database</label>
+      <p class="mt-4 font-medium text-base-content"><strong>Q5.</strong> In an OPC UA-enabled plant, where does the IO-Link process data from the AL1350 typically end up first?</p>
+      <div class="space-y-2 mt-1">
+        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="cp2-ws6-q5" value="a" class="radio radio-sm radio-secondary"> Directly in the OPC UA server — the AL1350 publishes OPC UA natively over Ethernet</label>
+        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="cp2-ws6-q5" value="b" class="radio radio-sm radio-secondary"> In the PLC process image via fieldbus (e.g. PROFINET), then in the OPC UA server via the PLC's OPC UA interface</label>
+        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="cp2-ws6-q5" value="c" class="radio radio-sm radio-secondary"> In the SCADA historian — it bypasses the PLC entirely and writes directly to the cloud database</label>
       </div>
 
 <!-- Verification section -->
-<div class=”rounded-xl border-2 border-warning/50 bg-warning/5 p-4 mt-4 space-y-3”>
-  <p class=”font-bold text-base-content text-base”>🎯 Verification — trace the equivalent layers in this app</p>
+<div class="rounded-xl border-2 border-warning/50 bg-warning/5 p-4 mt-4 space-y-3">
+  <p class="font-bold text-base-content text-base">🎯 Verification — trace the equivalent layers in this app</p>
   <p class="text-sm text-base-content/80">Use the live panels below and the <a href="#" data-page="home" class="link link-warning">Dashboard</a> to confirm each layer. Tick each item when verified.</p>
 
   <!-- Connection Diagnostics embedded panel -->
@@ -2353,7 +2506,7 @@ const WORKSHEETS = [
   </div>
 </div>
 
-<div id=”cp2-ws5-suggested” class=”hidden p-4 rounded-lg border border-base-300 bg-base-300/50 text-base-content/80 text-sm leading-relaxed ws-suggested”>Q1: c — the IO-Link master maps PDin into its process image; the PLC reads this via fieldbus each scan cycle. Q2: io_link_fastapi.py (MQTT subscription, rows 1 and 3); decoder.py (PDin decode, row 2). Q3: c — faster fault identification, multi-machine monitoring, and trend history. Latency spike: a — points to IO-Link subnet congestion or AL1350 load. Q5: b — IO-Link data goes into the PLC process image via fieldbus first; the PLC's OPC UA interface then exposes it to any OPC UA client.</div>
+<div id="cp2-ws5-suggested" class="hidden p-4 rounded-lg border border-base-300 bg-base-300/50 text-base-content/80 text-sm leading-relaxed ws-suggested">Q1: c — the IO-Link master maps PDin into its process image; the PLC reads this via fieldbus each scan cycle. Q2: io_link_fastapi.py (MQTT subscription, rows 1 and 3); decoder.py (PDin decode, row 2). Q3: c — faster fault identification, multi-machine monitoring, and trend history. Latency spike: a — points to IO-Link subnet congestion or AL1350 load. Q5: b — IO-Link data goes into the PLC process image via fieldbus first; the PLC's OPC UA interface then exposes it to any OPC UA client.</div>
     `
   },
   {
@@ -2389,15 +2542,15 @@ const WORKSHEETS = [
         </label>
         <label class="cp2-kit-item flex items-center gap-3 cursor-pointer rounded-xl border-2 border-transparent px-3 py-2 transition-all duration-200">
           <input type="checkbox" class="checkbox checkbox-md checkbox-secondary flex-shrink-0">
-          <span class=”cp2-kit-text”><strong>CMMS integration:</strong> event data (fault codes, timestamps, port identifiers) feeds a Computerised Maintenance Management System. This auto-generates work orders without manual data entry — the IO-Link event becomes the maintenance trigger.</span>
+          <span class="cp2-kit-text"><strong>CMMS integration:</strong> event data (fault codes, timestamps, port identifiers) feeds a Computerised Maintenance Management System. This auto-generates work orders without manual data entry — the IO-Link event becomes the maintenance trigger.</span>
         </label>
-        <label class=”cp2-kit-item flex items-center gap-3 cursor-pointer rounded-xl border-2 border-transparent px-3 py-2 transition-all duration-200”>
-          <input type=”checkbox” class=”checkbox checkbox-md checkbox-secondary flex-shrink-0”>
-          <span class=”cp2-kit-text”><strong>Three maintenance strategies:</strong> Reactive (fix after failure, highest MTTR and cost), Planned Preventive (fixed schedule, medium cost, may replace too early), Predictive / condition-based (replace when data indicates wear, lowest cost). IO-Link enables predictive by providing cycle count, event frequency, and process drift data.</span>
+        <label class="cp2-kit-item flex items-center gap-3 cursor-pointer rounded-xl border-2 border-transparent px-3 py-2 transition-all duration-200">
+          <input type="checkbox" class="checkbox checkbox-md checkbox-secondary flex-shrink-0">
+          <span class="cp2-kit-text"><strong>Three maintenance strategies:</strong> Reactive (fix after failure, highest MTTR and cost), Planned Preventive (fixed schedule, medium cost, may replace too early), Predictive / condition-based (replace when data indicates wear, lowest cost). IO-Link enables predictive by providing cycle count, event frequency, and process drift data.</span>
         </label>
-        <label class=”cp2-kit-item flex items-center gap-3 cursor-pointer rounded-xl border-2 border-transparent px-3 py-2 transition-all duration-200”>
-          <input type=”checkbox” class=”checkbox checkbox-md checkbox-secondary flex-shrink-0”>
-          <span class=”cp2-kit-text”><strong>Remaining Useful Life (RUL):</strong> calculated from cycle count vs rated lifetime. If a capacitive sensor has done 7.5M of its rated 10M cycles at 1,000 cycles/day, it has ~1,500 days to the 90% threshold. CMMS work order raised now — scheduled replacement in a planned window, not an emergency callout.</span>
+        <label class="cp2-kit-item flex items-center gap-3 cursor-pointer rounded-xl border-2 border-transparent px-3 py-2 transition-all duration-200">
+          <input type="checkbox" class="checkbox checkbox-md checkbox-secondary flex-shrink-0">
+          <span class="cp2-kit-text"><strong>Remaining Useful Life (RUL):</strong> calculated from cycle count vs rated lifetime. If a capacitive sensor has done 7.5M of its rated 10M cycles at 1,000 cycles/day, it has ~1,500 days to the 90% threshold. CMMS work order raised now — scheduled replacement in a planned window, not an emergency callout.</span>
         </label>
       </div>
 
@@ -2695,7 +2848,7 @@ const WORKSHEETS = [
         </div>
       </div>
 
-      <div id=”cp2-ws6-suggested” class=”hidden p-4 rounded-lg border border-base-300 bg-base-300/50 text-base-content/80 text-sm leading-relaxed ws-suggested”>Q1: a — Standard: 40×35=1,400 min=23.3 h. IO-Link: 40×8=320 min=5.3 h. Saving = 18 h/year. Q2: c — 18 × £5,000 = £90,000/year. Q3: b — automatic parameter restore (no re-commissioning cost) and remote diagnostics (no site visit needed). Q4: a — event data (faults and warnings) triggers maintenance work orders. Q5: b — (9,000,000 − 7,500,000) ÷ 1,000 = 1,500 days until 90% threshold. Q6: b — cycle count, event frequency, and calibration drift reveal actual device condition, unlike elapsed time alone.</div>
+      <div id="cp2-ws6-suggested" class="hidden p-4 rounded-lg border border-base-300 bg-base-300/50 text-base-content/80 text-sm leading-relaxed ws-suggested">Q1: a — Standard: 40×35=1,400 min=23.3 h. IO-Link: 40×8=320 min=5.3 h. Saving = 18 h/year. Q2: c — 18 × £5,000 = £90,000/year. Q3: b — automatic parameter restore (no re-commissioning cost) and remote diagnostics (no site visit needed). Q4: a — event data (faults and warnings) triggers maintenance work orders. Q5: b — (9,000,000 − 7,500,000) ÷ 1,000 = 1,500 days until 90% threshold. Q6: b — cycle count, event frequency, and calibration drift reveal actual device condition, unlike elapsed time alone.</div>
     `
   },
   {
@@ -3985,6 +4138,214 @@ function initLiveCp2Ws9(container) {
 }
 
 
+function initLiveCp2Ws4(container) {
+  var API = (window.IO_LINK_API_BASE || '') + '/api/io-link';
+
+  // ── PDout byte builders (Steps 1 & 5) ──────────────────────────────────
+
+  function _toHex2(n) { return ('0' + n.toString(16)).slice(-2).toUpperCase(); }
+
+  function _v(prefix, field) {
+    var el = container.querySelector('#' + prefix + field);
+    return el ? (parseInt(el.value) || 0) : 0;
+  }
+
+  function _computeHex(prefix) {
+    var b0 = ((_v(prefix,'audible') & 0x03) << 6) | ((_v(prefix,'c2i') & 0x07) << 3) | (_v(prefix,'c1i') & 0x07);
+    var b1 = ((_v(prefix,'speed')   & 0x03) << 6) | ((_v(prefix,'pattern') & 0x07) << 3) | (_v(prefix,'anim') & 0x07);
+    var b2 = ((_v(prefix,'c2') & 0x0F) << 4) | (_v(prefix,'c1') & 0x0F);
+    return _toHex2(b0) + _toHex2(b1) + _toHex2(b2);
+  }
+
+  function _wireBuilder(prefix, sendId, statusId, validId, targetC1, targetAnim, targetLabel) {
+    var preview = container.querySelector('#' + prefix + 'hex');
+    var validEl = container.querySelector('#' + validId);
+    var sendBtn = container.querySelector('#' + sendId);
+    var statusEl = container.querySelector('#' + statusId);
+
+    function _update() {
+      var hex = _computeHex(prefix);
+      var correct = (_v(prefix,'c1') === targetC1 && _v(prefix,'anim') === targetAnim);
+      if (preview) { preview.textContent = hex; preview.style.color = correct ? '#22c55e' : ''; }
+      if (validEl) { validEl.textContent = correct ? '✓ Correct — ' + targetLabel : ''; validEl.style.color = correct ? '#22c55e' : ''; }
+    }
+
+    ['audible','c2i','c1i','speed','pattern','anim','c1','c2'].forEach(function(field) {
+      var el = container.querySelector('#' + prefix + field);
+      if (el) el.addEventListener('change', _update);
+    });
+    _update();
+
+    if (sendBtn) {
+      sendBtn.addEventListener('click', function(e) {
+        e.stopPropagation();
+        var hex = _computeHex(prefix);
+        if (statusEl) statusEl.textContent = 'Sending…';
+        fetch(API + '/port/4/pdout', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({value: hex}) })
+          .then(function(r) { return r.json(); })
+          .then(function(d) { if (statusEl) statusEl.textContent = d.success ? '✓ Sent' : '✗ Failed'; })
+          .catch(function() { if (statusEl) statusEl.textContent = '✗ Error'; });
+      });
+    }
+  }
+
+  _wireBuilder('ws4s1-', 'ws4s1-send', 'ws4s1-status', 'ws4s1-valid', 1, 2, 'Red, Flash');
+  _wireBuilder('ws4s5-', 'ws4s5-send', 'ws4s5-status', 'ws4s5-valid', 0, 1, 'Green, Steady');
+
+  // ── Step 3: ISDU read SP1 from Port 3 ──────────────────────────────────
+
+  var sp1Btn = container.querySelector('#ws4-read-sp1');
+  if (sp1Btn) {
+    sp1Btn.addEventListener('click', function(e) {
+      e.stopPropagation();
+      var statusEl = container.querySelector('#ws4-sp1-status');
+      var valEl    = container.querySelector('#ws4-sp1-val');
+      var unitEl   = container.querySelector('#ws4-sp1-unit');
+      var hexEl    = container.querySelector('#ws4-sp1-hex');
+      if (statusEl) statusEl.textContent = 'Reading…';
+      fetch(API + '/port/3/parameter/read', {
+        method: 'POST', headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({index: 583, subindex: 0, dtype: 'int16', scale: 0.1})
+      }).then(function(r) { return r.json(); })
+        .then(function(d) {
+          if (d.success) {
+            if (valEl) valEl.textContent = d.value;
+            if (unitEl) unitEl.classList.remove('hidden');
+            if (hexEl)  hexEl.textContent = '(raw: 0x' + (d.raw_hex || '') + ')';
+            if (statusEl) statusEl.textContent = '';
+          } else {
+            if (statusEl) statusEl.textContent = '✗ Read failed';
+          }
+        })
+        .catch(function() { if (statusEl) statusEl.textContent = '✗ Error'; });
+    });
+  }
+
+  // ── Steps 2 & 4: live WebSocket for device identity + detection counter ─
+
+  var _capPrev = null;
+  var _capCount = 0;
+
+  // Ensure Port 2 is in IO-Link mode (may have been left inactive by a previous scenario)
+  fetch(API + '/port/2/mode', {
+    method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({mode: 'io-link'})
+  }).catch(function() {});
+
+  // Pre-populate Step 2 identity immediately without waiting for the HTTP poll cycle
+  fetch(API + '/port/2')
+    .then(function(r) { return r.json(); })
+    .then(function(d) {
+      var vidEl  = container.querySelector('#ws4-p2-vid');
+      var didEl  = container.querySelector('#ws4-p2-did');
+      var nameEl = container.querySelector('#ws4-p2-name');
+      var modeEl = container.querySelector('#ws4-p2-mode');
+      var _vid = d.vendor_id != null && d.vendor_id !== '' ? d.vendor_id : null;
+      var _did = d.device_id != null && d.device_id !== '' ? d.device_id : null;
+      if (vidEl)  vidEl.textContent  = _vid != null ? resolveVendorName(_vid) : '—';
+      if (didEl)  didEl.textContent  = _did != null ? String(_did) : '—';
+      if (nameEl) nameEl.textContent = (_vid != null && _did != null) ? resolveDeviceName(_vid, _did, d.name) : (d.name || '—');
+      if (modeEl) modeEl.textContent = d.mode || '—';
+    }).catch(function() {});
+
+  // Set cleanup AFTER startCp2LiveData so the stopCp2LiveData() call inside it doesn't fire it immediately
+  startCp2LiveData(function(data) {
+    if (!data || !Array.isArray(data.ports)) return;
+    var p2 = data.ports.find(function(p) { return p.port === 2; });
+
+    // Step 2 — identity
+    if (p2) {
+      var vidEl   = container.querySelector('#ws4-p2-vid');
+      var didEl   = container.querySelector('#ws4-p2-did');
+      var nameEl  = container.querySelector('#ws4-p2-name');
+      var modeEl  = container.querySelector('#ws4-p2-mode');
+      var _vid2 = p2.vendor_id  != null && p2.vendor_id  !== '' ? p2.vendor_id  : null;
+      var _did2 = p2.device_id != null && p2.device_id !== '' ? p2.device_id : null;
+      if (vidEl)  vidEl.textContent  = _vid2 != null ? resolveVendorName(_vid2) : '—';
+      if (didEl)  didEl.textContent  = _did2 != null ? String(_did2) : '—';
+      if (nameEl) nameEl.textContent = (_vid2 != null && _did2 != null) ? resolveDeviceName(_vid2, _did2, p2.name) : (p2.name || '—');
+      if (modeEl) modeEl.textContent = p2.mode || '—';
+    }
+
+    // Step 4 — detection counter
+    if (p2 && p2.pdin_decoded) {
+      var dec = p2.pdin_decoded;
+      var detected = !!(dec.object_detected || dec.so1 || dec.out1);
+      var ledEl   = container.querySelector('#ws4-cap-led');
+      var stateEl = container.querySelector('#ws4-cap-state');
+      var cntEl   = container.querySelector('#ws4-cap-count');
+      if (ledEl)   ledEl.style.background   = detected ? '#22c55e' : '#374151';
+      if (stateEl) stateEl.textContent       = detected ? 'DETECTED' : 'NO OBJECT';
+      if (_capPrev === false && detected === true) { _capCount++; }
+      _capPrev = detected;
+      if (cntEl) cntEl.textContent = _capCount;
+    }
+  });
+
+  _cp2Ws4Cleanup = function() {
+    fetch((window.IO_LINK_API_BASE || '') + '/api/io-link/port/4/pdout', {
+      method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({value: '000100'})
+    }).catch(function() {});
+  };
+}
+
+function initLiveCp2Ws5(container) {
+  var API = (window.IO_LINK_API_BASE || '') + '/api/io-link';
+
+  function wireChallenge(readId, hexId, ansId, checkId, resultId, port, index, subindex, dtype, scale, unit, tolerance) {
+    var readBtn = container.querySelector('#' + readId);
+    var hexEl = container.querySelector('#' + hexId);
+    var checkBtn = container.querySelector('#' + checkId);
+    var resultEl = container.querySelector('#' + resultId);
+    var expected = null;
+
+    if (readBtn) {
+      readBtn.addEventListener('click', function (e) {
+        e.stopPropagation();
+        if (hexEl) hexEl.textContent = 'Reading…';
+        if (resultEl) resultEl.textContent = '';
+        expected = null;
+        fetch(API + '/port/' + port + '/parameter/read', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ index: index, subindex: subindex, dtype: dtype, scale: scale })
+        }).then(function (r) { return r.json(); })
+          .then(function (d) {
+            if (d.success) {
+              if (hexEl) hexEl.textContent = (d.raw_hex || '').toUpperCase();
+              expected = d.value;
+            } else if (hexEl) {
+              hexEl.textContent = '✗ read failed';
+            }
+          }).catch(function () { if (hexEl) hexEl.textContent = '✗ error'; });
+      });
+    }
+
+    if (checkBtn) {
+      checkBtn.addEventListener('click', function (e) {
+        e.stopPropagation();
+        var ansEl = container.querySelector('#' + ansId);
+        var val = ansEl ? parseFloat(ansEl.value) : NaN;
+        if (expected === null) {
+          if (resultEl) { resultEl.textContent = 'Read the hex first'; resultEl.className = 'text-sm font-semibold text-warning'; }
+          return;
+        }
+        if (isNaN(val)) {
+          if (resultEl) { resultEl.textContent = 'Enter a number'; resultEl.className = 'text-sm font-semibold text-warning'; }
+          return;
+        }
+        var ok = Math.abs(val - expected) <= tolerance;
+        if (resultEl) {
+          resultEl.textContent = ok ? ('✓ Correct — ' + expected + ' ' + unit) : ('✗ Expected ' + expected + ' ' + unit);
+          resultEl.className = 'text-sm font-semibold ' + (ok ? 'text-success' : 'text-error');
+        }
+      });
+    }
+  }
+
+  wireChallenge('ws5-read-1', 'ws5-hex-1', 'ws5-ans-1', 'ws5-check-1', 'ws5-result-1', 3, 583, 0, 'int16', 0.1, '°C', 0.15);
+  wireChallenge('ws5-read-2', 'ws5-hex-2', 'ws5-ans-2', 'ws5-check-2', 'ws5-result-2', 2, 60, 1, 'uint16', 1, 'counts', 0.5);
+  wireChallenge('ws5-read-3', 'ws5-hex-3', 'ws5-ans-3', 'ws5-check-3', 'ws5-result-3', 3, 681, 0, 'int16', 0.1, '°C', 0.15);
+}
+
 function initWorksheetInteractivity(container) {
   if (!container) container = document.getElementById('cp0002-root');
   if (!container) return;
@@ -4017,6 +4378,8 @@ function initWorksheetInteractivity(container) {
   if (container.querySelector('.cp2-kit-item')) initCp2KitChecklist(container);
   if (container.querySelector('#cp2-sys-panel')) initLiveCp2Intro(container);
   if (container.querySelector('#cp2-ws3-panel')) initLiveCp2Ws3(container);
+  if (container.querySelector('#cp2-ws4-verify')) initLiveCp2Ws4(container);
+  if (container.querySelector('#cp2-ws5-verify')) initLiveCp2Ws5(container);
   if (container.querySelector('#cp2-ws9-live-panel')) initLiveCp2Ws9(container);
   if (container.querySelector('#cp2-diag-badge')) initCp2EmbeddedPanels(container);
 
