@@ -21,6 +21,8 @@ matrix-template/
 
 # Logs and env
 *.log
+logs/alarms.jsonl*
+backend/data_logs/
 .env
 .env.local
 

@@ -38,6 +38,7 @@ from device_parameters import (
     T_UINT8, G_CONFIG, G_DIAGNOSTICS, G_IDENTITY
 )
 from csv_logger import CSVLogger
+from alarm_logger import AlarmLogger, SEVERITY_INFO, SEVERITY_WARNING, SEVERITY_ALARM
 
 try:
     import aiomqtt
@@ -194,6 +195,7 @@ app.add_middleware(
 _BACKEND_START_TS: float = time.time()
 
 csv_logger = CSVLogger()
+alarm_logger = AlarmLogger()
 
 # Global state
 system_state = {
@@ -238,6 +240,84 @@ _prev_circuit_state: Optional[str] = None
 _prev_degraded_mode: Optional[bool] = None
 # Detection counter tracking per port (capacitive sensor ISDU index 210)
 _cap_counter_prev: dict = {}  # port -> last raw counter value
+
+# Alarm-transition tracking, so alarm_logger only records rising/falling edges,
+# not every 500 ms push while a condition is held.
+_prev_port_alarms: Dict[int, dict] = {}   # port -> {flag_name: bool, ...}
+_prev_supervision_alarm: Optional[bool] = None
+_SUPPLY_NOMINAL_V = 24.0
+_SUPPLY_UNDERVOLTAGE_V = 21.6   # 24 V - 10%, per LD0013 electrical test tolerance
+_SUPPLY_OVERVOLTAGE_V = 26.4    # 24 V + 10%
+
+# Flags to watch per device type: {decoded_key: (event_type, severity, label)}
+_PROXIMITY_ALARM_FLAGS = {
+    'instability_alarm':   ('proximity_instability', SEVERITY_ALARM, 'Instability Detection Alarm'),
+    'over_approach_alarm': ('proximity_over_approach', SEVERITY_ALARM, 'Over-Approach Alarm'),
+    'warning':              ('proximity_warning', SEVERITY_WARNING, 'Warning flag'),
+    'error':                ('proximity_error', SEVERITY_ALARM, 'Error flag'),
+}
+_TEMPERATURE_ALARM_FLAGS = {
+    'out1': ('temperature_out1', SEVERITY_WARNING, 'OUT1 setpoint (SP1/RP1)'),
+    'out2': ('temperature_out2', SEVERITY_WARNING, 'OUT2 setpoint (SP2/RP2)'),
+}
+
+
+def _track_port_alarms(port_data: dict) -> None:
+    """Diff a port's decoded pdin flags against the previous snapshot and log
+    any rising/falling edge as a structured alarm event. Never raises."""
+    try:
+        port_num = port_data.get('port')
+        dtype = port_data.get('device_type')
+        decoded = port_data.get('pdin_decoded') or {}
+        if port_num is None or not decoded:
+            return
+
+        if dtype == DEVICE_TYPE_PROXIMITY:
+            flag_map = _PROXIMITY_ALARM_FLAGS
+        elif dtype == DEVICE_TYPE_TEMPERATURE:
+            flag_map = _TEMPERATURE_ALARM_FLAGS
+        else:
+            return
+
+        prev = _prev_port_alarms.setdefault(port_num, {})
+        for key, (event_type, severity, label) in flag_map.items():
+            if key not in decoded:
+                continue
+            now_val = bool(decoded[key])
+            was_val = prev.get(key)
+            if was_val is not None and now_val != was_val:
+                alarm_logger.log(
+                    event_type, severity,
+                    f"Port {port_num}: {label} {'SET' if now_val else 'CLEARED'}",
+                    port=port_num,
+                    extra={'value': now_val, 'raw_hex': decoded.get('raw_hex')},
+                )
+            prev[key] = now_val
+    except Exception:
+        pass
+
+
+def _track_supervision_alarm(supervision: dict) -> None:
+    """Flag supply undervoltage/overvoltage transitions from AL1350 supervision data."""
+    global _prev_supervision_alarm
+    try:
+        voltage = supervision.get('voltage')
+        if voltage is None:
+            return
+        voltage = float(voltage)
+        is_fault = voltage < _SUPPLY_UNDERVOLTAGE_V or voltage > _SUPPLY_OVERVOLTAGE_V
+        if _prev_supervision_alarm is not None and is_fault != _prev_supervision_alarm:
+            kind = 'undervoltage' if voltage < _SUPPLY_UNDERVOLTAGE_V else 'overvoltage'
+            alarm_logger.log(
+                'supply_voltage', SEVERITY_ALARM if is_fault else SEVERITY_INFO,
+                f"Supply {kind.upper()} {'DETECTED' if is_fault else 'CLEARED'} — {voltage} V "
+                f"(nominal {_SUPPLY_NOMINAL_V} V ±10%)" if is_fault else
+                f"Supply voltage back in range — {voltage} V",
+                extra={'voltage': voltage},
+            )
+        _prev_supervision_alarm = is_fault
+    except (TypeError, ValueError):
+        pass
 
 # Configuration
 POLL_INTERVAL = 1.0
@@ -392,15 +472,30 @@ async def poll_io_link_master():
                         f"master={al1350._master_ip}:{al1350._master_port} "
                         f"poll_ms={poll_ms}"
                     )
+                    alarm_logger.log(
+                        'circuit_breaker', SEVERITY_ALARM,
+                        f"Circuit breaker OPENED after {al1350._breaker.failures} consecutive failures — "
+                        f"last_error={al1350.last_error!r}",
+                        extra={'failures': al1350._breaker.failures, 'poll_ms': poll_ms},
+                    )
                 elif circuit_after == 'closed' and _prev_circuit_state in ('open', 'half-open'):
                     logger.info(
                         f"CIRCUIT BREAKER CLOSED (recovered) — "
                         f"was={_prev_circuit_state} poll_ms={poll_ms}"
                     )
+                    alarm_logger.log(
+                        'circuit_breaker', SEVERITY_INFO,
+                        f"Circuit breaker CLOSED (recovered from {_prev_circuit_state})",
+                        extra={'poll_ms': poll_ms},
+                    )
                 elif circuit_after == 'half-open':
                     logger.info(
                         f"CIRCUIT BREAKER HALF-OPEN — probing recovery after 15 s "
                         f"master={al1350._master_ip}:{al1350._master_port}"
+                    )
+                    alarm_logger.log(
+                        'circuit_breaker', SEVERITY_WARNING,
+                        "Circuit breaker HALF-OPEN — probing recovery",
                     )
             _prev_circuit_state = circuit_after
 
@@ -411,8 +506,17 @@ async def poll_io_link_master():
                         f"DEGRADED MODE: falling back to per-request GETs "
                         f"reason={al1350.degraded_reason!r}"
                     )
+                    alarm_logger.log(
+                        'degraded_mode', SEVERITY_WARNING,
+                        f"Degraded mode ENTERED — falling back to per-request GETs "
+                        f"(reason={al1350.degraded_reason!r})",
+                    )
                 else:
                     logger.info("DEGRADED MODE cleared — getdatamulti working again")
+                    alarm_logger.log(
+                        'degraded_mode', SEVERITY_INFO,
+                        "Degraded mode CLEARED — getdatamulti working again",
+                    )
             _prev_degraded_mode = al1350.degraded_mode
 
             # Preserve static metadata between lightweight poll cycles.
@@ -434,6 +538,7 @@ async def poll_io_link_master():
             if isinstance(ports, list):
                 for port_data in ports:
                     _enrich_port(port_data, port_labels=port_labels)
+                    _track_port_alarms(port_data)
 
             # Read detection counters for all capacitive ports in parallel
             if isinstance(ports, list):
@@ -510,6 +615,7 @@ async def poll_io_link_master():
 
             if supervision:
                 append_supervision_history(supervision)
+                _track_supervision_alarm(supervision)
 
             # Only broadcast from the HTTP poll when MQTT is not active.
             # When MQTT is connected it broadcasts on every push message instead.
@@ -550,10 +656,20 @@ async def poll_io_link_master():
             _transition_ts = _now
             if _current:
                 logger.info(f"AL1350 STATUS → CONNECTED (was down {_dur}s)")
+                alarm_logger.log(
+                    'link', SEVERITY_INFO,
+                    f"AL1350 link CONNECTED (was down {_dur}s)",
+                    extra={'down_duration_sec': _dur},
+                )
             else:
                 logger.warning(
                     f"AL1350 STATUS → DISCONNECTED (was up {_dur}s) "
                     f"error={_err!r} circuit={al1350._breaker.state}"
+                )
+                alarm_logger.log(
+                    'link', SEVERITY_ALARM,
+                    f"AL1350 link DISCONNECTED (was up {_dur}s) — error={_err!r}",
+                    extra={'up_duration_sec': _dur, 'error': _err, 'circuit': al1350._breaker.state},
                 )
         consecutive_failures = 0 if _current else consecutive_failures + 1
         _prev_success = _current
@@ -590,6 +706,7 @@ def _parse_mqtt_message(raw: bytes) -> None:
                 raw_mode = mode_val.get("data")
                 port["mode"] = MODE_MAP.get(raw_mode, str(raw_mode)) if isinstance(raw_mode, int) else (raw_mode or "inactive")
             _enrich_port(port, port_labels=port_labels)
+            _track_port_alarms(port)
             ports[port_num] = port
 
         # Update supervision from MQTT payload
@@ -603,6 +720,7 @@ def _parse_mqtt_message(raw: bytes) -> None:
                 supervision[key] = entry.get("data")
         if supervision:
             append_supervision_history(supervision)
+            _track_supervision_alarm(supervision)
 
         # Detection counter reads for capacitive ports (still via HTTP; updated by poll loop)
         # Merge any existing detection_counter fields from the poll loop cache
@@ -974,6 +1092,28 @@ async def get_app_logs(n: int = 200):
     return JSONResponse({'success': True, 'count': len(entries), 'logs': entries})
 
 
+@app.get("/api/io-link/alarms")
+async def get_alarm_log(n: int = 200):
+    """Return the last N structured alarm/event records (circuit breaker, degraded
+    mode, link up/down, sensor alarms, supply voltage, ISDU writes). Backed by
+    logs/alarms.jsonl, which persists across backend restarts — unlike the other
+    in-memory diagnostics buffers."""
+    entries = alarm_logger.recent(n)
+    return JSONResponse({'success': True, 'count': len(entries), 'alarms': entries})
+
+
+@app.get("/api/io-link/alarms/export")
+async def export_alarm_log():
+    """Download the full persisted alarm log (JSON Lines) for offline review."""
+    path = alarm_logger.file_path()
+    if not path.exists():
+        raise HTTPException(status_code=404, detail="No alarm log recorded yet")
+    return FileResponse(
+        path, media_type="application/x-ndjson",
+        filename=f"alarms_{datetime.now().strftime('%Y%m%d_%H%M%S')}.jsonl",
+    )
+
+
 @app.get("/api/io-link/port/{port_num}")
 async def io_link_port_detail(port_num: int):
     """Get detailed data for a specific IO-Link port including decoded process data"""
@@ -1144,7 +1284,17 @@ async def write_port_parameter(port_num: int, request: Request):
     hex_val = encode_isdu_value(value, dtype, scale)
     ok = await al1350.write_isdu(port_num, index, subindex, hex_val)
     if not ok:
+        alarm_logger.log(
+            'isdu_write', SEVERITY_WARNING,
+            f"Port {port_num}: ISDU write FAILED — index={index} subindex={subindex} value={value}",
+            port=port_num, extra={'index': index, 'subindex': subindex, 'value': value},
+        )
         return JSONResponse({'success': False, 'error': 'ISDU write failed'})
+    alarm_logger.log(
+        'isdu_write', SEVERITY_INFO,
+        f"Port {port_num}: ISDU write — index={index} subindex={subindex} value={value}",
+        port=port_num, extra={'index': index, 'subindex': subindex, 'value': value, 'hex': hex_val},
+    )
     return JSONResponse({'success': True, 'wrote_hex': hex_val, 'value': value})
 
 

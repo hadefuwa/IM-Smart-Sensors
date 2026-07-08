@@ -173,6 +173,25 @@ export function renderAdminPage() {
       </div>
 
       <div class="card bg-base-200 shadow-xl border border-base-300">
+        <div class="card-body py-3 px-4">
+          <div class="flex items-center justify-between gap-2 mb-2">
+            <h2 class="card-title text-base-content text-base">Alarm Log</h2>
+            <div class="flex items-center gap-2">
+              <select id="alarmSeverityFilter" class="select select-bordered select-xs">
+                <option value="ALL">All events</option>
+                <option value="WARNING">Warning+</option>
+                <option value="ALARM">Alarm only</option>
+              </select>
+              <a id="alarmExportBtn" href="${API_BASE}/api/io-link/alarms/export" download
+                 class="btn btn-outline btn-xs">Export .jsonl</a>
+            </div>
+          </div>
+          <div id="alarmLogViewer" class="bg-base-300 rounded font-mono text-xs leading-5 overflow-y-auto" style="height:280px;"></div>
+          <p class="text-xs text-base-content/40 mt-1">Structured, persistent record of circuit-breaker trips, degraded mode, link drops, sensor alarms, supply voltage faults, and ISDU writes — survives a backend restart. Saved to <code>logs/alarms.jsonl</code> on the Pi.</p>
+        </div>
+      </div>
+
+      <div class="card bg-base-200 shadow-xl border border-base-300">
         <div class="card-body p-0 flex flex-col" style="height:360px;">
           <div id="diag-terminal-container" class="flex-1 min-h-0"></div>
         </div>
@@ -377,6 +396,31 @@ function fillLogViewer(logs) {
   if (shouldScroll) viewer.scrollTop = 0;
 }
 
+const _ALARM_SEVERITY_COLOUR = { alarm: 'text-error', warning: 'text-warning', info: 'text-info' };
+const _ALARM_SEVERITY_ORDER = { info: 0, warning: 1, alarm: 2 };
+
+function fillAlarmLog(alarms) {
+  const viewer = document.getElementById('alarmLogViewer');
+  if (!viewer) return;
+  const filterEl = document.getElementById('alarmSeverityFilter');
+  const filterVal = filterEl ? filterEl.value : 'ALL';
+  const minLevel = filterVal === 'ALARM' ? 2 : filterVal === 'WARNING' ? 1 : -1;
+
+  const lines = [...alarms].reverse().filter(e => (_ALARM_SEVERITY_ORDER[e.severity] ?? 0) >= minLevel);
+  if (lines.length === 0) {
+    viewer.innerHTML = '<div class="p-2 text-base-content/40">No alarm/event records match the filter.</div>';
+    return;
+  }
+  viewer.innerHTML = lines.map(e => {
+    const t = new Date(e.ts * 1000).toLocaleString([], { hour: '2-digit', minute: '2-digit', second: '2-digit', month: 'short', day: 'numeric' });
+    const cls = _ALARM_SEVERITY_COLOUR[e.severity] || 'text-base-content';
+    const sev = (e.severity || 'info').toUpperCase().padEnd(7);
+    const port = e.port != null ? `<span class="text-base-content/50">[P${e.port}]</span> ` : '';
+    const msg = (e.message || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    return `<div class="px-2 py-px hover:bg-base-100"><span class="text-base-content/40">${t}</span> <span class="${cls} font-bold">${sev}</span> ${port}<span class="text-base-content/80">${msg}</span></div>`;
+  }).join('');
+}
+
 function fillPortFreshness(stats) {
   const wrapper = document.getElementById('diagPortFreshness');
   if (!wrapper) return;
@@ -491,14 +535,16 @@ function fillDegradedBanner(stats) {
 
 async function refreshDiagnostics() {
   try {
-    const [diagRes, cfgRes, logsRes] = await Promise.all([
+    const [diagRes, cfgRes, logsRes, alarmsRes] = await Promise.all([
       fetch(`${API_BASE}/api/io-link/diagnostics`),
       fetch(`${API_BASE}/api/io-link/config`),
       fetch(`${API_BASE}/api/logs?n=200`),
+      fetch(`${API_BASE}/api/io-link/alarms?n=200`),
     ]);
     const data = await diagRes.json();
     const cfg = await cfgRes.json();
     const logsData = await logsRes.json().catch(() => ({ logs: [] }));
+    const alarmsData = await alarmsRes.json().catch(() => ({ alarms: [] }));
     if (!data.success) return;
     if (data.start_ts) _backendStartTs = data.start_ts;
 
@@ -507,6 +553,7 @@ async function refreshDiagnostics() {
     fillDegradedBanner(data.stats || {});
     fillEventsTable(data.events || []);
     fillLogViewer(logsData.logs || []);
+    fillAlarmLog(alarmsData.alarms || []);
     // Charts last — errors here don't affect the tables above
     destroyCharts();
     buildTimelineChart(data.events || []);
@@ -563,7 +610,7 @@ export function initAdminPage() {
   const btn = document.getElementById('diagRefreshBtn');
   if (btn) btn.onclick = refreshDiagnostics;
   document.addEventListener('change', e => {
-    if (e.target && e.target.id === 'logLevelFilter') refreshDiagnostics();
+    if (e.target && (e.target.id === 'logLevelFilter' || e.target.id === 'alarmSeverityFilter')) refreshDiagnostics();
   });
 
   _terminalLog = new TerminalLog('diag-terminal-container');
