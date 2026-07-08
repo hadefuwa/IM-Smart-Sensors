@@ -20,7 +20,7 @@ The `docs/` folder is organised into subfolders by purpose:
 | [manuals/PI_OPERATIONS.md](manuals/PI_OPERATIONS.md) | Git → Pi workflow, rollback, health checks |
 | [manuals/port-config.md](manuals/port-config.md) | IO-Link port mode troubleshooting and AL1350 API examples |
 | [manuals/SIDEBAR_SCROLL_FIX.md](manuals/SIDEBAR_SCROLL_FIX.md) | Sidebar flex constraint diagnosis (kiosk touchscreen) |
-| [manuals/PHOTOELECTRIC-SENSOR-REPLACEMENT.md](manuals/PHOTOELECTRIC-SENSOR-REPLACEMENT.md) | Current photoelectric sensor ISDU limitation + recommended replacements with full IO-Link parameter access |
+| [manuals/PHOTOELECTRIC-SENSOR-REPLACEMENT.md](manuals/PHOTOELECTRIC-SENSOR-REPLACEMENT.md) | Historical — Contrinex photoelectric sensor ISDU limitation + recommended replacements (Port 1 is now fitted with an Omron proximity sensor; retained for reference only) |
 
 ## Sensor Datasheets
 
@@ -29,11 +29,11 @@ The `docs/` folder is organised into subfolders by purpose:
 | [datasheets/TV7105.pdf](datasheets/TV7105.pdf) | IFM TV7105 temperature sensor |
 | [datasheets/Capacitive Proximity.pdf](datasheets/Capacitive%20Proximity.pdf) | RS PRO / Carlo Gavazzi CA18FAF08BP M18 capacitive sensor |
 | [datasheets/Capacitive Proximity Family.pdf](datasheets/Capacitive%20Proximity%20Family.pdf) | RS PRO capacitive proximity sensor family |
-| [datasheets/LTR-M18PA-PM.pdf](datasheets/LTR-M18PA-PM.pdf) | Contrinex LTR-M18PA-PMS-603 diffuse photoelectric sensor — sold as RS PRO 284-9794 |
-| [datasheets/RS PRO Photoelectric Sensor.pdf](datasheets/RS%20PRO%20Photoelectric%20Sensor.pdf) | RS PRO photoelectric sensor (older RS branded spec sheet) |
+| [datasheets/LTR-M18PA-PM.pdf](datasheets/LTR-M18PA-PM.pdf) | Contrinex LTR-M18PA-PMS-603 diffuse photoelectric sensor — sold as RS PRO 284-9794 (not fitted to this kit; retained for reference only) |
+| [datasheets/RS PRO Photoelectric Sensor.pdf](datasheets/RS%20PRO%20Photoelectric%20Sensor.pdf) | RS PRO photoelectric sensor (older RS branded spec sheet; not fitted to this kit) |
 | [datasheets/CL50PKQ.pdf](datasheets/CL50PKQ.pdf) | Banner CL50 Pro RGB light stack (IO-Link data reference) |
 | [datasheets/e2e_iodd_temp/](datasheets/e2e_iodd_temp/) | Omron E2E NEXT family IODD set (Port 1 proximity sensor) |
-| [datasheets/photoelectric/](datasheets/photoelectric/) | Contrinex LTR-M18PA-PMx-603 IODD + icons |
+| [datasheets/photoelectric/](datasheets/photoelectric/) | Contrinex LTR-M18PA-PMx-603 IODD + icons (not fitted to this kit; retained for reference only) |
 
 ## AL1350 Reference
 
@@ -48,6 +48,7 @@ The `docs/` folder is organised into subfolders by purpose:
 |----------|-------------|
 | [specifications/CE-Technical-Documentation.md](specifications/CE-Technical-Documentation.md) | CE Technical Construction File — directives, standards, safety assessment |
 | [specifications/LD0013-electrical-test-procedure.md](specifications/LD0013-electrical-test-procedure.md) | Electrical test procedure (LD0013) |
+| [Manufacturing/software-design-verification-record.md](Manufacturing/software-design-verification-record.md) | Software design & verification record — main logic, GUI/HMI, fault handling, alarm logic |
 | [specifications/parts-lists.md](specifications/parts-lists.md) / [.xlsx](specifications/parts-lists.xlsx) | Master parts list — drawing refs, manufacturers, part numbers, CE/UL status, spares |
 | [specifications/spec doc/](specifications/spec%20doc/) | IM4330 product specification (source doc + generated .md) |
 
@@ -59,6 +60,8 @@ The `docs/` folder is organised into subfolders by purpose:
 | [diagrams/data flow.html](diagrams/data%20flow.html) | Data flow diagram |
 | [diagrams/pid-schematic.html](diagrams/pid-schematic.html) | PID schematic (HTML) |
 | [diagrams/IM4330 PID Schematic.docx](diagrams/IM4330%20PID%20Schematic.docx) | PID schematic (source doc, component tag register) |
+| [diagrams/pid-schematic-text.md](diagrams/pid-schematic-text.md) | PID schematic — plain-text data-flow diagram (generic-label + real-device versions) |
+| [diagrams/pid-data-flow.html](diagrams/pid-data-flow.html) | PID schematic — illustrated data-flow diagram with generic/actual-device label toggle |
 
 ## Dev Notes
 

@@ -14,7 +14,7 @@ IO-Link Smart Sensors Training & Demonstration Kit
 Model: `[TBC]`
 
 **Comprising:**
-IFM AL1350 IO-Link Master, IFM TV7105 IO-Link temperature sensor, Carlo Gavazzi/RS PRO capacitive M18 proximity sensor, Contrinex LTR-M18PA-PMS-603 photoelectric sensor and/or Omron E2E-X16MB1T12 inductive proximity sensor, Banner CL50 Pro RGB status light, Raspberry Pi–based HMI dashboard with touchscreen, enclosure, cabling and 24 V DC power supply. The system is a benchtop/panel-mounted training rig designed for educational environments to teach IO-Link communication, IODD-based sensor parameterisation, and industrial HMI monitoring.
+IFM AL1350 IO-Link Master, IFM TV7105 IO-Link temperature sensor, Carlo Gavazzi/RS PRO capacitive M18 proximity sensor, Omron E2E-X16MB1T12 inductive proximity sensor, Banner CL50 Pro RGB status light, Raspberry Pi–based HMI dashboard with touchscreen, enclosure, cabling and 24 V DC power supply. The system is a benchtop/panel-mounted training rig designed for educational environments to teach IO-Link communication, IODD-based sensor parameterisation, and industrial HMI monitoring.
 
 **Serial Numbers / Batch Numbers:** `[TBC]`
 
@@ -102,17 +102,16 @@ Email: `[TBC]`@matrixtsl.com
 
 The IO-Link Smart Sensors Training & Demonstration Kit is an educational training rig specifically designed for technical and vocational colleges, providing practical skills in IO-Link Master/Device communication, IODD-based sensor parameterisation, and industrial HMI monitoring.
 
-It comprises an IFM AL1350 IO-Link Master (4 ports) connected to a set of industrial IO-Link sensors — an IFM TV7105 temperature sensor, a Carlo Gavazzi/RS PRO capacitive M18 proximity sensor, and a Contrinex photoelectric sensor and/or an Omron inductive proximity sensor — together with a Banner CL50 Pro RGB status light on the fourth port. A Raspberry Pi–based HMI dashboard, running the software in this repository, displays live sensor data pushed via MQTT and provides full parameter read/write access via IO-Link ISDU for hands-on training. The kit also hosts a set of interactive training worksheets (CP0001, CP0002) covering sensor fundamentals through fault-diagnosis and calibration-drift scenarios, replicating real-world maintenance situations for enhanced learning outcomes.
+It comprises an IFM AL1350 IO-Link Master (4 ports) connected to a set of industrial IO-Link sensors — an Omron E2E-X16MB1T12 inductive proximity sensor, a Carlo Gavazzi/RS PRO capacitive M18 proximity sensor, and an IFM TV7105 temperature sensor — together with a Banner CL50 Pro RGB status light on the fourth port. A Raspberry Pi–based HMI dashboard, running the software in this repository, displays live sensor data pushed via MQTT and provides full parameter read/write access via IO-Link ISDU for hands-on training. The kit also hosts a set of interactive training worksheets (CP0001, CP0002) covering sensor fundamentals through fault-diagnosis and calibration-drift scenarios, replicating real-world maintenance situations for enhanced learning outcomes.
 
 ### System Composition
 
 | Component | Role |
 |---|---|
 | IFM AL1350 | IO-Link Master, 4 ports, Class A |
-| IFM TV7105 | IO-Link temperature sensor (Port 3) |
+| Omron E2E-X16MB1T12 | IO-Link inductive proximity sensor (Port 1) |
 | Carlo Gavazzi/RS PRO capacitive M18 | IO-Link capacitive proximity sensor (Port 2) |
-| Contrinex LTR-M18PA-PMS-603 | IO-Link diffuse photoelectric sensor (Port 1, one sensor variant) |
-| Omron E2E-X16MB1T12 | IO-Link inductive proximity sensor (Port 1, alternate sensor variant) |
+| IFM TV7105 | IO-Link temperature sensor (Port 3) |
 | Banner CL50 Pro | RGB status light, PDout-only (Port 4) |
 | Raspberry Pi 4 + WaveShare 1024×600 touchscreen | HMI host, kiosk-mode dashboard |
 | Enclosure, M12 cabling, 24 V DC power supply | Mechanical/electrical infrastructure |
@@ -218,7 +217,7 @@ Cross-reference to Annex I of 2006/42/EC (where applicable) and the general LVD/
 
 | EHSR ref | Requirement | How addressed | Evidence |
 |---|---|---|---|
-| 1.1.2 | Principles of safety integration (eliminate/reduce risk at design stage) | Sensors and AL1350 are pre-certified industrial components (IFM, Contrinex, Omron, Carlo Gavazzi, Banner); enclosure design avoids live-part access | `[TBC]` — component datasheets in `docs/` |
+| 1.1.2 | Principles of safety integration (eliminate/reduce risk at design stage) | Sensors and AL1350 are pre-certified industrial components (IFM, Omron, Carlo Gavazzi, Banner); enclosure design avoids live-part access | `[TBC]` — component datasheets in `docs/` |
 | 1.1.3 | Materials and products | Enclosure/mounting materials selected for indoor lab use, non-toxic, RoHS compliant | `[TBC]` — supplier declarations |
 | 1.3.7 | Risks related to moving parts | Not applicable — no moving parts in the standard configuration | See Protection Against Mechanical Hazards |
 | 1.5.1 | Electricity supply | Field-side supply is SELV/PELV by design: AL1350 rated 20–30 V DC, Protection Class III; TV7105 supply "to EN 50178, SELV, PELV". Mains-to-24V PSU isolation and fusing on the primary side is the remaining item to document. | `[TBC]` — PSU datasheet + electrical schematic |
@@ -308,7 +307,7 @@ Hazards outside the mechanical/electrical categories already covered, per EN ISO
 | Software/firmware updates | Backend and frontend deployed per the documented Pi deployment procedure (build → deploy → restart backend service → relaunch kiosk). AL1350 firmware updates per the manufacturer operating manual — firmware changes should be followed by a full regression check of the ISDU parameter panels before returning the kit to classroom use. |
 | Calibration | TV7105 temperature offset calibration (±10 °C range, 0.1 °C scale) is demonstrated live in a dedicated worksheet scenario and is reset to 0.0 °C on scenario completion or navigation away. For units used as a genuine measurement reference (rather than purely a training demo), verify the as-shipped offset against a calibrated reference thermometer at commissioning, and re-verify annually or after any firmware update. |
 | Who may perform maintenance | Electrical work (PSU, mains wiring, terminal access) — competent/qualified electrician only, per the TV7105 manual's explicit instruction ("the unit must be connected by a qualified electrician"). Routine visual checks and the monthly supervision-reading check may be performed by trainers without electrical qualification. |
-| Spare parts | Approved replacements: IFM TV7105 (temperature), Carlo Gavazzi/RS PRO capacitive M18 or direct equivalent, Contrinex LTR-M18PA-PMS-603 or the replacement documented in `docs/PHOTOELECTRIC-SENSOR-REPLACEMENT.md`, Omron E2E-X16MB1T12, Banner CL50 Pro. `[TBC]` — confirm approved supplier/part-number list and lead times. |
+| Spare parts | Approved replacements: IFM TV7105 (temperature), Carlo Gavazzi/RS PRO capacitive M18 or direct equivalent, Omron E2E-X16MB1T12, Banner CL50 Pro. `[TBC]` — confirm approved supplier/part-number list and lead times. |
 | Decommissioning/disposal | WEEE-compliant disposal of all electronic components (AL1350, sensors, Pi, PSU, CL50) at end of life — do not dispose of as general waste. `[TBC]` — confirm the disposal/recycling route used. |
 | Maintenance records | `[TBC]` — record location/format for logging inspections and repairs; recommended: a simple dated log (paper or spreadsheet) per unit, cross-referenced to this document's retention requirement. |
 
@@ -334,13 +333,13 @@ Hazards outside the mechanical/electrical categories already covered, per EN ISO
 | Category | Detail |
 |---|---|
 | Harmonised standards applied | `[TBC]` for final selection/citation, but the following are expected to apply and should be confirmed against current OJEU/UKCA designated-standards lists at the time of assessment: **EN 61010-1** (safety of electrical equipment for measurement, control, and laboratory use); **EN IEC 61326-1** (EMC requirements for electrical equipment for measurement, control, and laboratory use); **EN ISO 12100** (safety of machinery — general principles for risk assessment and risk reduction, used as the assessment methodology in this document regardless of Machinery Directive applicability); **EN 60204-1** (electrical equipment of machines) — only if a future variant is assessed as machinery; **EN 50178** — referenced directly by the TV7105 manual for its SELV/PELV supply requirement |
-| Component certifications | IFM AL1350, IFM TV7105, Contrinex LTR-M18PA-PMS-603, Omron E2E-X16MB1T12, Carlo Gavazzi/RS PRO capacitive sensor, Banner CL50 Pro — each is independently CE-marked by its manufacturer as an industrial component. Retain copies of each component's manufacturer Declaration of Conformity in Appendix B. |
+| Component certifications | IFM AL1350, IFM TV7105, Omron E2E-X16MB1T12, Carlo Gavazzi/RS PRO capacitive sensor, Banner CL50 Pro — each is independently CE-marked by its manufacturer as an industrial component. Retain copies of each component's manufacturer Declaration of Conformity in Appendix B. |
 | Test reports | `[TBC]` — EMC test report, electrical safety test report, if the assembled system (rather than each component individually) is independently tested. Given all active components carry their own component-level CE marking and the assembly introduces no new emission/immunity-relevant circuitry beyond standard wiring, a documented technical justification for relying on component-level certification (rather than a full system EMC test) is an acceptable alternative — record that justification here once agreed with a compliance reviewer. |
-| Electrical schematics | `[TBC]` — wiring diagram for 20–30 V DC distribution from PSU → AL1350 → sensor M12 drops, plus AL1350 port assignments (Port 1 = Proximity/Photoelectric, Port 2 = Capacitive, Port 3 = IFM TV7105, Port 4 = Light Stack), PSU rating, and fusing/protection devices |
+| Electrical schematics | `[TBC]` — wiring diagram for 20–30 V DC distribution from PSU → AL1350 → sensor M12 drops, plus AL1350 port assignments (Port 1 = Proximity, Port 2 = Capacitive, Port 3 = IFM TV7105, Port 4 = Light Stack), PSU rating, and fusing/protection devices |
 | Software version / configuration under test | Record the git commit hash / release tag of this repository at the time of conformity assessment, plus the exact runtime configuration in force (MQTT broker host/port, AL1350 IP, poll interval, port labels) — the software configuration is part of the assessed system since it governs polling behaviour, ISDU write scope, and fail-safe display of degraded status |
-| IP rating | AL1350 master and TV7105: enclosure/housing IP rating per manufacturer datasheet — `[TBC]`. Photoelectric sensor (RS PRO/Contrinex): **IP67**. Assembled panel/enclosure IP rating: `[TBC]` — not yet assessed; recommend a minimum of IP20 for an indoor touch-safe enclosure. |
-| Operating environment ratings | AL1350: **-25 °C to +60 °C** ambient. Photoelectric sensor: **-25 °C to +65 °C**. The kit's overall rated operating envelope is bounded by the narrowest component figure — record the governing limit as **-25 °C to +60 °C**, indoor use only, non-condensing, no altitude derating assessed (`[TBC]` if used above 2000 m) |
-| Bill of materials | `[TBC]` — full BOM with manufacturer part numbers; core items known: IFM AL1350, IFM TV7105, Carlo Gavazzi/RS PRO capacitive M18, Contrinex LTR-M18PA-PMS-603 (or RS PRO 284-9794), Omron E2E-X16MB1T12, Banner CL50 Pro, Raspberry Pi 4 + WaveShare 1024×600 touchscreen, 24 V DC PSU (`[TBC]` model/rating), enclosure and M12 cabling (`[TBC]` supplier) |
+| IP rating | AL1350 master and TV7105: enclosure/housing IP rating per manufacturer datasheet — `[TBC]`. Omron E2E-X16MB1T12 proximity sensor: **IP67**. Assembled panel/enclosure IP rating: `[TBC]` — not yet assessed; recommend a minimum of IP20 for an indoor touch-safe enclosure. |
+| Operating environment ratings | AL1350: **-25 °C to +60 °C** ambient. Omron E2E-X16MB1T12 proximity sensor: `[TBC]` — confirm against manufacturer datasheet. The kit's overall rated operating envelope is bounded by the narrowest component figure — record the governing limit as **-25 °C to +60 °C**, indoor use only, non-condensing, no altitude derating assessed (`[TBC]` if used above 2000 m) |
+| Bill of materials | `[TBC]` — full BOM with manufacturer part numbers; core items known: IFM AL1350, IFM TV7105, Carlo Gavazzi/RS PRO capacitive M18, Omron E2E-X16MB1T12, Banner CL50 Pro, Raspberry Pi 4 + WaveShare 1024×600 touchscreen, 24 V DC PSU (`[TBC]` model/rating), enclosure and M12 cabling (`[TBC]` supplier) |
 | Drawings | `[TBC]` — enclosure/mounting general arrangement drawing, panel layout showing sensor port positions and cable routing |
 
 ---

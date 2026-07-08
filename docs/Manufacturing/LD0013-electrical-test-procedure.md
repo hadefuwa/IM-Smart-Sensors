@@ -70,7 +70,6 @@ This procedure applies to the standard 4-port IM4330 build (Proximity, Capacitiv
 - Switch off and disconnect the 24 V DC supply before making or breaking any wiring connection, including sensor M12 connectors and terminal block wiring.
 - Handle the Raspberry Pi and AL1350 electronics with basic ESD precautions (antistatic wrist strap or mat) when the enclosure is open.
 - The Banner CL50 Pro contains high-intensity LEDs — avoid prolonged direct eye contact at close range during Test 5 and Test 4, particularly at **High** intensity.
-- The Contrinex/photoelectric position (if fitted) emits an infrared beam — do not look directly into the sensor face.
 - Only personnel trained on this procedure and familiar with the IM4330 schematic should perform Test 6 (short-circuit test). Never short-circuit the 24 V rail directly across a live, connected sensor — use the designated test points described in Section 11.
 - If any component shows smoke, unusual heat, or a burning smell at any point during this procedure, isolate power immediately, do not reconnect, and escalate to a supervisor before continuing.
 

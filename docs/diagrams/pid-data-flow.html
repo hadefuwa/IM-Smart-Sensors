@@ -1,0 +1,464 @@
+<title>IM4330 — P&ID Data-Flow Schematic</title>
+<style>
+  :root{
+    --paper:#EDEFE8;
+    --paper-panel:#FBFBF7;
+    --ink:#1B2320;
+    --muted:#5C6A64;
+    --line:#42504A;
+    --line-soft:#B7C0B8;
+    --data:#2E7D4F;
+    --data-soft:#DCEBE1;
+    --cmd:#B5541E;
+    --cmd-soft:#F3E2D4;
+    --ring:#8FA599;
+    --focus:#1a6fb0;
+    --font-display:"Bahnschrift SemiBold","Bahnschrift","Segoe UI Semibold","Segoe UI",system-ui,sans-serif;
+    --font-body:"Segoe UI","SF Pro Text",-apple-system,"Helvetica Neue",Arial,sans-serif;
+    --font-mono:"Cascadia Mono","SFMono-Regular",Consolas,"Liberation Mono",Menlo,monospace;
+  }
+  @media (prefers-color-scheme: dark){
+    :root{
+      --paper:#12181A;
+      --paper-panel:#1A2224;
+      --ink:#E7ECE8;
+      --muted:#93A29B;
+      --line:#7C8D85;
+      --line-soft:#3A4642;
+      --data:#57C68A;
+      --data-soft:#1C332A;
+      --cmd:#E38C4F;
+      --cmd-soft:#33261C;
+      --ring:#5C6E68;
+    }
+  }
+  :root[data-theme="dark"]{
+    --paper:#12181A; --paper-panel:#1A2224; --ink:#E7ECE8; --muted:#93A29B;
+    --line:#7C8D85; --line-soft:#3A4642; --data:#57C68A; --data-soft:#1C332A;
+    --cmd:#E38C4F; --cmd-soft:#33261C; --ring:#5C6E68;
+  }
+  :root[data-theme="light"]{
+    --paper:#EDEFE8; --paper-panel:#FBFBF7; --ink:#1B2320; --muted:#5C6A64;
+    --line:#42504A; --line-soft:#B7C0B8; --data:#2E7D4F; --data-soft:#DCEBE1;
+    --cmd:#B5541E; --cmd-soft:#F3E2D4; --ring:#8FA599;
+  }
+
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{
+    background:var(--paper);
+    color:var(--ink);
+    font-family:var(--font-body);
+    padding:32px 20px 44px;
+    -webkit-font-smoothing:antialiased;
+  }
+  .sheet{ max-width:1280px; margin:0 auto; }
+
+  /* ---------- title bar ---------- */
+  .titlebar{
+    display:flex; align-items:flex-end; justify-content:space-between;
+    gap:24px; flex-wrap:wrap;
+    padding-bottom:16px; margin-bottom:18px;
+    border-bottom:2px solid var(--ink);
+  }
+  .eyebrow{
+    font-family:var(--font-mono); font-size:11px; letter-spacing:.14em;
+    text-transform:uppercase; color:var(--muted); display:block; margin-bottom:6px;
+  }
+  h1{
+    font-family:var(--font-display); font-weight:600;
+    font-size:clamp(22px,3vw,32px); letter-spacing:.01em; margin:0;
+    text-wrap:balance;
+  }
+  .sub{ font-size:13px; color:var(--muted); margin-top:6px; max-width:60ch; }
+
+  .toggle{
+    display:flex; align-items:center; gap:10px;
+    background:var(--paper-panel); border:1px solid var(--line-soft);
+    border-radius:999px; padding:6px 14px 6px 6px; cursor:pointer;
+    font-family:var(--font-mono); font-size:11.5px; letter-spacing:.04em;
+    color:var(--ink); text-transform:uppercase;
+  }
+  .toggle:focus-visible{ outline:2px solid var(--focus); outline-offset:2px; }
+  .toggle-track{
+    width:38px; height:20px; border-radius:999px; background:var(--line-soft);
+    position:relative; flex-shrink:0; transition:background .18s ease;
+  }
+  .toggle-thumb{
+    position:absolute; top:2px; left:2px; width:16px; height:16px; border-radius:999px;
+    background:var(--paper-panel); box-shadow:0 1px 2px rgba(0,0,0,.25);
+    transition:transform .18s ease;
+  }
+  html[data-labels="actual"] .toggle-track{ background:var(--data); }
+  html[data-labels="actual"] .toggle-thumb{ transform:translateX(18px); }
+
+  /* ---------- canvas ---------- */
+  .canvas-scroll{ overflow-x:auto; padding-bottom:4px; }
+  .canvas-wrap{ position:relative; min-width:1180px; padding:8px 4px 28px; }
+  svg.connectors{ position:absolute; inset:0; width:100%; height:100%; overflow:visible; pointer-events:none; }
+  .conn{ fill:none; stroke-width:2.25; }
+  .conn-data{ stroke:var(--data); }
+  .conn-cmd{ stroke:var(--cmd); stroke-dasharray:6 5; }
+  .conn-label{
+    font-family:var(--font-mono); font-size:10.5px; fill:var(--muted);
+    paint-order:stroke; stroke:var(--paper); stroke-width:5px;
+  }
+  @media (prefers-reduced-motion:no-preference){
+    .conn-draw{ animation:draw .7s ease forwards; }
+    @keyframes draw{ from{ stroke-dashoffset:var(--len); } to{ stroke-dashoffset:0; } }
+  }
+
+  .lanes{ display:flex; align-items:stretch; gap:64px; position:relative; z-index:1; }
+  .lane{ flex:1; min-width:220px; display:flex; flex-direction:column; }
+  .lane-master, .lane-pi{ flex:0 0 240px; }
+  .lane-hmi{ flex:0 0 250px; }
+  .lane-title{
+    font-family:var(--font-display); font-weight:600; font-size:14px;
+    letter-spacing:.03em; text-transform:uppercase; margin:0 0 2px;
+  }
+  .lane-sub{ font-family:var(--font-mono); font-size:10.5px; color:var(--muted); margin-bottom:14px; }
+
+  .node-stack{ display:flex; flex-direction:column; gap:14px; flex:1; justify-content:space-between; }
+
+  .node{
+    position:relative; background:var(--paper-panel);
+    border:1.5px solid var(--line); border-radius:3px;
+    padding:10px 14px; box-shadow:2px 2px 0 var(--line-soft);
+  }
+  .device{ display:flex; align-items:center; gap:10px; }
+  .glyph{ flex-shrink:0; color:var(--line); }
+  .node-name{ font-size:13px; font-weight:600; line-height:1.25; }
+  .node-tag{ font-family:var(--font-mono); font-size:10px; color:var(--muted); margin-top:2px; display:block; }
+
+  .panel-node{ display:flex; flex-direction:column; gap:0; padding:0; flex:1; }
+  .panel-head{
+    font-family:var(--font-display); font-weight:600; font-size:12.5px;
+    letter-spacing:.02em; padding:9px 14px; border-bottom:1.5px solid var(--line);
+    display:flex; align-items:center; gap:8px;
+  }
+  .panel-head .glyph{ color:var(--data); }
+  .panel-rows{ padding:8px 14px 10px; display:flex; flex-direction:column; gap:7px; }
+  .panel-row{ font-size:11.5px; color:var(--muted); line-height:1.4; }
+  .panel-row b{ color:var(--ink); font-weight:600; }
+  .panel-row .mono{ font-family:var(--font-mono); font-size:10.5px; }
+  .internal-arrow{
+    text-align:center; font-size:13px; color:var(--line-soft); line-height:1; margin:-2px 0;
+  }
+
+  .port{
+    position:absolute; width:7px; height:7px; border-radius:50%;
+    background:var(--paper); border:1.5px solid var(--line); top:50%; transform:translateY(-50%);
+  }
+  .port.right{ right:-4.5px; }
+  .port.left{ left:-4.5px; }
+  .port.top{ top:26%; }
+  .port.bottom{ top:74%; }
+
+  .lbl-actual{ display:none; }
+  html[data-labels="actual"] .lbl-generic{ display:none; }
+  html[data-labels="actual"] .lbl-actual{ display:inline; }
+
+  /* ---------- stamp / legend footer ---------- */
+  .stampbar{
+    display:flex; justify-content:space-between; align-items:flex-end; gap:24px;
+    margin-top:26px; padding-top:16px; border-top:2px solid var(--ink);
+    flex-wrap:wrap;
+  }
+  .legend{ display:flex; flex-direction:column; gap:8px; font-size:12px; }
+  .legend-row{ display:flex; align-items:center; gap:9px; }
+  .legend-line{ width:30px; height:0; border-top:2.5px solid var(--data); flex-shrink:0; }
+  .legend-line.cmd{ border-top:2.5px dashed var(--cmd); }
+  .legend-text b{ font-weight:600; }
+  .legend-text span{ color:var(--muted); font-size:11px; display:block; }
+
+  .titleblock{
+    display:grid; grid-template-columns:repeat(4,auto); border:1.5px solid var(--ink);
+    font-family:var(--font-mono); font-size:10.5px;
+  }
+  .titleblock div{ padding:6px 12px; border-left:1.5px solid var(--ink); }
+  .titleblock div:first-child{ border-left:none; }
+  .titleblock .k{ color:var(--muted); text-transform:uppercase; letter-spacing:.06em; font-size:9px; display:block; margin-bottom:2px; }
+  .titleblock .v{ color:var(--ink); font-weight:600; }
+</style>
+
+<div class="sheet">
+  <div class="titlebar">
+    <div>
+      <span class="eyebrow">IM4330 · IO-Link Smart Sensor Training System</span>
+      <h1>P&amp;ID Data-Flow Schematic</h1>
+      <p class="sub">Signal and command path from field device to HMI. Toggle labels between the generic system-diagram convention and the actual hardware fitted to this unit.</p>
+    </div>
+    <button class="toggle" id="labelToggle" type="button" aria-pressed="false">
+      <span class="toggle-track"><span class="toggle-thumb"></span></span>
+      <span class="toggle-label" id="toggleLabel">Generic labels</span>
+    </button>
+  </div>
+
+  <div class="canvas-scroll">
+    <div class="canvas-wrap" id="canvasWrap">
+      <svg class="connectors" id="connectors" aria-hidden="true"></svg>
+
+      <div class="lanes">
+        <!-- FIELD DEVICES -->
+        <section class="lane lane-field">
+          <h2 class="lane-title">Field Devices</h2>
+          <span class="lane-sub">M12 · 3-wire IO-Link</span>
+          <div class="node-stack">
+
+            <article class="node device" id="n-s1">
+              <svg class="glyph" width="26" height="26" viewBox="0 0 26 26" fill="none" stroke="currentColor" stroke-width="1.4">
+                <rect x="3" y="9" width="8" height="8" rx="1.5"/>
+                <path d="M13 8a7 7 0 0 1 0 10M17 5a11 11 0 0 1 0 16" stroke-linecap="round"/>
+              </svg>
+              <div>
+                <div class="node-name">
+                  <span class="lbl-generic">Proximity Sensor</span>
+                  <span class="lbl-actual">Omron E2E-X16MB1T12</span>
+                </div>
+                <span class="node-tag">PORT 1 · <span class="lbl-generic">Inductive proximity</span><span class="lbl-actual">PDin 2 byte</span></span>
+              </div>
+              <span class="port right" data-port="s1-out"></span>
+            </article>
+
+            <article class="node device" id="n-s2">
+              <svg class="glyph" width="26" height="26" viewBox="0 0 26 26" fill="none" stroke="currentColor" stroke-width="1.4">
+                <line x1="8" y1="4" x2="8" y2="22"/>
+                <line x1="18" y1="4" x2="18" y2="22"/>
+                <line x1="11" y1="9" x2="15" y2="9" stroke-dasharray="1.6 2"/>
+                <line x1="11" y1="13" x2="15" y2="13" stroke-dasharray="1.6 2"/>
+                <line x1="11" y1="17" x2="15" y2="17" stroke-dasharray="1.6 2"/>
+              </svg>
+              <div>
+                <div class="node-name">
+                  <span class="lbl-generic">Capacitive Sensor</span>
+                  <span class="lbl-actual">Carlo Gavazzi / RS PRO M18</span>
+                </div>
+                <span class="node-tag">PORT 2 · <span class="lbl-generic">Level / material detect</span><span class="lbl-actual">SSC1, index 60</span></span>
+              </div>
+              <span class="port right" data-port="s2-out"></span>
+            </article>
+
+            <article class="node device" id="n-s3">
+              <svg class="glyph" width="26" height="26" viewBox="0 0 26 26" fill="none" stroke="currentColor" stroke-width="1.4">
+                <rect x="10.5" y="3" width="5" height="13" rx="2.5"/>
+                <circle cx="13" cy="20" r="4" fill="currentColor" stroke="none"/>
+              </svg>
+              <div>
+                <div class="node-name">
+                  <span class="lbl-generic">Temperature Sensor</span>
+                  <span class="lbl-actual">IFM TV7105 (PT100)</span>
+                </div>
+                <span class="node-tag">PORT 3 · <span class="lbl-generic">SP/RP switching</span><span class="lbl-actual">SP1/RP1, SP2/RP2</span></span>
+              </div>
+              <span class="port right" data-port="s3-out"></span>
+            </article>
+
+            <article class="node device" id="n-a1">
+              <svg class="glyph" width="26" height="26" viewBox="0 0 26 26" fill="none" stroke="currentColor" stroke-width="1.4">
+                <rect x="8" y="2" width="10" height="22" rx="4"/>
+                <circle cx="13" cy="7" r="2" fill="currentColor" stroke="none"/>
+                <circle cx="13" cy="13" r="2" fill="currentColor" stroke="none" opacity=".55"/>
+                <circle cx="13" cy="19" r="2" fill="currentColor" stroke="none" opacity=".3"/>
+              </svg>
+              <div>
+                <div class="node-name">
+                  <span class="lbl-generic">Indicator / Light Stack</span>
+                  <span class="lbl-actual">Banner CL50 Pro RGB</span>
+                </div>
+                <span class="node-tag">PORT 4 · <span class="lbl-generic">Actuator, PDout only</span><span class="lbl-actual">Colour / animation / audible</span></span>
+              </div>
+              <span class="port right" data-port="a1-in"></span>
+            </article>
+
+          </div>
+        </section>
+
+        <!-- IO-LINK MASTER -->
+        <section class="lane lane-master">
+          <h2 class="lane-title">IO-Link Master</h2>
+          <span class="lane-sub">4-port IoT Core</span>
+          <div class="node-stack">
+            <div class="node panel-node" id="n-master" style="position:relative;">
+              <div class="panel-head">
+                <svg class="glyph" width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.4"><rect x="4" y="4" width="10" height="10" rx="1.5"/><line x1="1" y1="6" x2="4" y2="6"/><line x1="1" y1="9" x2="4" y2="9"/><line x1="1" y1="12" x2="4" y2="12"/><line x1="14" y1="9" x2="17" y2="9"/></svg>
+                <span><span class="lbl-generic">IO-Link Master</span><span class="lbl-actual">IFM AL1350</span></span>
+              </div>
+              <div class="panel-rows">
+                <div class="panel-row">Port polling — <b>getdatamulti</b> → per-port GET fallback</div>
+                <div class="panel-row">Acyclic parameter I/O — <span class="mono">iolreadacyclic / iolwriteacyclic</span> (ISDU)</div>
+                <div class="panel-row">Supervision — <span class="mono">temperature · voltage · current</span></div>
+              </div>
+              <span class="port left top" data-port="master-in-s1"></span>
+              <span class="port left" data-port="master-in-s2"></span>
+              <span class="port left bottom" data-port="master-in-s3"></span>
+              <span class="port left" style="top:88%" data-port="master-out-a1"></span>
+              <span class="port right top" data-port="master-out-data"></span>
+              <span class="port right bottom" data-port="master-in-cmd"></span>
+            </div>
+          </div>
+        </section>
+
+        <!-- RASPBERRY PI -->
+        <section class="lane lane-pi">
+          <h2 class="lane-title">Raspberry Pi</h2>
+          <span class="lane-sub">Edge compute</span>
+          <div class="node-stack">
+            <div class="node panel-node" id="n-pi" style="position:relative;">
+              <div class="panel-head">
+                <svg class="glyph" width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.4"><rect x="2" y="2" width="14" height="14" rx="1.5"/><circle cx="5" cy="5" r=".9" fill="currentColor" stroke="none"/><circle cx="13" cy="5" r=".9" fill="currentColor" stroke="none"/><circle cx="5" cy="13" r=".9" fill="currentColor" stroke="none"/><circle cx="13" cy="13" r=".9" fill="currentColor" stroke="none"/><rect x="6.5" y="6.5" width="5" height="5"/></svg>
+                <span>Edge Host</span>
+              </div>
+              <div class="panel-rows">
+                <div class="panel-row"><b><span class="lbl-generic">MQTT Broker</span><span class="lbl-actual">Mosquitto</span></b> — subscribes to master push, 500 ms</div>
+                <div class="internal-arrow">↓</div>
+                <div class="panel-row"><b><span class="lbl-generic">Backend Service</span><span class="lbl-actual">FastAPI (io_link_fastapi.py)</span></b> — decode, registry, fault handling</div>
+              </div>
+              <span class="port left top" data-port="pi-in-data"></span>
+              <span class="port left bottom" data-port="pi-out-cmd"></span>
+              <span class="port right top" data-port="pi-out-data"></span>
+              <span class="port right bottom" data-port="pi-in-cmd"></span>
+            </div>
+          </div>
+        </section>
+
+        <!-- HMI SCREEN -->
+        <section class="lane lane-hmi">
+          <h2 class="lane-title">HMI Screen</h2>
+          <span class="lane-sub"><span class="lbl-generic">Operator display</span><span class="lbl-actual">Chromium kiosk, 1024×600</span></span>
+          <div class="node-stack">
+            <div class="node panel-node" id="n-hmi" style="position:relative;">
+              <div class="panel-head">
+                <svg class="glyph" width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.4"><rect x="1.5" y="2.5" width="15" height="10" rx="1.3"/><line x1="6" y1="15.5" x2="12" y2="15.5"/><line x1="9" y1="12.5" x2="9" y2="15.5"/></svg>
+                <span>Dashboard</span>
+              </div>
+              <div class="panel-rows">
+                <div class="panel-row">Live gauges, port cards, supervision charts</div>
+                <div class="panel-row">Parameter read/write panels — operator issues commands</div>
+              </div>
+              <span class="port left top" data-port="hmi-in-data"></span>
+              <span class="port left bottom" data-port="hmi-out-cmd"></span>
+            </div>
+          </div>
+        </section>
+      </div>
+    </div>
+  </div>
+
+  <div class="stampbar">
+    <div class="legend">
+      <div class="legend-row">
+        <span class="legend-line"></span>
+        <span class="legend-text"><b>Live sensor data</b><span>PDin via MQTT push (500 ms), HTTP poll fallback</span></span>
+      </div>
+      <div class="legend-row">
+        <span class="legend-line cmd"></span>
+        <span class="legend-text"><b>Parameter / actuator write</b><span>ISDU write, PDout — on demand, &lt;200 ms round trip</span></span>
+      </div>
+    </div>
+    <div class="titleblock">
+      <div><span class="k">Drawing</span><span class="v">P&amp;ID — Data Flow</span></div>
+      <div><span class="k">Project</span><span class="v">IM4330</span></div>
+      <div><span class="k">Scale</span><span class="v">NTS</span></div>
+      <div><span class="k">Rev</span><span class="v">1.0</span></div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  var root = document.documentElement;
+  var btn = document.getElementById('labelToggle');
+  var lbl = document.getElementById('toggleLabel');
+  btn.addEventListener('click', function(){
+    var actual = root.getAttribute('data-labels') === 'actual';
+    root.setAttribute('data-labels', actual ? 'generic' : 'actual');
+    btn.setAttribute('aria-pressed', String(!actual));
+    lbl.textContent = actual ? 'Generic labels' : 'Actual devices';
+    requestAnimationFrame(draw);
+  });
+
+  var wrap = document.getElementById('canvasWrap');
+  var svg = document.getElementById('connectors');
+  var reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  var CONNECTIONS = [
+    {from:'s1-out', to:'master-in-s1', type:'data', label:'PDin'},
+    {from:'s2-out', to:'master-in-s2', type:'data', label:'PDin'},
+    {from:'s3-out', to:'master-in-s3', type:'data', label:'PDin'},
+    {from:'master-out-a1', to:'a1-in', type:'cmd', label:'PDout'},
+    {from:'master-out-data', to:'pi-in-data', type:'data', label:'MQTT 500 ms / HTTP'},
+    {from:'pi-out-cmd', to:'master-in-cmd', type:'cmd', label:'ISDU / PDout write'},
+    {from:'pi-out-data', to:'hmi-in-data', type:'data', label:'WebSocket /ws'},
+    {from:'hmi-out-cmd', to:'pi-in-cmd', type:'cmd', label:'write request'}
+  ];
+
+  function pt(id){
+    var el = wrap.querySelector('[data-port="'+id+'"]');
+    if(!el) return null;
+    var r = el.getBoundingClientRect(), c = wrap.getBoundingClientRect();
+    return { x: r.left + r.width/2 - c.left, y: r.top + r.height/2 - c.top };
+  }
+
+  function elbow(a,b){
+    var midX = (a.x + b.x) / 2;
+    return 'M '+a.x+','+a.y+' L '+midX+','+a.y+' L '+midX+','+b.y+' L '+b.x+','+b.y;
+  }
+
+  function svgEl(tag, attrs){
+    var e = document.createElementNS('http://www.w3.org/2000/svg', tag);
+    for (var k in attrs) e.setAttribute(k, attrs[k]);
+    return e;
+  }
+
+  function draw(){
+    svg.innerHTML = '';
+    var defs = svgEl('defs', {});
+    ['data','cmd'].forEach(function(type){
+      var marker = svgEl('marker', {id:'arrow-'+type, viewBox:'0 0 10 10', refX:'8', refY:'5', markerWidth:'7', markerHeight:'7', orient:'auto-start-reverse'});
+      var poly = svgEl('path', {d:'M0,0 L10,5 L0,10 z'});
+      poly.setAttribute('class', 'arrowfill-'+type);
+      marker.appendChild(poly);
+      defs.appendChild(marker);
+    });
+    svg.appendChild(defs);
+
+    var style = svgEl('style', {});
+    style.textContent = '.arrowfill-data{fill:var(--data)} .arrowfill-cmd{fill:var(--cmd)}';
+    svg.appendChild(style);
+
+    CONNECTIONS.forEach(function(c, i){
+      var a = pt(c.from), b = pt(c.to);
+      if(!a || !b) return;
+      var d = elbow(a,b);
+      var path = svgEl('path', {
+        d:d,
+        class:'conn conn-'+c.type + (reduceMotion ? '' : ' conn-draw'),
+        'marker-end':'url(#arrow-'+c.type+')'
+      });
+      if(!reduceMotion){
+        var len = Math.abs(a.x-b.x) + Math.abs(a.y-b.y) + 20;
+        path.style.setProperty('--len', len);
+        path.style.strokeDasharray = c.type === 'cmd' ? (len+'px') : len;
+        path.style.animationDelay = (i*0.05)+'s';
+      }
+      svg.appendChild(path);
+
+      var midX = (a.x+b.x)/2, midY = (a.y+b.y)/2 - (c.type==='cmd' ? -12 : 8);
+      var text = svgEl('text', {x:midX, y: (c.type==='cmd' ? b.y - 8 : a.y - 8), class:'conn-label', 'text-anchor':'middle'});
+      text.textContent = c.label;
+      svg.appendChild(text);
+
+      if(c.type === 'data' && !reduceMotion){
+        var dot = svgEl('circle', {r:'2.6', class:'arrowfill-data'});
+        var anim = svgEl('animateMotion', {dur:'2.6s', repeatCount:'indefinite', path:d, begin:(i*0.4)+'s'});
+        dot.appendChild(anim);
+        svg.appendChild(dot);
+      }
+    });
+  }
+
+  window.addEventListener('resize', function(){ requestAnimationFrame(draw); });
+  if (document.fonts && document.fonts.ready) { document.fonts.ready.then(draw); }
+  requestAnimationFrame(function(){ requestAnimationFrame(draw); });
+})();
+</script>

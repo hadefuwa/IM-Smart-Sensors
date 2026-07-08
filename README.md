@@ -57,9 +57,9 @@ Edit `backend/config.json` and set your master's IP (or change it later from the
     "timeout_sec": 3
   },
   "port_labels": {
-    "1": {"label": "Temperature Sensor",                 "device_type_hint": "temperature"},
+    "1": {"label": "Proximity Sensor (Omron E2E-X16MB1T12)", "device_type_hint": "proximity"},
     "2": {"label": "Capacitive Sensor (RS PRO 2377240)", "device_type_hint": "capacitive"},
-    "3": {"label": "Photoelectric Sensor (Contrinex LTR-M18PA-PMx-603)", "device_type_hint": "photo_electric"},
+    "3": {"label": "Temperature Sensor (IFM TV7105)",    "device_type_hint": "temperature"},
     "4": {"label": "Light Stack",                        "device_type_hint": "status_led"}
   }
 }
@@ -92,10 +92,10 @@ Open the URL shown (e.g. **http://localhost:5173**). To target a different backe
 
 The default homepage provides:
 
-- **Current State Overview** – Mimic components for IO-Link Master, Temperature, Capacitive (live dielectric value bar), Photoelectric, and Status LED (CL50)
+- **Current State Overview** – Mimic components for IO-Link Master, Temperature, Capacitive (live dielectric value bar), Proximity, and Status LED (CL50)
 - **Condition Monitoring** – Temperature trend chart, signal quality bar, detection cycle counters
 - **IODD Parameter Panels** – Inline per-sensor cards for reading and writing device parameters over IO-Link without any external tool:
-  - **Photoelectric (Contrinex LTR-M18PA-PMS-603)** — SSC1 SP1 threshold slider, Light-ON/Dark-ON logic toggle, Fast/Medium/Fine sensor mode, Teach SP1, Cancel, Factory Reset
+  - **Proximity (Omron E2E-X16MB1T12)** — Switchpoint Logic OUT1 (NO/NC) toggle, Device Status, Factory Reset
   - **Capacitive (RS PRO / Carlo Gavazzi M18)** — SSC1 SP1 sensitivity slider, Quality of Teach and Quality of Run progress bars, Teach Start/Stop/Cancel sequence
   - **Temperature (IFM TV7105)** — SP1 and SP2 setpoint sliders (−49.8–150°C), Device Status, Teach SP1/SP2, Factory Reset
 - **Datastream Terminal** – Live PDin/PDout bytes and decoded values with port filter and CSV export
@@ -126,7 +126,7 @@ The repo builds and deploys the UI to [GitHub Pages](https://hadefuwa.github.io/
 │   ├── io_link_fastapi.py        # Main app — all routes + WebSocket handler + ISDU endpoints
 │   ├── al1350_client.py          # AL1350 HTTP client — circuit breaker, retry, pooling, ISDU read/write
 │   ├── decoder.py                # PDin/PDout decoders + device-type detection
-│   ├── device_parameters.py      # IODD-derived parameter registry — TV7105, Contrinex LTR, Carlo Gavazzi
+│   ├── device_parameters.py      # IODD-derived parameter registry — TV7105, Omron E2E, Carlo Gavazzi
 │   ├── csv_logger.py             # CSV data logger
 │   ├── run_io_link_fastapi.py
 │   ├── config.json

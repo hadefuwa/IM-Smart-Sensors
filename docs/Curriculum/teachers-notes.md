@@ -376,11 +376,10 @@ Correct answer: **C** — The sensor output logic is set to NC (Normal Closed). 
 **Task 1 — Device Identification** (observational, no fixed answer — student reads from live IO-Link Master page)
 
 Expected findings:
-- Port 1: Contrinex / RS PRO photoelectric sensor (or Omron proximity, depending on configuration)
-- Port 2: Omron E2E-X16MB1T12 (or capacitive, depending on port assignment)
-- Port 3: Carlo Gavazzi / RS PRO capacitive
-- Port 4: IFM TV7105 temperature
-- Port 5: Banner CL50 Pro light stack
+- Port 1: Omron E2E-X16MB1T12 proximity sensor
+- Port 2: Carlo Gavazzi / RS PRO capacitive
+- Port 3: IFM TV7105 temperature
+- Port 4: Banner CL50 Pro light stack
 
 **Task 2A — Hex Decode**
 

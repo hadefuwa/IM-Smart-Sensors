@@ -363,7 +363,7 @@ At power-up, the AL1350 reads the connected sensor's Vendor ID and Device ID and
 2. If the datatype is signed and the value is ≥ 32768, apply two's complement: `signed = unsigned − 65536` (e.g. `0xFF9C` = 65436 → 65436 − 65536 = **−100** → ×0.1 = **−10.0 °C**)
 3. Multiply by the scale factor to get the engineering value
 
-**Data types on this kit:** uint8 (proximity monitor output), uint16 (capacitive SP1 depending on device), int16 (TV7105 SP1/RP1/SP2/RP2/calibration offset), int32 (Contrinex photoelectric SP1 — not on this kit's live ports but referenced in the registry).
+**Data types on this kit:** uint8 (proximity monitor output), uint16 (capacitive SP1 depending on device), int16 (TV7105 SP1/RP1/SP2/RP2/calibration offset).
 
 **Worked examples:**
 - TV7105 SP1 `0118` → 280 → **28.0 °C**
@@ -620,7 +620,7 @@ Labels wear off, records go missing, and sensors get swapped between machines. T
 
 ### Background — Identity Registry
 
-**Known Vendor IDs on this kit:** 310 = ifm, 342 = Contrinex, 612 = OMRON, 896/1586 = RS Pro (OEM branding of Carlo Gavazzi).
+**Known Vendor IDs on this kit:** 310 = ifm, 612 = OMRON, 896/1586 = RS Pro (OEM branding of Carlo Gavazzi), 451 = Banner.
 
 **Device ID combinations on this kit:**
 

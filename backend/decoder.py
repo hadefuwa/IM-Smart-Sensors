@@ -25,8 +25,6 @@ DEVICE_ID_FALLBACK = [
     # IFM TV7105 temperature sensor (port 3)
     # vendorID 310 / 0x136, deviceID 733 / 0x2DD, productname "TV7105"
     (310, 733, DEVICE_TYPE_TEMPERATURE),
-    # Contrinex LTR-M18PA-PMx-603 photoelectric (IO-Link 1.0) — COMMENTED OUT, sensor swapped
-    # (342, 131842, DEVICE_TYPE_PHOTO_ELECTRIC),
 ]
 
 # Common IO-Link event codes (hex) -> human-readable label (for maintenance training)
@@ -80,7 +78,7 @@ def get_device_type(vendor_id, device_id, name):
 
 def decode_photo_electric_pdin(bytes_data):
     """
-    Decode Process Data In for photoelectric sensors (RS PRO M18 diffuse, vendor 342).
+    Decode Process Data In for photoelectric sensors (RS PRO M18 diffuse family).
     Byte 0: bit 0 = OUT1 (object detected), bit 1 = OUT2 (complementary output), bit 7 = error/fault.
     Byte 1 (optional): signal quality 0-100%.
     """

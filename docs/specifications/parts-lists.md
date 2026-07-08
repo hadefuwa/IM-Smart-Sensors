@@ -27,14 +27,10 @@ This is the master parts list for the IM4330 training panel. It covers every maj
 
 | Drawing Ref | Port | Description | Manufacturer | Part No. | Qty | CE / UL Status | Datasheet |
 |---|---|---|---|---|---|---|---|
-| TBC | 1 | Photoelectric sensor, M18 diffuse, IO-Link | Contrinex | LTR-M18PA-PMS-603 (RS Stock No. 284-9794, Mfr Part No. 1202540116) | 1 | CE / cULus (confirm cULus on unit label before use) | `docs/datasheets/LTR-M18PA-PM.pdf` |
-| TBC | 2 | Inductive proximity sensor, M18, IO-Link COM2 | Omron | E2E-X16MB1T12 | 1 | CE / cULus (confirm on unit label) | `docs/datasheets/e2e_iodd_temp/` (IODD set), `docs/datasheets/e2e[q]-xxbxxxx_io-link_iodd_file_en.zip` |
-| TBC | 3 | Capacitive proximity sensor, M18, IO-Link | Carlo Gavazzi (RS PRO OEM) | CA18FAF08BP | 1 | CE (confirm cULus on unit label) | `docs/datasheets/Carlo Gavazzi CA18FAF08BP.pdf`, `docs/datasheets/Capacitive Proximity.pdf` / `.txt`, `docs/datasheets/Capacitive Proximity Family.pdf` / `.txt` |
-| TBC | 4 | PT100 temperature sensor, IO-Link, dual switching output | ifm electronic | TV7105 | 1 | CE (confirm on unit label) | `docs/datasheets/TV7105.pdf` / `docs/datasheets/TV7105.txt` |
-| TBC | — | RGB LED column light, PDout-only, IO-Link | Banner Engineering | CL50PKQ (CL50 Pro series) | 1 | CE / cULus | `docs/datasheets/CL50PKQ.pdf`, `docs/datasheets/CL50PKQ extra datasheet.pdf`, `docs/datasheets/CL50PKQ _ CL50 Pro Series 50 mm Programmable Column Lights.html` |
-| TBC | 1 (superseded ref.) | Alternate/legacy photoelectric datasheet on file | RS PRO | RS Stock No. 0360240 | — | CE / cULus / ECOLAB (per datasheet) | `docs/datasheets/RS PRO Photoelectric Sensor.pdf` / `.txt` |
-
-> **Note on Port 1:** `backend/config.json` currently labels Port 1 "Proximity" (Omron E2E) rather than "Photoelectric" (Contrinex). Confirm physical panel wiring against `backend/config.json` `port_labels` before relying on this table for a specific unit — the port assignment has changed during commissioning/testing. See `docs/manuals/PHOTOELECTRIC-SENSOR-REPLACEMENT.md` for the known ISDU limitation on the original Contrinex LTR-M18PA-PMS-603 firmware and candidate replacements.
+| TBC | 1 | Inductive proximity sensor, M18, IO-Link COM3 | Omron | E2E-X16MB1T12 | 1 | CE / cULus (confirm on unit label) | `docs/datasheets/e2e_iodd_temp/` (IODD set), `docs/datasheets/e2e[q]-xxbxxxx_io-link_iodd_file_en.zip` |
+| TBC | 2 | Capacitive proximity sensor, M18, IO-Link | Carlo Gavazzi (RS PRO OEM) | CA18FAF08BP | 1 | CE (confirm cULus on unit label) | `docs/datasheets/Carlo Gavazzi CA18FAF08BP.pdf`, `docs/datasheets/Capacitive Proximity.pdf` / `.txt`, `docs/datasheets/Capacitive Proximity Family.pdf` / `.txt` |
+| TBC | 3 | PT100 temperature sensor, IO-Link, dual switching output | ifm electronic | TV7105 | 1 | CE (confirm on unit label) | `docs/datasheets/TV7105.pdf` / `docs/datasheets/TV7105.txt` |
+| TBC | 4 | RGB LED column light, PDout-only, IO-Link | Banner Engineering | CL50PKQ (CL50 Pro series) | 1 | CE / cULus | `docs/datasheets/CL50PKQ.pdf`, `docs/datasheets/CL50PKQ extra datasheet.pdf`, `docs/datasheets/CL50PKQ _ CL50 Pro Series 50 mm Programmable Column Lights.html` |
 
 ## 14.4 Cabling and Accessories
 
@@ -53,7 +49,6 @@ Recommended critical spares to hold for uninterrupted training delivery (see als
 
 | Item | Manufacturer / Part No. | Qty Recommended | Notes |
 |---|---|---|---|
-| Photoelectric sensor | Contrinex LTR-M18PA-PMS-603 | 1 | Or approved IO-Link equivalent — see `docs/manuals/PHOTOELECTRIC-SENSOR-REPLACEMENT.md` for replacement candidates (e.g. Contrinex ISHR-M18PA-PMS-603, IDDR-M18PA-PMS-603) |
 | Proximity sensor | Omron E2E-X16MB1T12 | 1 | Standard M18 inductive IO-Link |
 | Capacitive sensor | Carlo Gavazzi CA18FAF08BP (RS PRO equivalent) | 1 | M18 capacitive IO-Link |
 | Temperature sensor | ifm TV7105 | 1 | PT100 IO-Link — high value; replace only on failure |
@@ -72,4 +67,3 @@ Recommended critical spares to hold for uninterrupted training delivery (see als
 - **Formal drawing numbers** for the panel assembly and all sub-components are **TBC** — this list currently references source documents in `docs/` rather than issued drawing numbers.
 - **CE/UL status** above is drawn from each component's individual datasheet where stated; several entries are marked "confirm on unit label" because the datasheet on file does not explicitly print a certification mark for the exact ordered variant. Verify the physical label on each unit before final sign-off.
 - **Cabling and accessories** part numbers are supplier-sourced and not yet recorded against a specific manufacturer/part number in this repository — update once sourcing is finalised.
-- **Port 1 sensor identity** (Contrinex photoelectric vs. Omron proximity) should be reconciled against the physical panel before this document is issued for a production unit — see the note in §14.3.

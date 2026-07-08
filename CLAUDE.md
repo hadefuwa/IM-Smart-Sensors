@@ -98,6 +98,16 @@ Pi credentials and network details are in `docs/manuals/PI_SSH.md`.
 - **MQTT push (primary data path):** `ensure_mqtt_subscription()` registers the AL1350's push subscription on every backend startup (subscriptions are lost on AL1350 power cycle). The AL1350 publishes pdin + supervision to Mosquitto every 500 ms. The backend subscribes via `aiomqtt` and broadcasts to WebSocket clients immediately. HTTP polling runs in parallel as fallback and for ISDU counter reads.
 - **Device tree cache:** `/gettree` response is cached for 5 minutes to reduce load on the AL1350.
 
+## Alarm / Event Logging
+
+`backend/alarm_logger.py` is a structured, persistent alarm log — distinct from `app.log` (free-text, `RotatingFileHandler`) and `csv_logger.py` (raw sensor process data, 1-hour retention). It exists because none of the in-memory diagnostics buffers (`connection_events`, `supervision_history`, the log viewer's ring buffer) survive a backend restart, and none of them record alarm *transitions* specifically — only current/live state.
+
+- Writes one JSON line per event to `logs/alarms.jsonl`, rotated at 2 MB (5 backups kept). The in-memory tail buffer is pre-loaded from disk on startup, so `GET /api/io-link/alarms` still returns recent history immediately after a restart.
+- `alarm_logger.log(event_type, severity, message, port=None, extra=None)` — severities are `info` / `warning` / `alarm` (`SEVERITY_INFO`/`SEVERITY_WARNING`/`SEVERITY_ALARM`).
+- Logged automatically: circuit-breaker open/half-open/closed, degraded-mode enter/clear, AL1350 link connect/disconnect, ISDU parameter writes (success and failure), and — via `_track_port_alarms()` / `_track_supervision_alarm()` in `io_link_fastapi.py` — proximity instability/over-approach/warning/error edges, temperature OUT1/OUT2 edges, and supply under/overvoltage edges (threshold ±10% of 24 V nominal, i.e. 21.6–26.4 V). These tracker functions only log on **rising/falling edges** (diffed against `_prev_port_alarms` / `_prev_supervision_alarm`), not on every push — call them after `_enrich_port()` in both the HTTP poll loop and `_parse_mqtt_message()`, not instead of it.
+- `GET /api/io-link/alarms?n=200` — recent structured events for the Diagnostics page's "Alarm Log" panel. `GET /api/io-link/alarms/export` — downloads the full `.jsonl` file.
+- `logs/alarms.jsonl*` is gitignored, same as `*.log` and `backend/data_logs/`.
+
 ## AL1350 IoT Core API
 
 The operating manual is at `docs/datasheets/Operating Manual.txt`. Critical protocol details:
@@ -115,13 +125,14 @@ The operating manual is at `docs/datasheets/Operating Manual.txt`. Critical prot
 
 ### Device Registry
 
-Keyed by `(vendor_id_int, device_id_int)`. Three devices registered:
+Keyed by `(vendor_id_int, device_id_int)`. Four devices registered:
 
 | Key | Device | Label |
 |-----|--------|-------|
 | `(310, 733)` | IFM TV7105 | Temperature sensor — SP1 (583), RP1 (584), SP2 (593), RP2 (594) all int16 scale 0.1; calibration offset (681); teach commands. SP must always be above its own RP — no cross-constraint between SP1 and SP2. |
 | `(1586, 1052673)` or `(896, 1069056)` | Carlo Gavazzi / RS PRO capacitive M18 | SSC1 SP1 (index 60/sub1, int16), QoT (75), QoR (76), teach start/stop/cancel commands |
-| `(342, 131842)` | Contrinex LTR-M18PA-PMS-603 photoelectric | SSC1 SP1 (index 0x3C/sub1, uint32), output logic (0x3D/sub1), sensor mode (0x40/sub2), teach/cancel/reset commands |
+| `(612, 131094)` | Omron E2E-X16MB1T12 inductive proximity | Switchpoint logic OUT1 (index 61/sub1, uint8), teach/config commands |
+| `(451, 393229)` | Banner CL50 Pro RGB column light | PDout-only 3-byte write (colour/animation/speed/intensity), factory reset command |
 
 The Carlo Gavazzi IDs `(1586, 1052673)` are an RS PRO OEM branding — both entries point to the same `_CAPACITIVE_PARAMS`.
 
@@ -175,7 +186,7 @@ The IO-Link Master page (`src/io-link-page.js`) has two data sources that must s
 - `VENDOR_NAMES` — 260+ entries from IO-Link Community `Vendor_ID_Table.xml` v252 (May 2026). IDs above 1260 are not in the official XML; add them manually with a comment.
 - `DEVICE_NAMES` — keyed `'vendorId/deviceId'`; overrides the raw product name string for devices where the name needs a friendlier label. Current entries cover the four sensors in this kit.
 
-Known vendor IDs in this kit: 310 (ifm), 342 (Contrinex), 612 (OMRON), 1586 (RS Pro).
+Known vendor IDs in this kit: 310 (ifm), 612 (OMRON), 1586 (RS Pro), 451 (Banner).
 
 ## Omron E2E Proximity Sensor — PDin Byte Layout
 
@@ -399,7 +410,7 @@ Touch events on X11 (WaveShare on Debian/Openbox) are emulated as mouse events �
     "use_https": false
   },
   "port_labels": {
-    "1": {"label": "Photoelectric",  "device_type_hint": "photo_electric"},
+    "1": {"label": "Proximity",       "device_type_hint": "proximity"},
     "2": {"label": "Capacitive",     "device_type_hint": "capacitive"},
     "3": {"label": "IFM TV7105",     "device_type_hint": "temperature"},
     "4": {"label": "Light Stack",    "device_type_hint": "status_led"}

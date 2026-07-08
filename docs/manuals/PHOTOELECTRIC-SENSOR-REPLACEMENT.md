@@ -1,5 +1,7 @@
 # Photoelectric Sensor Replacement — ISDU Limitation
 
+> **Historical / not applicable to this kit.** Port 1 on this training rig is fitted with an Omron E2E-X16MB1T12 inductive proximity sensor, not the Contrinex LTR-M18PA-PMS-603 photoelectric sensor described below. This document is retained for reference only, in case a future unit or variant is fitted with a Contrinex photoelectric sensor and hits the same ISDU limitation.
+
 ## Current Sensor
 
 | Property | Value |
@@ -77,7 +79,7 @@ Once swapped, the HMI dashboard and IO-Link page will unlock:
 - **Teach SP1 button** — teach threshold to current target in one tap
 - **Factory Reset** — restore defaults remotely
 
-The backend `device_parameters.py` already has the full Contrinex AdSS parameter registry ready to go — it will auto-detect the new sensor by vendor/device ID and activate all controls immediately on first connection.
+The backend `device_parameters.py` no longer carries a Contrinex AdSS parameter registry entry (it was removed since no Contrinex sensor is fitted to this kit) — the full parameter table below would need to be re-added and mapped to the new sensor's vendor/device ID before the HMI controls activate.
 
 ## Wiring
 
@@ -97,8 +99,6 @@ Once you have the new sensor's vendor ID and device ID (visible in the HMI passp
 ```python
 DEVICE_REGISTRY = {
     ...
-    (342, <new_device_id>): _PHOTOELECTRIC_PARAMS,   # Contrinex ISHR/IDDR replacement
+    (342, <new_device_id>): _PHOTOELECTRIC_PARAMS,   # Contrinex ISHR/IDDR replacement — re-add the full AdSS parameter table (see "Required Capability" above) before wiring this in
 }
 ```
-
-The `_PHOTOELECTRIC_PARAMS` entry already contains the full AdSS parameter table and just needs the correct device ID mapping.

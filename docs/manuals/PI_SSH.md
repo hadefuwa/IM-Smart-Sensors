@@ -119,6 +119,20 @@ Raspberry Pi
 IFM AL1350 IO-Link Master: 192.168.7.4
 ```
 
+## Provisioning a New Pi
+
+Every IM4330 Pi unit also gets a generic `matrix` / `matrix123` SSH login (plain user, no sudo) alongside the primary `hamed` account. To set this up on a fresh Pi:
+
+```bash
+# From this repo, after copying it to the new Pi (or after cloning it there):
+bash scripts/pi/create_matrix_user.sh
+
+# Or run it remotely without an interactive session first:
+& "C:\Program Files\PuTTY\plink.exe" -pw <hamed-password> -batch hamed@<new-pi-host> "bash /home/hamed/IM-Smart-Sensors/scripts/pi/create_matrix_user.sh"
+```
+
+The script is idempotent (safe to re-run) and accepts an optional username/password override: `create_matrix_user.sh <user> <password>`.
+
 ## Notes
 
 - If the build fails with `EACCES` on `dist/assets/`, the dist directory was built as root. Fix with:

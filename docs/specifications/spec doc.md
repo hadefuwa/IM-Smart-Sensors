@@ -122,11 +122,10 @@ Student progress (worksheets visited, MCQ answers) is tracked per session in bro
 | **Mosquitto MQTT Broker** | Lightweight pub/sub message broker on the Raspberry Pi. Receives 500 ms pushes from the AL1350 and decouples the backend from the master. |
 | **FastAPI Backend (Python)** | Subscribes to MQTT, decodes sensor PDin payloads, manages ISDU read/write, forwards live data over WebSocket to the browser. Includes circuit-breaker and HTTP polling fallback. |
 | **Chromium HMI Kiosk** | Full-screen dashboard on the WaveShare touchscreen. Renders live gauges, charts, and IODD parameter cards. No external framework dependency. |
-| **Contrinex LTR-M18PA-PMS-603 (Port 1)** | Diffuse photoelectric sensor, M18, IO-Link. SSC1 switching output with configurable switch point and output logic. |
-| **Omron E2E-X16MB1T12 (Port 2)** | Inductive proximity sensor, M18, IO-Link COM2. PDin: monitor output amplitude + OUT1/diagnostic flags (instability, over-approach). |
-| **Carlo Gavazzi / RS PRO M18 (Port 3)** | Capacitive proximity sensor, IO-Link. Detects metal, liquid, and non-metallic materials. SSC1 setpoint + quality-of-target configurable via ISDU. |
-| **IFM TV7105 (Port 4)** | PT100 IO-Link temperature sensor. Two independent switching outputs (SP1/RP1, SP2/RP2). Calibration offset via ISDU, range ±10 °C. |
-| **Banner CL50 Pro (Port 5)** | 50 mm programmable RGB LED column light. PDout-only. Colour, animation, intensity, and audible control via 3-byte PDout word. |
+| **Omron E2E-X16MB1T12 (Port 1)** | Inductive proximity sensor, M18, IO-Link COM3. PDin: monitor output amplitude + OUT1/diagnostic flags (instability, over-approach). |
+| **Carlo Gavazzi / RS PRO M18 (Port 2)** | Capacitive proximity sensor, IO-Link. Detects metal, liquid, and non-metallic materials. SSC1 setpoint + quality-of-target configurable via ISDU. |
+| **IFM TV7105 (Port 3)** | PT100 IO-Link temperature sensor. Two independent switching outputs (SP1/RP1, SP2/RP2). Calibration offset via ISDU, range ±10 °C. |
+| **Banner CL50 Pro (Port 4)** | 50 mm programmable RGB LED column light. PDout-only. Colour, animation, intensity, and audible control via 3-byte PDout word. |
 | **WaveShare 1024×600 Touchscreen** | Capacitive touchscreen display attached to the Raspberry Pi. Kiosk mode via Chromium on Openbox/X11. |
 
 ---
@@ -142,8 +141,7 @@ This curriculum is designed for 16 to 18-year-old engineering students in furthe
 ## System Hardware & Design
 
 - IFM AL1350 IO-Link master (IoT Core) with four configurable IO-Link ports
-- Five live IO-Link devices pre-mounted and wired on a compact training panel:
-    - Contrinex LTR-M18PA-PMS-603 photoelectric sensor
+- Four live IO-Link devices pre-mounted and wired on a compact training panel:
     - Omron E2E-X16MB1T12 inductive proximity sensor
     - Carlo Gavazzi / RS PRO M18 capacitive sensor
     - IFM TV7105 PT100 temperature sensor
@@ -252,7 +250,7 @@ By the end of this curriculum, learners will be able to:
 
 This training kit puts you in front of a real, running IO-Link sensor network. You will not watch a simulation — you will read live data from real sensors, write parameters that change how they behave, and fix faults you have injected yourself.
 
-**CP3723 — Maintenance on Smart Sensors** walks you through each device in the kit: a photoelectric sensor, a proximity sensor, a capacitive sensor, a temperature sensor, and a programmable LED light stack. Nine guided worksheets take you from first contact with the hardware through commissioning, fault diagnosis, and a final practical assessment.
+**CP3723 — Maintenance on Smart Sensors** walks you through each device in the kit: a proximity sensor, a capacitive sensor, a temperature sensor, and a programmable LED light stack. Nine guided worksheets take you from first contact with the hardware through commissioning, fault diagnosis, and a final practical assessment.
 
 **CP7395 — Industry 4.0 IO-Link** goes beneath the surface. Eleven engineering worksheets decode the IO-Link protocol, map the data pipeline from sensor byte to HMI value, and build the commercial argument for IO-Link over conventional wiring.
 
@@ -261,11 +259,10 @@ This training kit puts you in front of a real, running IO-Link sensor network. Y
 | Hardware | Software |
 |----------|----------|
 | IFM AL1350 IO-Link Master | Raspberry Pi HMI Dashboard |
-| Contrinex Photoelectric Sensor | FastAPI Backend + MQTT |
-| Omron Proximity Sensor | Browser-based Worksheets |
-| RS PRO Capacitive Sensor | Live ISDU Read/Write Controls |
-| IFM TV7105 Temperature Sensor | Progress Tracking + JSON Export |
-| Banner CL50 Pro LED Light Stack | |
+| Omron Proximity Sensor | FastAPI Backend + MQTT |
+| RS PRO Capacitive Sensor | Browser-based Worksheets |
+| IFM TV7105 Temperature Sensor | Live ISDU Read/Write Controls |
+| Banner CL50 Pro LED Light Stack | Progress Tracking + JSON Export |
 
 ---
 
@@ -299,7 +296,7 @@ Click [here](https://www.matrixtsl.com/learning/) to download curriculum from ou
 
 Main Module
 
-<div class="joplin-table-wrapper"><table><tbody><tr><td><p><strong>IO-Link Master – IFM AL1350</strong></p><ul><li><strong>Purpose:</strong> Central IO-Link master connecting all field devices to the network and HMI dashboard</li><li><strong>Key Features:</strong><ul><li>Four configurable IO-Link / digital-I/O ports</li><li>IoT Core REST + MQTT interface for live data push (500 ms)</li><li>Acyclic ISDU read/write for full device parameter access</li><li>On-board supervision: port voltage, current, and temperature</li></ul></li></ul></td><td><p><img alt="IFM AL1350 IO-Link Master" src=""></p></td></tr><tr><td><p><strong>Photoelectric Sensor – Contrinex LTR-M18PA-PMS-603</strong></p><ul><li><strong>Purpose:</strong> Detects objects optically; demonstrates light-based sensing over IO-Link</li><li><strong>Key Features:</strong><ul><li>M18 housing, IO-Link switch signal channel (SSC1)</li><li>Configurable switch point and output logic via ISDU</li><li>Teach-in, cancel, and factory-reset commands</li></ul></li></ul></td><td><p><img alt="Contrinex LTR-M18PA-PMS-603 Photoelectric Sensor" src=""></p></td></tr><tr><td><p><strong>Proximity Sensor – Omron E2E-X16MB1T12</strong></p><ul><li><strong>Purpose:</strong> Detects metal objects inductively; demonstrates discrete sensing and alarm flags</li><li><strong>Key Features:</strong><ul><li>OUT1 object-detected flag plus instability and over-approach alarms</li><li>Monitor-output amplitude value in process data</li><li>Switchpoint logic (NO/NC) configurable via ISDU</li></ul></li></ul></td><td><p><img alt="Omron E2E-X16MB1T12 Inductive Proximity Sensor" src=""></p></td></tr><tr><td><p><strong>Capacitive Sensor – Carlo Gavazzi / RS PRO M18</strong></p><ul><li><strong>Purpose:</strong> Detects presence of materials through non-metallic barriers</li><li><strong>Key Features:</strong><ul><li>M18 capacitive switch with IO-Link SSC1 channel</li><li>Switch point, quality-of-teach and quality-of-run parameters</li><li>Teach start / stop / cancel commands via ISDU</li></ul></li></ul></td><td><p><img alt="Carlo Gavazzi / RS PRO M18 Capacitive Sensor" src=""></p></td></tr><tr><td><p><strong>Temperature Sensor – IFM TV7105 (PT100)</strong></p><ul><li><strong>Purpose:</strong> Measures process temperature and demonstrates analogue-to-IO-Link conversion</li><li><strong>Key Features:</strong><ul><li>PT100 RTD element with IO-Link transmitter</li><li>Two independent switching outputs, each with switch point (SP) and reset point (RP) and hysteresis</li><li>Calibration offset adjustable via ISDU (±10 °C)</li></ul></li></ul></td><td><p><img alt="IFM TV7105 Temperature Sensor" src=""></p></td></tr><tr><td><p><strong>Light Stack – Banner CL50 Pro RGB</strong></p><ul><li><strong>Purpose:</strong> Multi-colour signal tower for visual system-state indication</li><li><strong>Key Features:</strong><ul><li>PDout-only IO-Link device controlled directly from the dashboard</li><li>16-colour palette, intensity, animation, and audible options</li><li>Software "breathing" intensity-sweep effect for status display</li></ul></li></ul></td><td><p><img alt="Banner CL50 Pro RGB Light Stack" src=""></p></td></tr><tr><td><p><strong>HMI – Raspberry Pi + WaveShare Touchscreen</strong></p><ul><li><strong>Purpose:</strong> Runs the touch HMI dashboard and hosts the data/MQTT services</li><li><strong>Key Features:</strong><ul><li>1024×600 capacitive touchscreen in kiosk mode</li><li>Real-time gauges, charts, and per-sensor IODD parameter cards</li><li>Connection diagnostics, latency graphs, and interactive worksheets</li></ul></li></ul></td><td><p><img alt="Raspberry Pi with WaveShare 1024x600 Touchscreen" src=""></p></td></tr></tbody></table></div>
+<div class="joplin-table-wrapper"><table><tbody><tr><td><p><strong>IO-Link Master – IFM AL1350</strong></p><ul><li><strong>Purpose:</strong> Central IO-Link master connecting all field devices to the network and HMI dashboard</li><li><strong>Key Features:</strong><ul><li>Four configurable IO-Link / digital-I/O ports</li><li>IoT Core REST + MQTT interface for live data push (500 ms)</li><li>Acyclic ISDU read/write for full device parameter access</li><li>On-board supervision: port voltage, current, and temperature</li></ul></li></ul></td><td><p><img alt="IFM AL1350 IO-Link Master" src=""></p></td></tr><tr><td><p><strong>Proximity Sensor – Omron E2E-X16MB1T12</strong></p><ul><li><strong>Purpose:</strong> Detects metal objects inductively; demonstrates discrete sensing and alarm flags</li><li><strong>Key Features:</strong><ul><li>OUT1 object-detected flag plus instability and over-approach alarms</li><li>Monitor-output amplitude value in process data</li><li>Switchpoint logic (NO/NC) configurable via ISDU</li></ul></li></ul></td><td><p><img alt="Omron E2E-X16MB1T12 Inductive Proximity Sensor" src=""></p></td></tr><tr><td><p><strong>Capacitive Sensor – Carlo Gavazzi / RS PRO M18</strong></p><ul><li><strong>Purpose:</strong> Detects presence of materials through non-metallic barriers</li><li><strong>Key Features:</strong><ul><li>M18 capacitive switch with IO-Link SSC1 channel</li><li>Switch point, quality-of-teach and quality-of-run parameters</li><li>Teach start / stop / cancel commands via ISDU</li></ul></li></ul></td><td><p><img alt="Carlo Gavazzi / RS PRO M18 Capacitive Sensor" src=""></p></td></tr><tr><td><p><strong>Temperature Sensor – IFM TV7105 (PT100)</strong></p><ul><li><strong>Purpose:</strong> Measures process temperature and demonstrates analogue-to-IO-Link conversion</li><li><strong>Key Features:</strong><ul><li>PT100 RTD element with IO-Link transmitter</li><li>Two independent switching outputs, each with switch point (SP) and reset point (RP) and hysteresis</li><li>Calibration offset adjustable via ISDU (±10 °C)</li></ul></li></ul></td><td><p><img alt="IFM TV7105 Temperature Sensor" src=""></p></td></tr><tr><td><p><strong>Light Stack – Banner CL50 Pro RGB</strong></p><ul><li><strong>Purpose:</strong> Multi-colour signal tower for visual system-state indication</li><li><strong>Key Features:</strong><ul><li>PDout-only IO-Link device controlled directly from the dashboard</li><li>16-colour palette, intensity, animation, and audible options</li><li>Software "breathing" intensity-sweep effect for status display</li></ul></li></ul></td><td><p><img alt="Banner CL50 Pro RGB Light Stack" src=""></p></td></tr><tr><td><p><strong>HMI – Raspberry Pi + WaveShare Touchscreen</strong></p><ul><li><strong>Purpose:</strong> Runs the touch HMI dashboard and hosts the data/MQTT services</li><li><strong>Key Features:</strong><ul><li>1024×600 capacitive touchscreen in kiosk mode</li><li>Real-time gauges, charts, and per-sensor IODD parameter cards</li><li>Connection diagnostics, latency graphs, and interactive worksheets</li></ul></li></ul></td><td><p><img alt="Raspberry Pi with WaveShare 1024x600 Touchscreen" src=""></p></td></tr></tbody></table></div>
 
 ---
 
@@ -375,7 +372,6 @@ Matrix Technology Solutions Ltd shall supply the **Maintenance of IO-Link System
 - The system shall include an **IFM AL1350 IO-Link master** (IoT Core) providing four configurable IO-Link / digital-I/O ports with acyclic ISDU read/write.
 - The system shall feature **finger-safe, low-voltage (24 V DC) wiring** and push-in connectors to allow easy maintenance and compact storage.
 - The system shall include the following IO-Link device set:
-    - A Contrinex LTR-M18PA-PMS-603 photoelectric sensor
     - An Omron E2E-X16MB1T12 inductive proximity sensor
     - A Carlo Gavazzi / RS PRO M18 capacitive sensor
     - An IFM TV7105 PT100 temperature sensor with dual switching outputs

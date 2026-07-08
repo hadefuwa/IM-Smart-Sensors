@@ -541,20 +541,21 @@ Byte 3:  0x01  → bit 0 = 1 → Switching output 1 active → Object detected
 
 The analogue value represents the strength of the dielectric effect — higher means more material detected. The switching output bit is the simple yes/no answer. The analogue value is useful for level sensing (e.g., gradually rising liquid) because it gives a continuous reading, not just a threshold.
 
-### Photoelectric Sensor (Contrinex LTR-M18PA-PMx-603, sold as RS PRO 0360240) — Port 3
+### Proximity Sensor (Omron E2E-X16MB1T12) — Port 1
 
-PDin: **1–2 bytes**
+PDin: **2 bytes**
 
 ```
-Raw PDin from MQTT: "01"
-Byte 0: 0x01 → bit 0 = 1 → Object detected (beam reflected back)
+Raw PDin from MQTT: "5100"
+Byte 0: 0x51 → Monitor output (oscillation amplitude, ~81 in free air — not a status byte)
+Byte 1: 0x00 → bit 0 = 0 → No object detected; all alarm flags clear
 
-Raw PDin from MQTT: "0064"
-Byte 0: 0x00 → No object detected
-Byte 1: 0x64 = 100 → Signal quality: 100%
+Raw PDin from MQTT: "9A01"
+Byte 0: 0x9A → Monitor output (amplitude has dropped — metal target present)
+Byte 1: 0x01 → bit 0 = 1 → Object detected
 ```
 
-The first bit of the first byte is the switching output. Additional bytes carry signal quality — a value that drops before total failure, giving early warning to clean the lens or adjust alignment.
+The IODD counts `bitOffset` from the LSB of the 16-bit record, so byte 0 and byte 1 are not in the intuitive order: byte 0 is the monitor-output amplitude, and byte 1 carries OUT1 (bit 0) plus the instability/over-approach/warning/error alarm flags (bits 4–7). Misreading byte 0 as a status byte produces a permanent false "instability alarm" as the amplitude LSB flickers.
 
 ### LED Light Stack (IFM CL50 PRO SELECT) — Port 4
 

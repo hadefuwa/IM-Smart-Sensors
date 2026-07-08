@@ -4,8 +4,6 @@ IODD-derived device parameter registry for known IO-Link sensors.
 Sources:
   IFM TV7105  — ifm-TV7105-20170308-IODD1.1.xml (HTW Dresden / IFM)
   RS PRO 2377240 / Carlo Gavazzi CA18FAF08BPxxIO — CGI-CA18FAF08BPxxIO_1-20200302-IODD1.1.xml
-  RS PRO 0360240 photoelectric (Contrinex OEM) — standard Smart Sensor Profile only (IODD not public)
-    [COMMENTED OUT — sensor swapped for Omron E2E-X16MB1T12 on port 1; re-enable (342,131842) if reverted]
   OMRON E2E-X NEXT M18 family — OMRON-E2E-NEXT-X_B1T18-20191010-IODD1.1.xml (IO-Link V1.1, COM3)
   Banner CL50PKQ / CL50 Pro RGB — Banner_Engineering-CL50RGBIOL-20210903-IODD1.1.xml (IO-Link V1.1)
     VendorID: 451, DeviceID: 393229 — docs/datasheets/CL50PKQ.pdf (IO-Link Data Reference Guide)
@@ -202,72 +200,6 @@ _PROXIMITY_OMRON_PARAMS = {
     ]
 }
 
-# ── Contrinex LTR-M18PA-PMS-603 photoelectric (IO-Link 1.0) ──────────────────
-# COMMENTED OUT — sensor swapped for OMRON E2E-X16MB1T12 on port 1.
-# Re-enable the registry entry (342, 131842) below if the photoelectric is re-fitted.
-_PHOTOELECTRIC_PARAMS = {
-    'label': 'Contrinex LTR-M18PA-PMS-603 Diffuse Photoelectric (IO-Link 1.0 — identity only)',
-    'isdu_limited': True,  # only pages 0 and 1 respond; no configurable params accessible over IO-Link
-    'pdo_write': False,
-    'commands': {
-        'teach_sp1':       {'value': 0x41, 'label': 'Single Value Teach SP1 — teach detection threshold to current target distance'},
-        'teach_sp2':       {'value': 0x42, 'label': 'Single Value Teach SP2 — teach second threshold'},
-        'teach_dyn_start': {'value': 0x47, 'label': 'Dynamic Teach SP1 Start — begin dynamic range capture'},
-        'teach_dyn_stop':  {'value': 0x48, 'label': 'Dynamic Teach SP1 Stop — end dynamic range capture'},
-        'teach_cancel':    {'value': 0x4F, 'label': 'Cancel / abort teach sequence'},
-        'factory_reset':   {'value': 0x80, 'label': 'Device Reset — restores all factory defaults'},
-    },
-    'parameters': [
-        # ── Identity ──────────────────────────────────────────────────────────
-        _p(0x12, 0, 'Product Name',      T_STRING, group=G_IDENTITY),
-        _p(0x15, 0, 'Serial Number',     T_STRING, group=G_IDENTITY),
-        _p(0x16, 0, 'Hardware Rev',      T_STRING, group=G_IDENTITY),
-        _p(0x17, 0, 'Firmware Rev',      T_STRING, group=G_IDENTITY),
-        _p(0x18, 0, 'Application Tag',   T_STRING, access='rw', group=G_IDENTITY,
-           desc='User-editable label stored in the sensor', max_len=32),
-        # ── Diagnostics ───────────────────────────────────────────────────────
-        _p(0x24, 0, 'Device Status', T_UINT8, group=G_DIAGNOSTICS,
-           enum={0: 'OK', 1: 'Maintenance required', 2: 'Out-of-specification',
-                 3: 'Functional check', 4: 'Failure'}),
-        _p(0x46, 1, 'Current Temperature',     T_UINT16, group=G_DIAGNOSTICS, scale=0.1, unit='°C',
-           desc='Internal sensor temperature (divide by 10)'),
-        _p(0x46, 2, 'Max Lifetime Temp',        T_UINT16, group=G_DIAGNOSTICS, scale=0.1, unit='°C'),
-        _p(0x46, 5, 'Operating Hours',           T_UINT32, group=G_DIAGNOSTICS, unit='h'),
-        _p(0x46, 8, 'Event Flags',               T_UINT8,  group=G_DIAGNOSTICS,
-           desc='Bit0=short-circuit, Bit1=EMC, Bit2=receiver disturbance, Bit3=LED limit, Bit4=undervoltage'),
-        # ── SSC1 — primary switching channel ──────────────────────────────────
-        _p(0x3C, 1, 'SSC1 SP1 — Setpoint 1', T_UINT32, access='rw', group=G_CONFIG,
-           min=2234, max=14894, default=14894,
-           desc='Detection threshold. Lower = triggers closer. Range maps ~15%–100% of max sensing distance.'),
-        _p(0x3C, 2, 'SSC1 SP2 — Setpoint 2', T_UINT32, access='rw', group=G_CONFIG,
-           min=2234, max=14894, default=2234,
-           desc='Second threshold (window lower bound or two-point TP2). Ignored in single-point mode.'),
-        _p(0x3D, 1, 'SSC1 Logic', T_UINT8, access='rw', group=G_CONFIG,
-           enum={0: 'High active (Light-ON)', 1: 'Low active (Dark-ON)'}),
-        _p(0x3D, 2, 'SSC1 Mode', T_UINT8, access='rw', group=G_CONFIG,
-           enum={0: 'Deactivated', 1: 'Single Point', 2: 'Window Mode', 3: 'Two Points'}),
-        _p(0x3D, 3, 'SSC1 Hysteresis Width', T_UINT32, access='rw', group=G_CONFIG,
-           min=0, max=16383, desc='Dead-band around SP1 to prevent output chatter'),
-        # ── SSC2 — secondary switching channel ────────────────────────────────
-        _p(0x3E, 1, 'SSC2 SP1 — Setpoint 1', T_UINT32, access='rw', group=G_CONFIG,
-           min=2234, max=14894, default=11936),
-        _p(0x3E, 2, 'SSC2 SP2 — Setpoint 2', T_UINT32, access='rw', group=G_CONFIG,
-           min=2234, max=14894, default=2234),
-        _p(0x3F, 1, 'SSC2 Logic', T_UINT8, access='rw', group=G_CONFIG,
-           enum={0: 'High active (Light-ON)', 1: 'Low active (Dark-ON)'}),
-        _p(0x3F, 2, 'SSC2 Mode', T_UINT8, access='rw', group=G_CONFIG,
-           enum={0: 'Deactivated', 1: 'Single Point', 2: 'Window Mode', 3: 'Two Points'}),
-        # ── Sensor general config ─────────────────────────────────────────────
-        _p(0x40, 2, 'Sensor Mode', T_UINT8, access='rw', group=G_CONFIG,
-           enum={0: 'Fast', 2: 'Medium (Normal)', 0x24: 'Fine'},
-           desc='Response speed vs. noise immunity trade-off'),
-        # ── Output timing ─────────────────────────────────────────────────────
-        _p(0x43, 1, 'Timer Mode', T_UINT8, access='rw', group=G_CONFIG,
-           enum={0: 'No Timer', 1: 'Stretch ON', 2: 'Delay ON', 3: 'Delay + Stretch ON', 4: 'One Shot'}),
-        _p(0x43, 2, 'Timer Value', T_UINT16, access='rw', group=G_CONFIG, unit='ms', min=0, max=65535),
-    ]
-}
-
 # ── Banner CL50 Pro RGB Column Light (IO-Link V1.1) ──────────────────────────
 # IODD: Banner_Engineering-CL50RGBIOL-20210903-IODD1.1.xml
 # VendorID: 451 (Banner Engineering Corp.), DeviceID: 393229
@@ -320,7 +252,6 @@ DEVICE_REGISTRY = {
     (896,  1069056):   _CAPACITIVE_PARAMS,        # Carlo Gavazzi official IDs
     (612,  131094):    _PROXIMITY_OMRON_PARAMS,   # OMRON E2E-X NEXT M18 (IO-Link V1.1)
     (451,  393229):    _CL50_BANNER_PARAMS,       # Banner CL50 Pro RGB column light (IO-Link V1.1)
-    # (342, 131842):   _PHOTOELECTRIC_PARAMS,     # Contrinex LTR-M18PA-PMS-603 IO-Link 1.0 — re-enable if sensor re-fitted
 }
 
 
