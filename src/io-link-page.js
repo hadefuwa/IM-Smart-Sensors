@@ -22,6 +22,7 @@ const SOURCE_BADGE = {
   fallback:      'badge-warning',
   error:         'badge-error',
   pending:       'badge-ghost',
+  simulated:     'badge-warning',
 };
 
 const MODE_COLOR = {

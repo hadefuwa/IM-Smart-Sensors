@@ -7435,7 +7435,7 @@ setTimeout(() => {
 // When the IO-Link Master page is active its WebSocket will also
 // update these elements (more frequently) — that's fine.
 // ================================================================
-(function startGlobalConnectionPoller() {
+function startGlobalConnectionPoller() {
   const _apiBase = window.IO_LINK_API_BASE || (window.location.protocol + '//' + window.location.hostname + ':8000');
 
   function fetchWithTimeout(url, timeoutMs) {
@@ -7483,7 +7483,38 @@ setTimeout(() => {
 
   poll();
   setInterval(poll, 5000);
-})();
+}
 
-// Initial page: HMI Dashboard (home page)
-renderPage('home');
+// ================================================================
+// APP BOOT
+// On the GitHub Pages build (VITE_SIM_MODE=true), the simulated IO-Link
+// master network patch (window.WebSocket / window.fetch) must be installed
+// before the first page opens its connection, or that first attempt races
+// the patch and burns a real reconnect cycle. Deliberately using .then()
+// rather than top-level await — the Pi's Chromium is old enough that
+// top-level await support isn't guaranteed, and this file is shared by
+// both builds.
+// ================================================================
+function _bootApp() {
+  startGlobalConnectionPoller();
+  renderPage('home');
+}
+
+if (import.meta.env.VITE_SIM_MODE === 'true') {
+  import('./sim/sim-runtime.js').then(m => {
+    m.installSimBackend();
+    window.addEventListener('sim:engaged', _showSimBanner, { once: true });
+    _bootApp();
+  }).catch(_bootApp);
+} else {
+  _bootApp();
+}
+
+function _showSimBanner() {
+  if (document.getElementById('_sim-mode-banner')) return;
+  const banner = document.createElement('div');
+  banner.id = '_sim-mode-banner';
+  banner.className = 'badge badge-warning gap-2 fixed top-2 left-1/2 -translate-x-1/2 z-[9999] shadow-lg px-3 py-3 text-xs font-semibold';
+  banner.textContent = '⚠ SIMULATED DATA — GitHub Pages demo, not connected to real hardware';
+  document.body.appendChild(banner);
+}
