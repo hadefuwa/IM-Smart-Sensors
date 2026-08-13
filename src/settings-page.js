@@ -132,7 +132,7 @@ export function renderSettingsPage() {
               <label class="label py-0" for="masterIpInput">
                 <span class="label-text font-medium text-base-content">Host / IP address</span>
               </label>
-              <input type="text" id="masterIpInput" placeholder="192.168.7.4" class="input input-bordered input-sm w-full" />
+              <input type="text" inputmode="decimal" id="masterIpInput" placeholder="192.168.7.4" class="input input-bordered input-sm w-full" />
               <p class="text-xs text-base-content/50">IP or hostname of the AL1350</p>
             </div>
 
@@ -140,7 +140,7 @@ export function renderSettingsPage() {
               <label class="label py-0" for="masterPortInput">
                 <span class="label-text font-medium text-base-content">HTTP port</span>
               </label>
-              <input type="number" id="masterPortInput" placeholder="80" min="1" max="65535" class="input input-bordered input-sm w-full" />
+              <input type="text" inputmode="numeric" id="masterPortInput" placeholder="80" class="input input-bordered input-sm w-full" />
               <p class="text-xs text-base-content/50">Default is 80 (or 443 for HTTPS)</p>
             </div>
 
@@ -148,7 +148,7 @@ export function renderSettingsPage() {
               <label class="label py-0" for="masterTimeoutInput">
                 <span class="label-text font-medium text-base-content">Request timeout (s)</span>
               </label>
-              <input type="number" id="masterTimeoutInput" placeholder="2" min="0.5" max="30" step="0.5" class="input input-bordered input-sm w-full" />
+              <input type="text" inputmode="decimal" id="masterTimeoutInput" placeholder="2" class="input input-bordered input-sm w-full" />
               <p class="text-xs text-base-content/50">Seconds before a request is abandoned (0.5–30)</p>
             </div>
 
@@ -156,7 +156,7 @@ export function renderSettingsPage() {
               <label class="label py-0" for="masterPollInput">
                 <span class="label-text font-medium text-base-content">Poll interval (s)</span>
               </label>
-              <input type="number" id="masterPollInput" placeholder="1" min="0.5" max="30" step="0.5" class="input input-bordered input-sm w-full" />
+              <input type="text" inputmode="decimal" id="masterPollInput" placeholder="1" class="input input-bordered input-sm w-full" />
               <p class="text-xs text-base-content/50">How often the backend queries the master (0.5–30)</p>
             </div>
           </div>
@@ -499,6 +499,25 @@ function _renderVKKeys() {
   });
 }
 
+/**
+ * Caret position, defensively.
+ * `selectionStart` is only defined for text/search/url/tel/password inputs — it
+ * is null on number/email/date, so fall back to the end of the value.
+ */
+function _vkCaret() {
+  const s = _vkTarget.selectionStart;
+  return typeof s === 'number' ? s : _vkTarget.value.length;
+}
+
+/** setSelectionRange throws InvalidStateError on inputs that don't support selection. */
+function _vkSetCaret(pos) {
+  try { _vkTarget.setSelectionRange(pos, pos); } catch (_) { /* unsupported input type */ }
+}
+
+function _vkCommit() {
+  _vkTarget.dispatchEvent(new Event('input', { bubbles: true }));
+}
+
 function _handleVKKey(key) {
   if (!_vkTarget) return;
   if (key === 'Done')         { hideVK(); return; }
@@ -506,19 +525,30 @@ function _handleVKKey(key) {
   if (key === '123')          { _vkNums = true;  _renderVKKeys(); return; }
   if (key === 'ABC')          { _vkNums = false; _vkShift = false; _renderVKKeys(); return; }
   if (key === '⌫') {
-    const s = _vkTarget.selectionStart;
-    if (s > 0) { _vkTarget.value = _vkTarget.value.slice(0, s - 1) + _vkTarget.value.slice(s); _vkTarget.setSelectionRange(s - 1, s - 1); }
+    const s = _vkCaret();
+    if (s > 0) {
+      _vkTarget.value = _vkTarget.value.slice(0, s - 1) + _vkTarget.value.slice(s);
+      _vkSetCaret(s - 1);
+      _vkCommit();
+    }
     return;
   }
-  const s = _vkTarget.selectionStart;
+  const s = _vkCaret();
   _vkTarget.value = _vkTarget.value.slice(0, s) + key + _vkTarget.value.slice(s);
-  _vkTarget.setSelectionRange(s + 1, s + 1);
+  _vkSetCaret(s + 1);
+  _vkCommit();
   if (_vkShift) { _vkShift = false; _renderVKKeys(); }
+}
+
+/** True when the field expects digits, so the keyboard opens on the numeric layout. */
+function _vkWantsNumbers(input) {
+  const mode = (input.getAttribute('inputmode') || '').toLowerCase();
+  return input.type === 'number' || mode === 'numeric' || mode === 'decimal' || mode === 'tel';
 }
 
 function showVK(input) {
   _vkTarget = input;
-  _vkNums   = input.type === 'number';
+  _vkNums   = _vkWantsNumbers(input);
   _vkShift  = false;
   _renderVKKeys();
   const overlay = document.getElementById('vk-overlay');
