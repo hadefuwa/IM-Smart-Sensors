@@ -470,9 +470,16 @@ function mountVirtualKeyboard() {
   document.body.appendChild(el);
   _renderVKKeys();
 
-  // Hide when tapping outside keyboard and outside an input
+  // Hide when tapping outside keyboard and outside an input.
+  // Guard against a detached target: keys that re-render the layout (123 / ABC /
+  // shift) remove the tapped button from the DOM before this bubble handler runs,
+  // and closest() on an orphaned node returns null — which read as "tapped
+  // outside" and hid the keyboard. Key buttons also stopPropagation, so this is
+  // belt-and-braces for anything else that re-renders mid-event.
   document.addEventListener('mousedown', e => {
-    if (!e.target.closest('#vk-overlay') && !e.target.matches('input')) hideVK();
+    const t = e.target;
+    if (!t.isConnected) return;
+    if (!t.closest('#vk-overlay') && !t.matches('input')) hideVK();
   });
 }
 
@@ -495,7 +502,11 @@ function _renderVKKeys() {
   }).join('');
 
   overlay.querySelectorAll('button[data-vk]').forEach(btn => {
-    btn.addEventListener('mousedown', e => { e.preventDefault(); _handleVKKey(decodeURIComponent(btn.dataset.vk)); });
+    btn.addEventListener('mousedown', e => {
+      e.preventDefault();
+      e.stopPropagation();   // a key tap is never an "outside" tap
+      _handleVKKey(decodeURIComponent(btn.dataset.vk));
+    });
   });
 }
 
